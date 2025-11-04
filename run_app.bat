@@ -1,0 +1,2 @@
+cd dentaltid
+flutter run

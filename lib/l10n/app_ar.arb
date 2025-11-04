@@ -1,0 +1,10 @@
+{
+  "dashboard": "لوحة القيادة",
+  "patients": "المرضى",
+  "appointments": "المواعيد",
+  "inventory": "المخزون",
+  "finance": "المالية",
+  "settings": "الإعدادات",
+  "language": "اللغة",
+  "theme": "المظهر"
+}

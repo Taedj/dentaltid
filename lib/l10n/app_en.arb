@@ -1,0 +1,10 @@
+{
+  "dashboard": "Dashboard",
+  "patients": "Patients",
+  "appointments": "Appointments",
+  "inventory": "Inventory",
+  "finance": "Finance",
+  "settings": "Settings",
+  "language": "Language",
+  "theme": "Theme"
+}

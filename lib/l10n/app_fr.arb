@@ -1,0 +1,10 @@
+{
+  "dashboard": "Tableau de bord",
+  "patients": "Patients",
+  "appointments": "Rendez-vous",
+  "inventory": "Inventaire",
+  "finance": "Finance",
+  "settings": "Paramètres",
+  "language": "Langue",
+  "theme": "Thème"
+}
