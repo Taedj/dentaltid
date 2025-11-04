@@ -1,2 +1,1 @@
-cd dentaltid
 flutter run

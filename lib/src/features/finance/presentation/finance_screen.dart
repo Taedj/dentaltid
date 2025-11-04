@@ -28,55 +28,76 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Widget build(BuildContext context) {
     final financeService = ref.watch(financeServiceProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Finance'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  TextFormField(
-                    controller: _descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a description';
-                      }
-                      return null;
-                    },
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Finance'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Add Transaction'),
+              Tab(text: 'Financial Summary'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // Add Transaction Tab
+            Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: <Widget>[
+                            TextFormField(
+                              controller: _descriptionController,
+                              decoration: const InputDecoration(labelText: 'Description'),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a description';
+                                }
+                                return null;
+                              },
+                            ),
+                            TextFormField(
+                              controller: _amountController,
+                              decoration: const InputDecoration(labelText: 'Amount'),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter an amount';
+                                }
+                                return null;
+                              },
+                            ),
+                            DropdownButton<TransactionType>(
+                              value: _selectedType,
+                              onChanged: (TransactionType? newValue) {
+                                setState(() {
+                                  _selectedType = newValue!;
+                                });
+                              },
+                              items: TransactionType.values
+                                  .map<DropdownMenuItem<TransactionType>>((TransactionType value) {
+                                return DropdownMenuItem<TransactionType>(
+                                  value: value,
+                                  child: Text(value.toString().split('.').last),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                  TextFormField(
-                    controller: _amountController,
-                    decoration: const InputDecoration(labelText: 'Amount'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      return null;
-                    },
-                  ),
-                  DropdownButton<TransactionType>(
-                    value: _selectedType,
-                    onChanged: (TransactionType? newValue) {
-                      setState(() {
-                        _selectedType = newValue!;
-                      });
-                    },
-                    items: TransactionType.values
-                        .map<DropdownMenuItem<TransactionType>>((TransactionType value) {
-                      return DropdownMenuItem<TransactionType>(
-                        value: value,
-                        child: Text(value.toString().split('.').last),
-                      );
-                    }).toList(),
-                  ),
-                  ElevatedButton(
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         final newTransaction = Transaction(
@@ -93,12 +114,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     },
                     child: const Text('Add Transaction'),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-          Expanded(
-            child: FutureBuilder(
+
+            // Financial Summary Tab
+            FutureBuilder(
               future: financeService.getTransactions(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -122,7 +143,10 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
                   return Column(
                     children: [
-                      FinanceChart(transactions: transactions),
+                      SizedBox(
+                        height: 200,
+                        child: FinanceChart(transactions: transactions),
+                      ),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Row(
@@ -163,8 +187,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 }
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

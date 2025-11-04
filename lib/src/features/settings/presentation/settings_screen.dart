@@ -89,9 +89,9 @@ class SettingsScreen extends ConsumerWidget {
                 }
               },
               items: const [
-                Locale('en', 'EN'),
-                Locale('fr', 'FR'),
-                Locale('ar', 'AR'),
+                Locale('en'),
+                Locale('fr'),
+                Locale('ar'),
               ].map<DropdownMenuItem<Locale>>((Locale value) {
                 return DropdownMenuItem<Locale>(
                   value: value,
