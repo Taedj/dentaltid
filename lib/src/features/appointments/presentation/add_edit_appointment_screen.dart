@@ -9,10 +9,12 @@ class AddEditAppointmentScreen extends ConsumerStatefulWidget {
   final Appointment? appointment;
 
   @override
-  ConsumerState<AddEditAppointmentScreen> createState() => _AddEditAppointmentScreenState();
+  ConsumerState<AddEditAppointmentScreen> createState() =>
+      _AddEditAppointmentScreenState();
 }
 
-class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScreen> {
+class _AddEditAppointmentScreenState
+    extends ConsumerState<AddEditAppointmentScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _patientIdController;
   late TextEditingController _dateController;
@@ -22,10 +24,14 @@ class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScr
   void initState() {
     super.initState();
     _patientIdController = TextEditingController(
-        text: widget.appointment?.patientId.toString() ?? '');
+      text: widget.appointment?.patientId.toString() ?? '',
+    );
     _dateController = TextEditingController(
-        text: widget.appointment?.date.toIso8601String().split('T')[0] ?? '');
-    _timeController = TextEditingController(text: widget.appointment?.time ?? '');
+      text: widget.appointment?.date.toIso8601String().split('T')[0] ?? '',
+    );
+    _timeController = TextEditingController(
+      text: widget.appointment?.time ?? '',
+    );
   }
 
   @override
@@ -43,7 +49,8 @@ class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScr
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            widget.appointment == null ? 'Add Appointment' : 'Edit Appointment'),
+          widget.appointment == null ? 'Add Appointment' : 'Edit Appointment',
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -64,11 +71,17 @@ class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScr
               ),
               TextFormField(
                 controller: _dateController,
-                decoration: const InputDecoration(labelText: 'Date (YYYY-MM-DD)'),
+                decoration: const InputDecoration(
+                  labelText: 'Date (YYYY-MM-DD)',
+                ),
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a date';
+                  }
+                  final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+                  if (!dateRegex.hasMatch(value)) {
+                    return 'Please enter a valid date in YYYY-MM-DD format';
                   }
                   return null;
                 },
@@ -81,6 +94,10 @@ class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScr
                   if (value == null || value.isEmpty) {
                     return 'Please enter a time';
                   }
+                  final timeRegex = RegExp(r'^\d{2}:\d{2}$');
+                  if (!timeRegex.hasMatch(value)) {
+                    return 'Please enter a valid time in HH:MM format';
+                  }
                   return null;
                 },
               ),
@@ -89,21 +106,36 @@ class _AddEditAppointmentScreenState extends ConsumerState<AddEditAppointmentScr
                 child: ElevatedButton(
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      final newAppointment = Appointment(
-                        id: widget.appointment?.id,
-                        patientId: int.tryParse(_patientIdController.text) ?? 0,
-                        date: DateTime.parse(_dateController.text),
-                        time: _timeController.text,
-                      );
+                      try {
+                        final newAppointment = Appointment(
+                          id: widget.appointment?.id,
+                          patientId:
+                              int.tryParse(_patientIdController.text) ?? 0,
+                          date: DateTime.parse(_dateController.text),
+                          time: _timeController.text,
+                        );
 
-                      if (widget.appointment == null) {
-                        await appointmentService.addAppointment(newAppointment);
-                      } else {
-                        await appointmentService
-                            .updateAppointment(newAppointment);
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
+                        if (widget.appointment == null) {
+                          await appointmentService.addAppointment(
+                            newAppointment,
+                          );
+                        } else {
+                          await appointmentService.updateAppointment(
+                            newAppointment,
+                          );
+                        }
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${e.toString()}'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       }
                     }
                   },

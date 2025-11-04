@@ -33,10 +33,22 @@ class AppointmentRepository {
 
   Future<void> deleteAppointment(int id) async {
     final db = await _databaseService.database;
-    await db.delete(
+    await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Appointment>> getUpcomingAppointments() async {
+    final db = await _databaseService.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'date >= ?',
+      whereArgs: [today.toIso8601String()],
+      orderBy: 'date ASC',
+      limit: 5,
     );
+    return List.generate(maps.length, (i) {
+      return Appointment.fromJson(maps[i]);
+    });
   }
 }

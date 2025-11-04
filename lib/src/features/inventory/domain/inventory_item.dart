@@ -14,20 +14,20 @@ class InventoryItem {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'quantity': quantity,
-        'expirationDate': expirationDate.toIso8601String(),
-        'supplier': supplier,
-      };
+    'id': id,
+    'name': name,
+    'quantity': quantity,
+    'expirationDate': expirationDate.toIso8601String(),
+    'supplier': supplier,
+  };
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
-        id: json['id'],
-        name: json['name'],
-        quantity: json['quantity'],
-        expirationDate: DateTime.parse(json['expirationDate']),
-        supplier: json['supplier'],
-      );
+    id: json['id'],
+    name: json['name'],
+    quantity: json['quantity'],
+    expirationDate: DateTime.parse(json['expirationDate']),
+    supplier: json['supplier'],
+  );
 
   InventoryItem copyWith({
     int? id,

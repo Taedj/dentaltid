@@ -18,14 +18,19 @@ class FinanceChart extends StatelessWidget {
       if (transaction.type == TransactionType.income) {
         dailyIncome[dateKey] = (dailyIncome[dateKey] ?? 0) + transaction.amount;
       } else {
-        dailyExpense[dateKey] = (dailyExpense[dateKey] ?? 0) + transaction.amount;
+        dailyExpense[dateKey] =
+            (dailyExpense[dateKey] ?? 0) + transaction.amount;
       }
     }
 
     // Prepare data for the bar chart
     List<BarChartGroupData> barGroups = [];
     int x = 0;
-    final sortedDates = (dailyIncome.keys.toList() + dailyExpense.keys.toList()).toSet().toList()..sort();
+    final sortedDates =
+        (dailyIncome.keys.toList() + dailyExpense.keys.toList())
+            .toSet()
+            .toList()
+          ..sort();
 
     for (var dateKey in sortedDates) {
       final income = dailyIncome[dateKey] ?? 0;
@@ -35,16 +40,8 @@ class FinanceChart extends StatelessWidget {
         BarChartGroupData(
           x: x,
           barRods: [
-            BarChartRodData(
-              toY: income,
-              color: Colors.green,
-              width: 10,
-            ),
-            BarChartRodData(
-              toY: expense,
-              color: Colors.red,
-              width: 10,
-            ),
+            BarChartRodData(toY: income, color: Colors.green, width: 10),
+            BarChartRodData(toY: expense, color: Colors.red, width: 10),
           ],
           showingTooltipIndicators: [0, 1],
         ),
@@ -64,7 +61,9 @@ class FinanceChart extends StatelessWidget {
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
                   if (value.toInt() < sortedDates.length) {
-                    return Text(sortedDates[value.toInt()].substring(5)); // Show MM-DD
+                    return Text(
+                      sortedDates[value.toInt()].substring(5),
+                    ); // Show MM-DD
                   }
                   return const Text('');
                 },

@@ -24,9 +24,7 @@ class _CloudBackupsScreenState extends State<CloudBackupsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Cloud Backups'),
-      ),
+      appBar: AppBar(title: const Text('Cloud Backups')),
       body: FutureBuilder<List<BackupInfo>>(
         future: _backupsFuture,
         builder: (context, snapshot) {
@@ -48,13 +46,17 @@ class _CloudBackupsScreenState extends State<CloudBackupsScreen> {
                     title: Text('Backup from: ${backup.timestamp.toLocal()}'),
                     trailing: ElevatedButton(
                       onPressed: () async {
-                        final success = await _backupService.restoreBackup(backupId: backup.id);
+                        final success = await _backupService.restoreBackup(
+                          backupId: backup.id,
+                        );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(success
-                                  ? 'Backup restored successfully.'
-                                  : 'Restore failed.'),
+                              content: Text(
+                                success
+                                    ? 'Backup restored successfully.'
+                                    : 'Restore failed.',
+                              ),
                             ),
                           );
                         }

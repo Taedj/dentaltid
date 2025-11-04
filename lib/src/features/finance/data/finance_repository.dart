@@ -33,10 +33,6 @@ class FinanceRepository {
 
   Future<void> deleteTransaction(int id) async {
     final db = await _databaseService.database;
-    await db.delete(
-      _tableName,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
 }

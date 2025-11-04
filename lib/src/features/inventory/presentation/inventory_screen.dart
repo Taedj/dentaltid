@@ -28,12 +28,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final inventoryService = ref.watch(inventoryServiceProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventory'),
-      ),
+      appBar: AppBar(title: const Text('Inventory')),
       body: Column(
         children: [
           Padding(
@@ -65,7 +64,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   ),
                   TextFormField(
                     controller: _expirationDateController,
-                    decoration: const InputDecoration(labelText: 'Expiration Date (YYYY-MM-DD)'),
+                    decoration: const InputDecoration(
+                      labelText: 'Expiration Date (YYYY-MM-DD)',
+                    ),
                     keyboardType: TextInputType.datetime,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -87,18 +88,33 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        final newItem = InventoryItem(
-                          name: _nameController.text,
-                          quantity: int.parse(_quantityController.text),
-                          expirationDate: DateTime.parse(_expirationDateController.text),
-                          supplier: _supplierController.text,
-                        );
-                        await inventoryService.addInventoryItem(newItem);
-                        ref.invalidate(inventoryServiceProvider);
-                        _nameController.clear();
-                        _quantityController.clear();
-                        _expirationDateController.clear();
-                        _supplierController.clear();
+                        try {
+                          final newItem = InventoryItem(
+                            name: _nameController.text,
+                            quantity: int.parse(_quantityController.text),
+                            expirationDate: DateTime.parse(
+                              _expirationDateController.text,
+                            ),
+                            supplier: _supplierController.text,
+                          );
+                          await inventoryService.addInventoryItem(newItem);
+                          ref.invalidate(
+                            inventoryItemsProvider,
+                          ); // Invalidate to refresh
+                          _nameController.clear();
+                          _quantityController.clear();
+                          _expirationDateController.clear();
+                          _supplierController.clear();
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: ${e.toString()}'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
                       }
                     },
                     child: const Text('Add Item'),
@@ -108,42 +124,74 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
           ),
           Expanded(
-            child: FutureBuilder(
-              future: inventoryService.getInventoryItems(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            child: inventoryItemsAsyncValue.when(
+              data: (items) {
+                if (items.isEmpty) {
                   return const Center(child: Text('No items yet.'));
-                } else {
-                  final items = snapshot.data!;
-                  return ListView.builder(
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      return Card(
-                        margin: const EdgeInsets.all(8.0),
-                        child: ListTile(
-                          title: Text(item.name),
-                          subtitle: Text(
-                              'Quantity: ${item.quantity} - Expires: ${item.expirationDate.toLocal().toString().split(' ')[0]}'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              if (item.id != null) {
-                                await inventoryService.deleteInventoryItem(item.id!);
-                                ref.invalidate(inventoryServiceProvider);
-                              }
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  );
                 }
+                return ListView.builder(
+                  itemCount: items.length,
+                  itemBuilder: (context, index) {
+                    final item = items[index];
+                    return Card(
+                      margin: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        title: Text(item.name),
+                        subtitle: Text(
+                          'Quantity: ${item.quantity} - Expires: ${item.expirationDate.toLocal().toString().split(' ')[0]}',
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () async {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Item'),
+                                content: const Text(
+                                  'Are you sure you want to delete this item?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(true),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmed == true && item.id != null) {
+                              try {
+                                await inventoryService.deleteInventoryItem(
+                                  item.id!,
+                                );
+                                ref.invalidate(
+                                  inventoryItemsProvider,
+                                ); // Invalidate to refresh
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error: ${e.toString()}'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
               },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(child: Text('Error: $error')),
             ),
           ),
         ],

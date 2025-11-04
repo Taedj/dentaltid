@@ -11,6 +11,11 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
   return InventoryService(ref.watch(inventoryRepositoryProvider));
 });
 
+final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
+  final service = ref.watch(inventoryServiceProvider);
+  return service.getInventoryItems();
+});
+
 class InventoryService {
   final InventoryRepository _repository;
 

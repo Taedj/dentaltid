@@ -13,7 +13,9 @@ class PatientRepository {
     await db.insert(_tableName, patient.toJson());
   }
 
-  Future<List<Patient>> getPatients([PatientFilter filter = PatientFilter.all]) async {
+  Future<List<Patient>> getPatients([
+    PatientFilter filter = PatientFilter.all,
+  ]) async {
     final db = await _databaseService.database;
     String? where;
     List<dynamic>? whereArgs;
@@ -28,19 +30,33 @@ class PatientRepository {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
         final endOfWeek = startOfWeek.add(const Duration(days: 6));
         where = 'createdAt BETWEEN ? AND ?';
-        whereArgs = [startOfWeek.toIso8601String(), endOfWeek.toIso8601String()];
+        whereArgs = [
+          startOfWeek.toIso8601String(),
+          endOfWeek.toIso8601String(),
+        ];
         break;
       case PatientFilter.thisMonth:
         final startOfMonth = DateTime(now.year, now.month, 1);
         final endOfMonth = DateTime(now.year, now.month + 1, 0);
         where = 'createdAt BETWEEN ? AND ?';
-        whereArgs = [startOfMonth.toIso8601String(), endOfMonth.toIso8601String()];
+        whereArgs = [
+          startOfMonth.toIso8601String(),
+          endOfMonth.toIso8601String(),
+        ];
         break;
       case PatientFilter.all:
         break;
+      case PatientFilter.emergency:
+        where = 'isEmergency = ?';
+        whereArgs = [1];
+        break;
     }
 
-    final List<Map<String, dynamic>> maps = await db.query(_tableName, where: where, whereArgs: whereArgs);
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: where,
+      whereArgs: whereArgs,
+    );
     return List.generate(maps.length, (i) {
       return Patient.fromJson(maps[i]);
     });
@@ -58,10 +74,6 @@ class PatientRepository {
 
   Future<void> deletePatient(int id) async {
     final db = await _databaseService.database;
-    await db.delete(
-      _tableName,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
 }

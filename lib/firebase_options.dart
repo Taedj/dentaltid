@@ -71,5 +71,4 @@ class DefaultFirebaseOptions {
     projectId: 'dentaltid',
     storageBucket: 'dentaltid.firebasestorage.app',
   );
-
 }

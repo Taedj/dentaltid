@@ -11,6 +11,11 @@ final financeServiceProvider = Provider<FinanceService>((ref) {
   return FinanceService(ref.watch(financeRepositoryProvider));
 });
 
+final transactionsProvider = FutureProvider<List<Transaction>>((ref) async {
+  final service = ref.watch(financeServiceProvider);
+  return service.getTransactions();
+});
+
 class FinanceService {
   final FinanceRepository _repository;
 

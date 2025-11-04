@@ -12,16 +12,16 @@ class Appointment {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'date': date.toIso8601String(),
-        'time': time,
-      };
+    'id': id,
+    'patientId': patientId,
+    'date': date.toIso8601String(),
+    'time': time,
+  };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
-        id: json['id'],
-        patientId: json['patientId'],
-        date: DateTime.parse(json['date']),
-        time: json['time'],
-      );
+    id: json['id'],
+    patientId: json['patientId'],
+    date: DateTime.parse(json['date']),
+    time: json['time'],
+  );
 }
