@@ -71,3 +71,13 @@ The goal is to create a modern, intuitive, and visually appealing user interface
     - Fixed `deprecated_member_use` in `lib/src/features/patients/presentation/add_edit_patient_screen.dart` by replacing `value` with `initialValue` in `DropdownButtonFormField`.
 - Ran `dart fix --apply` and `dart format .` to automatically apply fixes and format the code.
 - Verified that `flutter analyze` now reports "No issues found!".
+- **Enhanced Finance Chart:**
+    - Improved the `FinanceChart` widget in `lib/src/features/finance/presentation/finance_chart.dart` with the following features:
+        - Added padding around the chart for better margins.
+        - Formatted Y-axis labels with currency symbols and intelligent scaling.
+        - Improved X-axis date labels for readability and to prevent overlap.
+        - Implemented interactive tooltips to show detailed information on hover.
+        - Added a legend to differentiate between income and expense data series.
+        - Made gridlines more subtle for a cleaner look.
+        - Used theme-based colors and a modern design.
+    - Replaced deprecated `withOpacity` with `withAlpha` to resolve analyzer warnings.

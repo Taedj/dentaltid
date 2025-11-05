@@ -71,8 +71,24 @@ class _AddEditAppointmentScreenState
               ),
               TextFormField(
                 controller: _dateController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Date (YYYY-MM-DD)',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2101),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _dateController.text = picked.toIso8601String().split('T')[0];
+                        });
+                      }
+                    },
+                  ),
                 ),
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
@@ -97,7 +113,23 @@ class _AddEditAppointmentScreenState
               ),
               TextFormField(
                 controller: _timeController,
-                decoration: const InputDecoration(labelText: 'Time (HH:MM)'),
+                decoration: InputDecoration(
+                  labelText: 'Time (HH:MM)',
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.access_time),
+                    onPressed: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _timeController.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                        });
+                      }
+                    },
+                  ),
+                ),
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -133,6 +165,7 @@ class _AddEditAppointmentScreenState
                             newAppointment,
                           );
                         }
+                        ref.invalidate(appointmentsProvider);
                         if (context.mounted) {
                           Navigator.pop(context);
                         }

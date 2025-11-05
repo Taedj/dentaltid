@@ -220,8 +220,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
                 return Column(
                   children: [
-                    SizedBox(
-                      height: 200,
+                    Expanded(
+                      flex: 2,
                       child: FinanceChart(transactions: transactions),
                     ),
                     Padding(
@@ -239,6 +239,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       ),
                     ),
                     Expanded(
+                      flex: 1,
                       child: ListView.builder(
                         itemCount: transactions.length,
                         itemBuilder: (context, index) {
