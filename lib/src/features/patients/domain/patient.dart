@@ -15,6 +15,7 @@ class Patient {
   final bool isEmergency;
   final EmergencySeverity severity;
   final String healthAlerts;
+  final String phoneNumber;
 
   Patient({
     this.id,
@@ -29,6 +30,7 @@ class Patient {
     this.isEmergency = false,
     this.severity = EmergencySeverity.low,
     this.healthAlerts = '',
+    this.phoneNumber = '',
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +46,7 @@ class Patient {
     'isEmergency': isEmergency ? 1 : 0,
     'severity': severity.toString(),
     'healthAlerts': healthAlerts,
+    'phoneNumber': phoneNumber,
   };
 
   Patient copyWith({
@@ -59,6 +62,7 @@ class Patient {
     bool? isEmergency,
     EmergencySeverity? severity,
     String? healthAlerts,
+    String? phoneNumber,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -73,6 +77,7 @@ class Patient {
       isEmergency: isEmergency ?? this.isEmergency,
       severity: severity ?? this.severity,
       healthAlerts: healthAlerts ?? this.healthAlerts,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
     );
   }
 
@@ -92,5 +97,6 @@ class Patient {
       orElse: () => EmergencySeverity.low,
     ),
     healthAlerts: json['healthAlerts'] ?? '',
+    phoneNumber: json['phoneNumber'] ?? '',
   );
 }

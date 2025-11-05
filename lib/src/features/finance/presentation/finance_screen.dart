@@ -3,6 +3,7 @@ import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/finance/presentation/finance_chart.dart';
+import 'package:dentaltid/src/core/currency_provider.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -14,19 +15,22 @@ class FinanceScreen extends ConsumerStatefulWidget {
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   final _formKey = GlobalKey<FormState>();
   final _descriptionController = TextEditingController();
-  final _amountController = TextEditingController();
+  final _totalAmountController = TextEditingController();
+  final _paidAmountController = TextEditingController();
   TransactionType _selectedType = TransactionType.income;
-  TransactionStatus _selectedStatus = TransactionStatus.unpaid;
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.cash;
 
   @override
   void dispose() {
     _descriptionController.dispose();
-    _amountController.dispose();
+    _totalAmountController.dispose();
+    _paidAmountController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final currency = ref.watch(currencyProvider);
     final transactionsAsyncValue = ref.watch(transactionsProvider);
     final financeService = ref.watch(financeServiceProvider);
 
@@ -68,20 +72,44 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                               },
                             ),
                             TextFormField(
-                              controller: _amountController,
+                              controller: _totalAmountController,
                               decoration: const InputDecoration(
-                                labelText: 'Amount',
+                                labelText: 'Total Amount',
                               ),
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter an amount';
+                                  return 'Please enter a total amount';
+                                }
+                                final amount = double.tryParse(value);
+                                if (amount == null || amount <= 0) {
+                                  return 'Please enter a valid positive amount';
                                 }
                                 return null;
                               },
                             ),
-                            DropdownButton<TransactionType>(
-                              value: _selectedType,
+                            TextFormField(
+                              controller: _paidAmountController,
+                              decoration: const InputDecoration(
+                                labelText: 'Paid Amount',
+                              ),
+                              keyboardType: TextInputType.number,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a paid amount';
+                                }
+                                final paidAmount = double.tryParse(value);
+                                if (paidAmount == null || paidAmount < 0) {
+                                  return 'Please enter a valid non-negative amount';
+                                }
+                                return null;
+                              },
+                            ),
+                            DropdownButtonFormField<TransactionType>(
+                              initialValue: _selectedType,
+                              decoration: const InputDecoration(
+                                labelText: 'Type',
+                              ),
                               onChanged: (TransactionType? newValue) {
                                 setState(() {
                                   _selectedType = newValue!;
@@ -100,18 +128,21 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                                   })
                                   .toList(),
                             ),
-                            DropdownButton<TransactionStatus>(
-                              value: _selectedStatus,
-                              onChanged: (TransactionStatus? newValue) {
+                            DropdownButtonFormField<PaymentMethod>(
+                              initialValue: _selectedPaymentMethod,
+                              decoration: const InputDecoration(
+                                labelText: 'Payment Method',
+                              ),
+                              onChanged: (PaymentMethod? newValue) {
                                 setState(() {
-                                  _selectedStatus = newValue!;
+                                  _selectedPaymentMethod = newValue!;
                                 });
                               },
-                              items: TransactionStatus.values
-                                  .map<DropdownMenuItem<TransactionStatus>>((
-                                    TransactionStatus value,
+                              items: PaymentMethod.values
+                                  .map<DropdownMenuItem<PaymentMethod>>((
+                                    PaymentMethod value,
                                   ) {
-                                    return DropdownMenuItem<TransactionStatus>(
+                                    return DropdownMenuItem<PaymentMethod>(
                                       value: value,
                                       child: Text(
                                         value.toString().split('.').last,
@@ -132,17 +163,30 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         try {
+                          final totalAmount = double.parse(
+                            _totalAmountController.text,
+                          );
+                          final paidAmount = double.parse(
+                            _paidAmountController.text,
+                          );
+                          final status = paidAmount >= totalAmount
+                              ? TransactionStatus.paid
+                              : TransactionStatus.unpaid;
+
                           final newTransaction = Transaction(
                             description: _descriptionController.text,
-                            amount: double.parse(_amountController.text),
+                            totalAmount: totalAmount,
+                            paidAmount: paidAmount,
                             type: _selectedType,
                             date: DateTime.now(),
-                            status: _selectedStatus,
+                            status: status,
+                            paymentMethod: _selectedPaymentMethod,
                           );
                           await financeService.addTransaction(newTransaction);
                           ref.invalidate(transactionsProvider);
                           _descriptionController.clear();
-                          _amountController.clear();
+                          _totalAmountController.clear();
+                          _paidAmountController.clear();
                         } catch (e) {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -170,11 +214,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                 double totalPaid = 0;
                 double totalUnpaid = 0;
                 for (var t in transactions) {
-                  if (t.status == TransactionStatus.paid) {
-                    totalPaid += t.amount;
-                  } else {
-                    totalUnpaid += t.amount;
-                  }
+                  totalPaid += t.paidAmount;
+                  totalUnpaid += (t.totalAmount - t.paidAmount);
                 }
 
                 return Column(
@@ -188,8 +229,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text('Paid: \$${totalPaid.toStringAsFixed(2)}'),
-                          Text('Unpaid: \$${totalUnpaid.toStringAsFixed(2)}'),
+                          Text(
+                            'Paid: $currency${totalPaid.toStringAsFixed(2)}',
+                          ),
+                          Text(
+                            'Unpaid: $currency${totalUnpaid.toStringAsFixed(2)}',
+                          ),
                         ],
                       ),
                     ),
@@ -203,13 +248,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                             child: ListTile(
                               title: Text(transaction.description),
                               subtitle: Text(
-                                'Date: ${transaction.date.toLocal().toString().split(' ')[0]}',
+                                'Total: $currency${transaction.totalAmount} - Paid: $currency${transaction.paidAmount} - Outstanding: $currency${transaction.totalAmount - transaction.paidAmount}\nMethod: ${transaction.paymentMethod.toString().split('.').last}',
                               ),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    '\$${transaction.amount.toStringAsFixed(2)}',
+                                    '$currency${transaction.totalAmount.toStringAsFixed(2)}',
                                     style: TextStyle(
                                       color:
                                           transaction.type ==

@@ -16,15 +16,17 @@ class FinanceChart extends StatelessWidget {
     for (var transaction in transactions) {
       final dateKey = transaction.date.toIso8601String().split('T')[0];
       if (transaction.type == TransactionType.income) {
-        dailyIncome[dateKey] = (dailyIncome[dateKey] ?? 0) + transaction.amount;
+        dailyIncome[dateKey] =
+            (dailyIncome[dateKey] ?? 0) + transaction.totalAmount;
       } else {
         dailyExpense[dateKey] =
-            (dailyExpense[dateKey] ?? 0) + transaction.amount;
+            (dailyExpense[dateKey] ?? 0) + transaction.totalAmount;
       }
     }
 
-    // Prepare data for the bar chart
-    List<BarChartGroupData> barGroups = [];
+    // Prepare data for the line chart
+    List<FlSpot> incomeSpots = [];
+    List<FlSpot> expenseSpots = [];
     int x = 0;
     final sortedDates =
         (dailyIncome.keys.toList() + dailyExpense.keys.toList())
@@ -36,24 +38,16 @@ class FinanceChart extends StatelessWidget {
       final income = dailyIncome[dateKey] ?? 0;
       final expense = dailyExpense[dateKey] ?? 0;
 
-      barGroups.add(
-        BarChartGroupData(
-          x: x,
-          barRods: [
-            BarChartRodData(toY: income, color: Colors.green, width: 10),
-            BarChartRodData(toY: expense, color: Colors.red, width: 10),
-          ],
-          showingTooltipIndicators: [0, 1],
-        ),
-      );
+      incomeSpots.add(FlSpot(x.toDouble(), income));
+      expenseSpots.add(FlSpot(x.toDouble(), expense));
       x++;
     }
 
     return SizedBox(
       height: 300,
-      child: BarChart(
-        BarChartData(
-          barGroups: barGroups,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: true),
           titlesData: FlTitlesData(
             leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true)),
             bottomTitles: AxisTitles(
@@ -77,7 +71,26 @@ class FinanceChart extends StatelessWidget {
             show: true,
             border: Border.all(color: const Color(0xff37434d), width: 1),
           ),
-          gridData: FlGridData(show: true),
+          lineBarsData: [
+            LineChartBarData(
+              spots: incomeSpots,
+              isCurved: true,
+              color: Colors.green,
+              barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+            ),
+            LineChartBarData(
+              spots: expenseSpots,
+              isCurved: true,
+              color: Colors.red,
+              barWidth: 4,
+              isStrokeCapRound: true,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(show: false),
+            ),
+          ],
         ),
       ),
     );

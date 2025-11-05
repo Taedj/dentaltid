@@ -51,4 +51,22 @@ class AppointmentRepository {
       return Appointment.fromJson(maps[i]);
     });
   }
+
+  Future<Appointment?> getAppointmentByDetails(
+    int patientId,
+    DateTime date,
+    String time,
+  ) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'patientId = ? AND date = ? AND time = ?',
+      whereArgs: [patientId, date.toIso8601String(), time],
+    );
+    if (maps.isNotEmpty) {
+      return Appointment.fromJson(maps.first);
+    } else {
+      return null;
+    }
+  }
 }

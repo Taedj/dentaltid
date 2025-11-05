@@ -83,6 +83,15 @@ class _AddEditAppointmentScreenState
                   if (!dateRegex.hasMatch(value)) {
                     return 'Please enter a valid date in YYYY-MM-DD format';
                   }
+                  final selectedDate = DateTime.tryParse(value);
+                  if (selectedDate == null) {
+                    return 'Invalid date';
+                  }
+                  if (selectedDate.isBefore(
+                    DateTime.now().subtract(const Duration(days: 1)),
+                  )) {
+                    return 'Date cannot be in the past';
+                  }
                   return null;
                 },
               ),

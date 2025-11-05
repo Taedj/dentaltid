@@ -35,6 +35,16 @@ class AppointmentService {
   AppointmentService(this._repository, this._auditService);
 
   Future<void> addAppointment(Appointment appointment) async {
+    final existingAppointment = await _repository.getAppointmentByDetails(
+      appointment.patientId,
+      appointment.date,
+      appointment.time,
+    );
+    if (existingAppointment != null) {
+      throw Exception(
+        'An appointment for this patient at this date and time already exists.',
+      );
+    }
     await _repository.createAppointment(appointment);
     _auditService.logEvent(
       AuditAction.createAppointment,

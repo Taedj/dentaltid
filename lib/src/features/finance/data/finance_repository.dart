@@ -35,4 +35,17 @@ class FinanceRepository {
     final db = await _databaseService.database;
     await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<List<Transaction>> getTransactionsByPatientId(int patientId) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'patientId = ?',
+      whereArgs: [patientId],
+      orderBy: 'date DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return Transaction.fromJson(maps[i]);
+    });
+  }
 }

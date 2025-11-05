@@ -2,36 +2,49 @@ enum TransactionType { income, expense }
 
 enum TransactionStatus { paid, unpaid }
 
+enum PaymentMethod { cash, card, insurance, bankTransfer, other }
+
 class Transaction {
   final int? id;
+  final int? patientId; // Added patientId
   final String description;
-  final double amount;
+  final double totalAmount;
+  final double paidAmount;
   final TransactionType type;
   final DateTime date;
   final TransactionStatus status;
+  final PaymentMethod paymentMethod;
 
   Transaction({
     this.id,
+    this.patientId, // Added patientId
     required this.description,
-    required this.amount,
+    required this.totalAmount,
+    this.paidAmount = 0.0,
     required this.type,
     required this.date,
     this.status = TransactionStatus.unpaid,
+    this.paymentMethod = PaymentMethod.cash,
   });
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'patientId': patientId,
     'description': description,
-    'amount': amount,
+    'totalAmount': totalAmount,
+    'paidAmount': paidAmount,
     'type': type.toString(),
     'date': date.toIso8601String(),
     'status': status.toString(),
+    'paymentMethod': paymentMethod.toString(),
   };
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
     id: json['id'],
+    patientId: json['patientId'],
     description: json['description'],
-    amount: json['amount'],
+    totalAmount: json['totalAmount'],
+    paidAmount: json['paidAmount'] ?? 0.0,
     type: TransactionType.values.firstWhere(
       (e) => e.toString() == json['type'],
     ),
@@ -40,23 +53,33 @@ class Transaction {
       (e) => e.toString() == json['status'],
       orElse: () => TransactionStatus.unpaid,
     ),
+    paymentMethod: PaymentMethod.values.firstWhere(
+      (e) => e.toString() == json['paymentMethod'],
+      orElse: () => PaymentMethod.cash,
+    ),
   );
 
   Transaction copyWith({
     int? id,
+    int? patientId,
     String? description,
-    double? amount,
+    double? totalAmount,
+    double? paidAmount,
     TransactionType? type,
     DateTime? date,
     TransactionStatus? status,
+    PaymentMethod? paymentMethod,
   }) {
     return Transaction(
       id: id ?? this.id,
+      patientId: patientId ?? this.patientId,
       description: description ?? this.description,
-      amount: amount ?? this.amount,
+      totalAmount: totalAmount ?? this.totalAmount,
+      paidAmount: paidAmount ?? this.paidAmount,
       type: type ?? this.type,
       date: date ?? this.date,
       status: status ?? this.status,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
     );
   }
 }

@@ -215,7 +215,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                         leading: patient.isEmergency
                             ? const Icon(Icons.warning, color: Colors.red)
                             : null,
-                        title: Text('${patient.name} ${patient.familyName}'),
+                        title: Tooltip(
+                          message: patient.healthAlerts.isNotEmpty
+                              ? patient.healthAlerts
+                              : 'No health alerts',
+                          child: Text('${patient.name} ${patient.familyName}'),
+                        ),
                         subtitle: Text('Age: ${patient.age}'),
                         children: [
                           Padding(
@@ -327,15 +332,20 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                           ),
                           DataCell(Text((index + 1).toString())),
                           DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'name',
-                                patient.name,
+                            Tooltip(
+                              message: patient.healthAlerts.isNotEmpty
+                                  ? patient.healthAlerts
+                                  : 'No health alerts',
+                              child: InkWell(
+                                onTap: () => _showEditDialog(
+                                  context,
+                                  ref,
+                                  patient,
+                                  'name',
+                                  patient.name,
+                                ),
+                                child: Text(patient.name),
                               ),
-                              child: Text(patient.name),
                             ),
                           ),
                           DataCell(

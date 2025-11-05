@@ -36,4 +36,8 @@ class FinanceService {
   Future<void> deleteTransaction(int id) async {
     await _repository.deleteTransaction(id);
   }
+
+  Future<List<Transaction>> getTransactionsByPatientId(int patientId) async {
+    return await _repository.getTransactionsByPatientId(patientId);
+  }
 }

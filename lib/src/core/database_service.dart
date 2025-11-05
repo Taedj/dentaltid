@@ -1,9 +1,9 @@
 import 'package:path/path.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 4;
+  static const int _databaseVersion = 5;
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -17,15 +17,12 @@ class DatabaseService {
   }
 
   Future<Database> _initDB() async {
+    databaseFactory = databaseFactoryFfi;
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _databaseName);
 
-    // TODO: Use a secure storage solution for the password
-    const password = '72603991';
-
     return await openDatabase(
       path,
-      password: password,
       version: _databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -53,6 +50,15 @@ class DatabaseService {
           details TEXT
         )
       ''');
+    }
+    if (oldVersion < 5) {
+      await db.execute('ALTER TABLE patients ADD COLUMN phoneNumber TEXT');
+      await db.execute('ALTER TABLE transactions ADD COLUMN patientId INTEGER');
+      await db.execute('ALTER TABLE transactions ADD COLUMN totalAmount REAL');
+      await db.execute('ALTER TABLE transactions ADD COLUMN paidAmount REAL');
+      await db.execute(
+        'ALTER TABLE transactions ADD COLUMN paymentMethod TEXT',
+      );
     }
   }
 
@@ -85,17 +91,21 @@ class DatabaseService {
         createdAt TEXT,
         isEmergency INTEGER DEFAULT 0,
         severity TEXT,
-        healthAlerts TEXT
+        healthAlerts TEXT,
+        phoneNumber TEXT
       )
       ''');
     await db.execute('''
       CREATE TABLE transactions(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patientId INTEGER,
         description TEXT,
-        amount REAL,
+        totalAmount REAL,
+        paidAmount REAL,
         type TEXT,
         date TEXT,
-        status TEXT
+        status TEXT,
+        paymentMethod TEXT
       )
       ''');
     await db.execute('''

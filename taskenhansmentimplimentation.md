@@ -17,7 +17,7 @@ This document tracks the enhancements implemented in the DentalTid project, refe
 - [x] Add `isEmergency`, `severity`, `healthAlerts` fields to Patient model
 - [x] Auto-prioritize emergency cases at top of lists
 - [x] Red visual indicators with animated alerts
-- [ ] Hover tooltips showing health conditions (allergies, diabetes, blood pressure)
+- [x] Hover tooltips showing health conditions (allergies, diabetes, blood pressure)
 - [x] Emergency count in dashboard
 
 ### 2. Dynamic Dashboard
@@ -29,12 +29,12 @@ This document tracks the enhancements implemented in the DentalTid project, refe
 - [x] Interactive "Remaining Patients" counter with hover list
 
 ### 3. Data Validation & Error Handling
-- [ ] Phone number validation (format, length)
-- [ ] Age constraints (0-150)
-- [ ] Payment amount validation (non-negative)
-- [ ] Required field enforcement
-- [ ] Date range validation
-- [ ] Duplicate record detection
+- [x] Phone number validation (format, length)
+- [x] Age constraints (0-150)
+- [x] Payment amount validation (non-negative)
+- [x] Required field enforcement
+- [x] Date range validation
+- [x] Duplicate record detection (for patients and appointments)
 - [x] Try-catch blocks in all repository methods
 - [x] User-friendly error messages
 
@@ -44,12 +44,14 @@ This document tracks the enhancements implemented in the DentalTid project, refe
 - [x] Encrypt ZIP backups with AES-256
 - [x] Session timeout
 - [x] User roles (dentist, assistant, receptionist)
-- [ ] Audit log for critical operations
+- [x] Audit log for critical operations
 
 ### 5. Payment Tracking & Finance
-- [ ] Payment history per patient
-- [ ] Partial payment support
-- [ ] Payment method tracking (cash, card, insurance)
-- [ ] Outstanding balance calculations
-- [ ] Payment reminders
-- [ ] Receipt generation
+- [x] Payment history per patient
+- [x] Partial payment support
+- [x] Payment method tracking (cash, card, insurance)
+- [x] Outstanding balance calculations
+- [x] Payment reminders (basic visual indicator)
+- [x] Receipt generation (basic dialog)
+- [x] Currency selection
+- [x] Change chart in finance to Line Chart

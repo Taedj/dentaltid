@@ -1,22 +1,23 @@
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
-import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dentaltid/src/core/currency_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currency = ref.watch(currencyProvider);
     final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
     return Scaffold(
       appBar: AppBar(title: const Text('Dashboard')),
-      body: GridView.count(
-        crossAxisCount: 3,
+      body: GridView.extent(
+        maxCrossAxisExtent: 300,
         children: [
           _DashboardCard(
             title: 'Patients',
@@ -59,20 +60,17 @@ class HomeScreen extends ConsumerWidget {
                     double totalPaid = 0;
                     double totalUnpaid = 0;
                     for (var t in transactions) {
-                      if (t.status == TransactionStatus.paid) {
-                        totalPaid += t.amount;
-                      } else {
-                        totalUnpaid += t.amount;
-                      }
+                      totalPaid += t.paidAmount;
+                      totalUnpaid += (t.totalAmount - t.paidAmount);
                     }
                     return Column(
                       children: [
                         Text(
-                          'Paid: \$${totalPaid.toStringAsFixed(2)}',
+                          'Paid: $currency${totalPaid.toStringAsFixed(2)}',
                           style: const TextStyle(color: Colors.green),
                         ),
                         Text(
-                          'Unpaid: \$${totalUnpaid.toStringAsFixed(2)}',
+                          'Unpaid: $currency${totalUnpaid.toStringAsFixed(2)}',
                           style: const TextStyle(color: Colors.orange),
                         ),
                       ],

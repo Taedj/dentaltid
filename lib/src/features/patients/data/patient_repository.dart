@@ -76,4 +76,21 @@ class PatientRepository {
     final db = await _databaseService.database;
     await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<Patient?> getPatientByNameAndFamilyName(
+    String name,
+    String familyName,
+  ) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'name = ? AND familyName = ?',
+      whereArgs: [name, familyName],
+    );
+    if (maps.isNotEmpty) {
+      return Patient.fromJson(maps.first);
+    } else {
+      return null;
+    }
+  }
 }

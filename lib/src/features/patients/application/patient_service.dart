@@ -31,6 +31,13 @@ class PatientService {
   PatientService(this._repository, this._auditService);
 
   Future<void> addPatient(Patient patient) async {
+    final existingPatient = await _repository.getPatientByNameAndFamilyName(
+      patient.name,
+      patient.familyName,
+    );
+    if (existingPatient != null) {
+      throw Exception('Patient with this name and family name already exists.');
+    }
     await _repository.createPatient(patient);
     _auditService.logEvent(
       AuditAction.createPatient,
