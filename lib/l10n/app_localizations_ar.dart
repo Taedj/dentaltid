@@ -538,4 +538,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get completed => 'مكتمل';
+
+  @override
+  String get mustBeLoggedInToSync =>
+      'يجب عليك تسجيل الدخول للمزامنة مع السحابة.';
 }

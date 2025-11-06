@@ -173,5 +173,6 @@
   "todaysAppointmentsFlow": "Today's Appointments Flow",
   "waiting": "Waiting",
   "inProgress": "In Progress",
-  "completed": "Completed"
+  "completed": "Completed",
+  "mustBeLoggedInToSync": "You must be logged in to sync to the cloud."
 }

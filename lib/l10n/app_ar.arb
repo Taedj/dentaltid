@@ -173,5 +173,6 @@
   "todaysAppointmentsFlow": "تدفق مواعيد اليوم",
   "waiting": "في الانتظار",
   "inProgress": "قيد التقدم",
-  "completed": "مكتمل"
+  "completed": "مكتمل",
+  "mustBeLoggedInToSync": "يجب عليك تسجيل الدخول للمزامنة مع السحابة."
 }

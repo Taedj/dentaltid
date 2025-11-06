@@ -546,4 +546,8 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get completed => 'Terminé';
+
+  @override
+  String get mustBeLoggedInToSync =>
+      'Vous devez être connecté pour synchroniser avec le cloud.';
 }

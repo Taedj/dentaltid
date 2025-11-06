@@ -541,4 +541,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get completed => 'Completed';
+
+  @override
+  String get mustBeLoggedInToSync =>
+      'You must be logged in to sync to the cloud.';
 }

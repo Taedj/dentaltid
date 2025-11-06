@@ -29,6 +29,9 @@ dependencies:
   aes_crypt_null_safe: ^3.1.1
   sqflite_common_ffi: ^2.3.6
   flutter_secure_storage: ^9.2.2
+  firebase_auth: ^6.1.2
+  uuid: ^4.5.2
+  logging: ^1.2.0
 
 dev_dependencies:
   flutter_test:

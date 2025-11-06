@@ -1149,6 +1149,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Completed'**
   String get completed;
+
+  /// No description provided for @mustBeLoggedInToSync.
+  ///
+  /// In en, this message translates to:
+  /// **'You must be logged in to sync to the cloud.'**
+  String get mustBeLoggedInToSync;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'package:dentaltid/src/core/firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
@@ -5,7 +7,10 @@ import 'package:dentaltid/src/features/security/domain/user_role.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dentaltid/src/core/pin_service.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:uuid/uuid.dart';
+
+enum AuthMode { login, register }
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -15,197 +20,449 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _pinController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _clinicNameController = TextEditingController();
+  final _dentistNameController = TextEditingController();
+  final _licenseController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final PinService _pinService = PinService();
-  final UserRole _userRole = UserRole.dentist; // Hardcoded for now
-  bool _hasPin = false;
-  bool _isLoading = true;
+
+  final FirebaseService _firebaseService = FirebaseService();
+
+  AuthMode _authMode = AuthMode.login;
+  SubscriptionPlan _selectedPlan = SubscriptionPlan.professional;
+  bool _isLoading = false;
+  bool _acceptTerms = false;
 
   @override
-  void initState() {
-    super.initState();
-    _checkPinSetup();
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _clinicNameController.dispose();
+    _dentistNameController.dispose();
+    _licenseController.dispose();
+    super.dispose();
   }
 
-  Future<void> _checkPinSetup() async {
-    final hasPin = await _pinService.hasPinCode();
-    setState(() {
-      _hasPin = hasPin;
-      _isLoading = false;
-    });
-  }
+  Future<void> _authenticate() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _login() async {
-    if (_formKey.currentState!.validate()) {
-      final isValidPin = await _pinService.verifyPinCode(_pinController.text);
-      if (isValidPin) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isAuthenticated', true);
-        await prefs.setString('userRole', _userRole.toString());
-        ref
-            .read(auditServiceProvider)
-            .logEvent(
-              AuditAction.login,
-              details: 'User logged in',
-            ); // Log login event
-        if (mounted) {
-          context.go('/');
+    if (_authMode == AuthMode.register && !_acceptTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the terms and conditions'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_authMode == AuthMode.register) {
+        final User? user = await _firebaseService.signUpWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        if (user != null) {
+          final licenseKey = const Uuid().v4();
+          final userProfile = UserProfile(
+            uid: user.uid,
+            email: user.email!,
+            clinicName: _clinicNameController.text,
+            dentistName: _dentistNameController.text,
+            plan: _selectedPlan,
+            licenseKey: licenseKey,
+            status: SubscriptionStatus.active,
+            licenseExpiry: DateTime.now().add(const Duration(days: 30)),
+            createdAt: DateTime.now(),
+            lastLogin: DateTime.now(),
+            lastSync: DateTime.now(),
+          );
+
+          await _firebaseService.createUserProfile(userProfile, licenseKey);
         }
       } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Incorrect PIN'),
-              backgroundColor: Colors.red,
-            ),
-          );
+        final User? user = await _firebaseService.signInWithEmailAndPassword(
+          _emailController.text,
+          _passwordController.text,
+        );
+
+        if (user != null) {
+          final license = await _firebaseService.getUserLicense(user.uid);
+          if (license == null || license.isEmpty) {
+            throw Exception('No valid license found for this user.');
+          }
         }
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('isAuthenticated', true);
+      await prefs.setString('userRole', UserRole.dentist.toString());
+
+      ref.read(auditServiceProvider).logEvent(
+            _authMode == AuthMode.login
+                ? AuditAction.login
+                : AuditAction.createPatient, // Placeholder
+            details:
+                '${_authMode == AuthMode.login ? 'User logged in' : 'User registered'}: ${_emailController.text}',
+          );
+
+      if (!mounted) return;
+      context.go('/');
+    } on FirebaseAuthException catch (e) {
+      String message = 'An error occurred, please check your credentials.';
+      if (e.code == 'weak-password') {
+        message = 'The password provided is too weak.';
+      } else if (e.code == 'email-already-in-use') {
+        message = 'An account already exists for that email.';
+      } else if (e.code == 'user-not-found') {
+        message = 'No user found for that email.';
+      } else if (e.code == 'wrong-password') {
+        message = 'Wrong password provided for that user.';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Authentication failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
     }
   }
 
-  Future<void> _setupInitialPin() async {
-    final TextEditingController pinController = TextEditingController();
-    final TextEditingController confirmController = TextEditingController();
+  void _switchAuthMode() {
+    setState(() {
+      _authMode = _authMode == AuthMode.login
+          ? AuthMode.register
+          : AuthMode.login;
+      _formKey.currentState?.reset();
+    });
+  }
 
-    final result = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Setup PIN Code'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: pinController,
-                  decoration: const InputDecoration(
-                    labelText: 'Enter PIN (4 digits)',
-                  ),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  obscureText: true,
-                ),
-                TextFormField(
-                  controller: confirmController,
-                  decoration: const InputDecoration(labelText: 'Confirm PIN'),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  obscureText: true,
-                ),
-              ],
-            ),
+  Widget _buildPlanSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Choose Your Plan',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        ...SubscriptionPlan.values.map(
+          (plan) => RadioListTile<SubscriptionPlan>(
+            title: Text(_getPlanDisplayName(plan)),
+            subtitle: Text(_getPlanDescription(plan)),
+            value: plan,
+            // ignore: deprecated_member_use
+            groupValue: _selectedPlan,
+            // ignore: deprecated_member_use
+            onChanged: (value) {
+              setState(() => _selectedPlan = value!);
+            },
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Setup PIN'),
-              onPressed: () async {
-                final navigator = Navigator.of(context);
-                if (pinController.text.length == 4 &&
-                    pinController.text == confirmController.text &&
-                    RegExp(r'^\d{4}$').hasMatch(pinController.text)) {
-                  final success = await _pinService.setupPinCode(
-                    pinController.text,
-                  );
-                  if (success) {
-                    pinController.dispose();
-                    confirmController.dispose();
-                    navigator.pop(true); // Return success
-                  } else {
-                    navigator.pop(false); // Return failure
-                  }
-                } else {
-                  // Show error and keep dialog open
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'PIN must be 4 digits and match confirmation',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
-        );
-      },
+        ),
+      ],
     );
+  }
 
-    // Handle the result after dialog is dismissed
-    if (result == true && mounted) {
-      // After setting up PIN, authenticate the user
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isAuthenticated', true);
-      await prefs.setString('userRole', _userRole.toString());
-      ref
-          .read(auditServiceProvider)
-          .logEvent(
-            AuditAction.login,
-            details: 'User set up initial PIN and logged in',
-          );
-      // Navigate in next frame to avoid context issues
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          context.go('/');
-        }
-      });
+  String _getPlanDisplayName(SubscriptionPlan plan) {
+    switch (plan) {
+      case SubscriptionPlan.trial:
+        return 'Trial (30 Days)';
+      case SubscriptionPlan.basic:
+        return 'Basic Plan';
+      case SubscriptionPlan.professional:
+        return 'Professional Plan';
+      case SubscriptionPlan.clinic:
+        return 'Clinic Plan';
+      case SubscriptionPlan.enterprise:
+        return 'Enterprise Plan';
+    }
+  }
+
+  String _getPlanDescription(SubscriptionPlan plan) {
+    switch (plan) {
+      case SubscriptionPlan.trial:
+        return '\$0 - Limited features for 30 days';
+      case SubscriptionPlan.basic:
+        return '\$29/month - Up to 100 patients';
+      case SubscriptionPlan.professional:
+        return '\$79/month - Unlimited patients, advanced features';
+      case SubscriptionPlan.clinic:
+        return '\$149/month - Multi-user support';
+      case SubscriptionPlan.enterprise:
+        return '\$299/month - Custom integrations, priority support';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show setup dialog if no PIN is configured
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isLoading && !_hasPin) {
-        _setupInitialPin();
-      }
-    });
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      body: Center(
-        child: _isLoading
-            ? const CircularProgressIndicator()
-            : Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Enter PIN',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: 200,
-                      child: TextFormField(
-                        controller: _pinController,
-                        keyboardType: TextInputType.number,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'PIN',
-                          border: OutlineInputBorder(),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.primary,
+              colorScheme.primaryContainer,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              children: [
+                // DentalTid Logo and Branding
+                const SizedBox(height: 40),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colorScheme.onPrimary.withAlpha(25),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    children: [
+                      // Dental Icon (using emoji as placeholder)
+                      Text('🦷', style: TextStyle(fontSize: 60)),
+                      const SizedBox(height: 16),
+                      Text(
+                        'DentalTid',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimary,
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a PIN';
-                          }
-                          return null;
-                        },
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('Login'),
-                    ),
-                  ],
+                      Text(
+                        'Professional Dental Management',
+                        style: TextStyle(
+color: colorScheme.onPrimary.withAlpha(178),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+
+                const SizedBox(height: 40),
+
+                // Auth Form
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.shadowColor.withAlpha(50),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          _authMode == AuthMode.login
+                              ? 'Welcome Back'
+                              : 'Create Account',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Email Field
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: InputDecoration(
+                            labelText: 'Email Address',
+                            prefixIcon: const Icon(Icons.email),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your email';
+                            }
+                            if (!RegExp(
+                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                            ).hasMatch(value)) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Password Field
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your password';
+                            }
+                            if (_authMode == AuthMode.register &&
+                                value.length < 8) {
+                              return 'Password must be at least 8 characters';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        if (_authMode == AuthMode.register) ...[
+                          const SizedBox(height: 16),
+
+                          // Clinic Name
+                          TextFormField(
+                            controller: _clinicNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Clinic Name',
+                              prefixIcon: const Icon(Icons.business),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your clinic name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Dentist Name
+                          TextFormField(
+                            controller: _dentistNameController,
+                            decoration: InputDecoration(
+                              labelText: 'Your Name',
+                              prefixIcon: const Icon(Icons.person),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Plan Selection
+                          _buildPlanSelector(),
+                          const SizedBox(height: 16),
+
+                          // Terms and Conditions
+                          CheckboxListTile(
+                            title: const Text(
+                              'I accept the Terms and Conditions',
+                            ),
+                            value: _acceptTerms,
+                            onChanged: (value) {
+                              setState(() => _acceptTerms = value ?? false);
+                            },
+                            controlAffinity: ListTileControlAffinity.leading,
+                          ),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Auth Button
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _authenticate,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      colorScheme.onPrimary,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  _authMode == AuthMode.login
+                                      ? 'Login'
+                                      : 'Create Account & Pay',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Switch Auth Mode
+                        TextButton(
+                          onPressed: _switchAuthMode,
+                          child: Text(
+                            _authMode == AuthMode.login
+                                ? "Don't have an account? Sign up"
+                                : 'Already have an account? Login',
+                            style: TextStyle(color: colorScheme.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Footer
+                Text(
+                  '© 2025 DentalTid. Professional dental practice management.',
+                  style: TextStyle(
+                    color: colorScheme.onPrimary.withAlpha(178),
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

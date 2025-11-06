@@ -18,7 +18,17 @@ class _CloudBackupsScreenState extends State<CloudBackupsScreen> {
   @override
   void initState() {
     super.initState();
-    _backupsFuture = _firebaseService.getBackups();
+    _loadBackups();
+  }
+
+  Future<void> _loadBackups() async {
+    final user = _firebaseService.getCurrentUser();
+    if (user != null) {
+      _backupsFuture = _firebaseService.getUserBackups(user.uid);
+    } else {
+      _backupsFuture = Future.value([]);
+    }
+    setState(() {});
   }
 
   @override

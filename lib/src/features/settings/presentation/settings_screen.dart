@@ -8,6 +8,7 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/pin_service.dart';
+import 'package:dentaltid/src/core/firebase_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -19,6 +20,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isLoading = false;
   final PinService _pinService = PinService();
+  final FirebaseService _firebaseService = FirebaseService();
 
   Future<void> _showSetupPinDialog(
     BuildContext context,
@@ -285,8 +287,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         setState(() {
                           _isLoading = true;
                         });
+                        final user = _firebaseService.getCurrentUser();
+
+                        if (user == null) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.mustBeLoggedInToSync),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                          setState(() {
+                            _isLoading = false;
+                          });
+                          return;
+                        }
+
                         final backupId = await backupService.createBackup(
                           uploadToFirebase: true,
+                          uid: user.uid,
                         );
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(

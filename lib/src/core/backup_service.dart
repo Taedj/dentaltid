@@ -3,14 +3,16 @@ import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart';
-import 'package:sqflite_sqlcipher/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:aes_crypt_null_safe/aes_crypt_null_safe.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class BackupService {
   final FirebaseService _firebaseService = FirebaseService();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final Logger _logger = Logger('BackupService');
 
   Future<String> _getBackupPassword() async {
     const key = 'backup_password';
@@ -23,14 +25,24 @@ class BackupService {
     return password;
   }
 
-  Future<String?> createBackup({bool uploadToFirebase = false}) async {
+  Future<String?> createBackup({
+    bool uploadToFirebase = false,
+    String? uid,
+  }) async {
     try {
+      _logger.info(
+        'Starting backup creation. uploadToFirebase: $uploadToFirebase, uid: $uid',
+      );
       final dbPath = await getDatabasesPath();
       final databaseFile = File(join(dbPath, 'dentaltid.db'));
 
       if (!databaseFile.existsSync()) {
+        _logger.warning('Database file does not exist at $dbPath');
         return null;
       }
+      _logger.info(
+        'Database file found, size: ${databaseFile.lengthSync()} bytes',
+      );
 
       final encoder = ZipEncoder();
       final archive = Archive();
@@ -60,8 +72,9 @@ class BackupService {
 
       final encryptedFilePath = '$tempFilePath.aes';
 
-      if (uploadToFirebase) {
-        final backupId = await _firebaseService.uploadBackupToFirestore(
+      if (uploadToFirebase && uid != null) {
+        final backupId = await _firebaseService.uploadUserBackupToFirestore(
+          uid,
           encryptedFilePath,
         );
         await tempDir.delete(recursive: true);
@@ -84,19 +97,20 @@ class BackupService {
 
         return outputFile;
       }
-    } catch (e) {
+    } catch (e, s) {
+      _logger.severe('Error in createBackup: $e', e, s);
       return null;
     }
   }
 
-  Future<bool> restoreBackup({String? backupId}) async {
+  Future<bool> restoreBackup({String? backupId, String? uid}) async {
     try {
       String? backupFilePath;
-      if (backupId != null) {
+      if (backupId != null && uid != null) {
         final tempDir = await Directory.systemTemp.createTemp();
         final tempFilePath = join(tempDir.path, 'dentaltid_backup.zip');
         final downloadedFile = await _firebaseService
-            .downloadBackupFromFirestore(backupId, tempFilePath);
+            .downloadUserBackupFromFirestore(uid, backupId, tempFilePath);
         if (downloadedFile == null) {
           return false;
         }

@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
+import 'package:logging/logging.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:dentaltid/firebase_options.dart';
@@ -17,8 +18,17 @@ import 'dart:io';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Setup logging
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    // ignore: avoid_print
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi; // Set the database factory
   }
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const ProviderScope(child: MyApp()));

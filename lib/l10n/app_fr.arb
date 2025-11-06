@@ -173,5 +173,6 @@
   "todaysAppointmentsFlow": "Flux des rendez-vous d'aujourd'hui",
   "waiting": "En attente",
   "inProgress": "En cours",
-  "completed": "Terminé"
+  "completed": "Terminé",
+  "mustBeLoggedInToSync": "Vous devez être connecté pour synchroniser avec le cloud."
 }
