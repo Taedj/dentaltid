@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {
   const AddEditPatientScreen({super.key, this.patient});
@@ -80,6 +81,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
     BuildContext context,
     int patientId,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final descriptionController = TextEditingController();
     final totalAmountController = TextEditingController();
     final paidAmountController = TextEditingController();
@@ -90,54 +92,54 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add Transaction'),
+          title: Text(l10n.addTransaction),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description'),
+                  decoration: InputDecoration(labelText: l10n.description),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a description';
+                      return l10n.enterDescription;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: totalAmountController,
-                  decoration: const InputDecoration(labelText: 'Total Amount'),
+                  decoration: InputDecoration(labelText: l10n.totalAmount),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a total amount';
+                      return l10n.enterTotalAmount;
                     }
                     final amount = double.tryParse(value);
                     if (amount == null || amount <= 0) {
-                      return 'Please enter a valid positive amount';
+                      return l10n.enterValidPositiveAmount;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: paidAmountController,
-                  decoration: const InputDecoration(labelText: 'Paid Amount'),
+                  decoration: InputDecoration(labelText: l10n.paidAmount),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a paid amount';
+                      return l10n.enterPaidAmount;
                     }
                     final paidAmount = double.tryParse(value);
                     if (paidAmount == null || paidAmount < 0) {
-                      return 'Please enter a valid non-negative amount';
+                      return l10n.enterValidNonNegativeAmount;
                     }
                     return null;
                   },
                 ),
                 DropdownButtonFormField<TransactionType>(
                   initialValue: selectedType,
-                  decoration: const InputDecoration(labelText: 'Type'),
+                  decoration: InputDecoration(labelText: l10n.type),
                   items: TransactionType.values.map((type) {
                     return DropdownMenuItem<TransactionType>(
                       value: type,
@@ -152,9 +154,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                 ),
                 DropdownButtonFormField<PaymentMethod>(
                   initialValue: selectedPaymentMethod,
-                  decoration: const InputDecoration(
-                    labelText: 'Payment Method',
-                  ),
+                  decoration: InputDecoration(labelText: l10n.paymentMethod),
                   items: PaymentMethod.values.map((method) {
                     return DropdownMenuItem<PaymentMethod>(
                       value: method,
@@ -173,7 +173,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
               onPressed: () {
                 descriptionController.dispose();
                 totalAmountController.dispose();
@@ -182,9 +182,8 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
               },
             ),
             TextButton(
-              child: const Text('Add'),
+              child: Text(l10n.add),
               onPressed: () async {
-                // TODO: Add validation and save logic
                 final financeService = ref.read(financeServiceProvider);
                 final totalAmount = double.parse(totalAmountController.text);
                 final paidAmount = double.parse(paidAmountController.text);
@@ -222,38 +221,41 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
     BuildContext context,
     Transaction transaction,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Receipt'),
+          title: Text(l10n.receipt),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Description: ${transaction.description}'),
-                Text('Total Amount: \${transaction.totalAmount}'),
-                Text('Paid Amount: \${transaction.paidAmount}'),
+                Text('${l10n.description}: ${transaction.description}'),
+                Text('${l10n.total}: \$${transaction.totalAmount}'),
+                Text('${l10n.paid}: \$${transaction.paidAmount}'),
                 Text(
-                  'Outstanding Amount: \${transaction.totalAmount - transaction.paidAmount}',
-                ),
-                Text('Type: ${transaction.type.toString().split('.').last}'),
-                Text(
-                  'Date: ${transaction.date.toLocal().toString().split(' ')[0]}',
+                  '${l10n.outstandingAmount}: \$${transaction.totalAmount - transaction.paidAmount}',
                 ),
                 Text(
-                  'Status: ${transaction.status.toString().split('.').last}',
+                  '${l10n.type}: ${transaction.type.toString().split('.').last}',
                 ),
                 Text(
-                  'Payment Method: ${transaction.paymentMethod.toString().split('.').last}',
+                  '${l10n.date}: ${transaction.date.toLocal().toString().split(' ')[0]}',
+                ),
+                Text(
+                  '${l10n.paid}: ${transaction.status.toString().split('.').last}',
+                ),
+                Text(
+                  '${l10n.method}: ${transaction.paymentMethod.toString().split('.').last}',
                 ),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Close'),
+              child: Text(l10n.close),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -267,10 +269,13 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
   @override
   Widget build(BuildContext context) {
     final patientService = ref.watch(patientServiceProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.patient == null ? 'Add Patient' : 'Edit Patient'),
+        title: Text(
+          widget.patient == null ? l10n.addPatient : l10n.editPatient,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -281,75 +286,75 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
               children: <Widget>[
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: InputDecoration(labelText: l10n.name),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a name';
+                      return l10n.enterName;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: _familyNameController,
-                  decoration: const InputDecoration(labelText: 'Family Name'),
+                  decoration: InputDecoration(labelText: l10n.familyName),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a family name';
+                      return l10n.enterFamilyName;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Age'),
+                  decoration: InputDecoration(labelText: l10n.age),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter an age';
+                      return l10n.enterAge;
                     }
                     final age = int.tryParse(value);
                     if (age == null) {
-                      return 'Please enter a valid number';
+                      return l10n.enterValidNumber;
                     }
                     if (age < 0 || age > 150) {
-                      return 'Please enter an age between 0 and 150';
+                      return l10n.enterAgeBetween;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: _healthStateController,
-                  decoration: const InputDecoration(labelText: 'Health State'),
+                  decoration: InputDecoration(labelText: l10n.healthState),
                 ),
                 TextFormField(
                   controller: _diagnosisController,
-                  decoration: const InputDecoration(labelText: 'Diagnosis'),
+                  decoration: InputDecoration(labelText: l10n.diagnosis),
                 ),
                 TextFormField(
                   controller: _treatmentController,
-                  decoration: const InputDecoration(labelText: 'Treatment'),
+                  decoration: InputDecoration(labelText: l10n.treatment),
                 ),
                 TextFormField(
                   controller: _paymentController,
-                  decoration: const InputDecoration(labelText: 'Payment'),
+                  decoration: InputDecoration(labelText: l10n.payment),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a payment amount';
+                      return l10n.enterPaymentAmount;
                     }
                     final payment = double.tryParse(value);
                     if (payment == null) {
-                      return 'Please enter a valid number';
+                      return l10n.enterValidNumber;
                     }
                     if (payment < 0) {
-                      return 'Payment amount cannot be negative';
+                      return l10n.paymentCannotBeNegative;
                     }
                     return null;
                   },
                 ),
                 TextFormField(
                   controller: _phoneNumberController,
-                  decoration: const InputDecoration(labelText: 'Phone Number'),
+                  decoration: InputDecoration(labelText: l10n.phoneNumber),
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -359,7 +364,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                     // This regex allows for an optional '+' at the beginning, followed by 7 to 15 digits.
                     final phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
                     if (!phoneRegex.hasMatch(value)) {
-                      return 'Please enter a valid phone number (7-15 digits)';
+                      return l10n.enterValidPhoneNumber;
                     }
                     return null;
                   },
@@ -379,8 +384,8 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Emergency Details',
+                        Text(
+                          l10n.emergencyDetails,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -389,7 +394,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                         ),
                         const SizedBox(height: 10),
                         CheckboxListTile(
-                          title: const Text('Is Emergency'),
+                          title: Text(l10n.isEmergency),
                           value: _isEmergency,
                           onChanged: (bool? value) {
                             setState(() {
@@ -400,8 +405,8 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                         if (_isEmergency) ...[
                           DropdownButtonFormField<EmergencySeverity>(
                             initialValue: _severity,
-                            decoration: const InputDecoration(
-                              labelText: 'Severity',
+                            decoration: InputDecoration(
+                              labelText: l10n.severity,
                             ),
                             items: EmergencySeverity.values.map((
                               EmergencySeverity severity,
@@ -421,8 +426,8 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                           ),
                           TextFormField(
                             controller: _healthAlertsController,
-                            decoration: const InputDecoration(
-                              labelText: 'Health Alerts',
+                            decoration: InputDecoration(
+                              labelText: l10n.healthAlerts,
                             ),
                           ),
                         ],
@@ -483,7 +488,9 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                         }
                       }
                     },
-                    child: Text(widget.patient == null ? 'Add' : 'Update'),
+                    child: Text(
+                      widget.patient == null ? l10n.add : l10n.update,
+                    ),
                   ),
                 ),
               ],
@@ -512,6 +519,7 @@ class _PatientPaymentHistory extends ConsumerWidget {
     final transactionsAsyncValue = ref.watch(
       transactionsByPatientProvider(patientId),
     );
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       elevation: 4,
@@ -524,8 +532,8 @@ class _PatientPaymentHistory extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Payment History',
+                Text(
+                  l10n.paymentHistory,
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
@@ -540,7 +548,7 @@ class _PatientPaymentHistory extends ConsumerWidget {
             transactionsAsyncValue.when(
               data: (transactions) {
                 if (transactions.isEmpty) {
-                  return const Text('No payment history for this patient.');
+                  return Text(l10n.noPaymentHistory);
                 }
                 return ListView.builder(
                   shrinkWrap: true,

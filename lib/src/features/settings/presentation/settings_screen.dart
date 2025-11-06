@@ -7,6 +7,7 @@ import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/core/pin_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -17,6 +18,186 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isLoading = false;
+  final PinService _pinService = PinService();
+
+  Future<void> _showSetupPinDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final TextEditingController pinController = TextEditingController();
+    final TextEditingController confirmPinController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(l10n.setupPinCode),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: pinController,
+                  decoration: InputDecoration(labelText: l10n.enterNewPin),
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pinRequired;
+                    }
+                    if (value.length != 4 ||
+                        !RegExp(r'^\d{4}$').hasMatch(value)) {
+                      return l10n.pinMustBe4Digits;
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: confirmPinController,
+                  decoration: InputDecoration(labelText: l10n.confirmNewPin),
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  obscureText: true,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pinRequired;
+                    }
+                    if (value != pinController.text) {
+                      return l10n.pinsDoNotMatch;
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(l10n.cancel),
+              onPressed: () {
+                pinController.dispose();
+                confirmPinController.dispose();
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(l10n.save),
+              onPressed: () async {
+                if (pinController.text == confirmPinController.text &&
+                    pinController.text.length == 4 &&
+                    RegExp(r'^\d{4}$').hasMatch(pinController.text)) {
+                  final success = await _pinService.setupPinCode(
+                    pinController.text,
+                  );
+                  if (context.mounted) {
+                    pinController.dispose();
+                    confirmPinController.dispose();
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success ? l10n.pinSetupSuccessfully : l10n.invalidPin,
+                        ),
+                      ),
+                    );
+                    setState(() {}); // Refresh the UI
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showChangePinDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final TextEditingController currentPinController = TextEditingController();
+    final TextEditingController newPinController = TextEditingController();
+    final TextEditingController confirmPinController = TextEditingController();
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(l10n.changePinCode),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: currentPinController,
+                  decoration: InputDecoration(labelText: l10n.enterCurrentPin),
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  obscureText: true,
+                ),
+                TextFormField(
+                  controller: newPinController,
+                  decoration: InputDecoration(labelText: l10n.enterNewPin),
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  obscureText: true,
+                ),
+                TextFormField(
+                  controller: confirmPinController,
+                  decoration: InputDecoration(labelText: l10n.confirmNewPin),
+                  keyboardType: TextInputType.number,
+                  maxLength: 4,
+                  obscureText: true,
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(l10n.cancel),
+              onPressed: () {
+                currentPinController.dispose();
+                newPinController.dispose();
+                confirmPinController.dispose();
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(l10n.save),
+              onPressed: () async {
+                if (newPinController.text == confirmPinController.text &&
+                    newPinController.text.length == 4 &&
+                    RegExp(r'^\d{4}$').hasMatch(newPinController.text)) {
+                  final success = await _pinService.changePinCode(
+                    currentPinController.text,
+                    newPinController.text,
+                  );
+                  if (context.mounted) {
+                    currentPinController.dispose();
+                    newPinController.dispose();
+                    confirmPinController.dispose();
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          success
+                              ? l10n.pinChangedSuccessfully
+                              : l10n.invalidPin,
+                        ),
+                      ),
+                    );
+                  }
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +213,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Local Backup',
+                l10n.localBackup,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
@@ -49,8 +230,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             SnackBar(
                               content: Text(
                                 filePath != null
-                                    ? 'Backup created at: $filePath'
-                                    : 'Backup failed or cancelled.',
+                                    ? '${l10n.backupCreatedAt} $filePath'
+                                    : l10n.backupFailedOrCancelled,
                               ),
                             ),
                           );
@@ -61,7 +242,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       },
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Create Local Backup'),
+                    : Text(l10n.createLocalBackup),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
@@ -77,8 +258,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             SnackBar(
                               content: Text(
                                 success
-                                    ? 'Backup restored successfully.'
-                                    : 'Restore failed or cancelled.',
+                                    ? l10n.backupRestoredSuccessfully
+                                    : l10n.restoreFailedOrCancelled,
                               ),
                             ),
                           );
@@ -89,11 +270,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       },
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Restore from Local Backup'),
+                    : Text(l10n.restoreFromLocalBackup),
               ),
               const Divider(height: 40),
               Text(
-                'Cloud Sync',
+                l10n.cloudSync,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
@@ -112,8 +293,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             SnackBar(
                               content: Text(
                                 backupId != null
-                                    ? 'Backup uploaded to Cloud with ID: $backupId'
-                                    : 'Cloud backup failed.',
+                                    ? '${l10n.backupUploadedToCloud} $backupId'
+                                    : l10n.cloudBackupFailed,
                               ),
                             ),
                           );
@@ -124,14 +305,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       },
                 child: _isLoading
                     ? const CircularProgressIndicator()
-                    : const Text('Sync to Cloud'),
+                    : Text(l10n.syncToCloud),
               ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
                   context.go('/settings/cloud-backups');
                 },
-                child: const Text('Manage Cloud Backups'),
+                child: Text(l10n.manageCloudBackups),
               ),
               const Divider(height: 40),
               Text(
@@ -141,9 +322,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 10),
               DropdownButton<Locale>(
                 value: ref.watch(languageProvider),
-                onChanged: (Locale? newValue) {
+                onChanged: (Locale? newValue) async {
                   if (newValue != null) {
-                    ref.read(languageProvider.notifier).setLocale(newValue);
+                    await ref
+                        .read(languageProvider.notifier)
+                        .setLocale(newValue);
                   }
                 },
                 items: const [Locale('en'), Locale('fr'), Locale('ar')]
@@ -179,7 +362,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               const Divider(height: 40),
               Text(
-                'Currency',
+                l10n.currency,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
@@ -200,6 +383,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }).toList(),
               ),
               const Divider(height: 40),
+              Text(
+                l10n.pinCode,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              FutureBuilder<bool>(
+                future: PinService().hasPinCode(),
+                builder: (context, snapshot) {
+                  final hasPin = snapshot.data ?? false;
+                  return Column(
+                    children: [
+                      if (!hasPin)
+                        ElevatedButton(
+                          onPressed: () => _showSetupPinDialog(context, l10n),
+                          child: Text(l10n.setupPinCode),
+                        )
+                      else
+                        ElevatedButton(
+                          onPressed: () => _showChangePinDialog(context, l10n),
+                          child: Text(l10n.changePinCode),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              const Divider(height: 40),
               ElevatedButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
@@ -208,7 +417,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     context.go('/login');
                   }
                 },
-                child: const Text('Logout'),
+                child: Text(l10n.logout),
               ),
             ],
           ),

@@ -16,40 +16,60 @@ class ThemeNotifier extends StateNotifier<AppTheme> {
 }
 
 final appThemes = {
-  AppTheme.dark: ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.deepPurple,
-      brightness: Brightness.dark,
-    ),
-    appBarTheme: AppBarTheme(
-      backgroundColor: Colors.deepPurple[800], // Adjust to fit new scheme
+  AppTheme.dark: ThemeData.dark().copyWith(
+    primaryColor: Colors.deepPurpleAccent,
+    scaffoldBackgroundColor: const Color(0xFF1E1E1E),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF311B92),
+      foregroundColor: Colors.white,
+      elevation: 4,
     ),
     cardTheme: CardThemeData(
-      color: Colors.deepPurple[700], // Adjust to fit new scheme
+      color: const Color(0xFF4527A0),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     ),
   ),
-  AppTheme.light: ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
-      brightness: Brightness.light,
+  AppTheme.light: ThemeData.light().copyWith(
+    primaryColor: Colors.blue,
+    scaffoldBackgroundColor: Colors.white,
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.blue,
+      foregroundColor: Colors.white,
+      elevation: 4,
     ),
-    appBarTheme: const AppBarTheme(backgroundColor: Colors.blue),
-    cardTheme: const CardThemeData(color: Colors.white),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
   ),
-  AppTheme.blue: ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
-      brightness: Brightness.dark,
+  AppTheme.blue: ThemeData.dark().copyWith(
+    primaryColor: Colors.cyanAccent,
+    scaffoldBackgroundColor: const Color(0xFF0A192F),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0A192F),
+      foregroundColor: Colors.white,
+      elevation: 4,
     ),
-    appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF0A192F)),
-    cardTheme: const CardThemeData(color: Color(0xFF172A45)),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF172A45),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
   ),
-  AppTheme.green: ThemeData(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.green,
-      brightness: Brightness.dark,
+  AppTheme.green: ThemeData.dark().copyWith(
+    primaryColor: Colors.lightGreenAccent,
+    scaffoldBackgroundColor: const Color(0xFF0A2F19),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0A2F19),
+      foregroundColor: Colors.white,
+      elevation: 4,
     ),
-    appBarTheme: const AppBarTheme(backgroundColor: Color(0xFF0A2F19)),
-    cardTheme: const CardThemeData(color: Color(0xFF17452A)),
+    cardTheme: CardThemeData(
+      color: const Color(0xFF17452A),
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    ),
   ),
 };

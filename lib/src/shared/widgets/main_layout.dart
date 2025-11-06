@@ -129,34 +129,112 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     );
 
     int selectedIndex = _calculateSelectedIndex(location, destinations, l10n);
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (int index) {
-              String route = '/'; // Default route
-              if (index < destinations.length) {
-                final destinationLabel =
-                    (destinations[index].label as Text).data;
-                if (destinationLabel == l10n.patients) {
-                  route = '/patients';
-                } else if (destinationLabel == l10n.appointments) {
-                  route = '/appointments';
-                } else if (destinationLabel == l10n.inventory) {
-                  route = '/inventory';
-                } else if (destinationLabel == l10n.finance) {
-                  route = '/finance';
-                } else if (destinationLabel == l10n.settings) {
-                  route = '/settings';
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.surface,
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.8),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.shadow.withValues(alpha: 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(2, 0),
+                ),
+              ],
+            ),
+            child: NavigationRail(
+              selectedIndex: selectedIndex,
+              onDestinationSelected: (int index) {
+                String route = '/'; // Default route
+                if (index < destinations.length) {
+                  final destinationLabel =
+                      (destinations[index].label as Text).data;
+                  if (destinationLabel == l10n.patients) {
+                    route = '/patients';
+                  } else if (destinationLabel == l10n.appointments) {
+                    route = '/appointments';
+                  } else if (destinationLabel == l10n.inventory) {
+                    route = '/inventory';
+                  } else if (destinationLabel == l10n.finance) {
+                    route = '/finance';
+                  } else if (destinationLabel == l10n.settings) {
+                    route = '/settings';
+                  }
                 }
-              }
-              GoRouter.of(context).go(route);
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: destinations,
+                GoRouter.of(context).go(route);
+              },
+              labelType: NavigationRailLabelType.all,
+              backgroundColor: Colors.transparent,
+              selectedLabelTextStyle: TextStyle(
+                color: colorScheme.primary,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+              unselectedLabelTextStyle: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 12,
+              ),
+              selectedIconTheme: IconThemeData(
+                color: colorScheme.primary,
+                size: 28,
+              ),
+              unselectedIconTheme: IconThemeData(
+                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                size: 24,
+              ),
+              indicatorColor: colorScheme.primary.withValues(alpha: 0.1),
+              indicatorShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              minWidth: 80,
+              groupAlignment: 0.0,
+              destinations: destinations.map((destination) {
+                return NavigationRailDestination(
+                  icon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.transparent,
+                    ),
+                    child: destination.icon,
+                  ),
+                  selectedIcon: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                    ),
+                    child: destination.selectedIcon,
+                  ),
+                  label: destination.label,
+                );
+              }).toList(),
+            ),
           ),
-          const VerticalDivider(thickness: 1, width: 1),
+          Container(
+            width: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colorScheme.outline.withValues(alpha: 0.3),
+                  colorScheme.outline.withValues(alpha: 0.1),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
           // Main Content Area
           Expanded(child: widget.child),
         ],

@@ -82,6 +82,7 @@ class _MyAppState extends ConsumerState<MyApp> {
       onPointerUp: (_) => _resetTimer(),
       onPointerCancel: (_) => _resetTimer(),
       child: MaterialApp.router(
+        key: ValueKey(locale), // Force rebuild when locale changes
         routerConfig: router,
         debugShowCheckedModeBanner: false,
         theme: appThemes[theme],

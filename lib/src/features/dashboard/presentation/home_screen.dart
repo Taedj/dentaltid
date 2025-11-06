@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -14,275 +16,339 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currency = ref.watch(currencyProvider);
     final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          double cardHeight = constraints.maxHeight / 2;
-          double cardWidth = constraints.maxWidth / 3;
-          return Column(
-            children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Patients',
-                      icon: Icons.people,
-                      gradientColors: [
-                        Colors.blue.shade300,
-                        Colors.blue.shade700,
-                      ],
-                      child: patientsAsyncValue.when(
-                        data: (patients) => Tooltip(
-                          message: "Total number of patients",
-                          child: Text(
-                            patients.length.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        loading: () => const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                        error: (e, s) =>
-                            const Icon(Icons.error, color: Colors.white),
+      body: Column(
+        children: [
+          StreamBuilder<DateTime>(
+            stream: Stream.periodic(
+              const Duration(seconds: 1),
+              (_) => DateTime.now(),
+            ),
+            builder: (context, snapshot) {
+              final currentTime = snapshot.data ?? DateTime.now();
+              return Padding(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  top: 16,
+                  right: 16,
+                  bottom: 8,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.welcomeDr,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Emergency Patients',
-                      icon: Icons.local_hospital,
-                      gradientColors: [
-                        Colors.red.shade300,
-                        Colors.red.shade700,
-                      ],
-                      child: patientsAsyncValue.when(
-                        data: (patients) => Text(
-                          patients
-                              .where((p) => p.isEmergency)
-                              .length
-                              .toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        loading: () => const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
-                          ),
-                        ),
-                        error: (e, s) =>
-                            const Icon(Icons.error, color: Colors.white),
+                    const SizedBox(width: 32),
+                    Text(
+                      DateFormat('EEEE, MMMM d, y').format(currentTime),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: 32),
+                    Text(
+                      DateFormat('HH:mm:ss').format(currentTime),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Upcoming Appointments',
-                      icon: Icons.calendar_today,
-                      gradientColors: [
-                        Colors.green.shade300,
-                        Colors.green.shade700,
-                      ],
-                      child: ref
-                          .watch(upcomingAppointmentsProvider)
-                          .when(
-                            data: (appointments) => Text(
-                              appointments.length.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            loading: () => const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                            error: (e, s) =>
-                                const Icon(Icons.error, color: Colors.white),
-                          ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Payments',
-                      icon: Icons.attach_money,
-                      gradientColors: [
-                        Colors.purple.shade300,
-                        Colors.purple.shade700,
-                      ],
-                      child: ref
-                          .watch(transactionsProvider)
-                          .when(
-                            data: (transactions) {
-                              double totalPaid = 0;
-                              double totalUnpaid = 0;
-                              for (var t in transactions) {
-                                totalPaid += t.paidAmount;
-                                totalUnpaid += (t.totalAmount - t.paidAmount);
-                              }
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Paid: $currency${totalPaid.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                double cardHeight = constraints.maxHeight / 2;
+                double cardWidth = constraints.maxWidth / 3;
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.patients,
+                            icon: Icons.people,
+                            gradientColors: [
+                              Colors.blue.shade300,
+                              Colors.blue.shade700,
+                            ],
+                            child: patientsAsyncValue.when(
+                              data: (patients) => Tooltip(
+                                message: l10n.totalNumberOfPatients,
+                                child: Text(
+                                  patients.length.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  Text(
-                                    'Unpaid: $currency${totalUnpaid.toStringAsFixed(2)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              );
-                            },
-                            loading: () => const CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
+                                ),
                               ),
-                            ),
-                            error: (e, s) =>
-                                const Icon(Icons.error, color: Colors.white),
-                          ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Quick Actions',
-                      icon: Icons.touch_app,
-                      gradientColors: [
-                        Colors.orange.shade300,
-                        Colors.orange.shade700,
-                      ],
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.add, color: Colors.white),
-                            onPressed: () => context.go('/patients/add'),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.search, color: Colors.white),
-                            onPressed: () => context.go('/patients'),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.settings,
-                              color: Colors.white,
-                            ),
-                            onPressed: () => context.go('/settings'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: cardWidth,
-                    height: cardHeight,
-                    child: _DashboardCard(
-                      title: 'Emergency Alerts',
-                      icon: Icons.error_outline,
-                      gradientColors: [
-                        Colors.red.shade300,
-                        Colors.red.shade700,
-                      ],
-                      child: patientsAsyncValue.when(
-                        data: (patients) {
-                          final emergencyPatients = patients
-                              .where((p) => p.isEmergency)
-                              .toList();
-                          if (emergencyPatients.isEmpty) {
-                            return const Text(
-                              'No emergencies',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
+                              loading: () => const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
-                            );
-                          }
-                          return InkWell(
-                            onTap: () {
-                              context.go(
-                                '/patients',
-                                extra: PatientFilter.emergency,
-                              );
-                            },
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(
-                                  Icons.warning,
+                              error: (e, s) =>
+                                  const Icon(Icons.error, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.emergencyPatients,
+                            icon: Icons.local_hospital,
+                            gradientColors: [
+                              Colors.red.shade300,
+                              Colors.red.shade700,
+                            ],
+                            child: patientsAsyncValue.when(
+                              data: (patients) => Text(
+                                patients
+                                    .where((p) => p.isEmergency)
+                                    .length
+                                    .toString(),
+                                style: const TextStyle(
                                   color: Colors.white,
-                                  size: 32,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                Text(
-                                  '${emergencyPatients.length} Emergency Patients',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
+                              ),
+                              loading: () => const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
                                 ),
-                                Text(
-                                  emergencyPatients
-                                      .map((p) => p.name)
-                                      .take(2)
-                                      .join(', '),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                              ),
+                              error: (e, s) =>
+                                  const Icon(Icons.error, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.upcomingAppointments,
+                            icon: Icons.calendar_today,
+                            gradientColors: [
+                              Colors.green.shade300,
+                              Colors.green.shade700,
+                            ],
+                            child: ref
+                                .watch(upcomingAppointmentsProvider)
+                                .when(
+                                  data: (appointments) => Text(
+                                    appointments.length.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
+                                  loading: () =>
+                                      const CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                  error: (e, s) => const Icon(
+                                    Icons.error,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.payments,
+                            icon: Icons.attach_money,
+                            gradientColors: [
+                              Colors.purple.shade300,
+                              Colors.purple.shade700,
+                            ],
+                            child: ref
+                                .watch(transactionsProvider)
+                                .when(
+                                  data: (transactions) {
+                                    double totalPaid = 0;
+                                    double totalUnpaid = 0;
+                                    for (var t in transactions) {
+                                      totalPaid += t.paidAmount;
+                                      totalUnpaid +=
+                                          (t.totalAmount - t.paidAmount);
+                                    }
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          '${l10n.paid} $currency${totalPaid.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          '${l10n.unpaid} $currency${totalUnpaid.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                  loading: () =>
+                                      const CircularProgressIndicator(
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                      ),
+                                  error: (e, s) => const Icon(
+                                    Icons.error,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.quickActions,
+                            icon: Icons.touch_app,
+                            gradientColors: [
+                              Colors.orange.shade300,
+                              Colors.orange.shade700,
+                            ],
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => context.go('/patients/add'),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.search,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => context.go('/patients'),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.settings,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () => context.go('/settings'),
                                 ),
                               ],
                             ),
-                          );
-                        },
-                        loading: () => const CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.white,
                           ),
                         ),
-                        error: (e, s) =>
-                            const Icon(Icons.error, color: Colors.white),
-                      ),
+                        SizedBox(
+                          width: cardWidth,
+                          height: cardHeight,
+                          child: _DashboardCard(
+                            title: l10n.emergencyAlerts,
+                            icon: Icons.error_outline,
+                            gradientColors: [
+                              Colors.red.shade300,
+                              Colors.red.shade700,
+                            ],
+                            child: patientsAsyncValue.when(
+                              data: (patients) {
+                                final emergencyPatients = patients
+                                    .where((p) => p.isEmergency)
+                                    .toList();
+                                if (emergencyPatients.isEmpty) {
+                                  return Text(
+                                    l10n.noEmergencies,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  );
+                                }
+                                return InkWell(
+                                  onTap: () {
+                                    context.go(
+                                      '/patients',
+                                      extra: PatientFilter.emergency,
+                                    );
+                                  },
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.warning,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                      Text(
+                                        '${emergencyPatients.length} ${l10n.emergencyPatients}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      Text(
+                                        emergencyPatients
+                                            .map((p) => p.name)
+                                            .take(2)
+                                            .join(', '),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              loading: () => const CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                              error: (e, s) =>
+                                  const Icon(Icons.error, color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

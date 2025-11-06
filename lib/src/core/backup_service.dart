@@ -6,11 +6,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
 import 'package:aes_crypt_null_safe/aes_crypt_null_safe.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class BackupService {
   final FirebaseService _firebaseService = FirebaseService();
-  // TODO: Use a secure storage solution for the backup password
-  final String _backupPassword = '72603991';
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  Future<String> _getBackupPassword() async {
+    const key = 'backup_password';
+    String? password = await _secureStorage.read(key: key);
+    if (password == null) {
+      // Generate a secure random password if none exists
+      password = DateTime.now().millisecondsSinceEpoch.toString();
+      await _secureStorage.write(key: key, value: password);
+    }
+    return password;
+  }
 
   Future<String?> createBackup({bool uploadToFirebase = false}) async {
     try {
@@ -42,7 +53,8 @@ class BackupService {
       await output.close();
 
       // Encrypt the zip file
-      final crypt = AesCrypt(_backupPassword);
+      final password = await _getBackupPassword();
+      final crypt = AesCrypt(password);
       crypt.encryptFileSync(tempFilePath, '$tempFilePath.aes');
       await zipFile.delete(); // Delete unencrypted zip
 
@@ -103,7 +115,8 @@ class BackupService {
       }
 
       // Decrypt the backup file
-      final crypt = AesCrypt(_backupPassword);
+      final password = await _getBackupPassword();
+      final crypt = AesCrypt(password);
       final decryptedFilePath = backupFilePath.replaceAll('.aes', '');
       try {
         crypt.decryptFileSync(backupFilePath, decryptedFilePath);

@@ -1,7 +1,11 @@
+import 'package:dentaltid/src/core/config.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
+import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 
 class AddEditAppointmentScreen extends ConsumerStatefulWidget {
   const AddEditAppointmentScreen({super.key, this.appointment});
@@ -16,16 +20,14 @@ class AddEditAppointmentScreen extends ConsumerStatefulWidget {
 class _AddEditAppointmentScreenState
     extends ConsumerState<AddEditAppointmentScreen> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _patientIdController;
+  late int? _selectedPatientId;
   late TextEditingController _dateController;
   late TextEditingController _timeController;
 
   @override
   void initState() {
     super.initState();
-    _patientIdController = TextEditingController(
-      text: widget.appointment?.patientId.toString() ?? '',
-    );
+    _selectedPatientId = widget.appointment?.patientId;
     _dateController = TextEditingController(
       text: widget.appointment?.date.toIso8601String().split('T')[0] ?? '',
     );
@@ -36,7 +38,6 @@ class _AddEditAppointmentScreenState
 
   @override
   void dispose() {
-    _patientIdController.dispose();
     _dateController.dispose();
     _timeController.dispose();
     super.dispose();
@@ -44,12 +45,16 @@ class _AddEditAppointmentScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
+    final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.appointment == null ? 'Add Appointment' : 'Edit Appointment',
+          widget.appointment == null
+              ? l10n.addAppointment
+              : l10n.editAppointment,
         ),
       ),
       body: Padding(
@@ -58,33 +63,51 @@ class _AddEditAppointmentScreenState
           key: _formKey,
           child: Column(
             children: <Widget>[
-              TextFormField(
-                controller: _patientIdController,
-                decoration: const InputDecoration(labelText: 'Patient ID'),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a patient ID';
-                  }
-                  return null;
+              patientsAsyncValue.when(
+                data: (patients) {
+                  return DropdownButtonFormField<int>(
+                    initialValue: _selectedPatientId,
+                    decoration: InputDecoration(labelText: l10n.patient),
+                    items: patients.map((Patient patient) {
+                      return DropdownMenuItem<int>(
+                        value: patient.id,
+                        child: Text('${patient.name} ${patient.familyName}'),
+                      );
+                    }).toList(),
+                    onChanged: (int? newValue) {
+                      setState(() {
+                        _selectedPatientId = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return l10n.selectPatient;
+                      }
+                      return null;
+                    },
+                  );
                 },
+                loading: () => const CircularProgressIndicator(),
+                error: (error, stack) => Text('${l10n.error}$error'),
               ),
               TextFormField(
                 controller: _dateController,
                 decoration: InputDecoration(
-                  labelText: 'Date (YYYY-MM-DD)',
+                  labelText: l10n.dateYYYYMMDD,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () async {
                       final DateTime? picked = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
+                        firstDate: DateTime.now(),
                         lastDate: DateTime(2101),
                       );
                       if (picked != null) {
                         setState(() {
-                          _dateController.text = picked.toIso8601String().split('T')[0];
+                          _dateController.text = picked.toIso8601String().split(
+                            'T',
+                          )[0];
                         });
                       }
                     },
@@ -93,20 +116,20 @@ class _AddEditAppointmentScreenState
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a date';
+                    return l10n.enterDate;
                   }
                   final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
                   if (!dateRegex.hasMatch(value)) {
-                    return 'Please enter a valid date in YYYY-MM-DD format';
+                    return l10n.invalidDateFormat;
                   }
                   final selectedDate = DateTime.tryParse(value);
                   if (selectedDate == null) {
-                    return 'Invalid date';
+                    return l10n.invalidDate;
                   }
                   if (selectedDate.isBefore(
                     DateTime.now().subtract(const Duration(days: 1)),
                   )) {
-                    return 'Date cannot be in the past';
+                    return l10n.dateInPast;
                   }
                   return null;
                 },
@@ -114,7 +137,7 @@ class _AddEditAppointmentScreenState
               TextFormField(
                 controller: _timeController,
                 decoration: InputDecoration(
-                  labelText: 'Time (HH:MM)',
+                  labelText: l10n.timeHHMM,
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.access_time),
                     onPressed: () async {
@@ -124,7 +147,8 @@ class _AddEditAppointmentScreenState
                       );
                       if (picked != null) {
                         setState(() {
-                          _timeController.text = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+                          _timeController.text =
+                              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
                         });
                       }
                     },
@@ -133,11 +157,20 @@ class _AddEditAppointmentScreenState
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a time';
+                    return l10n.enterTime;
                   }
-                  final timeRegex = RegExp(r'^\d{2}:\d{2}$');
+                  final timeRegex = RegExp(r'^(\d{2}):(\d{2})$');
                   if (!timeRegex.hasMatch(value)) {
-                    return 'Please enter a valid time in HH:MM format';
+                    return l10n.invalidTimeFormat;
+                  }
+                  final match = timeRegex.firstMatch(value)!;
+                  final hour = int.parse(match.group(1)!);
+                  if (hour < AppConfig.workingHoursStart ||
+                      hour >= AppConfig.workingHoursEnd) {
+                    return l10n.invalidTime(
+                      AppConfig.workingHoursStart.toString(),
+                      AppConfig.workingHoursEnd.toString(),
+                    );
                   }
                   return null;
                 },
@@ -150,8 +183,7 @@ class _AddEditAppointmentScreenState
                       try {
                         final newAppointment = Appointment(
                           id: widget.appointment?.id,
-                          patientId:
-                              int.tryParse(_patientIdController.text) ?? 0,
+                          patientId: _selectedPatientId!,
                           date: DateTime.parse(_dateController.text),
                           time: _timeController.text,
                         );
@@ -169,11 +201,26 @@ class _AddEditAppointmentScreenState
                         if (context.mounted) {
                           Navigator.pop(context);
                         }
+                      } on Exception catch (e) {
+                        if (context.mounted) {
+                          String errorMessage = l10n.error + e.toString();
+                          if (e.toString().contains(
+                            'An appointment for this patient at this date and time already exists.',
+                          )) {
+                            errorMessage = l10n.appointmentExistsError;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(errorMessage),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
                       } catch (e) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error: ${e.toString()}'),
+                              content: Text('${l10n.error}${e.toString()}'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -181,7 +228,9 @@ class _AddEditAppointmentScreenState
                       }
                     }
                   },
-                  child: Text(widget.appointment == null ? 'Add' : 'Update'),
+                  child: Text(
+                    widget.appointment == null ? l10n.add : l10n.update,
+                  ),
                 ),
               ),
             ],

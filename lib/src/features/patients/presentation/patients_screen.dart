@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:dentaltid/l10n/app_localizations.dart';
 
 class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key, this.filter});
@@ -77,6 +78,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     String field,
     String currentValue,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final TextEditingController controller = TextEditingController(
       text: currentValue,
     );
@@ -84,17 +86,19 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Edit ${field[0].toUpperCase()}${field.substring(1)}'),
+          title: Text(
+            '${l10n.edit} ${field[0].toUpperCase()}${field.substring(1)}',
+          ),
           content: TextFormField(controller: controller, autofocus: true),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Save'),
+              child: Text(l10n.save),
               onPressed: () async {
                 final patientService = ref.read(patientServiceProvider);
                 Patient updatedPatient;
@@ -155,10 +159,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   Widget build(BuildContext context) {
     final patientsAsyncValue = ref.watch(patientsProvider(_selectedFilter));
     final patientService = ref.watch(patientServiceProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Patients'),
+        title: Text(l10n.patients),
         actions: [
           DropdownButton<PatientFilter>(
             value: _selectedFilter,
@@ -196,7 +201,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
             }
           });
           if (patients.isEmpty) {
-            return const Center(child: Text('No patients yet.'));
+            return Center(child: Text(l10n.noPatientsYet));
           }
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -218,22 +223,24 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                         title: Tooltip(
                           message: patient.healthAlerts.isNotEmpty
                               ? patient.healthAlerts
-                              : 'No health alerts',
+                              : l10n.noHealthAlerts,
                           child: Text('${patient.name} ${patient.familyName}'),
                         ),
-                        subtitle: Text('Age: ${patient.age}'),
+                        subtitle: Text('${l10n.age} ${patient.age}'),
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Health State: ${patient.healthState}'),
-                                Text('Diagnosis: ${patient.diagnosis}'),
-                                Text('Treatment: ${patient.treatment}'),
-                                Text('Payment: \${patient.payment}'),
                                 Text(
-                                  'Created At: ${patient.createdAt.toLocal().toString().split(' ')[0]}',
+                                  '${l10n.healthState} ${patient.healthState}',
+                                ),
+                                Text('${l10n.diagnosis} ${patient.diagnosis}'),
+                                Text('${l10n.treatment} ${patient.treatment}'),
+                                Text('${l10n.payment} \$${patient.payment}'),
+                                Text(
+                                  '${l10n.createdAt} ${patient.createdAt.toLocal().toString().split(' ')[0]}',
                                 ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
@@ -253,22 +260,26 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                         final confirmed = await showDialog<bool>(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            title: const Text('Delete Patient'),
-                                            content: const Text(
-                                              'Are you sure you want to delete this patient?',
+                                            title: Text(l10n.deletePatient),
+                                            content: Text(
+                                              l10n.confirmDeletePatient,
                                             ),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.of(
                                                   context,
                                                 ).pop(false),
-                                                child: const Text('Cancel'),
+                                                child: Text(l10n.cancel),
                                               ),
                                               TextButton(
                                                 onPressed: () => Navigator.of(
                                                   context,
                                                 ).pop(true),
-                                                child: const Text('Delete'),
+                                                child: Text(
+                                                  l10n.deletePatient.split(
+                                                    ' ',
+                                                  )[1],
+                                                ), // Just "Patient" for the button
                                               ),
                                             ],
                                           ),
@@ -296,184 +307,206 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                 );
               } else {
                 // Wide screen: DataTable
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    border: TableBorder.all(color: Colors.white),
-                    columns: const <DataColumn>[
-                      DataColumn(label: Text('Emergency')),
-                      DataColumn(label: Text('No.')),
-                      DataColumn(label: Text('Name')),
-                      DataColumn(label: Text('Family Name')),
-                      DataColumn(label: Text('Age')),
-                      DataColumn(label: Text('Health State')),
-                      DataColumn(label: Text('Diagnosis')),
-                      DataColumn(label: Text('Treatment')),
-                      DataColumn(label: Text('Payment')),
-                      DataColumn(label: Text('Actions')),
-                    ],
-                    rows: patients.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final patient = entry.value;
-                      return DataRow(
-                        color: WidgetStateProperty.resolveWith<Color?>((
-                          Set<WidgetState> states,
-                        ) {
-                          if (patient.isEmergency) {
-                            return Colors.red.withAlpha((255 * 0.2).round());
-                          }
-                          return null; // Use the default color.
-                        }),
-                        cells: <DataCell>[
-                          DataCell(
-                            patient.isEmergency
-                                ? const Icon(Icons.warning, color: Colors.red)
-                                : const SizedBox(),
-                          ),
-                          DataCell(Text((index + 1).toString())),
-                          DataCell(
-                            Tooltip(
-                              message: patient.healthAlerts.isNotEmpty
-                                  ? patient.healthAlerts
-                                  : 'No health alerts',
-                              child: InkWell(
-                                onTap: () => _showEditDialog(
-                                  context,
-                                  ref,
-                                  patient,
-                                  'name',
-                                  patient.name,
-                                ),
-                                child: Text(patient.name),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'familyName',
-                                patient.familyName,
-                              ),
-                              child: Text(patient.familyName),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'age',
-                                patient.age.toString(),
-                              ),
-                              child: Text(patient.age.toString()),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'healthState',
-                                patient.healthState,
-                              ),
-                              child: Text(patient.healthState),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'diagnosis',
-                                patient.diagnosis,
-                              ),
-                              child: Text(patient.diagnosis),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'treatment',
-                                patient.treatment,
-                              ),
-                              child: Text(patient.treatment),
-                            ),
-                          ),
-                          DataCell(
-                            InkWell(
-                              onTap: () => _showEditDialog(
-                                context,
-                                ref,
-                                patient,
-                                'payment',
-                                patient.payment.toString(),
-                              ),
-                              child: Text(patient.payment.toString()),
-                            ),
-                          ),
-                          DataCell(
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    context.go(
-                                      '/patients/edit',
-                                      extra: patient,
-                                    );
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () async {
-                                    final confirmed = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('Delete Patient'),
-                                        content: const Text(
-                                          'Are you sure you want to delete this patient?',
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () => Navigator.of(
-                                              context,
-                                            ).pop(false),
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(true),
-                                            child: const Text('Delete'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirmed == true &&
-                                        patient.id != null) {
-                                      await patientService.deletePatient(
-                                        patient.id!,
-                                      );
-                                      ref.invalidate(
-                                        patientsProvider(_selectedFilter),
-                                      ); // Invalidate to refresh
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
+                final isRTL = l10n.localeName == 'ar';
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Directionality(
+                    textDirection: isRTL
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
+                        border: TableBorder.all(color: Colors.white),
+                        columns: <DataColumn>[
+                          DataColumn(label: Text(l10n.emergency)),
+                          DataColumn(label: Text(l10n.number)),
+                          DataColumn(label: Text(l10n.name)),
+                          DataColumn(label: Text(l10n.familyName)),
+                          DataColumn(label: Text(l10n.age)),
+                          DataColumn(label: Text(l10n.healthState)),
+                          DataColumn(label: Text(l10n.diagnosis)),
+                          DataColumn(label: Text(l10n.treatment)),
+                          DataColumn(label: Text(l10n.payment)),
+                          DataColumn(label: Text(l10n.actions)),
                         ],
-                      );
-                    }).toList(),
+                        rows: patients.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final patient = entry.value;
+                          return DataRow(
+                            color: WidgetStateProperty.resolveWith<Color?>((
+                              Set<WidgetState> states,
+                            ) {
+                              if (patient.isEmergency) {
+                                return Colors.red.withAlpha(
+                                  (255 * 0.2).round(),
+                                );
+                              }
+                              return null; // Use the default color.
+                            }),
+                            cells: <DataCell>[
+                              DataCell(
+                                patient.isEmergency
+                                    ? const Icon(
+                                        Icons.warning,
+                                        color: Colors.red,
+                                      )
+                                    : const SizedBox(),
+                              ),
+                              DataCell(Text((index + 1).toString())),
+                              DataCell(
+                                Tooltip(
+                                  message: patient.healthAlerts.isNotEmpty
+                                      ? patient.healthAlerts
+                                      : l10n.noHealthAlerts,
+                                  child: InkWell(
+                                    onTap: () => _showEditDialog(
+                                      context,
+                                      ref,
+                                      patient,
+                                      'name',
+                                      patient.name,
+                                    ),
+                                    child: Text(patient.name),
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'familyName',
+                                    patient.familyName,
+                                  ),
+                                  child: Text(patient.familyName),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'age',
+                                    patient.age.toString(),
+                                  ),
+                                  child: Text(patient.age.toString()),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'healthState',
+                                    patient.healthState,
+                                  ),
+                                  child: Text(patient.healthState),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'diagnosis',
+                                    patient.diagnosis,
+                                  ),
+                                  child: Text(patient.diagnosis),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'treatment',
+                                    patient.treatment,
+                                  ),
+                                  child: Text(patient.treatment),
+                                ),
+                              ),
+                              DataCell(
+                                InkWell(
+                                  onTap: () => _showEditDialog(
+                                    context,
+                                    ref,
+                                    patient,
+                                    'payment',
+                                    patient.payment.toString(),
+                                  ),
+                                  child: Text(patient.payment.toString()),
+                                ),
+                              ),
+                              DataCell(
+                                Row(
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () {
+                                        context.go(
+                                          '/patients/edit',
+                                          extra: patient,
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () async {
+                                        final confirmed =
+                                            await showDialog<bool>(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title: Text(l10n.deletePatient),
+                                                content: Text(
+                                                  l10n.confirmDeletePatient,
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(false),
+                                                    child: Text(l10n.cancel),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.of(
+                                                          context,
+                                                        ).pop(true),
+                                                    child: Text(
+                                                      l10n.deletePatient.split(
+                                                        ' ',
+                                                      )[1],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                        if (confirmed == true &&
+                                            patient.id != null) {
+                                          await patientService.deletePatient(
+                                            patient.id!,
+                                          );
+                                          ref.invalidate(
+                                            patientsProvider(_selectedFilter),
+                                          ); // Invalidate to refresh
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
                   ),
                 );
               }
