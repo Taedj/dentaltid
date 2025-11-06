@@ -518,4 +518,32 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get pinCode => 'Code PIN';
+
+  @override
+  String get startAppointment => 'Démarrer le rendez-vous';
+
+  @override
+  String get completeAppointment => 'Terminer le rendez-vous';
+
+  @override
+  String get cancelAppointment => 'Annuler le rendez-vous';
+
+  @override
+  String get confirmCancelAppointment =>
+      'Êtes-vous sûr de vouloir annuler ce rendez-vous ?';
+
+  @override
+  String get confirm => 'Confirmer';
+
+  @override
+  String get todaysAppointmentsFlow => 'Flux des rendez-vous d\'aujourd\'hui';
+
+  @override
+  String get waiting => 'En attente';
+
+  @override
+  String get inProgress => 'En cours';
+
+  @override
+  String get completed => 'Terminé';
 }

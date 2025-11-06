@@ -4,6 +4,7 @@ import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 
 final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
   return AppointmentRepository(DatabaseService.instance);
@@ -26,6 +27,21 @@ final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
 ) async {
   final service = ref.watch(appointmentServiceProvider);
   return service.getUpcomingAppointments();
+});
+
+final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+  final service = ref.watch(appointmentServiceProvider);
+  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.waiting);
+});
+
+final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+  final service = ref.watch(appointmentServiceProvider);
+  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.inProgress);
+});
+
+final completedAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+  final service = ref.watch(appointmentServiceProvider);
+  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.completed);
 });
 
 class AppointmentService {
@@ -82,5 +98,20 @@ class AppointmentService {
     );
     // Invalidate the provider to refresh the UI
     // This is done in the UI layer after the operation
+  }
+
+  Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
+    await _repository.updateAppointmentStatus(id, status);
+    _auditService.logEvent(
+      AuditAction.updateAppointment,
+      details: 'Appointment with ID $id status updated to ${status.name}.',
+    );
+  }
+
+  Future<List<Appointment>> getAppointmentsByStatusForDate(
+    DateTime date,
+    AppointmentStatus status,
+  ) async {
+    return await _repository.getAppointmentsByStatusForDate(date, status);
   }
 }

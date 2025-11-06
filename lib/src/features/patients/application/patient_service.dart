@@ -24,6 +24,14 @@ final patientsProvider = FutureProvider.family<List<Patient>, PatientFilter>((
   return service.getPatients(filter);
 });
 
+final patientProvider = FutureProvider.family<Patient?, int>((
+  ref,
+  id,
+) async {
+  final service = ref.watch(patientServiceProvider);
+  return service.getPatientById(id);
+});
+
 class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
@@ -49,6 +57,10 @@ class PatientService {
     PatientFilter filter = PatientFilter.all,
   ]) async {
     return await _repository.getPatients(filter);
+  }
+
+  Future<Patient?> getPatientById(int id) async {
+    return await _repository.getPatientById(id);
   }
 
   Future<void> updatePatient(Patient patient) async {

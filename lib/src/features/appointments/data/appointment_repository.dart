@@ -1,5 +1,6 @@
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 
 class AppointmentRepository {
   final DatabaseService _databaseService;
@@ -68,5 +69,35 @@ class AppointmentRepository {
     } else {
       return null;
     }
+  }
+
+  Future<void> updateAppointmentStatus(
+    int id,
+    AppointmentStatus status,
+  ) async {
+    final db = await _databaseService.database;
+    await db.update(
+      _tableName,
+      {'status': status.toString()},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Appointment>> getAppointmentsByStatusForDate(
+    DateTime date,
+    AppointmentStatus status,
+  ) async {
+    final db = await _databaseService.database;
+    final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'date(date) = ? AND status = ?',
+      whereArgs: [dateString, status.toString()],
+      orderBy: 'time ASC',
+    );
+    return List.generate(maps.length, (i) {
+      return Appointment.fromJson(maps[i]);
+    });
   }
 }

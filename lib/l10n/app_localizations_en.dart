@@ -513,4 +513,32 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pinCode => 'PIN Code';
+
+  @override
+  String get startAppointment => 'Start Appointment';
+
+  @override
+  String get completeAppointment => 'Complete Appointment';
+
+  @override
+  String get cancelAppointment => 'Cancel Appointment';
+
+  @override
+  String get confirmCancelAppointment =>
+      'Are you sure you want to cancel this appointment?';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get todaysAppointmentsFlow => 'Today\'s Appointments Flow';
+
+  @override
+  String get waiting => 'Waiting';
+
+  @override
+  String get inProgress => 'In Progress';
+
+  @override
+  String get completed => 'Completed';
 }

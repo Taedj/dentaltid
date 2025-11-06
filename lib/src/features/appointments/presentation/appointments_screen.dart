@@ -1,4 +1,6 @@
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,7 +9,8 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 enum SortOption { dateAsc, dateDesc, timeAsc, timeDesc, patientId }
 
 class AppointmentsScreen extends ConsumerStatefulWidget {
-  const AppointmentsScreen({super.key});
+  final AppointmentStatus? status;
+  const AppointmentsScreen({super.key, this.status});
 
   @override
   ConsumerState<AppointmentsScreen> createState() => _AppointmentsScreenState();
@@ -17,6 +20,13 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
   SortOption _sortOption = SortOption.dateDesc;
   String _searchQuery = '';
   bool _showUpcomingOnly = false;
+  AppointmentStatus? _statusFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _statusFilter = widget.status;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +38,16 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       appBar: AppBar(
         title: Text(l10n.appointments),
         actions: [
+          if (_statusFilter != null)
+            IconButton(
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                setState(() {
+                  _statusFilter = null;
+                });
+              },
+              tooltip: 'Clear filter',
+            ),
           IconButton(
             icon: Icon(
               _showUpcomingOnly
@@ -87,9 +107,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(77),
               ),
               onChanged: (value) {
                 setState(() {
@@ -109,13 +127,13 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                       appointment.date.toString().contains(_searchQuery) ||
                       appointment.time.contains(_searchQuery);
 
-                  final isUpcoming =
-                      !_showUpcomingOnly ||
-                      appointment.date.isAfter(
-                        DateTime.now().subtract(const Duration(days: 1)),
-                      );
+                  final isUpcoming = !_showUpcomingOnly ||
+                      (appointment.status != AppointmentStatus.completed &&
+                          appointment.status != AppointmentStatus.cancelled);
 
-                  return matchesSearch && isUpcoming;
+                  final statusMatch = _statusFilter == null || appointment.status == _statusFilter;
+
+                  return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
 
                 // Sort appointments
@@ -142,55 +160,156 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   itemCount: filteredAppointments.length,
                   itemBuilder: (context, index) {
                     final appointment = filteredAppointments[index];
-                    final isPast = appointment.date.isBefore(
-                      DateTime.now().subtract(const Duration(days: 1)),
-                    );
+                    final patientFuture = ref.watch(patientProvider(appointment.patientId));
+
+                    Color cardColor;
+                    IconData leadingIcon;
+                    Color iconColor;
+                    Color statusColor;
+
+                    switch (appointment.status) {
+                      case AppointmentStatus.waiting:
+                        cardColor = Theme.of(context).colorScheme.surface;
+                        leadingIcon = Icons.hourglass_empty;
+                        iconColor = Theme.of(context).colorScheme.primary;
+                        statusColor = Colors.blue;
+                        break;
+                      case AppointmentStatus.inProgress:
+                        cardColor = Theme.of(context).colorScheme.surface;
+                        leadingIcon = Icons.play_circle_fill;
+                        iconColor = Theme.of(context).colorScheme.secondary;
+                        statusColor = Colors.orange;
+                        break;
+                      case AppointmentStatus.completed:
+                        cardColor = Theme.of(context).colorScheme.surface.withAlpha(128);
+                        leadingIcon = Icons.check_circle;
+                        iconColor = Colors.green;
+                        statusColor = Colors.green;
+                        break;
+                      case AppointmentStatus.cancelled:
+                        cardColor = Theme.of(context).colorScheme.surface.withAlpha(128);
+                        leadingIcon = Icons.cancel;
+                        iconColor = Theme.of(context).colorScheme.error;
+                        statusColor = Colors.red;
+                        break;
+                    }
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 4,
+                        vertical: 8,
                       ),
-                      color: isPast ? Colors.grey.withValues(alpha: 0.3) : null,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: statusColor.withAlpha(128),
+                          width: 1,
+                        ),
+                      ),
+                      color: cardColor,
                       child: ListTile(
                         leading: Icon(
-                          isPast ? Icons.history : Icons.calendar_today,
-                          color: isPast
-                              ? Colors.grey
-                              : Theme.of(context).primaryColor,
+                          leadingIcon,
+                          color: iconColor,
+                          size: 32,
                         ),
-                        title: Text(
-                          'Patient ID: ${appointment.patientId}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isPast ? Colors.grey[700] : null,
+                        title: patientFuture.when(
+                          data: (patient) => Text(
+                            patient?.name ?? 'Unknown Patient',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                          loading: () => const Text('Loading...'),
+                          error: (err, stack) => const Text('Error'),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            const SizedBox(height: 4),
                             Text(
-                              'Date: ${appointment.date.toLocal().toString().split(' ')[0]}',
-                              style: TextStyle(
-                                color: isPast ? Colors.grey[600] : null,
-                              ),
+                              '${l10n.date}: ${appointment.date.toLocal().toString().split(' ')[0]}',
                             ),
-                            Text(
-                              'Time: ${appointment.time}',
-                              style: TextStyle(
-                                color: isPast ? Colors.grey[600] : null,
-                              ),
-                            ),
+                            Text('${l10n.timeHHMM}: ${appointment.time}'),
                           ],
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (isPast)
-                              const Icon(
-                                Icons.check_circle,
-                                color: Colors.green,
-                                size: 20,
+                            Chip(
+                              label: Text(appointment.status.name),
+                              backgroundColor: statusColor.withAlpha(51),
+                              labelStyle: TextStyle(color: statusColor),
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                            ),
+                            const SizedBox(width: 8),
+                            if (appointment.status == AppointmentStatus.waiting)
+                              IconButton(
+                                icon: const Icon(Icons.play_arrow, color: Colors.green),
+                                onPressed: () async {
+                                  if (appointment.id != null) {
+                                    await appointmentService.updateAppointmentStatus(
+                                      appointment.id!,
+                                      AppointmentStatus.inProgress,
+                                    );
+                                    ref.invalidate(appointmentsProvider);
+                                    ref.invalidate(waitingAppointmentsProvider);
+                                    ref.invalidate(inProgressAppointmentsProvider);
+                                  }
+                                },
+                                tooltip: l10n.startAppointment,
+                              ),
+                            if (appointment.status == AppointmentStatus.inProgress)
+                              IconButton(
+                                icon: const Icon(Icons.check, color: Colors.blue),
+                                onPressed: () async {
+                                  if (appointment.id != null) {
+                                    await appointmentService.updateAppointmentStatus(
+                                      appointment.id!,
+                                      AppointmentStatus.completed,
+                                    );
+                                    ref.invalidate(appointmentsProvider);
+                                    ref.invalidate(inProgressAppointmentsProvider);
+                                    ref.invalidate(completedAppointmentsProvider);
+                                  }
+                                },
+                                tooltip: l10n.completeAppointment,
+                              ),
+                            if (appointment.status != AppointmentStatus.completed &&
+                                appointment.status != AppointmentStatus.cancelled)
+                              IconButton(
+                                icon: const Icon(Icons.cancel, color: Colors.red),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(l10n.cancelAppointment),
+                                      content: Text(l10n.confirmCancelAppointment),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: Text(l10n.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: Text(l10n.confirm),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true && appointment.id != null) {
+                                    await appointmentService.updateAppointmentStatus(
+                                      appointment.id!,
+                                      AppointmentStatus.cancelled,
+                                    );
+                                    ref.invalidate(appointmentsProvider);
+                                    ref.invalidate(waitingAppointmentsProvider);
+                                    ref.invalidate(inProgressAppointmentsProvider);
+                                    ref.invalidate(completedAppointmentsProvider);
+                                  }
+                                },
+                                tooltip: l10n.cancelAppointment,
                               ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),

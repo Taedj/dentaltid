@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/cloud_backups_screen.dart';
@@ -40,7 +41,13 @@ final router = GoRouter(
         GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
         GoRoute(
           path: '/appointments',
-          builder: (context, state) => const AppointmentsScreen(),
+          builder: (context, state) {
+            if (state.extra is AppointmentStatus) {
+              return AppointmentsScreen(status: state.extra as AppointmentStatus);
+            } else {
+              return const AppointmentsScreen();
+            }
+          },
           routes: [
             GoRoute(
               path: 'add',

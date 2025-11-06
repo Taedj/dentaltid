@@ -164,5 +164,14 @@
   "enterCurrentPin": "أدخل رقم التعريف الشخصي الحالي",
   "pinChangedSuccessfully": "تم تغيير رقم التعريف الشخصي بنجاح",
   "restoreFromLocalBackup": "استعادة من النسخ الاحتياطي المحلي",
-  "pinCode": "رقم التعريف الشخصي"
+  "pinCode": "رقم التعريف الشخصي",
+  "startAppointment": "بدء الموعد",
+  "completeAppointment": "إنهاء الموعد",
+  "cancelAppointment": "إلغاء الموعد",
+  "confirmCancelAppointment": "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟",
+  "confirm": "تأكيد",
+  "todaysAppointmentsFlow": "تدفق مواعيد اليوم",
+  "waiting": "في الانتظار",
+  "inProgress": "قيد التقدم",
+  "completed": "مكتمل"
 }

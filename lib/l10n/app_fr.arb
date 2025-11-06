@@ -164,5 +164,14 @@
   "enterCurrentPin": "Saisir le code PIN actuel",
   "pinChangedSuccessfully": "Code PIN changé avec succès",
   "restoreFromLocalBackup": "Restaurer depuis la sauvegarde locale",
-  "pinCode": "Code PIN"
+  "pinCode": "Code PIN",
+  "startAppointment": "Démarrer le rendez-vous",
+  "completeAppointment": "Terminer le rendez-vous",
+  "cancelAppointment": "Annuler le rendez-vous",
+  "confirmCancelAppointment": "Êtes-vous sûr de vouloir annuler ce rendez-vous ?",
+  "confirm": "Confirmer",
+  "todaysAppointmentsFlow": "Flux des rendez-vous d'aujourd'hui",
+  "waiting": "En attente",
+  "inProgress": "En cours",
+  "completed": "Terminé"
 }

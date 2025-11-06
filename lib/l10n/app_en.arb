@@ -164,5 +164,14 @@
   "enterCurrentPin": "Enter Current PIN",
   "pinChangedSuccessfully": "PIN changed successfully",
   "restoreFromLocalBackup": "Restore from Local Backup",
-  "pinCode": "PIN Code"
+  "pinCode": "PIN Code",
+  "startAppointment": "Start Appointment",
+  "completeAppointment": "Complete Appointment",
+  "cancelAppointment": "Cancel Appointment",
+  "confirmCancelAppointment": "Are you sure you want to cancel this appointment?",
+  "confirm": "Confirm",
+  "todaysAppointmentsFlow": "Today's Appointments Flow",
+  "waiting": "Waiting",
+  "inProgress": "In Progress",
+  "completed": "Completed"
 }

@@ -93,4 +93,18 @@ class PatientRepository {
       return null;
     }
   }
+
+  Future<Patient?> getPatientById(int id) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Patient.fromJson(maps.first);
+    } else {
+      return null;
+    }
+  }
 }

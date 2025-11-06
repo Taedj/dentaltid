@@ -510,4 +510,32 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get pinCode => 'رقم التعريف الشخصي';
+
+  @override
+  String get startAppointment => 'بدء الموعد';
+
+  @override
+  String get completeAppointment => 'إنهاء الموعد';
+
+  @override
+  String get cancelAppointment => 'إلغاء الموعد';
+
+  @override
+  String get confirmCancelAppointment =>
+      'هل أنت متأكد أنك تريد إلغاء هذا الموعد؟';
+
+  @override
+  String get confirm => 'تأكيد';
+
+  @override
+  String get todaysAppointmentsFlow => 'تدفق مواعيد اليوم';
+
+  @override
+  String get waiting => 'في الانتظار';
+
+  @override
+  String get inProgress => 'قيد التقدم';
+
+  @override
+  String get completed => 'مكتمل';
 }

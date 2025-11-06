@@ -3,7 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 5;
+  static const int _databaseVersion = 6;
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -60,6 +60,11 @@ class DatabaseService {
         'ALTER TABLE transactions ADD COLUMN paymentMethod TEXT',
       );
     }
+    if (oldVersion < 6) {
+      await db.execute(
+        'ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT \'waiting\'',
+      );
+    }
   }
 
   Future<void> close() async {
@@ -75,7 +80,8 @@ class DatabaseService {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patientId INTEGER,
         date TEXT,
-        time TEXT
+        time TEXT,
+        status TEXT DEFAULT 'waiting'
       )
       ''');
     await db.execute('''

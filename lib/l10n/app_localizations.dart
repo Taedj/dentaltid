@@ -1095,6 +1095,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'PIN Code'**
   String get pinCode;
+
+  /// No description provided for @startAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Appointment'**
+  String get startAppointment;
+
+  /// No description provided for @completeAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Appointment'**
+  String get completeAppointment;
+
+  /// No description provided for @cancelAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Appointment'**
+  String get cancelAppointment;
+
+  /// No description provided for @confirmCancelAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this appointment?'**
+  String get confirmCancelAppointment;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @todaysAppointmentsFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Appointments Flow'**
+  String get todaysAppointmentsFlow;
+
+  /// No description provided for @waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting'**
+  String get waiting;
+
+  /// No description provided for @inProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress'**
+  String get inProgress;
+
+  /// No description provided for @completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completed;
 }
 
 class _AppLocalizationsDelegate

@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -139,35 +141,35 @@ class HomeScreen extends ConsumerWidget {
                           width: cardWidth,
                           height: cardHeight,
                           child: _DashboardCard(
-                            title: l10n.upcomingAppointments,
-                            icon: Icons.calendar_today,
+                            title: l10n.todaysAppointmentsFlow,
+                            icon: Icons.access_time,
                             gradientColors: [
-                              Colors.green.shade300,
-                              Colors.green.shade700,
+                              Colors.teal.shade300,
+                              Colors.teal.shade700,
                             ],
-                            child: ref
-                                .watch(upcomingAppointmentsProvider)
-                                .when(
-                                  data: (appointments) => Text(
-                                    appointments.length.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  loading: () =>
-                                      const CircularProgressIndicator(
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                      ),
-                                  error: (e, s) => const Icon(
-                                    Icons.error,
-                                    color: Colors.white,
-                                  ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildAppointmentStatusText(
+                                  context,
+                                  l10n.waiting,
+                                  ref.watch(waitingAppointmentsProvider),
+                                  AppointmentStatus.waiting,
                                 ),
+                                _buildAppointmentStatusText(
+                                  context,
+                                  l10n.inProgress,
+                                  ref.watch(inProgressAppointmentsProvider),
+                                  AppointmentStatus.inProgress,
+                                ),
+                                _buildAppointmentStatusText(
+                                  context,
+                                  l10n.completed,
+                                  ref.watch(completedAppointmentsProvider),
+                                  AppointmentStatus.completed,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ],
@@ -228,44 +230,6 @@ class HomeScreen extends ConsumerWidget {
                                     color: Colors.white,
                                   ),
                                 ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: cardWidth,
-                          height: cardHeight,
-                          child: _DashboardCard(
-                            title: l10n.quickActions,
-                            icon: Icons.touch_app,
-                            gradientColors: [
-                              Colors.orange.shade300,
-                              Colors.orange.shade700,
-                            ],
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.add,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => context.go('/patients/add'),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.search,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => context.go('/patients'),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.settings,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () => context.go('/settings'),
-                                ),
-                              ],
-                            ),
                           ),
                         ),
                         SizedBox(
@@ -350,6 +314,38 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAppointmentStatusText(
+    BuildContext context,
+    String title,
+    AsyncValue<List<Appointment>> appointmentsAsyncValue,
+    AppointmentStatus status,
+  ) {
+    return appointmentsAsyncValue.when(
+      data: (appointments) => InkWell(
+        onTap: () {
+          // Navigate to appointments screen with filter
+          context.go('/appointments', extra: status);
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0),
+          child: Text(
+            '$title: ${appointments.length}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ),
+      loading: () => const CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(
+          Colors.white,
+        ),
+      ),
+      error: (e, s) => const Icon(Icons.error, color: Colors.white),
     );
   }
 }
