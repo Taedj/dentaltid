@@ -71,10 +71,7 @@ class AppointmentRepository {
     }
   }
 
-  Future<void> updateAppointmentStatus(
-    int id,
-    AppointmentStatus status,
-  ) async {
+  Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
     final db = await _databaseService.database;
     await db.update(
       _tableName,
@@ -89,11 +86,60 @@ class AppointmentRepository {
     AppointmentStatus status,
   ) async {
     final db = await _databaseService.database;
-    final dateString = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'date(date) = ? AND status = ?',
-      whereArgs: [dateString, status.toString()],
+      where: 'date >= ? AND date < ? AND status = ?',
+      whereArgs: [
+        startOfDay.toIso8601String(),
+        endOfDay.toIso8601String(),
+        status.toString(),
+      ],
+      orderBy: 'time ASC',
+    );
+    return List.generate(maps.length, (i) {
+      return Appointment.fromJson(maps[i]);
+    });
+  }
+
+  Future<List<Appointment>> getTodaysAppointments() async {
+    final db = await _databaseService.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endOfDay = today.add(const Duration(days: 1));
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'date >= ? AND date < ?',
+      whereArgs: [today.toIso8601String(), endOfDay.toIso8601String()],
+      orderBy: 'time ASC',
+    );
+    return List.generate(maps.length, (i) {
+      return Appointment.fromJson(maps[i]);
+    });
+  }
+
+  Future<List<Appointment>> getTodaysAppointmentsForEmergencyPatients(
+    List<int> emergencyPatientIds,
+  ) async {
+    if (emergencyPatientIds.isEmpty) return [];
+
+    final db = await _databaseService.database;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final endOfDay = today.add(const Duration(days: 1));
+
+    final placeholders = List.filled(emergencyPatientIds.length, '?').join(',');
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'date >= ? AND date < ? AND patientId IN ($placeholders)',
+      whereArgs: [
+        today.toIso8601String(),
+        endOfDay.toIso8601String(),
+        ...emergencyPatientIds,
+      ],
       orderBy: 'time ASC',
     );
     return List.generate(maps.length, (i) {

@@ -1,4 +1,4 @@
-enum SubscriptionPlan { trial, basic, professional, clinic, enterprise }
+enum SubscriptionPlan { free, trial, basic, professional, clinic, enterprise }
 
 enum SubscriptionStatus { active, expired, cancelled, suspended }
 

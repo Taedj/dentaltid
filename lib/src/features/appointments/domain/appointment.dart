@@ -16,21 +16,21 @@ class Appointment {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'patientId': patientId,
-        'date': date.toIso8601String(),
-        'time': time,
-        'status': status.toString(),
-      };
+    'id': id,
+    'patientId': patientId,
+    'date': date.toIso8601String(),
+    'time': time,
+    'status': status.toString(),
+  };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
-        id: json['id'],
-        patientId: json['patientId'],
-        date: DateTime.parse(json['date']),
-        time: json['time'],
-        status: AppointmentStatus.values.firstWhere(
-          (e) => e.toString() == json['status'],
-          orElse: () => AppointmentStatus.waiting,
-        ),
-      );
+    id: json['id'],
+    patientId: json['patientId'],
+    date: DateTime.parse(json['date']),
+    time: json['time'],
+    status: AppointmentStatus.values.firstWhere(
+      (e) => e.toString() == json['status'],
+      orElse: () => AppointmentStatus.waiting,
+    ),
+  );
 }

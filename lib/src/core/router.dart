@@ -43,7 +43,9 @@ final router = GoRouter(
           path: '/appointments',
           builder: (context, state) {
             if (state.extra is AppointmentStatus) {
-              return AppointmentsScreen(status: state.extra as AppointmentStatus);
+              return AppointmentsScreen(
+                status: state.extra as AppointmentStatus,
+              );
             } else {
               return const AppointmentsScreen();
             }

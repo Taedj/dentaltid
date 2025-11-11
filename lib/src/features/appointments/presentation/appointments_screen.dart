@@ -107,7 +107,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(77),
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withAlpha(77),
               ),
               onChanged: (value) {
                 setState(() {
@@ -127,11 +129,14 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                       appointment.date.toString().contains(_searchQuery) ||
                       appointment.time.contains(_searchQuery);
 
-                  final isUpcoming = !_showUpcomingOnly ||
+                  final isUpcoming =
+                      !_showUpcomingOnly ||
                       (appointment.status != AppointmentStatus.completed &&
                           appointment.status != AppointmentStatus.cancelled);
 
-                  final statusMatch = _statusFilter == null || appointment.status == _statusFilter;
+                  final statusMatch =
+                      _statusFilter == null ||
+                      appointment.status == _statusFilter;
 
                   return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
@@ -160,7 +165,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   itemCount: filteredAppointments.length,
                   itemBuilder: (context, index) {
                     final appointment = filteredAppointments[index];
-                    final patientFuture = ref.watch(patientProvider(appointment.patientId));
+                    final patientFuture = ref.watch(
+                      patientProvider(appointment.patientId),
+                    );
 
                     Color cardColor;
                     IconData leadingIcon;
@@ -181,13 +188,17 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                         statusColor = Colors.orange;
                         break;
                       case AppointmentStatus.completed:
-                        cardColor = Theme.of(context).colorScheme.surface.withAlpha(128);
+                        cardColor = Theme.of(
+                          context,
+                        ).colorScheme.surface.withAlpha(128);
                         leadingIcon = Icons.check_circle;
                         iconColor = Colors.green;
                         statusColor = Colors.green;
                         break;
                       case AppointmentStatus.cancelled:
-                        cardColor = Theme.of(context).colorScheme.surface.withAlpha(128);
+                        cardColor = Theme.of(
+                          context,
+                        ).colorScheme.surface.withAlpha(128);
                         leadingIcon = Icons.cancel;
                         iconColor = Theme.of(context).colorScheme.error;
                         statusColor = Colors.red;
@@ -209,17 +220,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                       ),
                       color: cardColor,
                       child: ListTile(
-                        leading: Icon(
-                          leadingIcon,
-                          color: iconColor,
-                          size: 32,
-                        ),
+                        leading: Icon(leadingIcon, color: iconColor, size: 32),
                         title: patientFuture.when(
                           data: (patient) => Text(
                             patient?.name ?? 'Unknown Patient',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           loading: () => const Text('Loading...'),
                           error: (err, stack) => const Text('Error'),
@@ -241,72 +246,90 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                               label: Text(appointment.status.name),
                               backgroundColor: statusColor.withAlpha(51),
                               labelStyle: TextStyle(color: statusColor),
-                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             if (appointment.status == AppointmentStatus.waiting)
                               IconButton(
-                                icon: const Icon(Icons.play_arrow, color: Colors.green),
+                                icon: const Icon(
+                                  Icons.play_arrow,
+                                  color: Colors.green,
+                                ),
                                 onPressed: () async {
                                   if (appointment.id != null) {
-                                    await appointmentService.updateAppointmentStatus(
-                                      appointment.id!,
-                                      AppointmentStatus.inProgress,
-                                    );
+                                    await appointmentService
+                                        .updateAppointmentStatus(
+                                          appointment.id!,
+                                          AppointmentStatus.inProgress,
+                                        );
                                     ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(waitingAppointmentsProvider);
-                                    ref.invalidate(inProgressAppointmentsProvider);
+                                    ref.invalidate(todaysAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.startAppointment,
                               ),
-                            if (appointment.status == AppointmentStatus.inProgress)
+                            if (appointment.status ==
+                                AppointmentStatus.inProgress)
                               IconButton(
-                                icon: const Icon(Icons.check, color: Colors.blue),
+                                icon: const Icon(
+                                  Icons.check,
+                                  color: Colors.blue,
+                                ),
                                 onPressed: () async {
                                   if (appointment.id != null) {
-                                    await appointmentService.updateAppointmentStatus(
-                                      appointment.id!,
-                                      AppointmentStatus.completed,
-                                    );
+                                    await appointmentService
+                                        .updateAppointmentStatus(
+                                          appointment.id!,
+                                          AppointmentStatus.completed,
+                                        );
                                     ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(inProgressAppointmentsProvider);
-                                    ref.invalidate(completedAppointmentsProvider);
+                                    ref.invalidate(todaysAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.completeAppointment,
                               ),
-                            if (appointment.status != AppointmentStatus.completed &&
-                                appointment.status != AppointmentStatus.cancelled)
+                            if (appointment.status !=
+                                    AppointmentStatus.completed &&
+                                appointment.status !=
+                                    AppointmentStatus.cancelled)
                               IconButton(
-                                icon: const Icon(Icons.cancel, color: Colors.red),
+                                icon: const Icon(
+                                  Icons.cancel,
+                                  color: Colors.red,
+                                ),
                                 onPressed: () async {
                                   final confirmed = await showDialog<bool>(
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: Text(l10n.cancelAppointment),
-                                      content: Text(l10n.confirmCancelAppointment),
+                                      content: Text(
+                                        l10n.confirmCancelAppointment,
+                                      ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(false),
                                           child: Text(l10n.cancel),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
+                                          onPressed: () =>
+                                              Navigator.of(context).pop(true),
                                           child: Text(l10n.confirm),
                                         ),
                                       ],
                                     ),
                                   );
-                                  if (confirmed == true && appointment.id != null) {
-                                    await appointmentService.updateAppointmentStatus(
-                                      appointment.id!,
-                                      AppointmentStatus.cancelled,
-                                    );
+                                  if (confirmed == true &&
+                                      appointment.id != null) {
+                                    await appointmentService
+                                        .updateAppointmentStatus(
+                                          appointment.id!,
+                                          AppointmentStatus.cancelled,
+                                        );
                                     ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(waitingAppointmentsProvider);
-                                    ref.invalidate(inProgressAppointmentsProvider);
-                                    ref.invalidate(completedAppointmentsProvider);
+                                    ref.invalidate(todaysAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.cancelAppointment,
@@ -341,6 +364,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     appointment.id!,
                                   );
                                   ref.invalidate(appointmentsProvider);
+                                  ref.invalidate(todaysAppointmentsProvider);
                                 }
                               },
                             ),

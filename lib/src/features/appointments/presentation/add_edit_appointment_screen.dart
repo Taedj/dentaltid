@@ -1,4 +1,3 @@
-import 'package:dentaltid/src/core/config.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
@@ -163,15 +162,22 @@ class _AddEditAppointmentScreenState
                   if (!timeRegex.hasMatch(value)) {
                     return l10n.invalidTimeFormat;
                   }
-                  final match = timeRegex.firstMatch(value)!;
-                  final hour = int.parse(match.group(1)!);
-                  if (hour < AppConfig.workingHoursStart ||
-                      hour >= AppConfig.workingHoursEnd) {
-                    return l10n.invalidTime(
-                      AppConfig.workingHoursStart.toString(),
-                      AppConfig.workingHoursEnd.toString(),
-                    );
+
+                  // Check if the combined date and time is in the future
+                  if (_dateController.text.isNotEmpty) {
+                    try {
+                      final dateTimeString = '${_dateController.text} $value';
+                      final appointmentDateTime = DateTime.parse(
+                        dateTimeString,
+                      );
+                      if (appointmentDateTime.isBefore(DateTime.now())) {
+                        return 'Appointment time cannot be in the past';
+                      }
+                    } catch (e) {
+                      // If parsing fails, let the date validation handle it
+                    }
                   }
+
                   return null;
                 },
               ),
@@ -198,6 +204,7 @@ class _AddEditAppointmentScreenState
                           );
                         }
                         ref.invalidate(appointmentsProvider);
+                        ref.invalidate(todaysAppointmentsProvider);
                         if (context.mounted) {
                           Navigator.pop(context);
                         }

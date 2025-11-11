@@ -23,8 +23,10 @@ class PatientRepository {
 
     switch (filter) {
       case PatientFilter.today:
-        where = 'date(createdAt) = date(?)';
-        whereArgs = [now.toIso8601String()];
+        final startOfDay = DateTime(now.year, now.month, now.day);
+        final endOfDay = startOfDay.add(const Duration(days: 1));
+        where = 'createdAt >= ? AND createdAt < ?';
+        whereArgs = [startOfDay.toIso8601String(), endOfDay.toIso8601String()];
         break;
       case PatientFilter.thisWeek:
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));

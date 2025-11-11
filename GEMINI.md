@@ -70,6 +70,13 @@ The goal is to create a modern, intuitive, and visually appealing user interface
     - Fixed `prefer_interpolation_to_compose_strings` in `lib/src/core/backup_service.dart` by ensuring correct string interpolation.
     - Fixed `deprecated_member_use` in `lib/src/features/patients/presentation/add_edit_patient_screen.dart` by replacing `value` with `initialValue` in `DropdownButtonFormField`.
 - Ran `dart fix --apply` and `dart format .` to automatically apply fixes and format the code.
+- **Resolved `flutter analyze` issues in `lib/src/features/dashboard/presentation/home_screen.dart`**:
+    - Removed unused imports: `currency_provider.dart` and `appointment.dart`.
+    - Removed unused local variable `emergencyAsync`.
+    - Removed unused private method `_flipCard`.
+    - Added curly braces to an `if` statement to resolve `curly_braces_in_flow_control_structures` lint.
+    - Re-added the definition for `todaysAppointmentsAsync` which was inadvertently removed.
+- Ran `dart format .` to ensure consistent code formatting.
 - Verified that `flutter analyze` now reports "No issues found!".
 - **Enhanced Finance Chart:**
     - Improved the `FinanceChart` widget in `lib/src/features/finance/presentation/finance_chart.dart` with the following features:

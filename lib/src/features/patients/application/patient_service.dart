@@ -13,6 +13,7 @@ final patientServiceProvider = Provider<PatientService>((ref) {
   return PatientService(
     ref.watch(patientRepositoryProvider),
     ref.watch(auditServiceProvider),
+    ref,
   );
 });
 
@@ -24,10 +25,7 @@ final patientsProvider = FutureProvider.family<List<Patient>, PatientFilter>((
   return service.getPatients(filter);
 });
 
-final patientProvider = FutureProvider.family<Patient?, int>((
-  ref,
-  id,
-) async {
+final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
   final service = ref.watch(patientServiceProvider);
   return service.getPatientById(id);
 });
@@ -35,8 +33,9 @@ final patientProvider = FutureProvider.family<Patient?, int>((
 class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
+  final Ref _ref;
 
-  PatientService(this._repository, this._auditService);
+  PatientService(this._repository, this._auditService, this._ref);
 
   Future<void> addPatient(Patient patient) async {
     final existingPatient = await _repository.getPatientByNameAndFamilyName(
@@ -51,6 +50,10 @@ class PatientService {
       AuditAction.createPatient,
       details: 'Patient ${patient.name} ${patient.familyName} added.',
     );
+    // Invalidate all patient providers to refresh the UI
+    _ref.invalidate(patientsProvider(PatientFilter.all));
+    _ref.invalidate(patientsProvider(PatientFilter.today));
+    _ref.invalidate(patientsProvider(PatientFilter.emergency));
   }
 
   Future<List<Patient>> getPatients([
@@ -69,6 +72,10 @@ class PatientService {
       AuditAction.updatePatient,
       details: 'Patient ${patient.name} ${patient.familyName} updated.',
     );
+    // Invalidate all patient providers to refresh the UI
+    _ref.invalidate(patientsProvider(PatientFilter.all));
+    _ref.invalidate(patientsProvider(PatientFilter.today));
+    _ref.invalidate(patientsProvider(PatientFilter.emergency));
   }
 
   Future<void> deletePatient(int id) async {
@@ -77,5 +84,9 @@ class PatientService {
       AuditAction.deletePatient,
       details: 'Patient with ID $id deleted.',
     );
+    // Invalidate all patient providers to refresh the UI
+    _ref.invalidate(patientsProvider(PatientFilter.all));
+    _ref.invalidate(patientsProvider(PatientFilter.today));
+    _ref.invalidate(patientsProvider(PatientFilter.emergency));
   }
 }

@@ -1,6 +1,8 @@
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/appointments/data/appointment_repository.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
+import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
@@ -14,6 +16,7 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
   return AppointmentService(
     ref.watch(appointmentRepositoryProvider),
     ref.watch(auditServiceProvider),
+    ref,
   );
 });
 
@@ -29,26 +32,72 @@ final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
   return service.getUpcomingAppointments();
 });
 
-final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
   final service = ref.watch(appointmentServiceProvider);
-  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.waiting);
+  return service.getAppointmentsByStatusForDate(
+    DateTime.now(),
+    AppointmentStatus.waiting,
+  );
 });
 
-final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
   final service = ref.watch(appointmentServiceProvider);
-  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.inProgress);
+  return service.getAppointmentsByStatusForDate(
+    DateTime.now(),
+    AppointmentStatus.inProgress,
+  );
 });
 
-final completedAppointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+final completedAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
   final service = ref.watch(appointmentServiceProvider);
-  return service.getAppointmentsByStatusForDate(DateTime.now(), AppointmentStatus.completed);
+  return service.getAppointmentsByStatusForDate(
+    DateTime.now(),
+    AppointmentStatus.completed,
+  );
+});
+
+final todaysAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
+  final service = ref.watch(appointmentServiceProvider);
+  return service.getTodaysAppointments();
+});
+
+final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
+  final emergencyPatientsAsync = ref.watch(
+    patientsProvider(PatientFilter.emergency),
+  );
+  return emergencyPatientsAsync.when(
+    data: (emergencyPatients) {
+      if (emergencyPatients.isEmpty) return Future.value([]);
+      final service = ref.watch(appointmentServiceProvider);
+      final emergencyPatientIds = emergencyPatients
+          .where((p) => p.id != null)
+          .map((p) => p.id!)
+          .toList();
+      return service.getTodaysAppointmentsForEmergencyPatients(
+        emergencyPatientIds,
+      );
+    },
+    loading: () => Future.value([]),
+    error: (error, stack) => Future.value([]),
+  );
 });
 
 class AppointmentService {
   final AppointmentRepository _repository;
   final AuditService _auditService;
+  final Ref _ref;
 
-  AppointmentService(this._repository, this._auditService);
+  AppointmentService(this._repository, this._auditService, this._ref);
 
   Future<void> addAppointment(Appointment appointment) async {
     final existingAppointment = await _repository.getAppointmentByDetails(
@@ -67,8 +116,14 @@ class AppointmentService {
       details:
           'Appointment for patient ${appointment.patientId} on ${appointment.date} at ${appointment.time} created.',
     );
-    // Invalidate the provider to refresh the UI
-    // This is done in the UI layer after the operation
+    // Invalidate all appointment providers to refresh the UI
+    _ref.invalidate(appointmentsProvider);
+    _ref.invalidate(upcomingAppointmentsProvider);
+    _ref.invalidate(waitingAppointmentsProvider);
+    _ref.invalidate(inProgressAppointmentsProvider);
+    _ref.invalidate(completedAppointmentsProvider);
+    _ref.invalidate(todaysAppointmentsProvider);
+    _ref.invalidate(todaysEmergencyAppointmentsProvider);
   }
 
   Future<List<Appointment>> getAppointments() async {
@@ -86,8 +141,13 @@ class AppointmentService {
       details:
           'Appointment for patient ${appointment.patientId} on ${appointment.date} at ${appointment.time} updated.',
     );
-    // Invalidate the provider to refresh the UI
-    // This is done in the UI layer after the operation
+    // Invalidate all appointment providers to refresh the UI
+    _ref.invalidate(appointmentsProvider);
+    _ref.invalidate(upcomingAppointmentsProvider);
+    _ref.invalidate(waitingAppointmentsProvider);
+    _ref.invalidate(inProgressAppointmentsProvider);
+    _ref.invalidate(completedAppointmentsProvider);
+    _ref.invalidate(todaysAppointmentsProvider);
   }
 
   Future<void> deleteAppointment(int id) async {
@@ -96,8 +156,13 @@ class AppointmentService {
       AuditAction.deleteAppointment,
       details: 'Appointment with ID $id deleted.',
     );
-    // Invalidate the provider to refresh the UI
-    // This is done in the UI layer after the operation
+    // Invalidate all appointment providers to refresh the UI
+    _ref.invalidate(appointmentsProvider);
+    _ref.invalidate(upcomingAppointmentsProvider);
+    _ref.invalidate(waitingAppointmentsProvider);
+    _ref.invalidate(inProgressAppointmentsProvider);
+    _ref.invalidate(completedAppointmentsProvider);
+    _ref.invalidate(todaysAppointmentsProvider);
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
@@ -106,6 +171,13 @@ class AppointmentService {
       AuditAction.updateAppointment,
       details: 'Appointment with ID $id status updated to ${status.name}.',
     );
+    // Invalidate all appointment providers to refresh the UI
+    _ref.invalidate(appointmentsProvider);
+    _ref.invalidate(upcomingAppointmentsProvider);
+    _ref.invalidate(waitingAppointmentsProvider);
+    _ref.invalidate(inProgressAppointmentsProvider);
+    _ref.invalidate(completedAppointmentsProvider);
+    _ref.invalidate(todaysAppointmentsProvider);
   }
 
   Future<List<Appointment>> getAppointmentsByStatusForDate(
@@ -113,5 +185,17 @@ class AppointmentService {
     AppointmentStatus status,
   ) async {
     return await _repository.getAppointmentsByStatusForDate(date, status);
+  }
+
+  Future<List<Appointment>> getTodaysAppointments() async {
+    return await _repository.getTodaysAppointments();
+  }
+
+  Future<List<Appointment>> getTodaysAppointmentsForEmergencyPatients(
+    List<int> emergencyPatientIds,
+  ) async {
+    return await _repository.getTodaysAppointmentsForEmergencyPatients(
+      emergencyPatientIds,
+    );
   }
 }

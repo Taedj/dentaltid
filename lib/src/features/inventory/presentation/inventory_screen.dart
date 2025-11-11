@@ -181,6 +181,26 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           controller: _expirationDateController,
                           decoration: InputDecoration(
                             labelText: l10n.expirationDate,
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.calendar_today),
+                              onPressed: () async {
+                                final DateTime? picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: DateTime.now().add(
+                                    const Duration(days: 30),
+                                  ), // Default to 30 days from now
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime(2101),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    _expirationDateController.text = picked
+                                        .toIso8601String()
+                                        .split('T')[0];
+                                  });
+                                }
+                              },
+                            ),
                           ),
                           keyboardType: TextInputType.datetime,
                           validator: (value) {
@@ -403,7 +423,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('${l10n.error}${e.toString()}'),
+                                      content: Text(
+                                        '${l10n.error}${e.toString()}',
+                                      ),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -418,7 +440,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('${l10n.error}$error')),
+              error: (error, stack) =>
+                  Center(child: Text('${l10n.error}$error')),
             ),
           ),
         ],

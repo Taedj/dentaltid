@@ -30,7 +30,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final FirebaseService _firebaseService = FirebaseService();
 
   AuthMode _authMode = AuthMode.login;
-  SubscriptionPlan _selectedPlan = SubscriptionPlan.professional;
   bool _isLoading = false;
   bool _acceptTerms = false;
 
@@ -73,10 +72,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             email: user.email!,
             clinicName: _clinicNameController.text,
             dentistName: _dentistNameController.text,
-            plan: _selectedPlan,
+            plan: SubscriptionPlan.free,
             licenseKey: licenseKey,
             status: SubscriptionStatus.active,
-            licenseExpiry: DateTime.now().add(const Duration(days: 30)),
+            licenseExpiry: DateTime.now().add(
+              const Duration(days: 36500),
+            ), // 100 years
             createdAt: DateTime.now(),
             lastLogin: DateTime.now(),
             lastSync: DateTime.now(),
@@ -85,24 +86,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await _firebaseService.createUserProfile(userProfile, licenseKey);
         }
       } else {
-        final User? user = await _firebaseService.signInWithEmailAndPassword(
+        await _firebaseService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
-
-        if (user != null) {
-          final license = await _firebaseService.getUserLicense(user.uid);
-          if (license == null || license.isEmpty) {
-            throw Exception('No valid license found for this user.');
-          }
-        }
       }
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isAuthenticated', true);
       await prefs.setString('userRole', UserRole.dentist.toString());
 
-      ref.read(auditServiceProvider).logEvent(
+      ref
+          .read(auditServiceProvider)
+          .logEvent(
             _authMode == AuthMode.login
                 ? AuditAction.login
                 : AuditAction.createPatient, // Placeholder
@@ -124,10 +120,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         message = 'Wrong password provided for that user.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     } catch (e) {
       if (mounted) {
@@ -154,62 +147,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
   }
 
-  Widget _buildPlanSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Choose Your Plan',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        ...SubscriptionPlan.values.map(
-          (plan) => RadioListTile<SubscriptionPlan>(
-            title: Text(_getPlanDisplayName(plan)),
-            subtitle: Text(_getPlanDescription(plan)),
-            value: plan,
-            // ignore: deprecated_member_use
-            groupValue: _selectedPlan,
-            // ignore: deprecated_member_use
-            onChanged: (value) {
-              setState(() => _selectedPlan = value!);
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _getPlanDisplayName(SubscriptionPlan plan) {
-    switch (plan) {
-      case SubscriptionPlan.trial:
-        return 'Trial (30 Days)';
-      case SubscriptionPlan.basic:
-        return 'Basic Plan';
-      case SubscriptionPlan.professional:
-        return 'Professional Plan';
-      case SubscriptionPlan.clinic:
-        return 'Clinic Plan';
-      case SubscriptionPlan.enterprise:
-        return 'Enterprise Plan';
-    }
-  }
-
-  String _getPlanDescription(SubscriptionPlan plan) {
-    switch (plan) {
-      case SubscriptionPlan.trial:
-        return '\$0 - Limited features for 30 days';
-      case SubscriptionPlan.basic:
-        return '\$29/month - Up to 100 patients';
-      case SubscriptionPlan.professional:
-        return '\$79/month - Unlimited patients, advanced features';
-      case SubscriptionPlan.clinic:
-        return '\$149/month - Multi-user support';
-      case SubscriptionPlan.enterprise:
-        return '\$299/month - Custom integrations, priority support';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -221,10 +158,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              colorScheme.primary,
-              colorScheme.primaryContainer,
-            ],
+            colors: [colorScheme.primary, colorScheme.primaryContainer],
           ),
         ),
         child: SafeArea(
@@ -256,7 +190,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Text(
                         'Professional Dental Management',
                         style: TextStyle(
-color: colorScheme.onPrimary.withAlpha(178),
+                          color: colorScheme.onPrimary.withAlpha(178),
                         ),
                       ),
                     ],
@@ -384,10 +318,6 @@ color: colorScheme.onPrimary.withAlpha(178),
                           ),
                           const SizedBox(height: 24),
 
-                          // Plan Selection
-                          _buildPlanSelector(),
-                          const SizedBox(height: 16),
-
                           // Terms and Conditions
                           CheckboxListTile(
                             title: const Text(
@@ -426,7 +356,7 @@ color: colorScheme.onPrimary.withAlpha(178),
                               : Text(
                                   _authMode == AuthMode.login
                                       ? 'Login'
-                                      : 'Create Account & Pay',
+                                      : 'Create Free Account',
                                   style: const TextStyle(fontSize: 16),
                                 ),
                         ),

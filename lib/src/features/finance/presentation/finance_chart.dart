@@ -114,16 +114,8 @@ class FinanceChart extends ConsumerWidget {
         BarChartGroupData(
           x: i,
           barRods: [
-            BarChartRodData(
-              toY: paidAmount,
-              color: Colors.blue,
-              width: 16,
-            ),
-            BarChartRodData(
-              toY: unpaidAmount,
-              color: Colors.red,
-              width: 16,
-            ),
+            BarChartRodData(toY: paidAmount, color: Colors.blue, width: 16),
+            BarChartRodData(toY: unpaidAmount, color: Colors.red, width: 16),
           ],
         ),
       );
@@ -187,10 +179,7 @@ class FinanceChart extends ConsumerWidget {
               final seriesName = rodIndex == 0 ? 'Paid' : 'Unpaid';
               return BarTooltipItem(
                 '$seriesName\n$formattedDate\n$amount',
-                TextStyle(
-                  color: rod.color,
-                  fontWeight: FontWeight.bold,
-                ),
+                TextStyle(color: rod.color, fontWeight: FontWeight.bold),
               );
             },
           ),
