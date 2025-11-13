@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
+import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
 class PatientsScreen extends ConsumerStatefulWidget {
@@ -69,90 +71,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       final file = File(outputFile);
       await file.writeAsString(csv);
     }
-  }
-
-  Future<void> _showEditDialog(
-    BuildContext context,
-    WidgetRef ref,
-    Patient patient,
-    String field,
-    String currentValue,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final TextEditingController controller = TextEditingController(
-      text: currentValue,
-    );
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            '${l10n.edit} ${field[0].toUpperCase()}${field.substring(1)}',
-          ),
-          content: TextFormField(controller: controller, autofocus: true),
-          actions: <Widget>[
-            TextButton(
-              child: Text(l10n.cancel),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(l10n.save),
-              onPressed: () async {
-                final patientService = ref.read(patientServiceProvider);
-                Patient updatedPatient;
-                switch (field) {
-                  case 'name':
-                    updatedPatient = patient.copyWith(name: controller.text);
-                    break;
-                  case 'familyName':
-                    updatedPatient = patient.copyWith(
-                      familyName: controller.text,
-                    );
-                    break;
-                  case 'age':
-                    updatedPatient = patient.copyWith(
-                      age: int.tryParse(controller.text) ?? patient.age,
-                    );
-                    break;
-                  case 'healthState':
-                    updatedPatient = patient.copyWith(
-                      healthState: controller.text,
-                    );
-                    break;
-                  case 'diagnosis':
-                    updatedPatient = patient.copyWith(
-                      diagnosis: controller.text,
-                    );
-                    break;
-                  case 'treatment':
-                    updatedPatient = patient.copyWith(
-                      treatment: controller.text,
-                    );
-                    break;
-                  case 'payment':
-                    updatedPatient = patient.copyWith(
-                      payment:
-                          double.tryParse(controller.text) ?? patient.payment,
-                    );
-                    break;
-                  default:
-                    updatedPatient = patient;
-                }
-                await patientService.updatePatient(updatedPatient);
-                ref.invalidate(
-                  patientsProvider(_selectedFilter),
-                ); // Invalidate to refresh
-                if (context.mounted) {
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -257,32 +175,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     IconButton(
                                       icon: const Icon(Icons.delete),
                                       onPressed: () async {
-                                        final confirmed = await showDialog<bool>(
+                                        final confirmed =
+                                            await showDeleteConfirmationDialog(
                                           context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: Text(l10n.deletePatient),
-                                            content: Text(
-                                              l10n.confirmDeletePatient,
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(
-                                                  context,
-                                                ).pop(false),
-                                                child: Text(l10n.cancel),
-                                              ),
-                                              TextButton(
-                                                onPressed: () => Navigator.of(
-                                                  context,
-                                                ).pop(true),
-                                                child: Text(
-                                                  l10n.deletePatient.split(
-                                                    ' ',
-                                                  )[1],
-                                                ), // Just "Patient" for the button
-                                              ),
-                                            ],
-                                          ),
+                                          title: l10n.deletePatient,
+                                          content: l10n.confirmDeletePatient,
                                         );
                                         if (confirmed == true &&
                                             patient.id != null) {
@@ -355,92 +252,113 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                               ),
                               DataCell(Text((index + 1).toString())),
                               DataCell(
-                                Tooltip(
-                                  message: patient.healthAlerts.isNotEmpty
-                                      ? patient.healthAlerts
-                                      : l10n.noHealthAlerts,
-                                  child: InkWell(
-                                    onTap: () => _showEditDialog(
-                                      context,
-                                      ref,
-                                      patient,
-                                      'name',
-                                      patient.name,
-                                    ),
-                                    child: Text(patient.name),
-                                  ),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'name',
+                                  currentValue: patient.name,
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService
+                                        .updatePatient(p.copyWith(name: value));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'familyName',
-                                    patient.familyName,
-                                  ),
-                                  child: Text(patient.familyName),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'familyName',
+                                  currentValue: patient.familyName,
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(familyName: value));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'age',
-                                    patient.age.toString(),
-                                  ),
-                                  child: Text(patient.age.toString()),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'age',
+                                  currentValue: patient.age.toString(),
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(
+                                            age: int.tryParse(value) ?? p.age));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
+                                  isNumeric: true,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'healthState',
-                                    patient.healthState,
-                                  ),
-                                  child: Text(patient.healthState),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'healthState',
+                                  currentValue: patient.healthState,
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(healthState: value));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'diagnosis',
-                                    patient.diagnosis,
-                                  ),
-                                  child: Text(patient.diagnosis),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'diagnosis',
+                                  currentValue: patient.diagnosis,
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(diagnosis: value));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'treatment',
-                                    patient.treatment,
-                                  ),
-                                  child: Text(patient.treatment),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'treatment',
+                                  currentValue: patient.treatment,
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(treatment: value));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
                                 ),
                               ),
                               DataCell(
-                                InkWell(
-                                  onTap: () => _showEditDialog(
-                                    context,
-                                    ref,
-                                    patient,
-                                    'payment',
-                                    patient.payment.toString(),
-                                  ),
-                                  child: Text(patient.payment.toString()),
+                                EditablePatientField(
+                                  patient: patient,
+                                  field: 'payment',
+                                  currentValue: patient.payment.toString(),
+                                  onUpdate: (p, value) async {
+                                    final patientService =
+                                        ref.read(patientServiceProvider);
+                                    await patientService.updatePatient(
+                                        p.copyWith(
+                                            payment: double.tryParse(value) ??
+                                                p.payment));
+                                  },
+                                  patientsProvider: patientsProvider,
+                                  selectedFilter: _selectedFilter,
+                                  isNumeric: true,
                                 ),
                               ),
                               DataCell(
@@ -459,35 +377,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                       icon: const Icon(Icons.delete),
                                       onPressed: () async {
                                         final confirmed =
-                                            await showDialog<bool>(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title: Text(l10n.deletePatient),
-                                                content: Text(
-                                                  l10n.confirmDeletePatient,
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop(false),
-                                                    child: Text(l10n.cancel),
-                                                  ),
-                                                  TextButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(
-                                                          context,
-                                                        ).pop(true),
-                                                    child: Text(
-                                                      l10n.deletePatient.split(
-                                                        ' ',
-                                                      )[1],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
+                                            await showDeleteConfirmationDialog(
+                                          context: context,
+                                          title: l10n.deletePatient,
+                                          content: l10n.confirmDeletePatient,
+                                        );
                                         if (confirmed == true &&
                                             patient.id != null) {
                                           await patientService.deletePatient(

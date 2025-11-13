@@ -476,6 +476,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmDeletePatient => 'هل أنت متأكد أنك تريد حذف هذا المريض؟';
 
   @override
+  String get confirm => 'تأكيد';
+
+  @override
   String get enterNewPin => 'أدخل رقم التعريف الشخصي الجديد';
 
   @override
@@ -523,9 +526,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get confirmCancelAppointment =>
       'هل أنت متأكد أنك تريد إلغاء هذا الموعد؟';
-
-  @override
-  String get confirm => 'تأكيد';
 
   @override
   String get todaysAppointmentsFlow => 'تدفق مواعيد اليوم';

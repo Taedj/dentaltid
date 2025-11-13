@@ -1,4 +1,5 @@
 import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/core/exceptions.dart';
 import 'package:dentaltid/src/features/appointments/data/appointment_repository.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
@@ -16,7 +17,6 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
   return AppointmentService(
     ref.watch(appointmentRepositoryProvider),
     ref.watch(auditServiceProvider),
-    ref,
   );
 });
 
@@ -75,15 +75,16 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
   final emergencyPatientsAsync = ref.watch(
     patientsProvider(PatientFilter.emergency),
   );
+  final repository = ref.watch(appointmentRepositoryProvider);
+
   return emergencyPatientsAsync.when(
     data: (emergencyPatients) {
       if (emergencyPatients.isEmpty) return Future.value([]);
-      final service = ref.watch(appointmentServiceProvider);
       final emergencyPatientIds = emergencyPatients
           .where((p) => p.id != null)
           .map((p) => p.id!)
           .toList();
-      return service.getTodaysAppointmentsForEmergencyPatients(
+      return repository.getTodaysAppointmentsForEmergencyPatients(
         emergencyPatientIds,
       );
     },
@@ -95,35 +96,35 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
 class AppointmentService {
   final AppointmentRepository _repository;
   final AuditService _auditService;
-  final Ref _ref;
 
-  AppointmentService(this._repository, this._auditService, this._ref);
+  AppointmentService(this._repository, this._auditService);
 
   Future<void> addAppointment(Appointment appointment) async {
-    final existingAppointment = await _repository.getAppointmentByDetails(
-      appointment.patientId,
-      appointment.date,
-      appointment.time,
-    );
-    if (existingAppointment != null) {
-      throw Exception(
-        'An appointment for this patient at this date and time already exists.',
+    try {
+      final existingAppointment = await _repository.getAppointmentByDetails(
+        appointment.patientId,
+        appointment.dateTime,
       );
+      if (existingAppointment != null) {
+        throw DuplicateEntryException(
+          'An appointment for this patient at this date and time already exists.',
+          entity: 'Appointment',
+          duplicateValue:
+              'Patient ID: ${appointment.patientId}, DateTime: ${appointment.dateTime}',
+        );
+      }
+      await _repository.createAppointment(appointment);
+      _auditService.logEvent(
+        AuditAction.createAppointment,
+        details:
+            'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} created.',
+      );
+      // Provider invalidation is handled by the UI to avoid circular dependencies
+    } catch (e) {
+      // Log the error for debugging
+      ErrorHandler.logError(e);
+      rethrow;
     }
-    await _repository.createAppointment(appointment);
-    _auditService.logEvent(
-      AuditAction.createAppointment,
-      details:
-          'Appointment for patient ${appointment.patientId} on ${appointment.date} at ${appointment.time} created.',
-    );
-    // Invalidate all appointment providers to refresh the UI
-    _ref.invalidate(appointmentsProvider);
-    _ref.invalidate(upcomingAppointmentsProvider);
-    _ref.invalidate(waitingAppointmentsProvider);
-    _ref.invalidate(inProgressAppointmentsProvider);
-    _ref.invalidate(completedAppointmentsProvider);
-    _ref.invalidate(todaysAppointmentsProvider);
-    _ref.invalidate(todaysEmergencyAppointmentsProvider);
   }
 
   Future<List<Appointment>> getAppointments() async {
@@ -139,15 +140,9 @@ class AppointmentService {
     _auditService.logEvent(
       AuditAction.updateAppointment,
       details:
-          'Appointment for patient ${appointment.patientId} on ${appointment.date} at ${appointment.time} updated.',
+          'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} updated.',
     );
-    // Invalidate all appointment providers to refresh the UI
-    _ref.invalidate(appointmentsProvider);
-    _ref.invalidate(upcomingAppointmentsProvider);
-    _ref.invalidate(waitingAppointmentsProvider);
-    _ref.invalidate(inProgressAppointmentsProvider);
-    _ref.invalidate(completedAppointmentsProvider);
-    _ref.invalidate(todaysAppointmentsProvider);
+    // Provider invalidation is handled by the UI to avoid circular dependencies
   }
 
   Future<void> deleteAppointment(int id) async {
@@ -156,13 +151,7 @@ class AppointmentService {
       AuditAction.deleteAppointment,
       details: 'Appointment with ID $id deleted.',
     );
-    // Invalidate all appointment providers to refresh the UI
-    _ref.invalidate(appointmentsProvider);
-    _ref.invalidate(upcomingAppointmentsProvider);
-    _ref.invalidate(waitingAppointmentsProvider);
-    _ref.invalidate(inProgressAppointmentsProvider);
-    _ref.invalidate(completedAppointmentsProvider);
-    _ref.invalidate(todaysAppointmentsProvider);
+    // Provider invalidation is handled by the UI to avoid circular dependencies
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
@@ -171,20 +160,14 @@ class AppointmentService {
       AuditAction.updateAppointment,
       details: 'Appointment with ID $id status updated to ${status.name}.',
     );
-    // Invalidate all appointment providers to refresh the UI
-    _ref.invalidate(appointmentsProvider);
-    _ref.invalidate(upcomingAppointmentsProvider);
-    _ref.invalidate(waitingAppointmentsProvider);
-    _ref.invalidate(inProgressAppointmentsProvider);
-    _ref.invalidate(completedAppointmentsProvider);
-    _ref.invalidate(todaysAppointmentsProvider);
+    // Provider invalidation is handled by the UI to avoid circular dependencies
   }
 
   Future<List<Appointment>> getAppointmentsByStatusForDate(
-    DateTime date,
+    DateTime dateTime,
     AppointmentStatus status,
   ) async {
-    return await _repository.getAppointmentsByStatusForDate(date, status);
+    return await _repository.getAppointmentsByStatusForDate(dateTime, status);
   }
 
   Future<List<Appointment>> getTodaysAppointments() async {

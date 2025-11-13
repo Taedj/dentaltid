@@ -484,6 +484,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Êtes-vous sûr de vouloir supprimer ce patient ?';
 
   @override
+  String get confirm => 'Confirmer';
+
+  @override
   String get enterNewPin => 'Saisir le nouveau code PIN';
 
   @override
@@ -531,9 +534,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get confirmCancelAppointment =>
       'Êtes-vous sûr de vouloir annuler ce rendez-vous ?';
-
-  @override
-  String get confirm => 'Confirmer';
 
   @override
   String get todaysAppointmentsFlow => 'Flux des rendez-vous d\'aujourd\'hui';

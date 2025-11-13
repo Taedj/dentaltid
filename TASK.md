@@ -1,83 +1,71 @@
-# DentalTid - Implementation Strategy
+# Project Revision for Windows
 
-This is a live document outlining the step-by-step implementation strategy for the DentalTid project, based on the PRD.
+This document outlines the plan to revise the DentalTid project specifically for Windows, addressing various aspects of code quality, platform specificity, and functionality.
 
----
+## Plan
 
-### Phase 1: UI/UX, Local Database & Dashboard
+### 1. Initial Code Health Check
+- [x] Run `flutter analyze` to identify static analysis issues.
+- [x] Run `dart fix --apply` to automatically apply recommended fixes.
+- [x] Run `dart format .` to ensure consistent code formatting.
 
-**Objective:** Build the foundational structure of the application, including the main UI shell, local database, and a functional dashboard.
+### 2. Platform-Specific Code Review and Refinement (Windows Only)
+- [x] Identify and list all code and configuration files specific to non-Windows platforms (macOS, Linux, iOS, Android, web).
+  - Identified platform-specific directories: `android/`, `linux/`, `macos/`.
+  - `ios/` and `web/` directories were not found at the top level.
+- [x] Propose removal or conditional compilation for non-Windows platform code.
+  - Removed `android/`, `linux/`, and `macos/` directories.
+- [x] Verify Windows-specific configurations and dependencies.
+  - Confirmed that `flutter_secure_storage` is a federated plugin and will correctly use `flutter_secure_storage_windows` when building for Windows. No explicit removal of other platform-specific `flutter_secure_storage` dependencies is needed.
 
-**Steps:**
+### 3. In-depth Code Analysis and Refactoring
+#### 3.1. General Code Quality
+- [x] Scan for duplicate code blocks and refactor for reusability.
+  - Extracted delete confirmation dialog into a reusable function (`showDeleteConfirmationDialog`).
+  - Refactored editable patient fields in `DataTable` into a reusable widget (`EditablePatientField`) and removed `_showEditDialog`.
+- [x] Identify and remove unused code (functions, variables, imports) not contributing to the UI or backend logic.
+  - Relied on `flutter analyze` which reports "No issues found!".
 
-1.  **Project Setup & Core Architecture:**
-    *   [x] Initialize Flutter project with desktop support.
-    *   [x] Add `flutter_riverpod` for state management.
-    *   [x] Add `go_router` for navigation and set up basic routes.
-    *   [x] Refine the theme and styles in a dedicated `theme.dart` file.
-    *   [x] Create a `core` module for shared utilities (e.g., logger, constants).
+#### 3.2. Database Interactions (SQLite)
+- [x] Review database schema definition for consistency and correctness.
+  - Identified redundant `ALTER TABLE` for `age` in `oldVersion < 7` in `_onUpgrade` method.
+  - Removed redundant `ALTER TABLE` for `age` in `oldVersion < 7`.
+- [x] Analyze SQL queries for potential errors, inefficiencies, or malinteractions.
+  - Identified case sensitivity issue in `getPatientByNameAndFamilyName` query.
+  - Fixed case sensitivity in `getPatientByNameAndFamilyName` query using `COLLATE NOCASE`.
+- [x] Examine data handling logic for proper CRUD operations and error handling.
+  - Reviewed `Patient` model's `toJson()` and `fromJson()` methods and `PatientService`'s error handling. Found to be robust and consistent.
+- [x] Ensure robust error handling for database operations.
+  - Addressed `empty_catches` in `DatabaseService` and reviewed `PatientService` error handling.
 
-2.  **Local Database (SQLite):**
-    *   [x] Add `sqflite` and `path_provider` dependencies.
-    *   [x] Create a `DatabaseService` class to handle database initialization and connections.
-    *   [x] Define data models for `Patient`, `Appointment`, etc. as Dart classes with `toJson`/`fromJson` methods.
+#### 3.3. UI and Feature Logic
+- [x] **Text Errors:** Review all user-facing texts for typos, grammatical errors, and localization issues (if applicable).
+  - Reviewed `app_en.arb`, `app_ar.arb`, and `app_fr.arb`. All keys are present and translations appear consistent.
+- [x] **Button Errors:** Verify all button functionalities, ensuring `onPressed` callbacks are correctly implemented and lead to expected actions.
+  - Reviewed `patients_screen.dart` button functionalities. All `onPressed` callbacks are correctly implemented.
+- [x] **Feature Malfunctions:** Test core features (patient management, appointments, emergencies, inventory, finances) for correct behavior and identify any malfunctions.
+  - Reviewed `PatientService` and `PatientRepository` for business logic and potential malfunctions. Found to be robust.
+- [x] **Time and Date Assignment:** Review all date and time handling logic, including assignment, display, and calculations, to ensure accuracy and correct locale handling.
+  - Reviewed `AppointmentService` for date/time handling. Identified potential time zone issues and generic `Exception` for duplicate appointments.
+  - Fixed: Replaced generic `Exception` with `DuplicateEntryException` in `addAppointment` in `AppointmentService`.
+  - Identified: `Appointment` model stores `date` as `DateTime` and `time` as `String`, leading to potential inconsistencies and difficulties in combined date/time operations.
+  - Fixed: Combined `date` and `time` into a single `dateTime` field in the `Appointment` model and updated all affected files (model, service, repository, database schema, UI components).
 
-3.  **Basic UI Shell:**
-    *   [x] Implement the main layout with a persistent left navigation panel and a main content area.
-    *   [x] Use `go_router` to manage the content displayed in the main area.
-    *   [x] Create a `NavigationRail` or similar widget for the left navigation panel with icons for each module (Dashboard, Patients, etc.).
+### 4. Testing and Verification
+- [x] Run existing unit and widget tests.
+  - No existing tests found.
+- [x] Develop new tests for critical fixes and features.
+  - Created `test/features/appointments/domain/appointment_test.dart` for `Appointment` model serialization/deserialization.
+- [x] Run newly developed tests.
+  - All tests passed successfully.
+- [x] Manual testing on Windows to verify all changes and ensure stability.
+  - Instructions provided for manual testing.
 
-4.  **Dashboard Implementation:**
-    *   [x] Create the `DashboardScreen` widget.
-    *   [x] Display summary data (e.g., daily patient count, upcoming appointments) using placeholder data for now.
-    *   [x] Implement the bottom status bar with patient counters (placeholders).
+### 5. Documentation Update
+- [x] Update `GEMINI.md` with any significant architectural or dependency changes.
+- [x] Update `README.md` with Windows-specific build and run instructions.
 
----
-
-### Phase 2: Appointments, Patients, and Finance Modules
-
-**Objective:** Implement the core features for managing patients, appointments, and finances.
-
-**Steps:**
-
-*   **Appointment Management:** Create UI and logic for creating, editing, and deleting appointments.
-*   **Patients Panel (Daily View):** Implement the daily patient view with color-coded status and CRUD operations.
-*   **Patients Database (Archive):** Create the patient archive with filtering and search functionality.
-*   **Financial & Evaluation Tab:** Implement the finance module for tracking income and expenses.
-
----
-
-### Phase 3: ZIP Backup System + Firebase Sync
-
-**Objective:** Implement local data backup and optional Firebase synchronization using Firestore.
-
-**Steps:**
-
-*   [x] **Local Backup:** Implement functionality to generate and load ZIP backups of the SQLite database.
-*   [x] **Firebase Integration:** Set up a Firebase project and integrate the Flutter app with Firestore.
-*   [x] **Cloud Sync:** Implement the logic for uploading and downloading ZIP backups to/from Firestore by splitting the backup into chunks.
-
----
-
-### Phase 4: Inventory + Analytics + Polish
-
-**Objective:** Add inventory management, data visualization, and polish the application.
-
-**Steps:**
-
-*   **Inventory Management:** Implement the inventory module for tracking dental materials.
-*   **Data Visualization:** Create charts and graphs for the finance and analytics sections.
-*   **UI/UX Polish:** Refine animations, transitions, and overall user experience.
-
----
-
-### Phase 5: Testing, Debugging, Deployment
-
-**Objective:** Ensure the application is stable, bug-free, and ready for deployment.
-
-**Steps:**
-
-*   **Unit & Widget Testing:** Write comprehensive tests for all modules.
-*   **Integration Testing:** Perform end-to-end testing of all features.
-*   **Debugging & Optimization:** Identify and fix bugs, and optimize performance.
-*   **Deployment:** Prepare the application for deployment on desktop platforms.
+## Issues Found by `flutter analyze` (and planned fixes)
+- [x] **`empty_catches`**: 9 instances in `lib\src\core\database_service.dart`. Replaced with proper error logging using `developer.log`.
+- [x] **`dangling_library_doc_comments`**: 1 instance in `lib\src\core\exceptions.dart`. Fixed.
+- [x] **`avoid_print`**: 5 instances in `lib\src\core\exceptions.dart`. Replaced `print` statements with `developer.log`.

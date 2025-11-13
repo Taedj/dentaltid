@@ -479,6 +479,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Are you sure you want to delete this patient?';
 
   @override
+  String get confirm => 'Confirm';
+
+  @override
   String get enterNewPin => 'Enter New PIN';
 
   @override
@@ -526,9 +529,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get confirmCancelAppointment =>
       'Are you sure you want to cancel this appointment?';
-
-  @override
-  String get confirm => 'Confirm';
 
   @override
   String get todaysAppointmentsFlow => 'Today\'s Appointments Flow';

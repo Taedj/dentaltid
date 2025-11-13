@@ -40,12 +40,11 @@ class AppointmentRepository {
   Future<List<Appointment>> getUpcomingAppointments() async {
     final db = await _databaseService.database;
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'date >= ?',
-      whereArgs: [today.toIso8601String()],
-      orderBy: 'date ASC',
+      where: 'dateTime >= ?',
+      whereArgs: [now.toIso8601String()],
+      orderBy: 'dateTime ASC',
       limit: 5,
     );
     return List.generate(maps.length, (i) {
@@ -55,14 +54,13 @@ class AppointmentRepository {
 
   Future<Appointment?> getAppointmentByDetails(
     int patientId,
-    DateTime date,
-    String time,
+    DateTime dateTime,
   ) async {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'patientId = ? AND date = ? AND time = ?',
-      whereArgs: [patientId, date.toIso8601String(), time],
+      where: 'patientId = ? AND dateTime = ?',
+      whereArgs: [patientId, dateTime.toIso8601String()],
     );
     if (maps.isNotEmpty) {
       return Appointment.fromJson(maps.first);
@@ -82,22 +80,22 @@ class AppointmentRepository {
   }
 
   Future<List<Appointment>> getAppointmentsByStatusForDate(
-    DateTime date,
+    DateTime dateTime,
     AppointmentStatus status,
   ) async {
     final db = await _databaseService.database;
-    final startOfDay = DateTime(date.year, date.month, date.day);
+    final startOfDay = DateTime(dateTime.year, dateTime.month, dateTime.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'date >= ? AND date < ? AND status = ?',
+      where: 'dateTime >= ? AND dateTime < ? AND status = ?',
       whereArgs: [
         startOfDay.toIso8601String(),
         endOfDay.toIso8601String(),
         status.toString(),
       ],
-      orderBy: 'time ASC',
+      orderBy: 'dateTime ASC',
     );
     return List.generate(maps.length, (i) {
       return Appointment.fromJson(maps[i]);
@@ -112,9 +110,9 @@ class AppointmentRepository {
 
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'date >= ? AND date < ?',
+      where: 'dateTime >= ? AND dateTime < ?',
       whereArgs: [today.toIso8601String(), endOfDay.toIso8601String()],
-      orderBy: 'time ASC',
+      orderBy: 'dateTime ASC',
     );
     return List.generate(maps.length, (i) {
       return Appointment.fromJson(maps[i]);
@@ -134,13 +132,13 @@ class AppointmentRepository {
     final placeholders = List.filled(emergencyPatientIds.length, '?').join(',');
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'date >= ? AND date < ? AND patientId IN ($placeholders)',
+      where: 'dateTime >= ? AND dateTime < ? AND patientId IN ($placeholders)',
       whereArgs: [
         today.toIso8601String(),
         endOfDay.toIso8601String(),
         ...emergencyPatientIds,
       ],
-      orderBy: 'time ASC',
+      orderBy: 'dateTime ASC',
     );
     return List.generate(maps.length, (i) {
       return Appointment.fromJson(maps[i]);

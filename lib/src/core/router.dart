@@ -65,7 +65,11 @@ final router = GoRouter(
         GoRoute(
           path: '/patients',
           builder: (context, state) {
-            final filter = state.extra as PatientFilter?;
+            // Handle both PatientFilter and null cases
+            PatientFilter? filter;
+            if (state.extra is PatientFilter) {
+              filter = state.extra as PatientFilter;
+            }
             return PatientsScreen(filter: filter);
           },
           routes: [

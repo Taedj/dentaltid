@@ -88,3 +88,33 @@ The goal is to create a modern, intuitive, and visually appealing user interface
         - Made gridlines more subtle for a cleaner look.
         - Used theme-based colors and a modern design.
     - Replaced deprecated `withOpacity` with `withAlpha` to resolve analyzer warnings.
+- **Project Revision for Windows (Deep Scan and Refactoring):**
+    - **Initial Code Health Check:**
+        - Addressed `empty_catches` in `lib/src/core/database_service.dart` with proper logging.
+        - Fixed `dangling_library_doc_comments` and `avoid_print` in `lib/src/core/exceptions.dart`.
+        - Ran `dart fix --apply` and `dart format .`.
+        - Verified `flutter analyze` reports "No issues found!".
+    - **Platform-Specific Code Refinement:**
+        - Removed `android/`, `linux/`, and `macos/` directories to focus on Windows only.
+        - Verified Windows-specific configurations and dependencies.
+    - **In-depth Code Analysis and Refactoring:**
+        - **General Code Quality:**
+            - Extracted delete confirmation dialog into a reusable function.
+            - Refactored editable patient fields in `DataTable` into a reusable widget.
+        - **Database Interactions (SQLite):**
+            - Removed redundant `ALTER TABLE` for `age` in `_onUpgrade` method.
+            - Fixed case sensitivity in `getPatientByNameAndFamilyName` query using `COLLATE NOCASE`.
+            - Reviewed data handling logic and error handling, found to be robust.
+        - **UI and Feature Logic:**
+            - Reviewed localization files (`.arb`) for consistency.
+            - Verified button functionalities in `patients_screen.dart`.
+            - Reviewed `PatientService` and `PatientRepository` for business logic and potential malfunctions, found to be robust.
+            - **Time and Date Handling Refactoring:**
+                - Replaced generic `Exception` with `DuplicateEntryException` in `addAppointment` in `AppointmentService`.
+                - Combined `date` and `time` into a single `dateTime` field in the `Appointment` model.
+                - Updated `AppointmentService`, `AppointmentRepository`, `DatabaseService` (with new migration), `AddEditAppointmentScreen`, and `AppointmentsScreen` to use the new `dateTime` field.
+    - **Testing and Verification:**
+        - No existing automated tests were found.
+        - Developed a new unit test for `Appointment` model serialization/deserialization.
+        - Ran the new test, which passed successfully.
+        - Provided instructions for manual testing on Windows.

@@ -86,7 +86,7 @@ class PatientRepository {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'name = ? AND familyName = ?',
+      where: 'name = ? COLLATE NOCASE AND familyName = ? COLLATE NOCASE',
       whereArgs: [name, familyName],
     );
     if (maps.isNotEmpty) {

@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/core/exceptions.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
@@ -470,18 +471,42 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                           if (widget.patient == null) {
                             await patientService.addPatient(newPatient);
                             ref.invalidate(patientsProvider(PatientFilter.all));
+                            ref.invalidate(
+                              patientsProvider(PatientFilter.today),
+                            );
+                            ref.invalidate(
+                              patientsProvider(PatientFilter.emergency),
+                            );
                           } else {
                             await patientService.updatePatient(newPatient);
+                            ref.invalidate(patientsProvider(PatientFilter.all));
+                            ref.invalidate(
+                              patientsProvider(PatientFilter.today),
+                            );
+                            ref.invalidate(
+                              patientsProvider(PatientFilter.emergency),
+                            );
                           }
                           if (context.mounted) {
                             Navigator.pop(context);
                           }
                         } catch (e) {
                           if (context.mounted) {
+                            final errorMessage =
+                                ErrorHandler.getUserFriendlyMessage(e);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Error: ${e.toString()}'),
+                                content: Text(errorMessage),
                                 backgroundColor: Colors.red,
+                                duration: const Duration(seconds: 5),
+                                action: SnackBarAction(
+                                  label: 'OK',
+                                  onPressed: () {
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).hideCurrentSnackBar();
+                                  },
+                                ),
                               ),
                             );
                           }

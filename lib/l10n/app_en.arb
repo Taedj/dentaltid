@@ -153,6 +153,7 @@
   "actions": "Actions",
   "deletePatient": "Delete Patient",
   "confirmDeletePatient": "Are you sure you want to delete this patient?",
+  "confirm": "Confirm",
   "enterNewPin": "Enter New PIN",
   "pinRequired": "PIN is required",
   "pinMustBe4Digits": "PIN must be 4 digits",

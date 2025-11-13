@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
@@ -5,6 +7,7 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/core/exceptions.dart'; // Import for DuplicateEntryException
 
 class AddEditAppointmentScreen extends ConsumerStatefulWidget {
   const AddEditAppointmentScreen({super.key, this.appointment});
@@ -20,25 +23,22 @@ class _AddEditAppointmentScreenState
     extends ConsumerState<AddEditAppointmentScreen> {
   final _formKey = GlobalKey<FormState>();
   late int? _selectedPatientId;
-  late TextEditingController _dateController;
-  late TextEditingController _timeController;
+  late TextEditingController _dateTimeController; // Combined controller
 
   @override
   void initState() {
     super.initState();
     _selectedPatientId = widget.appointment?.patientId;
-    _dateController = TextEditingController(
-      text: widget.appointment?.date.toIso8601String().split('T')[0] ?? '',
-    );
-    _timeController = TextEditingController(
-      text: widget.appointment?.time ?? '',
+    _dateTimeController = TextEditingController(
+      text:
+          widget.appointment?.dateTime.toIso8601String() ??
+          '', // Use combined dateTime
     );
   }
 
   @override
   void dispose() {
-    _dateController.dispose();
-    _timeController.dispose();
+    _dateTimeController.dispose(); // Dispose combined controller
     super.dispose();
   }
 
@@ -90,24 +90,39 @@ class _AddEditAppointmentScreenState
                 error: (error, stack) => Text('${l10n.error}$error'),
               ),
               TextFormField(
-                controller: _dateController,
+                controller: _dateTimeController,
                 decoration: InputDecoration(
-                  labelText: l10n.dateYYYYMMDD,
+                  labelText:
+                      '${l10n.dateYYYYMMDD} ${l10n.timeHHMM}', // Combined label
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
+                      final DateTime? pickedDate = await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime.now(),
                         lastDate: DateTime(2101),
                       );
-                      if (picked != null) {
-                        setState(() {
-                          _dateController.text = picked.toIso8601String().split(
-                            'T',
-                          )[0];
-                        });
+                      if (!context.mounted) return; // Added check
+                      if (pickedDate != null) {
+                        final TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+                        if (!context.mounted) return; // Added check
+                        if (pickedTime != null) {
+                          final combinedDateTime = DateTime(
+                            pickedDate.year,
+                            pickedDate.month,
+                            pickedDate.day,
+                            pickedTime.hour,
+                            pickedTime.minute,
+                          );
+                          setState(() {
+                            _dateTimeController.text = combinedDateTime
+                                .toIso8601String();
+                          });
+                        }
                       }
                     },
                   ),
@@ -115,69 +130,20 @@ class _AddEditAppointmentScreenState
                 keyboardType: TextInputType.datetime,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return l10n.enterDate;
+                    return l10n
+                        .enterDate; // Reusing enterDate for combined field
                   }
-                  final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-                  if (!dateRegex.hasMatch(value)) {
-                    return l10n.invalidDateFormat;
+                  final selectedDateTime = DateTime.tryParse(value);
+                  if (selectedDateTime == null) {
+                    return l10n.invalidDateFormat; // Reusing invalidDateFormat
                   }
-                  final selectedDate = DateTime.tryParse(value);
-                  if (selectedDate == null) {
-                    return l10n.invalidDate;
-                  }
-                  if (selectedDate.isBefore(
-                    DateTime.now().subtract(const Duration(days: 1)),
+                  if (selectedDateTime.isBefore(
+                    DateTime.now().subtract(
+                      const Duration(minutes: 1),
+                    ), // Allow current minute
                   )) {
-                    return l10n.dateInPast;
+                    return l10n.dateInPast; // Reusing dateInPast
                   }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _timeController,
-                decoration: InputDecoration(
-                  labelText: l10n.timeHHMM,
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.access_time),
-                    onPressed: () async {
-                      final TimeOfDay? picked = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _timeController.text =
-                              '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
-                        });
-                      }
-                    },
-                  ),
-                ),
-                keyboardType: TextInputType.datetime,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.enterTime;
-                  }
-                  final timeRegex = RegExp(r'^(\d{2}):(\d{2})$');
-                  if (!timeRegex.hasMatch(value)) {
-                    return l10n.invalidTimeFormat;
-                  }
-
-                  // Check if the combined date and time is in the future
-                  if (_dateController.text.isNotEmpty) {
-                    try {
-                      final dateTimeString = '${_dateController.text} $value';
-                      final appointmentDateTime = DateTime.parse(
-                        dateTimeString,
-                      );
-                      if (appointmentDateTime.isBefore(DateTime.now())) {
-                        return 'Appointment time cannot be in the past';
-                      }
-                    } catch (e) {
-                      // If parsing fails, let the date validation handle it
-                    }
-                  }
-
                   return null;
                 },
               ),
@@ -190,8 +156,9 @@ class _AddEditAppointmentScreenState
                         final newAppointment = Appointment(
                           id: widget.appointment?.id,
                           patientId: _selectedPatientId!,
-                          date: DateTime.parse(_dateController.text),
-                          time: _timeController.text,
+                          dateTime: DateTime.parse(
+                            _dateTimeController.text,
+                          ), // Use combined dateTime
                         );
 
                         if (widget.appointment == null) {
@@ -205,33 +172,33 @@ class _AddEditAppointmentScreenState
                         }
                         ref.invalidate(appointmentsProvider);
                         ref.invalidate(todaysAppointmentsProvider);
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                        }
-                      } on Exception catch (e) {
-                        if (context.mounted) {
-                          String errorMessage = l10n.error + e.toString();
-                          if (e.toString().contains(
-                            'An appointment for this patient at this date and time already exists.',
-                          )) {
-                            errorMessage = l10n.appointmentExistsError;
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(errorMessage),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                      } on DuplicateEntryException catch (_) {
+                        // Changed to catch (_)
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.appointmentExistsError),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('${l10n.error}${e.toString()}'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
+                        // Changed to catch (e) to log the actual error
+                        if (!context.mounted) return;
+                        // Log the actual error for debugging
+                        developer.log(
+                          'Error adding appointment: $e',
+                          name: 'AddEditAppointmentScreen',
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${l10n.error}$e',
+                            ), // Show the actual error
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
                     }
                   },

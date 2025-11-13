@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
-enum SortOption { dateAsc, dateDesc, timeAsc, timeDesc, patientId }
+enum SortOption { dateTimeAsc, dateTimeDesc, patientId } // Updated enum
 
 class AppointmentsScreen extends ConsumerStatefulWidget {
   final AppointmentStatus? status;
@@ -17,7 +17,7 @@ class AppointmentsScreen extends ConsumerStatefulWidget {
 }
 
 class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
-  SortOption _sortOption = SortOption.dateDesc;
+  SortOption _sortOption = SortOption.dateTimeDesc; // Updated default sort
   String _searchQuery = '';
   bool _showUpcomingOnly = false;
   AppointmentStatus? _statusFilter;
@@ -72,20 +72,12 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<SortOption>>[
               PopupMenuItem<SortOption>(
-                value: SortOption.dateDesc,
+                value: SortOption.dateTimeDesc,
                 child: Text(l10n.dateNewestFirst),
               ),
               PopupMenuItem<SortOption>(
-                value: SortOption.dateAsc,
+                value: SortOption.dateTimeAsc,
                 child: Text(l10n.dateOldestFirst),
-              ),
-              PopupMenuItem<SortOption>(
-                value: SortOption.timeAsc,
-                child: Text(l10n.timeEarliestFirst),
-              ),
-              PopupMenuItem<SortOption>(
-                value: SortOption.timeDesc,
-                child: Text(l10n.timeLatestFirst),
               ),
               PopupMenuItem<SortOption>(
                 value: SortOption.patientId,
@@ -126,8 +118,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   final matchesSearch =
                       _searchQuery.isEmpty ||
                       appointment.patientId.toString().contains(_searchQuery) ||
-                      appointment.date.toString().contains(_searchQuery) ||
-                      appointment.time.contains(_searchQuery);
+                      appointment.dateTime.toLocal().toString().contains(_searchQuery); // Use dateTime
 
                   final isUpcoming =
                       !_showUpcomingOnly ||
@@ -144,14 +135,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 // Sort appointments
                 filteredAppointments.sort((a, b) {
                   switch (_sortOption) {
-                    case SortOption.dateDesc:
-                      return b.date.compareTo(a.date);
-                    case SortOption.dateAsc:
-                      return a.date.compareTo(b.date);
-                    case SortOption.timeAsc:
-                      return a.time.compareTo(b.time);
-                    case SortOption.timeDesc:
-                      return b.time.compareTo(a.time);
+                    case SortOption.dateTimeDesc: // Updated sort option
+                      return b.dateTime.compareTo(a.dateTime);
+                    case SortOption.dateTimeAsc: // Updated sort option
+                      return a.dateTime.compareTo(b.dateTime);
                     case SortOption.patientId:
                       return a.patientId.compareTo(b.patientId);
                   }
@@ -234,9 +221,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                           children: [
                             const SizedBox(height: 4),
                             Text(
-                              '${l10n.date}: ${appointment.date.toLocal().toString().split(' ')[0]}',
+                              '${l10n.date}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[0]}', // Display date part
                             ),
-                            Text('${l10n.timeHHMM}: ${appointment.time}'),
+                            Text(
+                              '${l10n.timeHHMM}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[1].substring(0, 5)}', // Display time part
+                            ),
                           ],
                         ),
                         trailing: Row(
@@ -353,7 +342,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.of(context).pop(true),
-                                        child: Text(l10n.deleteAppointment),
+                                        child: Text(l10n.confirm), // Use l10n.confirm
                                       ),
                                     ],
                                   ),

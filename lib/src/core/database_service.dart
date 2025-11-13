@@ -1,9 +1,10 @@
+import 'dart:developer' as developer;
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 6;
+  static const int _databaseVersion = 8; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -31,11 +32,90 @@ class DatabaseService {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute(
-        'ALTER TABLE patients ADD COLUMN isEmergency INTEGER DEFAULT 0',
-      );
-      await db.execute('ALTER TABLE patients ADD COLUMN severity TEXT');
-      await db.execute('ALTER TABLE patients ADD COLUMN healthAlerts TEXT');
+      // Add missing core columns that should have been in the original schema
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN age INTEGER');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (age column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN healthState TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (healthState column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN diagnosis TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (diagnosis column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN treatment TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (treatment column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN payment REAL');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (payment column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN createdAt TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (createdAt column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute(
+          'ALTER TABLE patients ADD COLUMN isEmergency INTEGER DEFAULT 0',
+        );
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (isEmergency column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN severity TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (severity column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+      try {
+        await db.execute('ALTER TABLE patients ADD COLUMN healthAlerts TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (healthAlerts column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
     }
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE transactions ADD COLUMN status TEXT');
@@ -65,6 +145,25 @@ class DatabaseService {
         'ALTER TABLE appointments ADD COLUMN status TEXT DEFAULT \'waiting\'',
       );
     }
+    if (oldVersion < 8) {
+      // Migration for combining date and time into a single dateTime column
+      await db.execute('ALTER TABLE appointments ADD COLUMN dateTime TEXT');
+      await db.execute(
+          'UPDATE appointments SET dateTime = date || \'T\' || time || \':00.000\''); // Combine date and time
+      await db.execute('CREATE TEMPORARY TABLE appointments_backup(id, patientId, dateTime, status)');
+      await db.execute('INSERT INTO appointments_backup SELECT id, patientId, dateTime, status FROM appointments');
+      await db.execute('DROP TABLE appointments');
+      await db.execute('''
+        CREATE TABLE appointments(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patientId INTEGER,
+          dateTime TEXT,
+          status TEXT DEFAULT 'waiting'
+        )
+      ''');
+      await db.execute('INSERT INTO appointments SELECT id, patientId, dateTime, status FROM appointments_backup');
+      await db.execute('DROP TABLE appointments_backup');
+    }
   }
 
   Future<void> close() async {
@@ -79,8 +178,7 @@ class DatabaseService {
       CREATE TABLE appointments(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patientId INTEGER,
-        date TEXT,
-        time TEXT,
+        dateTime TEXT,
         status TEXT DEFAULT 'waiting'
       )
       ''');
