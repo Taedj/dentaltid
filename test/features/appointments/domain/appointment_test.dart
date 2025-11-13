@@ -18,7 +18,10 @@ void main() {
 
       expect(decodedAppointment.id, appointment.id);
       expect(decodedAppointment.patientId, appointment.patientId);
-      expect(decodedAppointment.dateTime.toIso8601String(), appointment.dateTime.toIso8601String());
+      expect(
+        decodedAppointment.dateTime.toIso8601String(),
+        appointment.dateTime.toIso8601String(),
+      );
       expect(decodedAppointment.status, appointment.status);
     });
 
@@ -46,7 +49,10 @@ void main() {
 
       expect(appointment.id, 3);
       expect(appointment.patientId, 103);
-      expect(appointment.status, AppointmentStatus.waiting); // Fallback to default
+      expect(
+        appointment.status,
+        AppointmentStatus.waiting,
+      ); // Fallback to default
     });
   });
 }

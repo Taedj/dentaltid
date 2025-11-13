@@ -19,7 +19,8 @@ class EditablePatientField extends ConsumerWidget {
   final String field;
   final String currentValue;
   final Function(Patient, String) onUpdate;
-  final AutoDisposeFutureProviderFamily<List<Patient>, PatientFilter> patientsProvider; // Changed type
+  final AutoDisposeFutureProviderFamily<List<Patient>, PatientFilter>
+  patientsProvider; // Changed type
   final PatientFilter selectedFilter; // Re-added this
   final bool isNumeric; // Re-added this
 
@@ -42,7 +43,9 @@ class EditablePatientField extends ConsumerWidget {
               content: TextFormField(
                 controller: controller,
                 autofocus: true,
-                keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+                keyboardType: isNumeric
+                    ? TextInputType.number
+                    : TextInputType.text,
               ),
               actions: <Widget>[
                 TextButton(
@@ -55,7 +58,9 @@ class EditablePatientField extends ConsumerWidget {
                   child: Text(l10n.save),
                   onPressed: () async {
                     await onUpdate(patient, controller.text);
-                    ref.invalidate(patientsProvider(selectedFilter)); // Corrected call
+                    ref.invalidate(
+                      patientsProvider(selectedFilter),
+                    ); // Corrected call
                     if (context.mounted) {
                       Navigator.of(context).pop();
                     }

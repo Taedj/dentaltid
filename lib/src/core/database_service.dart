@@ -149,9 +149,14 @@ class DatabaseService {
       // Migration for combining date and time into a single dateTime column
       await db.execute('ALTER TABLE appointments ADD COLUMN dateTime TEXT');
       await db.execute(
-          'UPDATE appointments SET dateTime = date || \'T\' || time || \':00.000\''); // Combine date and time
-      await db.execute('CREATE TEMPORARY TABLE appointments_backup(id, patientId, dateTime, status)');
-      await db.execute('INSERT INTO appointments_backup SELECT id, patientId, dateTime, status FROM appointments');
+        'UPDATE appointments SET dateTime = date || \'T\' || time || \':00.000\'',
+      ); // Combine date and time
+      await db.execute(
+        'CREATE TEMPORARY TABLE appointments_backup(id, patientId, dateTime, status)',
+      );
+      await db.execute(
+        'INSERT INTO appointments_backup SELECT id, patientId, dateTime, status FROM appointments',
+      );
       await db.execute('DROP TABLE appointments');
       await db.execute('''
         CREATE TABLE appointments(
@@ -161,7 +166,9 @@ class DatabaseService {
           status TEXT DEFAULT 'waiting'
         )
       ''');
-      await db.execute('INSERT INTO appointments SELECT id, patientId, dateTime, status FROM appointments_backup');
+      await db.execute(
+        'INSERT INTO appointments SELECT id, patientId, dateTime, status FROM appointments_backup',
+      );
       await db.execute('DROP TABLE appointments_backup');
     }
   }

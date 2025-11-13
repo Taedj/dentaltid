@@ -177,10 +177,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                       onPressed: () async {
                                         final confirmed =
                                             await showDeleteConfirmationDialog(
-                                          context: context,
-                                          title: l10n.deletePatient,
-                                          content: l10n.confirmDeletePatient,
-                                        );
+                                              context: context,
+                                              title: l10n.deletePatient,
+                                              content:
+                                                  l10n.confirmDeletePatient,
+                                            );
                                         if (confirmed == true &&
                                             patient.id != null) {
                                           await patientService.deletePatient(
@@ -257,10 +258,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'name',
                                   currentValue: patient.name,
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
-                                    await patientService
-                                        .updatePatient(p.copyWith(name: value));
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
+                                    await patientService.updatePatient(
+                                      p.copyWith(name: value),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -272,10 +275,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'familyName',
                                   currentValue: patient.familyName,
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(familyName: value));
+                                      p.copyWith(familyName: value),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -287,11 +292,14 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'age',
                                   currentValue: patient.age.toString(),
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(
-                                            age: int.tryParse(value) ?? p.age));
+                                      p.copyWith(
+                                        age: int.tryParse(value) ?? p.age,
+                                      ),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -304,10 +312,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'healthState',
                                   currentValue: patient.healthState,
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(healthState: value));
+                                      p.copyWith(healthState: value),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -319,10 +329,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'diagnosis',
                                   currentValue: patient.diagnosis,
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(diagnosis: value));
+                                      p.copyWith(diagnosis: value),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -334,10 +346,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'treatment',
                                   currentValue: patient.treatment,
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(treatment: value));
+                                      p.copyWith(treatment: value),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -349,12 +363,15 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   field: 'payment',
                                   currentValue: patient.payment.toString(),
                                   onUpdate: (p, value) async {
-                                    final patientService =
-                                        ref.read(patientServiceProvider);
+                                    final patientService = ref.read(
+                                      patientServiceProvider,
+                                    );
                                     await patientService.updatePatient(
-                                        p.copyWith(
-                                            payment: double.tryParse(value) ??
-                                                p.payment));
+                                      p.copyWith(
+                                        payment:
+                                            double.tryParse(value) ?? p.payment,
+                                      ),
+                                    );
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
@@ -378,10 +395,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                       onPressed: () async {
                                         final confirmed =
                                             await showDeleteConfirmationDialog(
-                                          context: context,
-                                          title: l10n.deletePatient,
-                                          content: l10n.confirmDeletePatient,
-                                        );
+                                              context: context,
+                                              title: l10n.deletePatient,
+                                              content:
+                                                  l10n.confirmDeletePatient,
+                                            );
                                         if (confirmed == true &&
                                             patient.id != null) {
                                           await patientService.deletePatient(

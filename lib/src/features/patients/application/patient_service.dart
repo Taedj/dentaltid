@@ -17,13 +17,14 @@ final patientServiceProvider = Provider<PatientService>((ref) {
   );
 });
 
-final patientsProvider = AutoDisposeFutureProvider.family<List<Patient>, PatientFilter>((
-  ref,
-  filter,
-) async {
-  final service = ref.watch(patientServiceProvider);
-  return service.getPatients(filter);
-});
+final patientsProvider =
+    AutoDisposeFutureProvider.family<List<Patient>, PatientFilter>((
+      ref,
+      filter,
+    ) async {
+      final service = ref.watch(patientServiceProvider);
+      return service.getPatients(filter);
+    });
 
 final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
   final service = ref.watch(patientServiceProvider);

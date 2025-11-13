@@ -118,7 +118,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   final matchesSearch =
                       _searchQuery.isEmpty ||
                       appointment.patientId.toString().contains(_searchQuery) ||
-                      appointment.dateTime.toLocal().toString().contains(_searchQuery); // Use dateTime
+                      appointment.dateTime.toLocal().toString().contains(
+                        _searchQuery,
+                      ); // Use dateTime
 
                   final isUpcoming =
                       !_showUpcomingOnly ||
@@ -342,7 +344,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.of(context).pop(true),
-                                        child: Text(l10n.confirm), // Use l10n.confirm
+                                        child: Text(
+                                          l10n.confirm,
+                                        ), // Use l10n.confirm
                                       ),
                                     ],
                                   ),
