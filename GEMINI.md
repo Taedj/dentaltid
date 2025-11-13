@@ -124,3 +124,5 @@ The goal is to create a modern, intuitive, and visually appealing user interface
     - Ensured consistency across all `.arb` files by adding all necessary localization keys.
     - Regenerated localization files using `flutter gen-l10n`.
     - Verified that `flutter analyze` reports "No issues found!".
+- **Code Formatting:**
+    - Ran `dart format .` to ensure consistent code formatting across the project.
