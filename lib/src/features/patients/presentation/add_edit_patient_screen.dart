@@ -3,10 +3,12 @@ import 'package:dentaltid/src/features/patients/application/patient_service.dart
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+// ignore: unused_import
 import 'package:dentaltid/src/features/visits/domain/visit.dart';
 import 'package:dentaltid/src/features/visits/application/visit_service.dart';
 
@@ -650,9 +652,7 @@ class _PatientVisitHistory extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
-                    // TODO: Implement add new visit functionality
-                    // For now, just print a message
-                    print('Add new visit for patient $patientId');
+                    context.go('/patients/${patientId}/visits/add', extra: patientId);
                   },
                 ),
               ],
@@ -679,8 +679,7 @@ class _PatientVisitHistory extends ConsumerWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () {
-                          // TODO: Implement edit visit functionality
-                          print('Edit visit ${visit.id}');
+                          context.go('/patients/${patientId}/visits/edit', extra: {'patientId': patientId, 'visit': visit});
                         },
                       ),
                     );

@@ -7,6 +7,8 @@ import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.d
 import 'package:dentaltid/src/features/finance/presentation/finance_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/add_edit_patient_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/patients_screen.dart';
+import 'package:dentaltid/src/features/visits/presentation/add_edit_visit_screen.dart';
+import 'package:dentaltid/src/features/visits/domain/visit.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/home_screen.dart';
@@ -80,6 +82,20 @@ final router = GoRouter(
               path: 'edit',
               builder: (context, state) =>
                   AddEditPatientScreen(patient: state.extra as dynamic),
+            ),
+            GoRoute(
+              path: 'visits/add',
+              builder: (context, state) => AddEditVisitScreen(patientId: state.extra as int),
+            ),
+            GoRoute(
+              path: 'visits/edit',
+              builder: (context, state) {
+                final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
+                return AddEditVisitScreen(
+                  patientId: extra['patientId'] as int,
+                  visit: extra['visit'] as Visit,
+                );
+              },
             ),
           ],
         ),

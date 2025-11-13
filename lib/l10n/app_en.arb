@@ -165,5 +165,9 @@
   "visitHistory": "Visit History",
   "noVisitHistory": "No visit history",
   "visitDate": "Visit Date",
-  "reasonForVisit": "Reason for Visit"
+  "reasonForVisit": "Reason for Visit",
+  "addVisit": "Add Visit",
+  "editVisit": "Edit Visit",
+  "notes": "Notes",
+  "enterReasonForVisit": "Please enter a reason for visit"
 }

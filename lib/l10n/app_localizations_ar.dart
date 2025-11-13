@@ -514,4 +514,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reasonForVisit => 'Reason for Visit';
+
+  @override
+  String get addVisit => 'Add Visit';
+
+  @override
+  String get editVisit => 'Edit Visit';
+
+  @override
+  String get notes => 'Notes';
+
+  @override
+  String get enterReasonForVisit => 'Please enter a reason for visit';
 }

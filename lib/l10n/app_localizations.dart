@@ -1101,6 +1101,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reason for Visit'**
   String get reasonForVisit;
+
+  /// No description provided for @addVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Visit'**
+  String get addVisit;
+
+  /// No description provided for @editVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Visit'**
+  String get editVisit;
+
+  /// No description provided for @notes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get notes;
+
+  /// No description provided for @enterReasonForVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a reason for visit'**
+  String get enterReasonForVisit;
 }
 
 class _AppLocalizationsDelegate
