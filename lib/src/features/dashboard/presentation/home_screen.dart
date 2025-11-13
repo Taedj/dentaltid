@@ -5,10 +5,10 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart'; // Import the new provider
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -20,40 +20,73 @@ class HomeScreen extends ConsumerWidget {
     );
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final l10n = AppLocalizations.of(context)!;
+    final userProfileAsyncValue = ref.watch(userProfileProvider); // Watch the user profile provider
+
     return Scaffold(
       body: Column(
         children: [
-          // Header with welcome message and time
+          // Header with welcome message, date, and time
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: StreamBuilder<DateTime>(
-              stream: Stream.periodic(
-                const Duration(seconds: 1),
-                (_) => DateTime.now(),
-              ),
-              builder: (context, snapshot) {
-                final currentTime = snapshot.data ?? DateTime.now();
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      l10n.welcomeDr,
+            child: Column(
+              children: [
+                userProfileAsyncValue.when(
+                  data: (userProfile) {
+                    final dentistName = userProfile?.dentistName ?? 'Dr.';
+                    return Text(
+                      '${l10n.welcomeDr} $dentistName',
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
+                    );
+                  },
+                  loading: () => Text(
+                    l10n.welcomeDr,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(width: 32),
-                    Text(
-                      DateFormat('HH:mm:ss').format(currentTime),
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  ),
+                  error: (e, s) => Text(
+                    l10n.welcomeDr,
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                StreamBuilder<DateTime>(
+                  stream: Stream.periodic(
+                    const Duration(seconds: 1),
+                    (_) => DateTime.now(),
+                  ),
+                  builder: (context, snapshot) {
+                    final currentTime = snapshot.data ?? DateTime.now();
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          DateFormat('EEEE, MMMM d, yyyy').format(currentTime),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          DateFormat('HH:mm:ss').format(currentTime),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
 
