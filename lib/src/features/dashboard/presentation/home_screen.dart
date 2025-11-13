@@ -28,63 +28,73 @@ class HomeScreen extends ConsumerWidget {
           // Header with welcome message, date, and time
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                userProfileAsyncValue.when(
-                  data: (userProfile) {
-                    final dentistName = userProfile?.dentistName ?? 'Dr.';
-                    return Text(
-                      '${l10n.welcomeDr} $dentistName',
+                Expanded(
+                  flex: 2, // Give more space to the welcome message
+                  child: userProfileAsyncValue.when(
+                    data: (userProfile) {
+                      final dentistName = userProfile?.dentistName ?? 'Dr.';
+                      return Text(
+                        '${l10n.welcomeDr} $dentistName',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.left,
+                      );
+                    },
+                    loading: () => Text(
+                      l10n.welcomeDr,
                       style: const TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                       ),
-                    );
-                  },
-                  loading: () => Text(
-                    l10n.welcomeDr,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      textAlign: TextAlign.left,
                     ),
-                  ),
-                  error: (e, s) => Text(
-                    l10n.welcomeDr,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                    error: (e, s) => Text(
+                      l10n.welcomeDr,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.left,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                StreamBuilder<DateTime>(
-                  stream: Stream.periodic(
-                    const Duration(seconds: 1),
-                    (_) => DateTime.now(),
+                Expanded(
+                  flex: 1, // Space for date and time
+                  child: StreamBuilder<DateTime>(
+                    stream: Stream.periodic(
+                      const Duration(seconds: 1),
+                      (_) => DateTime.now(),
+                    ),
+                    builder: (context, snapshot) {
+                      final currentTime = snapshot.data ?? DateTime.now();
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            DateFormat('EEEE, MMMM d, yyyy').format(currentTime),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                          Text(
+                            DateFormat('HH:mm:ss').format(currentTime),
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.right,
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  builder: (context, snapshot) {
-                    final currentTime = snapshot.data ?? DateTime.now();
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          DateFormat('EEEE, MMMM d, yyyy').format(currentTime),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          DateFormat('HH:mm:ss').format(currentTime),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    );
-                  },
                 ),
               ],
             ),
