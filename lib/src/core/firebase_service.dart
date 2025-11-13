@@ -47,6 +47,20 @@ class FirebaseService {
     return _auth.currentUser;
   }
 
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final user = _auth.currentUser;
+    final cred = EmailAuthProvider.credential(
+      email: user!.email!,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(newPassword);
+  }
+
   // User Profile Management
   Future<void> createUserProfile(UserProfile profile, String licenseKey) async {
     await _firestore

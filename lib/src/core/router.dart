@@ -13,19 +13,18 @@ import 'package:dentaltid/src/features/dashboard/presentation/home_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/appointments_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/add_edit_appointment_screen.dart';
 import 'package:dentaltid/src/shared/widgets/main_layout.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 final router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) async {
-    final prefs = await SharedPreferences.getInstance();
-    final isAuthenticated = prefs.getBool('isAuthenticated') ?? false;
+    final user = FirebaseAuth.instance.currentUser;
     final isLoggingIn = state.matchedLocation == '/login';
 
-    if (!isAuthenticated && !isLoggingIn) {
+    if (user == null && !isLoggingIn) {
       return '/login';
     }
 
-    if (isAuthenticated && isLoggingIn) {
+    if (user != null && isLoggingIn) {
       return '/';
     }
 

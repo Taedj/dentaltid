@@ -93,7 +93,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('isAuthenticated', true);
       await prefs.setString('userRole', UserRole.dentist.toString());
 
       ref

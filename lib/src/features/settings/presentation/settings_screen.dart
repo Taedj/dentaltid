@@ -5,9 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
-import 'package:dentaltid/src/core/pin_service.dart';
+
 import 'package:dentaltid/src/core/firebase_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -19,139 +18,43 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isLoading = false;
-  final PinService _pinService = PinService();
   final FirebaseService _firebaseService = FirebaseService();
 
-  Future<void> _showSetupPinDialog(
+  Future<void> _showChangePasswordDialog(
     BuildContext context,
     AppLocalizations l10n,
   ) async {
-    final TextEditingController pinController = TextEditingController();
-    final TextEditingController confirmPinController = TextEditingController();
+    final TextEditingController currentPasswordController =
+        TextEditingController();
+    final TextEditingController newPasswordController = TextEditingController();
+    final TextEditingController confirmPasswordController =
+        TextEditingController();
 
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(l10n.setupPinCode),
+          title: Text(l10n.changePassword),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: pinController,
-                  decoration: InputDecoration(labelText: l10n.enterNewPin),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.pinRequired;
-                    }
-                    if (value.length != 4 ||
-                        !RegExp(r'^\d{4}$').hasMatch(value)) {
-                      return l10n.pinMustBe4Digits;
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: confirmPinController,
-                  decoration: InputDecoration(labelText: l10n.confirmNewPin),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.pinRequired;
-                    }
-                    if (value != pinController.text) {
-                      return l10n.pinsDoNotMatch;
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(l10n.cancel),
-              onPressed: () {
-                pinController.dispose();
-                confirmPinController.dispose();
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(l10n.save),
-              onPressed: () async {
-                if (pinController.text == confirmPinController.text &&
-                    pinController.text.length == 4 &&
-                    RegExp(r'^\d{4}$').hasMatch(pinController.text)) {
-                  final success = await _pinService.setupPinCode(
-                    pinController.text,
-                  );
-                  if (context.mounted) {
-                    pinController.dispose();
-                    confirmPinController.dispose();
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success ? l10n.pinSetupSuccessfully : l10n.invalidPin,
-                        ),
-                      ),
-                    );
-                    setState(() {}); // Refresh the UI
-                  }
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showChangePinDialog(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) async {
-    final TextEditingController currentPinController = TextEditingController();
-    final TextEditingController newPinController = TextEditingController();
-    final TextEditingController confirmPinController = TextEditingController();
-
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(l10n.changePinCode),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: currentPinController,
-                  decoration: InputDecoration(labelText: l10n.enterCurrentPin),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
+                  controller: currentPasswordController,
+                  decoration: InputDecoration(labelText: l10n.currentPassword),
                   obscureText: true,
                 ),
                 TextFormField(
-                  controller: newPinController,
-                  decoration: InputDecoration(labelText: l10n.enterNewPin),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
+                  controller: newPasswordController,
+                  decoration: InputDecoration(labelText: l10n.newPassword),
                   obscureText: true,
                 ),
                 TextFormField(
-                  controller: confirmPinController,
-                  decoration: InputDecoration(labelText: l10n.confirmNewPin),
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
+                  controller: confirmPasswordController,
+                  decoration: InputDecoration(
+                    labelText: l10n.confirmNewPassword,
+                  ),
                   obscureText: true,
                 ),
               ],
@@ -161,37 +64,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextButton(
               child: Text(l10n.cancel),
               onPressed: () {
-                currentPinController.dispose();
-                newPinController.dispose();
-                confirmPinController.dispose();
+                currentPasswordController.dispose();
+                newPasswordController.dispose();
+                confirmPasswordController.dispose();
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
               child: Text(l10n.save),
               onPressed: () async {
-                if (newPinController.text == confirmPinController.text &&
-                    newPinController.text.length == 4 &&
-                    RegExp(r'^\d{4}$').hasMatch(newPinController.text)) {
-                  final success = await _pinService.changePinCode(
-                    currentPinController.text,
-                    newPinController.text,
-                  );
-                  if (context.mounted) {
-                    currentPinController.dispose();
-                    newPinController.dispose();
-                    confirmPinController.dispose();
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          success
-                              ? l10n.pinChangedSuccessfully
-                              : l10n.invalidPin,
-                        ),
-                      ),
+                if (newPasswordController.text ==
+                    confirmPasswordController.text) {
+                  try {
+                    await _firebaseService.changePassword(
+                      currentPasswordController.text,
+                      newPasswordController.text,
                     );
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.passwordChangedSuccessfully),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(l10n.invalidPassword),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.passwordsDoNotMatch),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
             ),
@@ -291,12 +204,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         if (user == null) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(l10n.mustBeLoggedInToSync),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
+                            context.go('/login');
                           }
                           setState(() {
                             _isLoading = false;
@@ -402,37 +310,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 }).toList(),
               ),
+
               const Divider(height: 40),
               Text(
-                l10n.pinCode,
+                l10n.account,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 10),
-              FutureBuilder<bool>(
-                future: PinService().hasPinCode(),
-                builder: (context, snapshot) {
-                  final hasPin = snapshot.data ?? false;
-                  return Column(
-                    children: [
-                      if (!hasPin)
-                        ElevatedButton(
-                          onPressed: () => _showSetupPinDialog(context, l10n),
-                          child: Text(l10n.setupPinCode),
-                        )
-                      else
-                        ElevatedButton(
-                          onPressed: () => _showChangePinDialog(context, l10n),
-                          child: Text(l10n.changePinCode),
-                        ),
-                    ],
-                  );
-                },
+              ElevatedButton(
+                onPressed: () => _showChangePasswordDialog(context, l10n),
+                child: Text(l10n.changePassword),
               ),
               const Divider(height: 40),
               ElevatedButton(
                 onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('isAuthenticated', false);
+                  await _firebaseService.signOut();
                   if (context.mounted) {
                     context.go('/login');
                   }

@@ -130,24 +130,6 @@ abstract class AppLocalizations {
   /// **'Finance'**
   String get finance;
 
-  /// No description provided for @settings.
-  ///
-  /// In en, this message translates to:
-  /// **'Settings'**
-  String get settings;
-
-  /// No description provided for @language.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get language;
-
-  /// No description provided for @theme.
-  ///
-  /// In en, this message translates to:
-  /// **'Theme'**
-  String get theme;
-
   /// No description provided for @addAppointment.
   ///
   /// In en, this message translates to:
@@ -193,7 +175,7 @@ abstract class AppLocalizations {
   /// No description provided for @invalidDate.
   ///
   /// In en, this message translates to:
-  /// **'Invalid date'**
+  /// **'Invalid Date'**
   String get invalidDate;
 
   /// No description provided for @dateInPast.
@@ -249,6 +231,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'An appointment for this patient at this date and time already exists.'**
   String get appointmentExistsError;
+
+  /// No description provided for @settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @changePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePassword;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get currentPassword;
+
+  /// No description provided for @newPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get newPassword;
+
+  /// No description provided for @passwordChangedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed successfully'**
+  String get passwordChangedSuccessfully;
+
+  /// No description provided for @invalidPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid password'**
+  String get invalidPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @theme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get theme;
 
   /// No description provided for @localBackup.
   ///
@@ -328,384 +370,6 @@ abstract class AppLocalizations {
   /// **'Logout'**
   String get logout;
 
-  /// No description provided for @showAllItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Show All Items'**
-  String get showAllItems;
-
-  /// No description provided for @showExpiredOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Expired Only'**
-  String get showExpiredOnly;
-
-  /// No description provided for @showLowStockOnly.
-  ///
-  /// In en, this message translates to:
-  /// **'Show Low Stock Only'**
-  String get showLowStockOnly;
-
-  /// No description provided for @nameAZ.
-  ///
-  /// In en, this message translates to:
-  /// **'Name (A-Z)'**
-  String get nameAZ;
-
-  /// No description provided for @nameZA.
-  ///
-  /// In en, this message translates to:
-  /// **'Name (Z-A)'**
-  String get nameZA;
-
-  /// No description provided for @quantityLowToHigh.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity (Low to High)'**
-  String get quantityLowToHigh;
-
-  /// No description provided for @quantityHighToLow.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity (High to Low)'**
-  String get quantityHighToLow;
-
-  /// No description provided for @expirySoonestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Expiry (Soonest First)'**
-  String get expirySoonestFirst;
-
-  /// No description provided for @expiryLatestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Expiry (Latest First)'**
-  String get expiryLatestFirst;
-
-  /// No description provided for @searchInventoryItems.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Inventory Items'**
-  String get searchInventoryItems;
-
-  /// No description provided for @name.
-  ///
-  /// In en, this message translates to:
-  /// **'Name'**
-  String get name;
-
-  /// No description provided for @quantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Quantity'**
-  String get quantity;
-
-  /// No description provided for @expirationDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Expiration Date'**
-  String get expirationDate;
-
-  /// No description provided for @supplier.
-  ///
-  /// In en, this message translates to:
-  /// **'Supplier'**
-  String get supplier;
-
-  /// No description provided for @addItem.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Item'**
-  String get addItem;
-
-  /// No description provided for @noItemsFound.
-  ///
-  /// In en, this message translates to:
-  /// **'No items found'**
-  String get noItemsFound;
-
-  /// No description provided for @expires.
-  ///
-  /// In en, this message translates to:
-  /// **'Expires'**
-  String get expires;
-
-  /// No description provided for @expired.
-  ///
-  /// In en, this message translates to:
-  /// **'Expired'**
-  String get expired;
-
-  /// No description provided for @lowStock.
-  ///
-  /// In en, this message translates to:
-  /// **'Low Stock'**
-  String get lowStock;
-
-  /// No description provided for @deleteItem.
-  ///
-  /// In en, this message translates to:
-  /// **'Delete Item'**
-  String get deleteItem;
-
-  /// No description provided for @confirmDeleteItem.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete this item?'**
-  String get confirmDeleteItem;
-
-  /// No description provided for @cancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancel;
-
-  /// No description provided for @enterName.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a name'**
-  String get enterName;
-
-  /// No description provided for @enterQuantity.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a quantity'**
-  String get enterQuantity;
-
-  /// No description provided for @enterSupplier.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a supplier'**
-  String get enterSupplier;
-
-  /// No description provided for @addTransaction.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Transaction'**
-  String get addTransaction;
-
-  /// No description provided for @financialSummary.
-  ///
-  /// In en, this message translates to:
-  /// **'Financial Summary'**
-  String get financialSummary;
-
-  /// No description provided for @description.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get description;
-
-  /// No description provided for @enterDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a description'**
-  String get enterDescription;
-
-  /// No description provided for @totalAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Total Amount'**
-  String get totalAmount;
-
-  /// No description provided for @enterTotalAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter total amount'**
-  String get enterTotalAmount;
-
-  /// No description provided for @enterValidPositiveAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a valid positive amount'**
-  String get enterValidPositiveAmount;
-
-  /// No description provided for @paidAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid Amount'**
-  String get paidAmount;
-
-  /// No description provided for @enterPaidAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter paid amount'**
-  String get enterPaidAmount;
-
-  /// No description provided for @enterValidNonNegativeAmount.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a valid non-negative amount'**
-  String get enterValidNonNegativeAmount;
-
-  /// No description provided for @type.
-  ///
-  /// In en, this message translates to:
-  /// **'Type'**
-  String get type;
-
-  /// No description provided for @income.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get income;
-
-  /// No description provided for @expense.
-  ///
-  /// In en, this message translates to:
-  /// **'Expense'**
-  String get expense;
-
-  /// No description provided for @paymentMethod.
-  ///
-  /// In en, this message translates to:
-  /// **'Payment Method'**
-  String get paymentMethod;
-
-  /// No description provided for @cash.
-  ///
-  /// In en, this message translates to:
-  /// **'Cash'**
-  String get cash;
-
-  /// No description provided for @card.
-  ///
-  /// In en, this message translates to:
-  /// **'Card'**
-  String get card;
-
-  /// No description provided for @bankTransfer.
-  ///
-  /// In en, this message translates to:
-  /// **'Bank Transfer'**
-  String get bankTransfer;
-
-  /// No description provided for @searchTransactions.
-  ///
-  /// In en, this message translates to:
-  /// **'Search Transactions'**
-  String get searchTransactions;
-
-  /// No description provided for @allTypes.
-  ///
-  /// In en, this message translates to:
-  /// **'All Types'**
-  String get allTypes;
-
-  /// No description provided for @dateNewestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Date (Newest First)'**
-  String get dateNewestFirst;
-
-  /// No description provided for @dateOldestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Date (Oldest First)'**
-  String get dateOldestFirst;
-
-  /// No description provided for @amountHighestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount (Highest First)'**
-  String get amountHighestFirst;
-
-  /// No description provided for @amountLowestFirst.
-  ///
-  /// In en, this message translates to:
-  /// **'Amount (Lowest First)'**
-  String get amountLowestFirst;
-
-  /// No description provided for @noTransactionsYet.
-  ///
-  /// In en, this message translates to:
-  /// **'No transactions yet'**
-  String get noTransactionsYet;
-
-  /// No description provided for @paid.
-  ///
-  /// In en, this message translates to:
-  /// **'Paid'**
-  String get paid;
-
-  /// No description provided for @unpaid.
-  ///
-  /// In en, this message translates to:
-  /// **'Unpaid'**
-  String get unpaid;
-
-  /// No description provided for @date.
-  ///
-  /// In en, this message translates to:
-  /// **'Date'**
-  String get date;
-
-  /// No description provided for @method.
-  ///
-  /// In en, this message translates to:
-  /// **'Method'**
-  String get method;
-
-  /// No description provided for @incorrectPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Incorrect PIN'**
-  String get incorrectPin;
-
-  /// No description provided for @setupPinCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Setup PIN Code'**
-  String get setupPinCode;
-
-  /// No description provided for @enterPin4Digits.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter PIN (4 digits)'**
-  String get enterPin4Digits;
-
-  /// No description provided for @confirmPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm PIN'**
-  String get confirmPin;
-
-  /// No description provided for @setupPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Setup PIN'**
-  String get setupPin;
-
-  /// No description provided for @pinMustBe4DigitsAndMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN must be 4 digits and match confirmation'**
-  String get pinMustBe4DigitsAndMatch;
-
-  /// No description provided for @enterPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter PIN'**
-  String get enterPin;
-
-  /// No description provided for @pin.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN'**
-  String get pin;
-
-  /// No description provided for @pleaseEnterPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Please enter a PIN'**
-  String get pleaseEnterPin;
-
-  /// No description provided for @login.
-  ///
-  /// In en, this message translates to:
-  /// **'Login'**
-  String get login;
-
   /// No description provided for @showAllAppointments.
   ///
   /// In en, this message translates to:
@@ -759,6 +423,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Are you sure you want to delete this appointment?'**
   String get confirmDeleteAppointment;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
 
   /// No description provided for @welcomeDr.
   ///
@@ -1024,108 +694,6 @@ abstract class AppLocalizations {
   /// **'Are you sure you want to delete this patient?'**
   String get confirmDeletePatient;
 
-  /// No description provided for @confirm.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get confirm;
-
-  /// No description provided for @enterNewPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter New PIN'**
-  String get enterNewPin;
-
-  /// No description provided for @pinRequired.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN is required'**
-  String get pinRequired;
-
-  /// No description provided for @pinMustBe4Digits.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN must be 4 digits'**
-  String get pinMustBe4Digits;
-
-  /// No description provided for @confirmNewPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm New PIN'**
-  String get confirmNewPin;
-
-  /// No description provided for @pinsDoNotMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'PINs do not match'**
-  String get pinsDoNotMatch;
-
-  /// No description provided for @pinSetupSuccessfully.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN setup successfully'**
-  String get pinSetupSuccessfully;
-
-  /// No description provided for @invalidPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Invalid PIN'**
-  String get invalidPin;
-
-  /// No description provided for @changePinCode.
-  ///
-  /// In en, this message translates to:
-  /// **'Change PIN Code'**
-  String get changePinCode;
-
-  /// No description provided for @enterCurrentPin.
-  ///
-  /// In en, this message translates to:
-  /// **'Enter Current PIN'**
-  String get enterCurrentPin;
-
-  /// No description provided for @pinChangedSuccessfully.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN changed successfully'**
-  String get pinChangedSuccessfully;
-
-  /// No description provided for @restoreFromLocalBackup.
-  ///
-  /// In en, this message translates to:
-  /// **'Restore from Local Backup'**
-  String get restoreFromLocalBackup;
-
-  /// No description provided for @pinCode.
-  ///
-  /// In en, this message translates to:
-  /// **'PIN Code'**
-  String get pinCode;
-
-  /// No description provided for @startAppointment.
-  ///
-  /// In en, this message translates to:
-  /// **'Start Appointment'**
-  String get startAppointment;
-
-  /// No description provided for @completeAppointment.
-  ///
-  /// In en, this message translates to:
-  /// **'Complete Appointment'**
-  String get completeAppointment;
-
-  /// No description provided for @cancelAppointment.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel Appointment'**
-  String get cancelAppointment;
-
-  /// No description provided for @confirmCancelAppointment.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to cancel this appointment?'**
-  String get confirmCancelAppointment;
-
   /// No description provided for @todaysAppointmentsFlow.
   ///
   /// In en, this message translates to:
@@ -1155,6 +723,360 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You must be logged in to sync to the cloud.'**
   String get mustBeLoggedInToSync;
+
+  /// No description provided for @dateNewestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Date (Newest First)'**
+  String get dateNewestFirst;
+
+  /// No description provided for @dateOldestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Date (Oldest First)'**
+  String get dateOldestFirst;
+
+  /// No description provided for @startAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Appointment'**
+  String get startAppointment;
+
+  /// No description provided for @completeAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Appointment'**
+  String get completeAppointment;
+
+  /// No description provided for @cancelAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Appointment'**
+  String get cancelAppointment;
+
+  /// No description provided for @confirmCancelAppointment.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this appointment?'**
+  String get confirmCancelAppointment;
+
+  /// No description provided for @addTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Transaction'**
+  String get addTransaction;
+
+  /// No description provided for @financialSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Financial Summary'**
+  String get financialSummary;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @enterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a description'**
+  String get enterDescription;
+
+  /// No description provided for @totalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Amount'**
+  String get totalAmount;
+
+  /// No description provided for @enterTotalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter total amount'**
+  String get enterTotalAmount;
+
+  /// No description provided for @enterValidPositiveAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid positive amount'**
+  String get enterValidPositiveAmount;
+
+  /// No description provided for @paidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid Amount'**
+  String get paidAmount;
+
+  /// No description provided for @enterPaidAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter paid amount'**
+  String get enterPaidAmount;
+
+  /// No description provided for @enterValidNonNegativeAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid non-negative amount'**
+  String get enterValidNonNegativeAmount;
+
+  /// No description provided for @type.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get type;
+
+  /// No description provided for @income.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get income;
+
+  /// No description provided for @expense.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expense;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// No description provided for @cash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get cash;
+
+  /// No description provided for @card.
+  ///
+  /// In en, this message translates to:
+  /// **'Card'**
+  String get card;
+
+  /// No description provided for @bankTransfer.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Transfer'**
+  String get bankTransfer;
+
+  /// No description provided for @searchTransactions.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Transactions'**
+  String get searchTransactions;
+
+  /// No description provided for @allTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'All Types'**
+  String get allTypes;
+
+  /// No description provided for @amountHighestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (Highest First)'**
+  String get amountHighestFirst;
+
+  /// No description provided for @amountLowestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Amount (Lowest First)'**
+  String get amountLowestFirst;
+
+  /// No description provided for @showAllItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Show All Items'**
+  String get showAllItems;
+
+  /// No description provided for @showExpiredOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Expired Only'**
+  String get showExpiredOnly;
+
+  /// No description provided for @showLowStockOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Low Stock Only'**
+  String get showLowStockOnly;
+
+  /// No description provided for @nameAZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (A-Z)'**
+  String get nameAZ;
+
+  /// No description provided for @nameZA.
+  ///
+  /// In en, this message translates to:
+  /// **'Name (Z-A)'**
+  String get nameZA;
+
+  /// No description provided for @quantityLowToHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity (Low to High)'**
+  String get quantityLowToHigh;
+
+  /// No description provided for @quantityHighToLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity (High to Low)'**
+  String get quantityHighToLow;
+
+  /// No description provided for @expirySoonestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry (Soonest First)'**
+  String get expirySoonestFirst;
+
+  /// No description provided for @expiryLatestFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiry (Latest First)'**
+  String get expiryLatestFirst;
+
+  /// No description provided for @searchInventoryItems.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Inventory Items'**
+  String get searchInventoryItems;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantity;
+
+  /// No description provided for @expirationDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Expiration Date'**
+  String get expirationDate;
+
+  /// No description provided for @supplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get supplier;
+
+  /// No description provided for @addItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Item'**
+  String get addItem;
+
+  /// No description provided for @noItemsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No items found'**
+  String get noItemsFound;
+
+  /// No description provided for @expires.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires'**
+  String get expires;
+
+  /// No description provided for @expired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
+  String get expired;
+
+  /// No description provided for @lowStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Stock'**
+  String get lowStock;
+
+  /// No description provided for @deleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Item'**
+  String get deleteItem;
+
+  /// No description provided for @confirmDeleteItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this item?'**
+  String get confirmDeleteItem;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @enterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name'**
+  String get enterName;
+
+  /// No description provided for @enterQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a quantity'**
+  String get enterQuantity;
+
+  /// No description provided for @enterSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a supplier'**
+  String get enterSupplier;
+
+  /// No description provided for @confirmNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get confirmNewPassword;
+
+  /// No description provided for @restoreFromLocalBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from Local Backup'**
+  String get restoreFromLocalBackup;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @method.
+  ///
+  /// In en, this message translates to:
+  /// **'Method'**
+  String get method;
+
+  /// No description provided for @paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paid;
+
+  /// No description provided for @unpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get unpaid;
+
+  /// No description provided for @noTransactionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet'**
+  String get noTransactionsYet;
 }
 
 class _AppLocalizationsDelegate

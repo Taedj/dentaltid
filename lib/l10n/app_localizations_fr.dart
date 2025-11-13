@@ -24,15 +24,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get finance => 'Finance';
 
   @override
-  String get settings => 'Paramètres';
-
-  @override
-  String get language => 'Langue';
-
-  @override
-  String get theme => 'Thème';
-
-  @override
   String get addAppointment => 'Ajouter un rendez-vous';
 
   @override
@@ -89,6 +80,36 @@ class AppLocalizationsFr extends AppLocalizations {
       'Un rendez-vous pour ce patient à cette date et heure existe déjà.';
 
   @override
+  String get settings => 'Paramètres';
+
+  @override
+  String get account => 'Compte';
+
+  @override
+  String get changePassword => 'Changer le mot de passe';
+
+  @override
+  String get currentPassword => 'Mot de passe actuel';
+
+  @override
+  String get newPassword => 'Nouveau mot de passe';
+
+  @override
+  String get passwordChangedSuccessfully => 'Mot de passe changé avec succès';
+
+  @override
+  String get invalidPassword => 'Mot de passe invalide';
+
+  @override
+  String get passwordsDoNotMatch => 'Les mots de passe ne correspondent pas';
+
+  @override
+  String get language => 'Langue';
+
+  @override
+  String get theme => 'Thème';
+
+  @override
   String get localBackup => 'Sauvegarde locale';
 
   @override
@@ -128,200 +149,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get logout => 'Déconnexion';
 
   @override
-  String get showAllItems => 'Afficher tous les articles';
-
-  @override
-  String get showExpiredOnly => 'Afficher uniquement les articles expirés';
-
-  @override
-  String get showLowStockOnly =>
-      'Afficher uniquement les articles en faible stock';
-
-  @override
-  String get nameAZ => 'Nom (A-Z)';
-
-  @override
-  String get nameZA => 'Nom (Z-A)';
-
-  @override
-  String get quantityLowToHigh => 'Quantité (croissante)';
-
-  @override
-  String get quantityHighToLow => 'Quantité (décroissante)';
-
-  @override
-  String get expirySoonestFirst => 'Expiration (la plus proche en premier)';
-
-  @override
-  String get expiryLatestFirst => 'Expiration (la plus éloignée en premier)';
-
-  @override
-  String get searchInventoryItems => 'Rechercher des articles d\'inventaire';
-
-  @override
-  String get name => 'Nom';
-
-  @override
-  String get quantity => 'Quantité';
-
-  @override
-  String get expirationDate => 'Date d\'expiration';
-
-  @override
-  String get supplier => 'Fournisseur';
-
-  @override
-  String get addItem => 'Ajouter un article';
-
-  @override
-  String get noItemsFound => 'Aucun article trouvé';
-
-  @override
-  String get expires => 'Expire';
-
-  @override
-  String get expired => 'Expiré';
-
-  @override
-  String get lowStock => 'Faible stock';
-
-  @override
-  String get deleteItem => 'Supprimer l\'article';
-
-  @override
-  String get confirmDeleteItem =>
-      'Êtes-vous sûr de vouloir supprimer cet article ?';
-
-  @override
-  String get cancel => 'Annuler';
-
-  @override
-  String get enterName => 'Veuillez saisir un nom';
-
-  @override
-  String get enterQuantity => 'Veuillez saisir une quantité';
-
-  @override
-  String get enterSupplier => 'Veuillez saisir un fournisseur';
-
-  @override
-  String get addTransaction => 'Ajouter une transaction';
-
-  @override
-  String get financialSummary => 'Résumé financier';
-
-  @override
-  String get description => 'Description';
-
-  @override
-  String get enterDescription => 'Veuillez saisir une description';
-
-  @override
-  String get totalAmount => 'Montant total';
-
-  @override
-  String get enterTotalAmount => 'Veuillez saisir le montant total';
-
-  @override
-  String get enterValidPositiveAmount =>
-      'Veuillez saisir un montant positif valide';
-
-  @override
-  String get paidAmount => 'Montant payé';
-
-  @override
-  String get enterPaidAmount => 'Veuillez saisir le montant payé';
-
-  @override
-  String get enterValidNonNegativeAmount =>
-      'Veuillez saisir un montant non négatif valide';
-
-  @override
-  String get type => 'Type';
-
-  @override
-  String get income => 'Revenu';
-
-  @override
-  String get expense => 'Dépense';
-
-  @override
-  String get paymentMethod => 'Mode de paiement';
-
-  @override
-  String get cash => 'Espèces';
-
-  @override
-  String get card => 'Carte';
-
-  @override
-  String get bankTransfer => 'Virement bancaire';
-
-  @override
-  String get searchTransactions => 'Rechercher des transactions';
-
-  @override
-  String get allTypes => 'Tous les types';
-
-  @override
-  String get dateNewestFirst => 'Date (la plus récente en premier)';
-
-  @override
-  String get dateOldestFirst => 'Date (la plus ancienne en premier)';
-
-  @override
-  String get amountHighestFirst => 'Montant (le plus élevé en premier)';
-
-  @override
-  String get amountLowestFirst => 'Montant (le moins élevé en premier)';
-
-  @override
-  String get noTransactionsYet => 'Aucune transaction pour l\'instant';
-
-  @override
-  String get paid => 'Payé';
-
-  @override
-  String get unpaid => 'Impayé';
-
-  @override
-  String get date => 'Date';
-
-  @override
-  String get method => 'Méthode';
-
-  @override
-  String get incorrectPin => 'Code PIN incorrect';
-
-  @override
-  String get setupPinCode => 'Configurer le code PIN';
-
-  @override
-  String get enterPin4Digits => 'Saisir le code PIN (4 chiffres)';
-
-  @override
-  String get confirmPin => 'Confirmer le code PIN';
-
-  @override
-  String get setupPin => 'Configurer le code PIN';
-
-  @override
-  String get pinMustBe4DigitsAndMatch =>
-      'Le code PIN doit comporter 4 chiffres et correspondre à la confirmation';
-
-  @override
-  String get enterPin => 'Saisir le code PIN';
-
-  @override
-  String get pin => 'Code PIN';
-
-  @override
-  String get pleaseEnterPin => 'Veuillez saisir un code PIN';
-
-  @override
-  String get login => 'Connexion';
-
-  @override
   String get showAllAppointments => 'Afficher tous les rendez-vous';
 
   @override
@@ -348,6 +175,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get confirmDeleteAppointment =>
       'Êtes-vous sûr de vouloir supprimer ce rendez-vous ?';
+
+  @override
+  String get confirm => 'Confirmer';
 
   @override
   String get welcomeDr => 'Bienvenue Dr.';
@@ -484,43 +314,26 @@ class AppLocalizationsFr extends AppLocalizations {
       'Êtes-vous sûr de vouloir supprimer ce patient ?';
 
   @override
-  String get confirm => 'Confirmer';
+  String get todaysAppointmentsFlow => 'Flux des rendez-vous d\'aujourd\'hui';
 
   @override
-  String get enterNewPin => 'Saisir le nouveau code PIN';
+  String get waiting => 'En attente';
 
   @override
-  String get pinRequired => 'Le code PIN est requis';
+  String get inProgress => 'En cours';
 
   @override
-  String get pinMustBe4Digits => 'Le code PIN doit comporter 4 chiffres';
+  String get completed => 'Terminé';
 
   @override
-  String get confirmNewPin => 'Confirmer le nouveau code PIN';
+  String get mustBeLoggedInToSync =>
+      'Vous devez être connecté pour synchroniser avec le cloud.';
 
   @override
-  String get pinsDoNotMatch => 'Les codes PIN ne correspondent pas';
+  String get dateNewestFirst => 'Date (la plus récente en premier)';
 
   @override
-  String get pinSetupSuccessfully => 'Configuration du code PIN réussie';
-
-  @override
-  String get invalidPin => 'Code PIN invalide';
-
-  @override
-  String get changePinCode => 'Changer le code PIN';
-
-  @override
-  String get enterCurrentPin => 'Saisir le code PIN actuel';
-
-  @override
-  String get pinChangedSuccessfully => 'Code PIN changé avec succès';
-
-  @override
-  String get restoreFromLocalBackup => 'Restaurer depuis la sauvegarde locale';
-
-  @override
-  String get pinCode => 'Code PIN';
+  String get dateOldestFirst => 'Date (la plus ancienne en premier)';
 
   @override
   String get startAppointment => 'Démarrer le rendez-vous';
@@ -536,18 +349,165 @@ class AppLocalizationsFr extends AppLocalizations {
       'Êtes-vous sûr de vouloir annuler ce rendez-vous ?';
 
   @override
-  String get todaysAppointmentsFlow => 'Flux des rendez-vous d\'aujourd\'hui';
+  String get addTransaction => 'Ajouter une transaction';
 
   @override
-  String get waiting => 'En attente';
+  String get financialSummary => 'Résumé financier';
 
   @override
-  String get inProgress => 'En cours';
+  String get description => 'Description';
 
   @override
-  String get completed => 'Terminé';
+  String get enterDescription => 'Veuillez saisir une description';
 
   @override
-  String get mustBeLoggedInToSync =>
-      'Vous devez être connecté pour synchroniser avec le cloud.';
+  String get totalAmount => 'Montant total';
+
+  @override
+  String get enterTotalAmount => 'Veuillez saisir le montant total';
+
+  @override
+  String get enterValidPositiveAmount =>
+      'Veuillez saisir un montant positif valide';
+
+  @override
+  String get paidAmount => 'Montant payé';
+
+  @override
+  String get enterPaidAmount => 'Veuillez saisir le montant payé';
+
+  @override
+  String get enterValidNonNegativeAmount =>
+      'Veuillez saisir un montant non négatif valide';
+
+  @override
+  String get type => 'Type';
+
+  @override
+  String get income => 'Revenu';
+
+  @override
+  String get expense => 'Dépense';
+
+  @override
+  String get paymentMethod => 'Mode de paiement';
+
+  @override
+  String get cash => 'Espèces';
+
+  @override
+  String get card => 'Carte';
+
+  @override
+  String get bankTransfer => 'Virement bancaire';
+
+  @override
+  String get searchTransactions => 'Rechercher des transactions';
+
+  @override
+  String get allTypes => 'Tous les types';
+
+  @override
+  String get amountHighestFirst => 'Montant (le plus élevé en premier)';
+
+  @override
+  String get amountLowestFirst => 'Montant (le moins élevé en premier)';
+
+  @override
+  String get showAllItems => 'Afficher tous les articles';
+
+  @override
+  String get showExpiredOnly => 'Afficher uniquement les articles expirés';
+
+  @override
+  String get showLowStockOnly =>
+      'Afficher uniquement les articles en faible stock';
+
+  @override
+  String get nameAZ => 'Nom (A-Z)';
+
+  @override
+  String get nameZA => 'Nom (Z-A)';
+
+  @override
+  String get quantityLowToHigh => 'Quantité (croissante)';
+
+  @override
+  String get quantityHighToLow => 'Quantité (décroissante)';
+
+  @override
+  String get expirySoonestFirst => 'Expiration (la plus proche en premier)';
+
+  @override
+  String get expiryLatestFirst => 'Expiration (la plus éloignée en premier)';
+
+  @override
+  String get searchInventoryItems => 'Rechercher des articles d\'inventaire';
+
+  @override
+  String get name => 'Nom';
+
+  @override
+  String get quantity => 'Quantité';
+
+  @override
+  String get expirationDate => 'Date d\'expiration';
+
+  @override
+  String get supplier => 'Fournisseur';
+
+  @override
+  String get addItem => 'Ajouter un article';
+
+  @override
+  String get noItemsFound => 'Aucun article trouvé';
+
+  @override
+  String get expires => 'Expire';
+
+  @override
+  String get expired => 'Expiré';
+
+  @override
+  String get lowStock => 'Faible stock';
+
+  @override
+  String get deleteItem => 'Supprimer l\'article';
+
+  @override
+  String get confirmDeleteItem =>
+      'Êtes-vous sûr de vouloir supprimer cet article ?';
+
+  @override
+  String get cancel => 'Annuler';
+
+  @override
+  String get enterName => 'Veuillez saisir un nom';
+
+  @override
+  String get enterQuantity => 'Veuillez saisir une quantité';
+
+  @override
+  String get enterSupplier => 'Veuillez saisir un fournisseur';
+
+  @override
+  String get confirmNewPassword => 'Confirmer le nouveau mot de passe';
+
+  @override
+  String get restoreFromLocalBackup => 'Restaurer depuis la sauvegarde locale';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get method => 'Méthode';
+
+  @override
+  String get paid => 'Payé';
+
+  @override
+  String get unpaid => 'Impayé';
+
+  @override
+  String get noTransactionsYet => 'Aucune transaction pour l\'instant';
 }
