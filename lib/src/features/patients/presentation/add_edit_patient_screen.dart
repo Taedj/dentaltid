@@ -458,8 +458,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             healthState: _healthStateController.text,
                             diagnosis: _diagnosisController.text,
                             treatment: _treatmentController.text,
-                            payment:
-                                double.tryParse(_paymentController.text) ?? 0.0,
+                            payment: _paymentController.text,
                             createdAt:
                                 widget.patient?.createdAt ?? DateTime.now(),
                             isEmergency: _isEmergency,
@@ -499,14 +498,6 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                                 content: Text(errorMessage),
                                 backgroundColor: Colors.red,
                                 duration: const Duration(seconds: 5),
-                                action: SnackBarAction(
-                                  label: 'OK',
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(
-                                      context,
-                                    ).hideCurrentSnackBar();
-                                  },
-                                ),
                               ),
                             );
                           }
