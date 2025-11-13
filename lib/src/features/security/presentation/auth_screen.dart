@@ -243,6 +243,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             if (value == null || value.isEmpty) {
                               return 'Please enter your email';
                             }
+                            // ignore: deprecated_member_use
                             if (!RegExp(
                               r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                             ).hasMatch(value)) {

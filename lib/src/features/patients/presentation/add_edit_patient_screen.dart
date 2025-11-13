@@ -363,6 +363,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                     }
                     // Regex for phone number validation (e.g., +1234567890, 123-456-7890, etc.)
                     // This regex allows for an optional '+' at the beginning, followed by 7 to 15 digits.
+                    // ignore: deprecated_member_use
                     final phoneRegex = RegExp(r'^\+?[0-9]{7,15}$');
                     if (!phoneRegex.hasMatch(value)) {
                       return l10n.enterValidPhoneNumber;
