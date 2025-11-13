@@ -177,16 +177,87 @@ New keys will be required for:
 - **UI Tests:** For the new UI elements and navigation flows.
 - **Manual Testing:** Thorough end-to-end testing of all new features and modified workflows.
 
-## 9. Implementation Order (High-Level)
+## 10. Modifications to the 'Patients' Tab for New Appointment Workflow
 
-1.  Fix `GoException` (Done).
-2.  Create `Session` model, repository, and service.
-3.  Update `DatabaseService` for `sessions` table and foreign keys.
-4.  Modify `Patient` model (`isBlacklisted`).
-5.  Modify `Visit` model (add `visitNumber`, `isEmergency`, `emergencySeverity`, `healthAlerts`).
-6.  Modify `Appointment` model (link to `sessionId`).
-7.  Modify `Transaction` model (link to `sessionId`).
-8.  Update `AddEditAppointmentScreen` for the new workflow.
-9.  Update `AddEditPatientScreen` for the unified "Visits and Payments History" display.
-10. Update localization files.
-11. Implement UI for blacklist and patient notes.
+The 'Patients' tab (`PatientsScreen`) and the 'Add/Edit Patient' screen (`AddEditPatientScreen`) will need significant updates to integrate seamlessly with the new visit and session management.
+
+### A. `PatientsScreen` Enhancements
+
+1.  **"Add Appointment" Button:**
+    - A prominent button to initiate the new appointment creation flow. This button will navigate to the `AddEditAppointmentScreen` (or a dedicated "New Appointment Wizard").
+2.  **Patient List Interaction:**
+    - When a patient is selected from the list, an option to "Schedule New Appointment" or "View Patient History" should be available.
+    - "Schedule New Appointment" will pre-select the patient in the `AddEditAppointmentScreen`.
+3.  **Search Functionality:**
+    - Ensure the existing patient search can quickly retrieve patients for appointment scheduling.
+4.  **Blacklisted Patient Indicator:**
+    - Visually indicate if a patient is blacklisted directly in the patient list.
+
+### B. `AddEditPatientScreen` Enhancements (Beyond Visit History)
+
+1.  **Patient Notes Section:**
+    - A dedicated `TextFormField` for general patient notes (updates `Patient.notes`). This should be easily accessible and editable.
+2.  **Blacklist Management:**
+    - A `CheckboxListTile` or toggle switch to mark a patient as "Blacklisted" (updates `Patient.isBlacklisted`). This should have a clear warning/confirmation for activation.
+3.  **Unified History View:**
+    - The "Visits and Payments History" section (as described in 6.B) will be the central hub for all historical data.
+    - Ensure easy navigation from this section to add new appointments/visits/sessions or edit existing ones.
+4.  **"Schedule New Appointment" Button:**
+    - A button within the `AddEditPatientScreen` to directly initiate a new appointment for the current patient, pre-filling their details.
+
+## 11. Example Simulation: Client Interaction Workflow
+
+This simulation outlines how a dentist or assistant would interact with the system for a new or returning patient.
+
+**Scenario: New Patient - First Visit & Appointment**
+
+1.  **Receptionist/Assistant:** A new patient calls to schedule an appointment.
+2.  **System Action:** Receptionist navigates to the "Appointments" tab, clicks "Add Appointment".
+3.  **System Prompt:** "Select Patient".
+4.  **Receptionist Action:** Since it's a new patient, clicks "Add New Patient" button.
+5.  **System Action:** `AddEditPatientScreen` opens.
+6.  **Receptionist Action:** Fills in patient details (Name, Family Name, Age, Phone Number, etc.). Saves the new patient.
+7.  **System Action:** Returns to `AddEditAppointmentScreen` with the new patient pre-selected.
+8.  **Receptionist Action:**
+    - Enters "Reason for Visit" (e.g., "Initial check-up and cleaning").
+    - Marks "Is Emergency?" if applicable.
+    - Sets "Number of Sessions" to 1 (for the initial appointment).
+    - Enters "Treatment Details" for Session 1 (e.g., "Dental Exam, X-rays, Cleaning").
+    - Enters "Total Amount" for Session 1, records "Paid Amount" if any upfront payment is made.
+    - Adds general "Notes" about the patient's initial concerns.
+    - Schedules the appointment date/time.
+9.  **System Action:** Saves the new Visit, Session, and Appointment. The patient's profile now shows their first visit.
+
+**Scenario: Returning Patient - Follow-up Visit with Multiple Sessions**
+
+1.  **Dentist/Assistant:** A patient (e.g., John Doe) needs a root canal, which requires multiple sessions.
+2.  **System Action:** Dentist/Assistant navigates to the "Patients" tab, searches for "John Doe", and selects his profile.
+3.  **System Action:** On `AddEditPatientScreen`, under "Visits and Payments History", they see John's previous visits.
+4.  **Dentist/Assistant Action:** Clicks "Schedule New Appointment" for John Doe.
+5.  **System Prompt:** "Create New Visit" or "Select Existing Visit".
+6.  **Dentist/Assistant Action:** Clicks "Create New Visit".
+7.  **System Action:** Automatically assigns `visitNumber` (e.g., Visit #3).
+8.  **Dentist/Assistant Action:**
+    - Enters "Reason for Visit" (e.g., "Root Canal Treatment").
+    - Sets "Number of Sessions" to 3.
+    - **For Session 1:**
+        - Sets `dateTime`.
+        - Enters "Treatment Details" (e.g., "Pulp removal, temporary filling").
+        - Enters "Total Amount" and "Paid Amount".
+        - Adds session-specific "Notes".
+    - **For Session 2 & 3:** (Can be added later or pre-scheduled)
+        - Schedules future `dateTime`s.
+        - Leaves "Treatment Details" and "Notes" blank for now.
+9.  **System Action:** Saves the new Visit and its associated Sessions and Appointments. The patient's history is updated.
+
+**Scenario: Patient Payment for a Session**
+
+1.  **Receptionist/Assistant:** A patient (e.g., Jane Smith) comes to pay for a completed session.
+2.  **System Action:** Receptionist navigates to "Patients", selects "Jane Smith".
+3.  **System Action:** On `AddEditPatientScreen`, under "Visits and Payments History", they find the relevant visit and session.
+4.  **Receptionist Action:** Clicks "Edit" on the specific session.
+5.  **System Action:** `AddEditSessionScreen` (or similar) opens.
+6.  **Receptionist Action:** Updates "Paid Amount" for that session. The "Unpaid Amount" automatically adjusts.
+7.  **System Action:** Saves the session. The payment is recorded and linked to that specific session.
+
+This detailed plan will guide the implementation of the new features.
