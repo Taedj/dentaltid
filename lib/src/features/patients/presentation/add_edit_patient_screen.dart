@@ -458,7 +458,8 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             healthState: _healthStateController.text,
                             diagnosis: _diagnosisController.text,
                             treatment: _treatmentController.text,
-                            payment: _paymentController.text,
+                            payment:
+                                double.tryParse(_paymentController.text) ?? 0.0,
                             createdAt:
                                 widget.patient?.createdAt ?? DateTime.now(),
                             isEmergency: _isEmergency,
