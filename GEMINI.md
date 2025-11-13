@@ -151,3 +151,6 @@ The goal is to create a modern, intuitive, and visually appealing user interface
     - Integrated a `_PatientVisitHistory` widget into `lib/src/features/patients/presentation/add_edit_patient_screen.dart` to display a list of visits for a patient.
     - Added new localization keys (`visitHistory`, `noVisitHistory`, `visitDate`, `reasonForVisit`) to `lib/l10n/app_en.arb` and regenerated localization files.
     - Verified that `flutter analyze` reports no critical errors after these changes.
+- **Resolved `unnecessary_brace_in_string_interps` warnings:**
+    - Removed unnecessary braces from string interpolation for `patientId` in `lib/src/features/patients/presentation/add_edit_patient_screen.dart`.
+    - Verified that `flutter analyze` now reports "No issues found!".

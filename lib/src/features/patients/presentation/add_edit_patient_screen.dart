@@ -652,7 +652,7 @@ class _PatientVisitHistory extends ConsumerWidget {
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
-                    context.go('/patients/${patientId}/visits/add', extra: patientId);
+                    context.go('/patients/$patientId/visits/add', extra: patientId);
                   },
                 ),
               ],
@@ -679,7 +679,7 @@ class _PatientVisitHistory extends ConsumerWidget {
                       trailing: IconButton(
                         icon: const Icon(Icons.edit),
                         onPressed: () {
-                          context.go('/patients/${patientId}/visits/edit', extra: {'patientId': patientId, 'visit': visit});
+                          context.go('/patients/$patientId/visits/edit', extra: {'patientId': patientId, 'visit': visit});
                         },
                       ),
                     );
