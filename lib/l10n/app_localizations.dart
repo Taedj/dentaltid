@@ -1125,6 +1125,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter a reason for visit'**
   String get enterReasonForVisit;
+
+  /// No description provided for @searchPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Patient'**
+  String get searchPatient;
+
+  /// No description provided for @showCurrentDayPatients.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Current Day Patients'**
+  String get showCurrentDayPatients;
+
+  /// No description provided for @visitDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Details'**
+  String get visitDetails;
+
+  /// No description provided for @createNewVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Create New Visit'**
+  String get createNewVisit;
+
+  /// No description provided for @selectExistingVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Existing Visit'**
+  String get selectExistingVisit;
+
+  /// No description provided for @requiredField.
+  ///
+  /// In en, this message translates to:
+  /// **'This field is required'**
+  String get requiredField;
+
+  /// No description provided for @emergencySeverity.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Severity'**
+  String get emergencySeverity;
+
+  /// No description provided for @sessionDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Session Details'**
+  String get sessionDetails;
+
+  /// No description provided for @numberOfSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of Sessions'**
+  String get numberOfSessions;
+
+  /// No description provided for @session.
+  ///
+  /// In en, this message translates to:
+  /// **'Session'**
+  String get session;
+
+  /// No description provided for @dateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Date & Time'**
+  String get dateTime;
+
+  /// No description provided for @treatmentDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Treatment Details'**
+  String get treatmentDetails;
+
+  /// No description provided for @patientNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient Notes'**
+  String get patientNotes;
+
+  /// No description provided for @blacklistPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Blacklist Patient'**
+  String get blacklistPatient;
 }
 
 class _AppLocalizationsDelegate

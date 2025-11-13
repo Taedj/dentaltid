@@ -101,23 +101,25 @@ class AppointmentService {
 
   Future<void> addAppointment(Appointment appointment) async {
     try {
-      final existingAppointment = await _repository.getAppointmentByDetails(
-        appointment.patientId,
-        appointment.dateTime,
-      );
+      // Check for existing appointment with same session and dateTime
+      final existingAppointment = await _repository
+          .getAppointmentBySessionAndDateTime(
+            appointment.sessionId,
+            appointment.dateTime,
+          );
       if (existingAppointment != null) {
         throw DuplicateEntryException(
-          'An appointment for this patient at this date and time already exists.',
+          'An appointment for this session at this date and time already exists.',
           entity: 'Appointment',
           duplicateValue:
-              'Patient ID: ${appointment.patientId}, DateTime: ${appointment.dateTime}',
+              'Session ID: ${appointment.sessionId}, DateTime: ${appointment.dateTime}',
         );
       }
       await _repository.createAppointment(appointment);
       _auditService.logEvent(
         AuditAction.createAppointment,
         details:
-            'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} created.',
+            'Appointment for session ${appointment.sessionId} on ${appointment.dateTime} created.',
       );
       // Provider invalidation is handled by the UI to avoid circular dependencies
     } catch (e) {
@@ -140,7 +142,7 @@ class AppointmentService {
     _auditService.logEvent(
       AuditAction.updateAppointment,
       details:
-          'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} updated.',
+          'Appointment for session ${appointment.sessionId} on ${appointment.dateTime} updated.',
     );
     // Provider invalidation is handled by the UI to avoid circular dependencies
   }

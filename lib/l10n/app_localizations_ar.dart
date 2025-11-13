@@ -504,26 +504,68 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noTransactionsYet => 'لا توجد معاملات بعد';
 
   @override
-  String get visitHistory => 'Visit History';
+  String get visitHistory => 'تاريخ الزيارات';
 
   @override
-  String get noVisitHistory => 'No visit history';
+  String get noVisitHistory => 'لا يوجد تاريخ زيارات';
 
   @override
-  String get visitDate => 'Visit Date';
+  String get visitDate => 'تاريخ الزيارة';
 
   @override
-  String get reasonForVisit => 'Reason for Visit';
+  String get reasonForVisit => 'سبب الزيارة';
 
   @override
-  String get addVisit => 'Add Visit';
+  String get addVisit => 'إضافة زيارة';
 
   @override
-  String get editVisit => 'Edit Visit';
+  String get editVisit => 'تعديل الزيارة';
 
   @override
-  String get notes => 'Notes';
+  String get notes => 'الملاحظات';
 
   @override
-  String get enterReasonForVisit => 'Please enter a reason for visit';
+  String get enterReasonForVisit => 'الرجاء إدخال سبب الزيارة';
+
+  @override
+  String get searchPatient => 'البحث عن مريض';
+
+  @override
+  String get showCurrentDayPatients => 'عرض مرضى اليوم';
+
+  @override
+  String get visitDetails => 'تفاصيل الزيارة';
+
+  @override
+  String get createNewVisit => 'إنشاء زيارة جديدة';
+
+  @override
+  String get selectExistingVisit => 'اختيار زيارة موجودة';
+
+  @override
+  String get requiredField => 'هذا الحقل مطلوب';
+
+  @override
+  String get emergencySeverity => 'شدة الطوارئ';
+
+  @override
+  String get sessionDetails => 'تفاصيل الجلسة';
+
+  @override
+  String get numberOfSessions => 'عدد الجلسات';
+
+  @override
+  String get session => 'الجلسة';
+
+  @override
+  String get dateTime => 'التاريخ والوقت';
+
+  @override
+  String get treatmentDetails => 'تفاصيل العلاج';
+
+  @override
+  String get patientNotes => 'ملاحظات المريض';
+
+  @override
+  String get blacklistPatient => 'مريض في القائمة السوداء';
 }

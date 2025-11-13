@@ -52,15 +52,15 @@ class AppointmentRepository {
     });
   }
 
-  Future<Appointment?> getAppointmentByDetails(
-    int patientId,
+  Future<Appointment?> getAppointmentBySessionAndDateTime(
+    int sessionId,
     DateTime dateTime,
   ) async {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'patientId = ? AND dateTime = ?',
-      whereArgs: [patientId, dateTime.toIso8601String()],
+      where: 'sessionId = ? AND dateTime = ?',
+      whereArgs: [sessionId, dateTime.toIso8601String()],
     );
     if (maps.isNotEmpty) {
       return Appointment.fromJson(maps.first);

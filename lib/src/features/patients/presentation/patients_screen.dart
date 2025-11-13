@@ -9,6 +9,9 @@ import 'dart:io';
 import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/features/visits/application/visit_service.dart';
+import 'package:dentaltid/src/features/sessions/application/session_service.dart';
 
 class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key, this.filter});
@@ -26,6 +29,27 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   void initState() {
     super.initState();
     _selectedFilter = widget.filter ?? PatientFilter.all;
+  }
+
+  Future<double> _calculateTotalUnpaidForPatient(int patientId) async {
+    try {
+      final visitService = ref.read(visitServiceProvider);
+      final sessionService = ref.read(sessionServiceProvider);
+
+      final visits = await visitService.getVisitsByPatientId(patientId);
+      double totalUnpaid = 0.0;
+
+      for (final visit in visits) {
+        final sessions = await sessionService.getSessionsByVisitId(visit.id!);
+        for (final session in sessions) {
+          totalUnpaid += session.totalAmount - session.paidAmount;
+        }
+      }
+
+      return totalUnpaid;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   Future<void> _exportPatientsToCsv() async {
@@ -109,15 +133,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       ),
       body: patientsAsyncValue.when(
         data: (patients) {
-          patients.sort((a, b) {
-            if (a.isEmergency && !b.isEmergency) {
-              return -1;
-            } else if (!a.isEmergency && b.isEmergency) {
-              return 1;
-            } else {
-              return 0;
-            }
-          });
           if (patients.isEmpty) {
             return Center(child: Text(l10n.noPatientsYet));
           }
@@ -130,20 +145,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                   itemBuilder: (context, index) {
                     final patient = patients[index];
                     return Card(
-                      color: patient.isEmergency
-                          ? Colors.red.withAlpha((255 * 0.1).round())
-                          : null,
                       margin: const EdgeInsets.all(8.0),
                       child: ExpansionTile(
-                        leading: patient.isEmergency
-                            ? const Icon(Icons.warning, color: Colors.red)
-                            : null,
-                        title: Tooltip(
-                          message: patient.healthAlerts.isNotEmpty
-                              ? patient.healthAlerts
-                              : l10n.noHealthAlerts,
-                          child: Text('${patient.name} ${patient.familyName}'),
-                        ),
+                        title: Text('${patient.name} ${patient.familyName}'),
                         subtitle: Text('${l10n.age} ${patient.age}'),
                         children: [
                           Padding(
@@ -154,11 +158,33 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                 Text(
                                   '${l10n.healthState} ${patient.healthState}',
                                 ),
-                                Text('${l10n.diagnosis} ${patient.diagnosis}'),
-                                Text('${l10n.treatment} ${patient.treatment}'),
-                                Text('${l10n.payment} \$${patient.payment}'),
-                                Text(
-                                  '${l10n.createdAt} ${patient.createdAt.toLocal().toString().split(' ')[0]}',
+                                if (patient.phoneNumber.isNotEmpty)
+                                  Text(
+                                    '${l10n.phoneNumber} ${patient.phoneNumber}',
+                                  ),
+                                FutureBuilder<double>(
+                                  future: _calculateTotalUnpaidForPatient(
+                                    patient.id!,
+                                  ),
+                                  builder: (context, snapshot) {
+                                    final currency = ref.watch(
+                                      currencyProvider,
+                                    );
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return Text('${l10n.payment} ...');
+                                    }
+                                    final unpaid = snapshot.data ?? 0.0;
+                                    return Text(
+                                      'Unpaid: $currency${unpaid.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        color: unpaid > 0
+                                            ? Colors.red.shade700
+                                            : Colors.green.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    );
+                                  },
                                 ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
@@ -217,40 +243,20 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                       child: DataTable(
                         border: TableBorder.all(color: Colors.white),
                         columns: <DataColumn>[
-                          DataColumn(label: Text(l10n.emergency)),
-                          DataColumn(label: Text(l10n.number)),
+                          DataColumn(label: Text('N°')),
                           DataColumn(label: Text(l10n.name)),
                           DataColumn(label: Text(l10n.familyName)),
                           DataColumn(label: Text(l10n.age)),
                           DataColumn(label: Text(l10n.healthState)),
-                          DataColumn(label: Text(l10n.diagnosis)),
-                          DataColumn(label: Text(l10n.treatment)),
-                          DataColumn(label: Text(l10n.payment)),
+                          DataColumn(label: Text(l10n.phoneNumber)),
+                          DataColumn(label: Text('Unpaid')),
                           DataColumn(label: Text(l10n.actions)),
                         ],
                         rows: patients.asMap().entries.map((entry) {
                           final index = entry.key;
                           final patient = entry.value;
                           return DataRow(
-                            color: WidgetStateProperty.resolveWith<Color?>((
-                              Set<WidgetState> states,
-                            ) {
-                              if (patient.isEmergency) {
-                                return Colors.red.withAlpha(
-                                  (255 * 0.2).round(),
-                                );
-                              }
-                              return null; // Use the default color.
-                            }),
                             cells: <DataCell>[
-                              DataCell(
-                                patient.isEmergency
-                                    ? const Icon(
-                                        Icons.warning,
-                                        color: Colors.red,
-                                      )
-                                    : const SizedBox(),
-                              ),
                               DataCell(Text((index + 1).toString())),
                               DataCell(
                                 EditablePatientField(
@@ -326,14 +332,14 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                               DataCell(
                                 EditablePatientField(
                                   patient: patient,
-                                  field: 'diagnosis',
-                                  currentValue: patient.diagnosis,
+                                  field: 'phoneNumber',
+                                  currentValue: patient.phoneNumber,
                                   onUpdate: (p, value) async {
                                     final patientService = ref.read(
                                       patientServiceProvider,
                                     );
                                     await patientService.updatePatient(
-                                      p.copyWith(diagnosis: value),
+                                      p.copyWith(phoneNumber: value),
                                     );
                                   },
                                   patientsProvider: patientsProvider,
@@ -341,41 +347,29 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                 ),
                               ),
                               DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'treatment',
-                                  currentValue: patient.treatment,
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
+                                FutureBuilder<double>(
+                                  future: _calculateTotalUnpaidForPatient(
+                                    patient.id!,
+                                  ),
+                                  builder: (context, snapshot) {
+                                    final currency = ref.watch(
+                                      currencyProvider,
                                     );
-                                    await patientService.updatePatient(
-                                      p.copyWith(treatment: value),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
-                                ),
-                              ),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'payment',
-                                  currentValue: patient.payment.toString(),
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(
-                                        payment:
-                                            double.tryParse(value) ?? p.payment,
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Text('...');
+                                    }
+                                    final unpaid = snapshot.data ?? 0.0;
+                                    return Text(
+                                      '$currency${unpaid.toStringAsFixed(2)}',
+                                      style: TextStyle(
+                                        color: unpaid > 0
+                                            ? Colors.red.shade700
+                                            : Colors.green.shade700,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     );
                                   },
-                                  patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
-                                  isNumeric: true,
                                 ),
                               ),
                               DataCell(

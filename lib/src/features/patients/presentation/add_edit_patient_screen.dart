@@ -4,13 +4,13 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dentaltid/src/features/finance/application/finance_service.dart';
-import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 // ignore: unused_import
 import 'package:dentaltid/src/features/visits/domain/visit.dart';
 import 'package:dentaltid/src/features/visits/application/visit_service.dart';
+import 'package:dentaltid/src/features/sessions/application/session_service.dart';
+import 'package:dentaltid/src/features/sessions/domain/session.dart';
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {
   const AddEditPatientScreen({super.key, this.patient});
@@ -27,14 +27,43 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
   late TextEditingController _nameController;
   late TextEditingController _familyNameController;
   late TextEditingController _ageController;
+  late TextEditingController _dateOfBirthController;
   late TextEditingController _healthStateController;
-  late TextEditingController _diagnosisController;
-  late TextEditingController _treatmentController;
-  late TextEditingController _paymentController;
+
   late TextEditingController _phoneNumberController;
   late bool _isEmergency;
   late EmergencySeverity _severity;
   late TextEditingController _healthAlertsController;
+
+  Future<void> _selectDateOfBirth(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirthController.text.isNotEmpty
+          ? DateTime.tryParse(_dateOfBirthController.text) ?? DateTime.now()
+          : DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _dateOfBirthController.text = picked.toLocal().toString().split(' ')[0];
+      });
+    }
+  }
+
+  int _calculateAgeFromDOB(String dobString) {
+    if (dobString.isEmpty) return 0;
+    final dob = DateTime.tryParse(dobString);
+    if (dob == null) return 0;
+
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
+  }
 
   @override
   void initState() {
@@ -46,18 +75,15 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
     _ageController = TextEditingController(
       text: widget.patient?.age.toString() ?? '',
     );
+    _dateOfBirthController = TextEditingController(
+      text: widget.patient?.dateOfBirth != null
+          ? widget.patient!.dateOfBirth!.toLocal().toString().split(' ')[0]
+          : '',
+    );
     _healthStateController = TextEditingController(
       text: widget.patient?.healthState ?? '',
     );
-    _diagnosisController = TextEditingController(
-      text: widget.patient?.diagnosis ?? '',
-    );
-    _treatmentController = TextEditingController(
-      text: widget.patient?.treatment ?? '',
-    );
-    _paymentController = TextEditingController(
-      text: widget.patient?.payment.toString() ?? '',
-    );
+
     _isEmergency = widget.patient?.isEmergency ?? false;
     _severity = widget.patient?.severity ?? EmergencySeverity.low;
     _healthAlertsController = TextEditingController(
@@ -73,202 +99,12 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
     _nameController.dispose();
     _familyNameController.dispose();
     _ageController.dispose();
+    _dateOfBirthController.dispose();
     _healthStateController.dispose();
-    _diagnosisController.dispose();
-    _treatmentController.dispose();
-    _paymentController.dispose();
+
     _healthAlertsController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
-  }
-
-  Future<void> _showAddTransactionDialog(
-    BuildContext context,
-    int patientId,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final descriptionController = TextEditingController();
-    final totalAmountController = TextEditingController();
-    final paidAmountController = TextEditingController();
-    TransactionType selectedType = TransactionType.income;
-    PaymentMethod selectedPaymentMethod = PaymentMethod.cash;
-
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(l10n.addTransaction),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(labelText: l10n.description),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterDescription;
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: totalAmountController,
-                  decoration: InputDecoration(labelText: l10n.totalAmount),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterTotalAmount;
-                    }
-                    final amount = double.tryParse(value);
-                    if (amount == null || amount <= 0) {
-                      return l10n.enterValidPositiveAmount;
-                    }
-                    return null;
-                  },
-                ),
-                TextFormField(
-                  controller: paidAmountController,
-                  decoration: InputDecoration(labelText: l10n.paidAmount),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterPaidAmount;
-                    }
-                    final paidAmount = double.tryParse(value);
-                    if (paidAmount == null || paidAmount < 0) {
-                      return l10n.enterValidNonNegativeAmount;
-                    }
-                    return null;
-                  },
-                ),
-                DropdownButtonFormField<TransactionType>(
-                  initialValue: selectedType,
-                  decoration: InputDecoration(labelText: l10n.type),
-                  items: TransactionType.values.map((type) {
-                    return DropdownMenuItem<TransactionType>(
-                      value: type,
-                      child: Text(type.toString().split('.').last),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    if (newValue != null) {
-                      selectedType = newValue;
-                    }
-                  },
-                ),
-                DropdownButtonFormField<PaymentMethod>(
-                  initialValue: selectedPaymentMethod,
-                  decoration: InputDecoration(labelText: l10n.paymentMethod),
-                  items: PaymentMethod.values.map((method) {
-                    return DropdownMenuItem<PaymentMethod>(
-                      value: method,
-                      child: Text(method.toString().split('.').last),
-                    );
-                  }).toList(),
-                  onChanged: (newValue) {
-                    if (newValue != null) {
-                      selectedPaymentMethod = newValue;
-                    }
-                  },
-                ),
-                // Removed TransactionStatus dropdown as it will be calculated
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(l10n.cancel),
-              onPressed: () {
-                descriptionController.dispose();
-                totalAmountController.dispose();
-                paidAmountController.dispose();
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(l10n.add),
-              onPressed: () async {
-                final financeService = ref.read(financeServiceProvider);
-                final totalAmount = double.parse(totalAmountController.text);
-                final paidAmount = double.parse(paidAmountController.text);
-                final status = paidAmount >= totalAmount
-                    ? TransactionStatus.paid
-                    : TransactionStatus.unpaid;
-
-                final newTransaction = Transaction(
-                  patientId: patientId,
-                  description: descriptionController.text,
-                  totalAmount: totalAmount,
-                  paidAmount: paidAmount,
-                  type: selectedType,
-                  date: DateTime.now(),
-                  status: status,
-                  paymentMethod: selectedPaymentMethod,
-                );
-                await financeService.addTransaction(newTransaction);
-                ref.invalidate(transactionsByPatientProvider(patientId));
-                if (context.mounted) {
-                  descriptionController.dispose();
-                  totalAmountController.dispose();
-                  paidAmountController.dispose();
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _showReceiptDialog(
-    BuildContext context,
-    Transaction transaction,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    return showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(l10n.receipt),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('${l10n.description}: ${transaction.description}'),
-                Text('${l10n.total}: \$${transaction.totalAmount}'),
-                Text('${l10n.paid}: \$${transaction.paidAmount}'),
-                Text(
-                  '${l10n.outstandingAmount}: \$${transaction.totalAmount - transaction.paidAmount}',
-                ),
-                Text(
-                  '${l10n.type}: ${transaction.type.toString().split('.').last}',
-                ),
-                Text(
-                  '${l10n.date}: ${transaction.date.toLocal().toString().split(' ')[0]}',
-                ),
-                Text(
-                  '${l10n.paid}: ${transaction.status.toString().split('.').last}',
-                ),
-                Text(
-                  '${l10n.method}: ${transaction.paymentMethod.toString().split('.').last}',
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(l10n.close),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -310,19 +146,21 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                   },
                 ),
                 TextFormField(
-                  controller: _ageController,
-                  decoration: InputDecoration(labelText: l10n.age),
-                  keyboardType: TextInputType.number,
+                  controller: _dateOfBirthController,
+                  decoration: InputDecoration(
+                    labelText: 'Date of Birth',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () => _selectDateOfBirth(context),
+                    ),
+                  ),
+                  readOnly: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return l10n.enterAge;
+                      return 'Please select date of birth';
                     }
-                    final age = int.tryParse(value);
-                    if (age == null) {
-                      return l10n.enterValidNumber;
-                    }
-                    if (age < 0 || age > 150) {
-                      return l10n.enterAgeBetween;
+                    if (DateTime.tryParse(value) == null) {
+                      return 'Invalid date format';
                     }
                     return null;
                   },
@@ -331,32 +169,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                   controller: _healthStateController,
                   decoration: InputDecoration(labelText: l10n.healthState),
                 ),
-                TextFormField(
-                  controller: _diagnosisController,
-                  decoration: InputDecoration(labelText: l10n.diagnosis),
-                ),
-                TextFormField(
-                  controller: _treatmentController,
-                  decoration: InputDecoration(labelText: l10n.treatment),
-                ),
-                TextFormField(
-                  controller: _paymentController,
-                  decoration: InputDecoration(labelText: l10n.payment),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return l10n.enterPaymentAmount;
-                    }
-                    final payment = double.tryParse(value);
-                    if (payment == null) {
-                      return l10n.enterValidNumber;
-                    }
-                    if (payment < 0) {
-                      return l10n.paymentCannotBeNegative;
-                    }
-                    return null;
-                  },
-                ),
+
                 TextFormField(
                   controller: _phoneNumberController,
                   decoration: InputDecoration(labelText: l10n.phoneNumber),
@@ -443,13 +256,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                 ),
                 if (widget.patient != null) ...[
                   const SizedBox(height: 20),
-                  _PatientPaymentHistory(
-                    patientId: widget.patient!.id!,
-                    onAddTransaction: _showAddTransactionDialog,
-                    onShowReceipt: _showReceiptDialog,
-                  ),
-                  const SizedBox(height: 20),
-                  _PatientVisitHistory(
+                  _PatientVisitsAndPaymentsHistory(
                     patientId: widget.patient!.id!,
                   ),
                 ],
@@ -463,12 +270,16 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             id: widget.patient?.id,
                             name: _nameController.text,
                             familyName: _familyNameController.text,
-                            age: int.tryParse(_ageController.text) ?? 0,
+                            age: _calculateAgeFromDOB(
+                              _dateOfBirthController.text,
+                            ),
+                            dateOfBirth: DateTime.tryParse(
+                              _dateOfBirthController.text,
+                            ),
                             healthState: _healthStateController.text,
-                            diagnosis: _diagnosisController.text,
-                            treatment: _treatmentController.text,
-                            payment:
-                                double.tryParse(_paymentController.text) ?? 0.0,
+                            diagnosis: '',
+                            treatment: '',
+                            payment: 0.0,
                             createdAt:
                                 widget.patient?.createdAt ?? DateTime.now(),
                             isEmergency: _isEmergency,
@@ -528,110 +339,15 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
   }
 }
 
-class _PatientPaymentHistory extends ConsumerWidget {
-  final int patientId;
-  final Function(BuildContext, int) onAddTransaction;
-  final Function(BuildContext, Transaction) onShowReceipt;
-
-  const _PatientPaymentHistory({
-    required this.patientId,
-    required this.onAddTransaction,
-    required this.onShowReceipt,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currency = ref.watch(currencyProvider);
-    final transactionsAsyncValue = ref.watch(
-      transactionsByPatientProvider(patientId),
-    );
-    final l10n = AppLocalizations.of(context)!;
-
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.paymentHistory,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    onAddTransaction(context, patientId);
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            transactionsAsyncValue.when(
-              data: (transactions) {
-                if (transactions.isEmpty) {
-                  return Text(l10n.noPaymentHistory);
-                }
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: transactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = transactions[index];
-                    return ListTile(
-                      leading: transaction.totalAmount > transaction.paidAmount
-                          ? const Icon(Icons.warning, color: Colors.orange)
-                          : null,
-                      title: Text(transaction.description),
-                      subtitle: Text(
-                        'Total: $currency${transaction.totalAmount} - Paid: $currency${transaction.paidAmount} - Outstanding: $currency${transaction.totalAmount - transaction.paidAmount}\nMethod: ${transaction.paymentMethod.toString().split('.').last}',
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.receipt),
-                            onPressed: () {
-                              onShowReceipt(context, transaction);
-                            },
-                          ),
-                          Text(transaction.status.toString().split('.').last),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Text('Error: ${error.toString()}'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-final transactionsByPatientProvider =
-    FutureProvider.family<List<Transaction>, int>(((ref, patientId) async {
-      final service = ref.watch(financeServiceProvider);
-      return service.getTransactionsByPatientId(patientId);
-    }));
-
-class _PatientVisitHistory extends ConsumerWidget {
+class _PatientVisitsAndPaymentsHistory extends ConsumerWidget {
   final int patientId;
 
-  const _PatientVisitHistory({
-    required this.patientId,
-  });
+  const _PatientVisitsAndPaymentsHistory({required this.patientId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visitsAsyncValue = ref.watch(visitsByPatientProvider(patientId));
+    final currency = ref.watch(currencyProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return Card(
@@ -642,26 +358,15 @@ class _PatientVisitHistory extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.visitHistory,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    context.go('/patients/$patientId/visits/add', extra: patientId);
-                  },
-                ),
-              ],
+            Text(
+              'Visits and Payments History',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             visitsAsyncValue.when(
               data: (visits) {
                 if (visits.isEmpty) {
-                  return Text(l10n.noVisitHistory);
+                  return Text('No visits yet');
                 }
                 return ListView.builder(
                   shrinkWrap: true,
@@ -669,19 +374,11 @@ class _PatientVisitHistory extends ConsumerWidget {
                   itemCount: visits.length,
                   itemBuilder: (context, index) {
                     final visit = visits[index];
-                    return ListTile(
-                      title: Text(
-                        '${l10n.visitDate}: ${visit.dateTime.toLocal().toString().split(' ')[0]}',
-                      ),
-                      subtitle: Text(
-                        '${l10n.reasonForVisit}: ${visit.reasonForVisit}\n${l10n.diagnosis}: ${visit.diagnosis}',
-                      ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          context.go('/patients/$patientId/visits/edit', extra: {'patientId': patientId, 'visit': visit});
-                        },
-                      ),
+                    return _VisitExpansionTile(
+                      visit: visit,
+                      patientId: patientId,
+                      currency: currency,
+                      l10n: l10n,
                     );
                   },
                 );
@@ -695,3 +392,239 @@ class _PatientVisitHistory extends ConsumerWidget {
     );
   }
 }
+
+class _VisitExpansionTile extends ConsumerStatefulWidget {
+  final Visit visit;
+  final int patientId;
+  final String currency;
+  final AppLocalizations l10n;
+
+  const _VisitExpansionTile({
+    required this.visit,
+    required this.patientId,
+    required this.currency,
+    required this.l10n,
+  });
+
+  @override
+  ConsumerState<_VisitExpansionTile> createState() =>
+      _VisitExpansionTileState();
+}
+
+class _VisitExpansionTileState extends ConsumerState<_VisitExpansionTile> {
+  Future<Map<String, double>> _getVisitPaymentSummary(int visitId) async {
+    final sessionService = ref.read(sessionServiceProvider);
+    final sessions = await sessionService.getSessionsByVisitId(visitId);
+
+    double total = 0.0;
+    double paid = 0.0;
+
+    for (final session in sessions) {
+      total += session.totalAmount;
+      paid += session.paidAmount;
+    }
+
+    final unpaid = total - paid;
+
+    return {'total': total, 'paid': paid, 'unpaid': unpaid};
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sessionsAsyncValue = ref.watch(
+      sessionsByVisitProvider(widget.visit.id!),
+    );
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ExpansionTile(
+        title: Row(
+          children: [
+            Text(
+              'Visit ${widget.visit.visitNumber}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              widget.visit.dateTime.toLocal().toString().split(' ')[0],
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+          ],
+        ),
+        subtitle: FutureBuilder<Map<String, double>>(
+          future: _getVisitPaymentSummary(widget.visit.id!),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Text(
+                '${widget.l10n.reasonForVisit}: ${widget.visit.reasonForVisit}',
+              );
+            }
+
+            final paymentData =
+                snapshot.data ?? {'total': 0.0, 'paid': 0.0, 'unpaid': 0.0};
+            final total = paymentData['total']!;
+            final paid = paymentData['paid']!;
+            final unpaid = paymentData['unpaid']!;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${widget.l10n.reasonForVisit}: ${widget.visit.reasonForVisit}',
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Total: ${widget.currency}${total.toStringAsFixed(2)}',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Paid: ${widget.currency}${paid.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Unpaid: ${widget.currency}${unpaid.toStringAsFixed(2)}',
+                      style: TextStyle(
+                        color: unpaid > 0
+                            ? Colors.red.shade700
+                            : Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () {
+                // Navigate to edit the visit information
+                if (context.mounted) {
+                  context.push(
+                    '/patients/${widget.patientId}/visits/edit',
+                    extra: {'visit': widget.visit},
+                  );
+                }
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              color: Colors.red,
+              onPressed: () async {
+                // Show confirmation dialog before deleting
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Visit'),
+                    content: const Text(
+                      'Are you sure you want to delete this visit? This will also delete all associated sessions and appointments.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && context.mounted) {
+                  try {
+                    final visitService = ref.read(visitServiceProvider);
+                    await visitService.deleteVisit(widget.visit.id!);
+
+                    // Refresh the visits list
+                    ref.invalidate(visitsByPatientProvider(widget.patientId));
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Visit deleted successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error deleting visit: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ],
+        ),
+        children: [
+          sessionsAsyncValue.when(
+            data: (sessions) {
+              if (sessions.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text('No sessions for this visit'),
+                );
+              }
+              return Column(
+                children: sessions.map((session) {
+                  return ListTile(
+                    leading: Text(
+                      '${widget.l10n.session} ${session.sessionNumber}',
+                    ),
+                    title: Text(session.dateTime.toLocal().toString()),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${widget.l10n.treatmentDetails}: ${session.treatmentDetails}',
+                        ),
+                        Text('${widget.l10n.notes}: ${session.notes}'),
+                        Text(
+                          'Payment: ${widget.currency}${session.totalAmount} (Paid: ${widget.currency}${session.paidAmount})',
+                        ),
+                      ],
+                    ),
+                    // Removed edit button for sessions as requested
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Text('Error: ${error.toString()}'),
+          ),
+        ],
+        onExpansionChanged: (expanded) {
+          // Expansion state is managed by ExpansionTile
+        },
+      ),
+    );
+  }
+}
+
+final sessionsByVisitProvider = FutureProvider.family<List<Session>, int>((
+  ref,
+  visitId,
+) async {
+  final sessionService = ref.watch(sessionServiceProvider);
+  return sessionService.getSessionsByVisitId(visitId);
+});

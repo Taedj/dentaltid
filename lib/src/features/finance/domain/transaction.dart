@@ -6,8 +6,7 @@ enum PaymentMethod { cash, card, insurance, bankTransfer, other }
 
 class Transaction {
   final int? id;
-  final int? patientId;
-  final int? visitId; // New field to link to a Visit
+  final int? sessionId;
   final String description;
   final double totalAmount;
   final double paidAmount;
@@ -18,8 +17,7 @@ class Transaction {
 
   Transaction({
     this.id,
-    this.patientId,
-    this.visitId, // New field
+    this.sessionId,
     required this.description,
     required this.totalAmount,
     this.paidAmount = 0.0,
@@ -31,8 +29,7 @@ class Transaction {
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'patientId': patientId,
-    'visitId': visitId,
+    'sessionId': sessionId,
     'description': description,
     'totalAmount': totalAmount,
     'paidAmount': paidAmount,
@@ -44,8 +41,7 @@ class Transaction {
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
     id: json['id'],
-    patientId: json['patientId'],
-    visitId: json['visitId'],
+    sessionId: json['sessionId'],
     description: json['description'],
     totalAmount: json['totalAmount'],
     paidAmount: json['paidAmount'] ?? 0.0,
@@ -65,8 +61,7 @@ class Transaction {
 
   Transaction copyWith({
     int? id,
-    int? patientId,
-    int? visitId,
+    int? sessionId,
     String? description,
     double? totalAmount,
     double? paidAmount,
@@ -77,8 +72,7 @@ class Transaction {
   }) {
     return Transaction(
       id: id ?? this.id,
-      patientId: patientId ?? this.patientId,
-      visitId: visitId ?? this.visitId,
+      sessionId: sessionId ?? this.sessionId,
       description: description ?? this.description,
       totalAmount: totalAmount ?? this.totalAmount,
       paidAmount: paidAmount ?? this.paidAmount,

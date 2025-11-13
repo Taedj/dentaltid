@@ -4,7 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 9; // Incremented version
+  static const int _databaseVersion = 11; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -186,6 +186,96 @@ class DatabaseService {
       await db.execute('ALTER TABLE appointments ADD COLUMN visitId INTEGER');
       await db.execute('ALTER TABLE transactions ADD COLUMN visitId INTEGER');
     }
+    if (oldVersion < 10) {
+      // Add isBlacklisted to patients
+      await db.execute(
+        'ALTER TABLE patients ADD COLUMN isBlacklisted INTEGER DEFAULT 0',
+      );
+
+      // Add new columns to visits
+      await db.execute(
+        'ALTER TABLE visits ADD COLUMN visitNumber INTEGER DEFAULT 1',
+      );
+      await db.execute(
+        'ALTER TABLE visits ADD COLUMN isEmergency INTEGER DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE visits ADD COLUMN emergencySeverity TEXT');
+      await db.execute('ALTER TABLE visits ADD COLUMN healthAlerts TEXT');
+
+      // Create sessions table
+      await db.execute('''
+        CREATE TABLE sessions(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          visitId INTEGER,
+          sessionNumber INTEGER,
+          dateTime TEXT,
+          notes TEXT,
+          treatmentDetails TEXT,
+          totalAmount REAL DEFAULT 0.0,
+          paidAmount REAL DEFAULT 0.0,
+          status TEXT DEFAULT 'scheduled'
+        )
+      ''');
+
+      // Modify appointments table: drop patientId, add sessionId
+      await db.execute('ALTER TABLE appointments ADD COLUMN sessionId INTEGER');
+      await db.execute(
+        'UPDATE appointments SET sessionId = patientId',
+      ); // Temporary migration
+      await db.execute(
+        'CREATE TEMPORARY TABLE appointments_backup(id, sessionId, visitId, dateTime, status)',
+      );
+      await db.execute(
+        'INSERT INTO appointments_backup SELECT id, sessionId, visitId, dateTime, status FROM appointments',
+      );
+      await db.execute('DROP TABLE appointments');
+      await db.execute('''
+        CREATE TABLE appointments(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sessionId INTEGER,
+          dateTime TEXT,
+          status TEXT DEFAULT 'waiting'
+        )
+      ''');
+      await db.execute(
+        'INSERT INTO appointments SELECT id, sessionId, dateTime, status FROM appointments_backup',
+      );
+      await db.execute('DROP TABLE appointments_backup');
+
+      // Modify transactions table: drop patientId, add sessionId
+      await db.execute('ALTER TABLE transactions ADD COLUMN sessionId INTEGER');
+      await db.execute(
+        'UPDATE transactions SET sessionId = patientId',
+      ); // Temporary migration
+      await db.execute(
+        'CREATE TEMPORARY TABLE transactions_backup(id, sessionId, visitId, description, totalAmount, paidAmount, type, date, status, paymentMethod)',
+      );
+      await db.execute(
+        'INSERT INTO transactions_backup SELECT id, sessionId, visitId, description, totalAmount, paidAmount, type, date, status, paymentMethod FROM transactions',
+      );
+      await db.execute('DROP TABLE transactions');
+      await db.execute('''
+        CREATE TABLE transactions(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          sessionId INTEGER,
+          description TEXT,
+          totalAmount REAL,
+          paidAmount REAL,
+          type TEXT,
+          date TEXT,
+          status TEXT,
+          paymentMethod TEXT
+        )
+      ''');
+      await db.execute(
+        'INSERT INTO transactions SELECT id, sessionId, description, totalAmount, paidAmount, type, date, status, paymentMethod FROM transactions_backup',
+      );
+      await db.execute('DROP TABLE transactions_backup');
+    }
+    if (oldVersion < 11) {
+      // Add dateOfBirth column to patients table
+      await db.execute('ALTER TABLE patients ADD COLUMN dateOfBirth TEXT');
+    }
   }
 
   Future<void> close() async {
@@ -199,8 +289,7 @@ class DatabaseService {
     await db.execute('''
       CREATE TABLE appointments(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        patientId INTEGER,
-        visitId INTEGER,
+        sessionId INTEGER,
         dateTime TEXT,
         status TEXT DEFAULT 'waiting'
       )
@@ -211,6 +300,7 @@ class DatabaseService {
         name TEXT,
         familyName TEXT,
         age INTEGER,
+        dateOfBirth TEXT,
         healthState TEXT,
         diagnosis TEXT,
         treatment TEXT,
@@ -219,14 +309,14 @@ class DatabaseService {
         isEmergency INTEGER DEFAULT 0,
         severity TEXT,
         healthAlerts TEXT,
-        phoneNumber TEXT
+        phoneNumber TEXT,
+        isBlacklisted INTEGER DEFAULT 0
       )
       ''');
     await db.execute('''
       CREATE TABLE transactions(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        patientId INTEGER,
-        visitId INTEGER,
+        sessionId INTEGER,
         description TEXT,
         totalAmount REAL,
         paidAmount REAL,
@@ -262,7 +352,24 @@ class DatabaseService {
         reasonForVisit TEXT,
         notes TEXT,
         diagnosis TEXT,
-        treatment TEXT
+        treatment TEXT,
+        visitNumber INTEGER DEFAULT 1,
+        isEmergency INTEGER DEFAULT 0,
+        emergencySeverity TEXT,
+        healthAlerts TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE sessions(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        visitId INTEGER,
+        sessionNumber INTEGER,
+        dateTime TEXT,
+        notes TEXT,
+        treatmentDetails TEXT,
+        totalAmount REAL DEFAULT 0.0,
+        paidAmount REAL DEFAULT 0.0,
+        status TEXT DEFAULT 'scheduled'
       )
     ''');
   }

@@ -169,5 +169,19 @@
   "addVisit": "Add Visit",
   "editVisit": "Edit Visit",
   "notes": "Notes",
-  "enterReasonForVisit": "Please enter a reason for visit"
+  "enterReasonForVisit": "Please enter a reason for visit",
+  "searchPatient": "Search Patient",
+  "showCurrentDayPatients": "Show Current Day Patients",
+  "visitDetails": "Visit Details",
+  "createNewVisit": "Create New Visit",
+  "selectExistingVisit": "Select Existing Visit",
+  "requiredField": "This field is required",
+  "emergencySeverity": "Emergency Severity",
+  "sessionDetails": "Session Details",
+  "numberOfSessions": "Number of Sessions",
+  "session": "Session",
+  "dateTime": "Date & Time",
+  "treatmentDetails": "Treatment Details",
+  "patientNotes": "Patient Notes",
+  "blacklistPatient": "Blacklist Patient"
 }

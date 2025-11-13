@@ -64,7 +64,7 @@ class FinanceService {
     _ref.invalidate(transactionsProvider);
   }
 
-  Future<List<Transaction>> getTransactionsByPatientId(int patientId) async {
-    return await _repository.getTransactionsByPatientId(patientId);
+  Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {
+    return await _repository.getTransactionsBySessionId(sessionId);
   }
 }

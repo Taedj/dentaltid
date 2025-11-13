@@ -8,7 +8,7 @@ void main() {
       final now = DateTime.now();
       final appointment = Appointment(
         id: 1,
-        patientId: 101,
+        sessionId: 101,
         dateTime: now,
         status: AppointmentStatus.waiting,
       );
@@ -17,7 +17,7 @@ void main() {
       final decodedAppointment = Appointment.fromJson(json);
 
       expect(decodedAppointment.id, appointment.id);
-      expect(decodedAppointment.patientId, appointment.patientId);
+      expect(decodedAppointment.sessionId, appointment.sessionId);
       expect(
         decodedAppointment.dateTime.toIso8601String(),
         appointment.dateTime.toIso8601String(),
@@ -28,27 +28,27 @@ void main() {
     test('fromJson should handle missing status gracefully', () {
       final json = {
         'id': 2,
-        'patientId': 102,
+        'sessionId': 102,
         'dateTime': DateTime.now().toIso8601String(),
       };
       final appointment = Appointment.fromJson(json);
 
       expect(appointment.id, 2);
-      expect(appointment.patientId, 102);
+      expect(appointment.sessionId, 102);
       expect(appointment.status, AppointmentStatus.waiting); // Default value
     });
 
     test('fromJson should handle unknown status gracefully', () {
       final json = {
         'id': 3,
-        'patientId': 103,
+        'sessionId': 103,
         'dateTime': DateTime.now().toIso8601String(),
         'status': 'AppointmentStatus.unknown', // Unknown status
       };
       final appointment = Appointment.fromJson(json);
 
       expect(appointment.id, 3);
-      expect(appointment.patientId, 103);
+      expect(appointment.sessionId, 103);
       expect(
         appointment.status,
         AppointmentStatus.waiting,

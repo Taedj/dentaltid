@@ -512,26 +512,68 @@ class AppLocalizationsFr extends AppLocalizations {
   String get noTransactionsYet => 'Aucune transaction pour l\'instant';
 
   @override
-  String get visitHistory => 'Visit History';
+  String get visitHistory => 'Historique des visites';
 
   @override
-  String get noVisitHistory => 'No visit history';
+  String get noVisitHistory => 'Aucun historique de visite';
 
   @override
-  String get visitDate => 'Visit Date';
+  String get visitDate => 'Date de visite';
 
   @override
-  String get reasonForVisit => 'Reason for Visit';
+  String get reasonForVisit => 'Raison de la visite';
 
   @override
-  String get addVisit => 'Add Visit';
+  String get addVisit => 'Ajouter une visite';
 
   @override
-  String get editVisit => 'Edit Visit';
+  String get editVisit => 'Modifier la visite';
 
   @override
   String get notes => 'Notes';
 
   @override
-  String get enterReasonForVisit => 'Please enter a reason for visit';
+  String get enterReasonForVisit => 'Veuillez saisir la raison de la visite';
+
+  @override
+  String get searchPatient => 'Rechercher un patient';
+
+  @override
+  String get showCurrentDayPatients => 'Afficher les patients du jour';
+
+  @override
+  String get visitDetails => 'Détails de la visite';
+
+  @override
+  String get createNewVisit => 'Créer une nouvelle visite';
+
+  @override
+  String get selectExistingVisit => 'Sélectionner une visite existante';
+
+  @override
+  String get requiredField => 'Ce champ est obligatoire';
+
+  @override
+  String get emergencySeverity => 'Sévérité d\'urgence';
+
+  @override
+  String get sessionDetails => 'Détails de la session';
+
+  @override
+  String get numberOfSessions => 'Nombre de sessions';
+
+  @override
+  String get session => 'Session';
+
+  @override
+  String get dateTime => 'Date et heure';
+
+  @override
+  String get treatmentDetails => 'Détails du traitement';
+
+  @override
+  String get patientNotes => 'Notes du patient';
+
+  @override
+  String get blacklistPatient => 'Patient sur liste noire';
 }

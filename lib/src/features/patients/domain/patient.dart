@@ -7,6 +7,7 @@ class Patient {
   final String name;
   final String familyName;
   final int age;
+  final DateTime? dateOfBirth;
   final String healthState;
   final String diagnosis;
   final String treatment;
@@ -16,12 +17,14 @@ class Patient {
   final EmergencySeverity severity;
   final String healthAlerts;
   final String phoneNumber;
+  final bool isBlacklisted;
 
   Patient({
     this.id,
     required this.name,
     required this.familyName,
     required this.age,
+    this.dateOfBirth,
     required this.healthState,
     required this.diagnosis,
     required this.treatment,
@@ -31,6 +34,7 @@ class Patient {
     this.severity = EmergencySeverity.low,
     this.healthAlerts = '',
     this.phoneNumber = '',
+    this.isBlacklisted = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +42,7 @@ class Patient {
     'name': name,
     'familyName': familyName,
     'age': age,
+    'dateOfBirth': dateOfBirth?.toIso8601String(),
     'healthState': healthState,
     'diagnosis': diagnosis,
     'treatment': treatment,
@@ -47,6 +52,7 @@ class Patient {
     'severity': severity.toString(),
     'healthAlerts': healthAlerts,
     'phoneNumber': phoneNumber,
+    'isBlacklisted': isBlacklisted ? 1 : 0,
   };
 
   Patient copyWith({
@@ -54,6 +60,7 @@ class Patient {
     String? name,
     String? familyName,
     int? age,
+    DateTime? dateOfBirth,
     String? healthState,
     String? diagnosis,
     String? treatment,
@@ -63,12 +70,14 @@ class Patient {
     EmergencySeverity? severity,
     String? healthAlerts,
     String? phoneNumber,
+    bool? isBlacklisted,
   }) {
     return Patient(
       id: id ?? this.id,
       name: name ?? this.name,
       familyName: familyName ?? this.familyName,
       age: age ?? this.age,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       healthState: healthState ?? this.healthState,
       diagnosis: diagnosis ?? this.diagnosis,
       treatment: treatment ?? this.treatment,
@@ -78,6 +87,7 @@ class Patient {
       severity: severity ?? this.severity,
       healthAlerts: healthAlerts ?? this.healthAlerts,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      isBlacklisted: isBlacklisted ?? this.isBlacklisted,
     );
   }
 
@@ -86,6 +96,9 @@ class Patient {
     name: json['name'],
     familyName: json['familyName'],
     age: json['age'],
+    dateOfBirth: json['dateOfBirth'] != null
+        ? DateTime.parse(json['dateOfBirth'])
+        : null,
     healthState: json['healthState'],
     diagnosis: json['diagnosis'],
     treatment: json['treatment'],
@@ -98,5 +111,6 @@ class Patient {
     ),
     healthAlerts: json['healthAlerts'] ?? '',
     phoneNumber: json['phoneNumber'] ?? '',
+    isBlacklisted: json['isBlacklisted'] == 1,
   );
 }

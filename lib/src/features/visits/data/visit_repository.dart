@@ -9,8 +9,11 @@ class VisitRepository {
 
   Future<int> addVisit(Visit visit) async {
     final db = await _databaseService.database;
-    return await db.insert('visits', visit.toJson(),
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      'visits',
+      visit.toJson(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   Future<Visit?> getVisitById(int id) async {
@@ -51,10 +54,41 @@ class VisitRepository {
 
   Future<int> deleteVisit(int id) async {
     final db = await _databaseService.database;
-    return await db.delete(
+    return await db.delete('visits', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<List<Visit>> getEmergencyVisits() async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
       'visits',
-      where: 'id = ?',
-      whereArgs: [id],
+      where: 'isEmergency = 1',
+      orderBy: 'dateTime DESC',
     );
+    return List.generate(maps.length, (i) {
+      return Visit.fromJson(maps[i]);
+    });
+  }
+
+  Future<int> getNextVisitNumber(int patientId) async {
+    final db = await _databaseService.database;
+    final result = await db.rawQuery(
+      'SELECT MAX(visitNumber) as maxNumber FROM visits WHERE patientId = ?',
+      [patientId],
+    );
+    final maxNumber = result.first['maxNumber'] as int?;
+    return (maxNumber ?? 0) + 1;
+  }
+
+  Future<List<Visit>> getVisitsWithEmergencyInfo() async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'visits',
+      where: 'isEmergency = 1 OR emergencySeverity != ?',
+      whereArgs: ['EmergencySeverity.low'],
+      orderBy: 'dateTime DESC',
+    );
+    return List.generate(maps.length, (i) {
+      return Visit.fromJson(maps[i]);
+    });
   }
 }

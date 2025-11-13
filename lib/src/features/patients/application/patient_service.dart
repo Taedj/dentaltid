@@ -195,4 +195,27 @@ class PatientService {
       );
     }
   }
+
+  Future<List<Patient>> getBlacklistedPatients() async {
+    try {
+      return await _repository.getBlacklistedPatients();
+    } catch (e) {
+      ErrorHandler.logError(e);
+      throw ServiceException(
+        'Failed to retrieve blacklisted patients',
+        service: 'PatientService',
+        originalError: e,
+      );
+    }
+  }
+
+  Future<bool> isPatientBlacklisted(int id) async {
+    try {
+      final patient = await getPatientById(id);
+      return patient?.isBlacklisted ?? false;
+    } catch (e) {
+      ErrorHandler.logError(e);
+      return false;
+    }
+  }
 }

@@ -36,12 +36,12 @@ class FinanceRepository {
     await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
   }
 
-  Future<List<Transaction>> getTransactionsByPatientId(int patientId) async {
+  Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'patientId = ?',
-      whereArgs: [patientId],
+      where: 'sessionId = ?',
+      whereArgs: [sessionId],
       orderBy: 'date DESC',
     );
     return List.generate(maps.length, (i) {

@@ -109,4 +109,16 @@ class PatientRepository {
       return null;
     }
   }
+
+  Future<List<Patient>> getBlacklistedPatients() async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'isBlacklisted = ?',
+      whereArgs: [1],
+    );
+    return List.generate(maps.length, (i) {
+      return Patient.fromJson(maps[i]);
+    });
+  }
 }

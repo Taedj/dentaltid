@@ -35,10 +35,24 @@ class VisitService {
   Future<int> deleteVisit(int id) async {
     return await _visitRepository.deleteVisit(id);
   }
+
+  Future<List<Visit>> getEmergencyVisits() async {
+    return await _visitRepository.getEmergencyVisits();
+  }
+
+  Future<int> getNextVisitNumber(int patientId) async {
+    return await _visitRepository.getNextVisitNumber(patientId);
+  }
+
+  Future<List<Visit>> getVisitsWithEmergencyInfo() async {
+    return await _visitRepository.getVisitsWithEmergencyInfo();
+  }
 }
 
-final visitsByPatientProvider =
-    FutureProvider.family<List<Visit>, int>(((ref, patientId) async {
+final visitsByPatientProvider = FutureProvider.family<List<Visit>, int>(((
+  ref,
+  patientId,
+) async {
   final service = ref.watch(visitServiceProvider);
   return service.getVisitsByPatientId(patientId);
 }));

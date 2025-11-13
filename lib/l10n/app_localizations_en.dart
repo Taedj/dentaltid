@@ -529,4 +529,46 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get enterReasonForVisit => 'Please enter a reason for visit';
+
+  @override
+  String get searchPatient => 'Search Patient';
+
+  @override
+  String get showCurrentDayPatients => 'Show Current Day Patients';
+
+  @override
+  String get visitDetails => 'Visit Details';
+
+  @override
+  String get createNewVisit => 'Create New Visit';
+
+  @override
+  String get selectExistingVisit => 'Select Existing Visit';
+
+  @override
+  String get requiredField => 'This field is required';
+
+  @override
+  String get emergencySeverity => 'Emergency Severity';
+
+  @override
+  String get sessionDetails => 'Session Details';
+
+  @override
+  String get numberOfSessions => 'Number of Sessions';
+
+  @override
+  String get session => 'Session';
+
+  @override
+  String get dateTime => 'Date & Time';
+
+  @override
+  String get treatmentDetails => 'Treatment Details';
+
+  @override
+  String get patientNotes => 'Patient Notes';
+
+  @override
+  String get blacklistPatient => 'Blacklist Patient';
 }
