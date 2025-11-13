@@ -502,4 +502,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noTransactionsYet => 'لا توجد معاملات بعد';
+
+  @override
+  String get visitHistory => 'Visit History';
+
+  @override
+  String get noVisitHistory => 'No visit history';
+
+  @override
+  String get visitDate => 'Visit Date';
+
+  @override
+  String get reasonForVisit => 'Reason for Visit';
 }

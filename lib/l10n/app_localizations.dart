@@ -1077,6 +1077,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No transactions yet'**
   String get noTransactionsYet;
+
+  /// No description provided for @visitHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit History'**
+  String get visitHistory;
+
+  /// No description provided for @noVisitHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No visit history'**
+  String get noVisitHistory;
+
+  /// No description provided for @visitDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit Date'**
+  String get visitDate;
+
+  /// No description provided for @reasonForVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason for Visit'**
+  String get reasonForVisit;
 }
 
 class _AppLocalizationsDelegate

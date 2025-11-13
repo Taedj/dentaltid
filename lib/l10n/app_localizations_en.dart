@@ -505,4 +505,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noTransactionsYet => 'No transactions yet';
+
+  @override
+  String get visitHistory => 'Visit History';
+
+  @override
+  String get noVisitHistory => 'No visit history';
+
+  @override
+  String get visitDate => 'Visit Date';
+
+  @override
+  String get reasonForVisit => 'Reason for Visit';
 }

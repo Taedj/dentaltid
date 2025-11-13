@@ -510,4 +510,16 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get noTransactionsYet => 'Aucune transaction pour l\'instant';
+
+  @override
+  String get visitHistory => 'Visit History';
+
+  @override
+  String get noVisitHistory => 'No visit history';
+
+  @override
+  String get visitDate => 'Visit Date';
+
+  @override
+  String get reasonForVisit => 'Reason for Visit';
 }

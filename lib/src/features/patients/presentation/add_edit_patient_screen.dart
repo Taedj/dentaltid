@@ -7,6 +7,8 @@ import 'package:dentaltid/src/features/finance/application/finance_service.dart'
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/features/visits/domain/visit.dart';
+import 'package:dentaltid/src/features/visits/application/visit_service.dart';
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {
   const AddEditPatientScreen({super.key, this.patient});
@@ -444,6 +446,10 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                     onAddTransaction: _showAddTransactionDialog,
                     onShowReceipt: _showReceiptDialog,
                   ),
+                  const SizedBox(height: 20),
+                  _PatientVisitHistory(
+                    patientId: widget.patient!.id!,
+                  ),
                 ],
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -613,3 +619,80 @@ final transactionsByPatientProvider =
       final service = ref.watch(financeServiceProvider);
       return service.getTransactionsByPatientId(patientId);
     }));
+
+class _PatientVisitHistory extends ConsumerWidget {
+  final int patientId;
+
+  const _PatientVisitHistory({
+    required this.patientId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final visitsAsyncValue = ref.watch(visitsByPatientProvider(patientId));
+    final l10n = AppLocalizations.of(context)!;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.visitHistory,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    // TODO: Implement add new visit functionality
+                    // For now, just print a message
+                    print('Add new visit for patient $patientId');
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            visitsAsyncValue.when(
+              data: (visits) {
+                if (visits.isEmpty) {
+                  return Text(l10n.noVisitHistory);
+                }
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: visits.length,
+                  itemBuilder: (context, index) {
+                    final visit = visits[index];
+                    return ListTile(
+                      title: Text(
+                        '${l10n.visitDate}: ${visit.dateTime.toLocal().toString().split(' ')[0]}',
+                      ),
+                      subtitle: Text(
+                        '${l10n.reasonForVisit}: ${visit.reasonForVisit}\n${l10n.diagnosis}: ${visit.diagnosis}',
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          // TODO: Implement edit visit functionality
+                          print('Edit visit ${visit.id}');
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Text('Error: ${error.toString()}'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

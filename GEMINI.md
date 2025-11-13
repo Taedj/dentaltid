@@ -140,3 +140,14 @@ The goal is to create a modern, intuitive, and visually appealing user interface
 - **Enhanced Dashboard Header Layout:**
     - Refactored the dashboard header in `lib/src/features/dashboard/presentation/home_screen.dart` to use a `Row` with `Expanded` widgets for a more explicit grid-like organization of the dentist's name, current date, and time.
     - Verified that `flutter analyze` reports "No issues found!" after these changes.
+- **Implemented Patient Visit Management:**
+    - Created new directories for the `visits` feature: `lib/src/features/visits/application`, `lib/src/features/visits/data`, `lib/src/features/visits/domain`, `lib/src/features/visits/presentation`.
+    - Defined the `Visit` model in `lib/src/features/visits/domain/visit.dart` to represent patient visits with fields for date, reason, notes, diagnosis, and treatment.
+    - Updated `lib/src/features/appointments/domain/appointment.dart` and `lib/src/features/finance/domain/transaction.dart` to include a `visitId` for linking to specific visits.
+    - Incremented `_databaseVersion` to 9 in `lib/src/core/database_service.dart`.
+    - Modified `DatabaseService` to create the `visits` table and add `visitId` columns to the `appointments` and `transactions` tables during database creation and upgrade.
+    - Created `VisitRepository` in `lib/src/features/visits/data/visit_repository.dart` for database interactions with `Visit` objects.
+    - Created `VisitService` in `lib/src/features/visits/application/visit_service.dart` to provide business logic and a `visitsByPatientProvider`.
+    - Integrated a `_PatientVisitHistory` widget into `lib/src/features/patients/presentation/add_edit_patient_screen.dart` to display a list of visits for a patient.
+    - Added new localization keys (`visitHistory`, `noVisitHistory`, `visitDate`, `reasonForVisit`) to `lib/l10n/app_en.arb` and regenerated localization files.
+    - Verified that `flutter analyze` reports no critical errors after these changes.

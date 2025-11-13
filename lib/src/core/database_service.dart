@@ -4,7 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 8; // Incremented version
+  static const int _databaseVersion = 9; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -171,6 +171,21 @@ class DatabaseService {
       );
       await db.execute('DROP TABLE appointments_backup');
     }
+    if (oldVersion < 9) {
+      await db.execute('''
+        CREATE TABLE visits(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patientId INTEGER,
+          dateTime TEXT,
+          reasonForVisit TEXT,
+          notes TEXT,
+          diagnosis TEXT,
+          treatment TEXT
+        )
+      ''');
+      await db.execute('ALTER TABLE appointments ADD COLUMN visitId INTEGER');
+      await db.execute('ALTER TABLE transactions ADD COLUMN visitId INTEGER');
+    }
   }
 
   Future<void> close() async {
@@ -185,6 +200,7 @@ class DatabaseService {
       CREATE TABLE appointments(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patientId INTEGER,
+        visitId INTEGER,
         dateTime TEXT,
         status TEXT DEFAULT 'waiting'
       )
@@ -210,6 +226,7 @@ class DatabaseService {
       CREATE TABLE transactions(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         patientId INTEGER,
+        visitId INTEGER,
         description TEXT,
         totalAmount REAL,
         paidAmount REAL,
@@ -235,6 +252,17 @@ class DatabaseService {
         userId TEXT,
         timestamp TEXT,
         details TEXT
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE visits(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patientId INTEGER,
+        dateTime TEXT,
+        reasonForVisit TEXT,
+        notes TEXT,
+        diagnosis TEXT,
+        treatment TEXT
       )
     ''');
   }
