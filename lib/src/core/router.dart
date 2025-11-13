@@ -84,15 +84,15 @@ final router = GoRouter(
                   AddEditPatientScreen(patient: state.extra as dynamic),
             ),
             GoRoute(
-              path: 'visits/add',
-              builder: (context, state) => AddEditVisitScreen(patientId: state.extra as int),
+              path: ':patientId/visits/add', // Changed path to include parameter
+              builder: (context, state) => AddEditVisitScreen(patientId: int.parse(state.pathParameters['patientId']!)),
             ),
             GoRoute(
-              path: 'visits/edit',
+              path: ':patientId/visits/edit', // Changed path to include parameter
               builder: (context, state) {
                 final Map<String, dynamic> extra = state.extra as Map<String, dynamic>;
                 return AddEditVisitScreen(
-                  patientId: extra['patientId'] as int,
+                  patientId: int.parse(state.pathParameters['patientId']!), // Get from path parameters
                   visit: extra['visit'] as Visit,
                 );
               },
