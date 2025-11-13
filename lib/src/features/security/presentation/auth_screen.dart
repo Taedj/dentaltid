@@ -24,6 +24,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _passwordController = TextEditingController();
   final _clinicNameController = TextEditingController();
   final _dentistNameController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
+  final _medicalLicenseNumberController = TextEditingController();
   final _licenseController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -39,6 +41,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _passwordController.dispose();
     _clinicNameController.dispose();
     _dentistNameController.dispose();
+    _phoneNumberController.dispose();
+    _medicalLicenseNumberController.dispose();
     _licenseController.dispose();
     super.dispose();
   }
@@ -72,6 +76,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             email: user.email!,
             clinicName: _clinicNameController.text,
             dentistName: _dentistNameController.text,
+            phoneNumber: _phoneNumberController.text,
+            medicalLicenseNumber: _medicalLicenseNumberController.text,
             plan: SubscriptionPlan.free,
             licenseKey: licenseKey,
             status: SubscriptionStatus.active,
@@ -312,6 +318,51 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return 'Please enter your name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Phone Number
+                          TextFormField(
+                            controller: _phoneNumberController,
+                            decoration: InputDecoration(
+                              labelText: 'Phone Number',
+                              prefixIcon: const Icon(Icons.phone),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null; // Phone number is optional
+                              }
+                              // ignore: deprecated_member_use
+                              if (!RegExp(
+                                r'^\+?[0-9]{7,15}$',
+                              ).hasMatch(value)) {
+                                return 'Please enter a valid phone number';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Medical License Number
+                          TextFormField(
+                            controller: _medicalLicenseNumberController,
+                            decoration: InputDecoration(
+                              labelText: 'Medical License Number',
+                              prefixIcon: const Icon(Icons.medical_services),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your medical license number';
                               }
                               return null;
                             },

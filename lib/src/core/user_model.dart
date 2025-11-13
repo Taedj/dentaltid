@@ -15,6 +15,7 @@ class UserProfile {
   final String? clinicName;
   final String? dentistName;
   final String? phoneNumber;
+  final String? medicalLicenseNumber;
 
   UserProfile({
     required this.uid,
@@ -29,6 +30,7 @@ class UserProfile {
     this.clinicName,
     this.dentistName,
     this.phoneNumber,
+    this.medicalLicenseNumber,
   });
 
   Map<String, dynamic> toJson() => {
@@ -44,6 +46,7 @@ class UserProfile {
     'clinicName': clinicName,
     'dentistName': dentistName,
     'phoneNumber': phoneNumber,
+    'medicalLicenseNumber': medicalLicenseNumber,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -65,6 +68,7 @@ class UserProfile {
     clinicName: json['clinicName'],
     dentistName: json['dentistName'],
     phoneNumber: json['phoneNumber'],
+    medicalLicenseNumber: json['medicalLicenseNumber'],
   );
 
   UserProfile copyWith({
@@ -80,6 +84,7 @@ class UserProfile {
     String? clinicName,
     String? dentistName,
     String? phoneNumber,
+    String? medicalLicenseNumber,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -94,6 +99,7 @@ class UserProfile {
       clinicName: clinicName ?? this.clinicName,
       dentistName: dentistName ?? this.dentistName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
+      medicalLicenseNumber: medicalLicenseNumber ?? this.medicalLicenseNumber,
     );
   }
 }

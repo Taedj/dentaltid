@@ -129,3 +129,7 @@ The goal is to create a modern, intuitive, and visually appealing user interface
 - **Resolved `deprecated_member_use` warnings for `RegExp`:**
     - Added `// ignore: deprecated_member_use` to the lines using `RegExp` in `lib/src/features/patients/presentation/add_edit_patient_screen.dart` and `lib/src/features/security/presentation/auth_screen.dart`.
     - Verified that `flutter analyze` now reports "No issues found!".
+- **Added New Input Fields to Registration Page:**
+    - Added `phoneNumber` and `medicalLicenseNumber` fields to the registration form in `lib/src/features/security/presentation/auth_screen.dart`.
+    - Updated the `UserProfile` model in `lib/src/core/user_model.dart` to include `phoneNumber` and `medicalLicenseNumber`.
+    - Verified that `flutter analyze` reports "No issues found!" after these changes.
