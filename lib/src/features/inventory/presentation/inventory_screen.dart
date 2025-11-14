@@ -251,7 +251,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('${l10n.error}${e.toString()}'),
+                                  content: Text('$l10n.error${e.toString()}'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -424,7 +424,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        '${l10n.error}${e.toString()}',
+                                        '$l10n.error${e.toString()}',
                                       ),
                                       backgroundColor: Colors.red,
                                     ),

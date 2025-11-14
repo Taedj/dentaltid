@@ -9,9 +9,6 @@ import 'dart:io';
 import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:dentaltid/src/core/currency_provider.dart';
-import 'package:dentaltid/src/features/visits/application/visit_service.dart';
-import 'package:dentaltid/src/features/sessions/application/session_service.dart';
 
 class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key, this.filter});
@@ -29,27 +26,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   void initState() {
     super.initState();
     _selectedFilter = widget.filter ?? PatientFilter.all;
-  }
-
-  Future<double> _calculateTotalUnpaidForPatient(int patientId) async {
-    try {
-      final visitService = ref.read(visitServiceProvider);
-      final sessionService = ref.read(sessionServiceProvider);
-
-      final visits = await visitService.getVisitsByPatientId(patientId);
-      double totalUnpaid = 0.0;
-
-      for (final visit in visits) {
-        final sessions = await sessionService.getSessionsByVisitId(visit.id!);
-        for (final session in sessions) {
-          totalUnpaid += session.totalAmount - session.paidAmount;
-        }
-      }
-
-      return totalUnpaid;
-    } catch (e) {
-      return 0.0;
-    }
   }
 
   Future<void> _exportPatientsToCsv() async {
@@ -162,30 +138,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   Text(
                                     '${l10n.phoneNumber} ${patient.phoneNumber}',
                                   ),
-                                FutureBuilder<double>(
-                                  future: _calculateTotalUnpaidForPatient(
-                                    patient.id!,
-                                  ),
-                                  builder: (context, snapshot) {
-                                    final currency = ref.watch(
-                                      currencyProvider,
-                                    );
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return Text('${l10n.payment} ...');
-                                    }
-                                    final unpaid = snapshot.data ?? 0.0;
-                                    return Text(
-                                      'Unpaid: $currency${unpaid.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        color: unpaid > 0
-                                            ? Colors.red.shade700
-                                            : Colors.green.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    );
-                                  },
-                                ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
@@ -249,7 +201,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                           DataColumn(label: Text(l10n.age)),
                           DataColumn(label: Text(l10n.healthState)),
                           DataColumn(label: Text(l10n.phoneNumber)),
-                          DataColumn(label: Text('Unpaid')),
                           DataColumn(label: Text(l10n.actions)),
                         ],
                         rows: patients.asMap().entries.map((entry) {
@@ -344,32 +295,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   },
                                   patientsProvider: patientsProvider,
                                   selectedFilter: _selectedFilter,
-                                ),
-                              ),
-                              DataCell(
-                                FutureBuilder<double>(
-                                  future: _calculateTotalUnpaidForPatient(
-                                    patient.id!,
-                                  ),
-                                  builder: (context, snapshot) {
-                                    final currency = ref.watch(
-                                      currencyProvider,
-                                    );
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return const Text('...');
-                                    }
-                                    final unpaid = snapshot.data ?? 0.0;
-                                    return Text(
-                                      '$currency${unpaid.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        color: unpaid > 0
-                                            ? Colors.red.shade700
-                                            : Colors.green.shade700,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    );
-                                  },
                                 ),
                               ),
                               DataCell(

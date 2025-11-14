@@ -1,10 +1,23 @@
 import 'package:flutter/material.dart';
 
+final lightTheme = ThemeData.light().copyWith(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.blue,
+    brightness: Brightness.light,
+  ),
+  cardTheme: CardThemeData(
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  ),
+);
+
 final darkTheme = ThemeData.dark().copyWith(
-  // Define a dark theme as per PRD
-  primaryColor: Colors.deepPurple,
-  hintColor: Colors.deepPurpleAccent,
-  scaffoldBackgroundColor: Colors.grey[900],
-  appBarTheme: AppBarTheme(backgroundColor: Colors.grey[850]),
-  cardTheme: CardThemeData(color: Colors.grey[800]),
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Colors.deepPurple,
+    brightness: Brightness.dark,
+  ),
+  cardTheme: CardThemeData(
+    elevation: 2,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+  ),
 );

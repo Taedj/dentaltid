@@ -2,32 +2,11 @@ import 'package:dentaltid/src/features/appointments/application/appointment_serv
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
-import 'package:dentaltid/src/features/visits/application/visit_service.dart';
-import 'package:dentaltid/src/features/visits/domain/visit.dart';
-import 'package:dentaltid/src/features/sessions/application/session_service.dart';
-import 'package:dentaltid/src/features/sessions/domain/session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-
-class SessionFormData {
-  int sessionNumber;
-  DateTime dateTime;
-  TextEditingController treatmentDetailsController;
-  TextEditingController notesController;
-  TextEditingController totalAmountController;
-  TextEditingController paidAmountController;
-
-  SessionFormData({
-    required this.sessionNumber,
-    required this.dateTime,
-    required this.treatmentDetailsController,
-    required this.notesController,
-    required this.totalAmountController,
-    required this.paidAmountController,
-  });
-}
+import 'package:intl/intl.dart';
 
 class AddEditAppointmentScreen extends ConsumerStatefulWidget {
   const AddEditAppointmentScreen({super.key, this.appointment});
@@ -45,74 +24,38 @@ class _AddEditAppointmentScreenState
 
   // Patient Selection
   Patient? _selectedPatient;
-  final TextEditingController _patientSearchController =
-      TextEditingController();
-  List<Patient> _filteredPatients = [];
-  bool _showCurrentDayPatients = false;
 
-  // Visit Details
-  bool _createNewVisit = true;
-  Visit? _selectedVisit;
-  final TextEditingController _reasonForVisitController =
-      TextEditingController();
-  final TextEditingController _visitNotesController = TextEditingController();
-  bool _isEmergency = false;
-  EmergencySeverity _emergencySeverity = EmergencySeverity.low;
-  final TextEditingController _healthAlertsController = TextEditingController();
+  // Appointment Date and Time
+  DateTime _appointmentDateTime = DateTime.now();
 
-  // Session Details
-  int _numberOfSessions = 1;
-  List<SessionFormData> _sessions = [];
+  // Payment fields
+  final TextEditingController _totalCostController = TextEditingController();
+  final TextEditingController _paidController = TextEditingController();
+  late TextEditingController _unpaidController;
 
-  // Patient Notes & Blacklist
-  final TextEditingController _patientNotesController = TextEditingController();
-  bool _isBlacklisted = false;
+  // Date time display controller
+  late TextEditingController _dateTimeDisplayController;
+
+  double get _totalCost => double.tryParse(_totalCostController.text) ?? 0.0;
+  double get _paid => double.tryParse(_paidController.text) ?? 0.0;
+  double get _unpaid => _totalCost - _paid;
 
   @override
   void initState() {
     super.initState();
-    _initializeSessions();
+    _dateTimeDisplayController = TextEditingController();
+    _unpaidController = TextEditingController();
     _loadExistingDataIfEditing();
-  }
-
-  void _initializeSessions() {
-    _sessions = List.generate(
-      _numberOfSessions,
-      (index) => SessionFormData(
-        sessionNumber: index + 1,
-        dateTime: DateTime.now().add(Duration(days: index)),
-        treatmentDetailsController: TextEditingController(),
-        notesController: TextEditingController(),
-        totalAmountController: TextEditingController(text: '0.0'),
-        paidAmountController: TextEditingController(text: '0.0'),
-      ),
-    );
   }
 
   void _loadExistingDataIfEditing() async {
     if (widget.appointment != null) {
       try {
-        // Load existing appointment data
-        final sessionService = ref.read(sessionServiceProvider);
-        final session = await sessionService.getSessionById(
-          widget.appointment!.sessionId,
-        );
-
-        if (session == null) {
-          throw Exception('Session not found');
-        }
-
-        // Load visit data
-        final visitService = ref.read(visitServiceProvider);
-        final visit = await visitService.getVisitById(session.visitId);
-
-        if (visit == null) {
-          throw Exception('Visit not found');
-        }
-
         // Load patient data
         final patientService = ref.read(patientServiceProvider);
-        final patient = await patientService.getPatientById(visit.patientId);
+        final patient = await patientService.getPatientById(
+          widget.appointment!.patientId,
+        );
 
         if (patient == null) {
           throw Exception('Patient not found');
@@ -120,42 +63,11 @@ class _AddEditAppointmentScreenState
 
         setState(() {
           _selectedPatient = patient;
-          _selectedVisit = visit;
-          _createNewVisit = false; // We're editing an existing appointment
+          _appointmentDateTime = widget.appointment!.dateTime;
+          _dateTimeDisplayController.text = DateFormat(
+            'yyyy-MM-dd HH:mm',
+          ).format(_appointmentDateTime);
         });
-
-        // Pre-populate form fields with existing data
-        _reasonForVisitController.text = visit.reasonForVisit;
-        _visitNotesController.text = visit.notes;
-        _isEmergency = visit.isEmergency;
-        _emergencySeverity = visit.emergencySeverity;
-        _healthAlertsController.text = visit.healthAlerts;
-
-        // Load session data
-        final sessions = await sessionService.getSessionsByVisitId(visit.id!);
-        if (sessions.isNotEmpty) {
-          setState(() {
-            _numberOfSessions = sessions.length;
-            _sessions = sessions
-                .map(
-                  (session) => SessionFormData(
-                    sessionNumber: session.sessionNumber,
-                    dateTime: session.dateTime,
-                    treatmentDetailsController: TextEditingController(
-                      text: session.treatmentDetails,
-                    ),
-                    notesController: TextEditingController(text: session.notes),
-                    totalAmountController: TextEditingController(
-                      text: session.totalAmount.toString(),
-                    ),
-                    paidAmountController: TextEditingController(
-                      text: session.paidAmount.toString(),
-                    ),
-                  ),
-                )
-                .toList();
-          });
-        }
       } catch (e) {
         // Handle error loading existing data
         if (mounted) {
@@ -169,17 +81,10 @@ class _AddEditAppointmentScreenState
 
   @override
   void dispose() {
-    _patientSearchController.dispose();
-    _reasonForVisitController.dispose();
-    _visitNotesController.dispose();
-    _healthAlertsController.dispose();
-    _patientNotesController.dispose();
-    for (final session in _sessions) {
-      session.treatmentDetailsController.dispose();
-      session.notesController.dispose();
-      session.totalAmountController.dispose();
-      session.paidAmountController.dispose();
-    }
+    _totalCostController.dispose();
+    _paidController.dispose();
+    _unpaidController.dispose();
+    _dateTimeDisplayController.dispose();
     super.dispose();
   }
 
@@ -189,6 +94,9 @@ class _AddEditAppointmentScreenState
     final appointmentService = ref.watch(appointmentServiceProvider);
     final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
 
+    // Update unpaid controller text
+    _unpaidController.text = '\$${_unpaid.toStringAsFixed(2)}';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -196,26 +104,94 @@ class _AddEditAppointmentScreenState
               ? l10n.addAppointment
               : l10n.editAppointment,
         ),
+        elevation: 2,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _buildPatientSelectionSection(l10n, patientsAsyncValue),
-              const SizedBox(height: 24),
-              _buildVisitDetailsSection(l10n),
-              const SizedBox(height: 24),
-              _buildSessionDetailsSection(l10n),
-              const SizedBox(height: 24),
-              _buildPatientNotesSection(l10n),
-              const SizedBox(height: 24),
-              _buildSaveButton(l10n, appointmentService),
-            ],
-          ),
-        ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWideScreen = constraints.maxWidth > 800;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  if (isWideScreen) ...[
+                    // Wide screen: Organized 3-column grid layout
+                    Column(
+                      children: [
+                        // First row: Core appointment details
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: _buildPatientSelectionCard(
+                                  l10n,
+                                  patientsAsyncValue,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: _buildAppointmentDateTimeCard(l10n),
+                              ),
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: _buildAppointmentTypeCard(l10n),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Second row: Payment and history
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 2,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: _buildPaymentStatusCard(l10n),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: _buildLastVisitCard(l10n),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSaveButtonLarge(l10n, appointmentService),
+                  ] else ...[
+                    // Narrow screen: Single column layout
+                    _buildPatientSelectionSection(l10n, patientsAsyncValue),
+                    const SizedBox(height: 16),
+                    _buildPaymentStatusCard(l10n),
+                    const SizedBox(height: 16),
+                    _buildAppointmentDateTimeSection(l10n),
+                    const SizedBox(height: 16),
+                    _buildAppointmentTypeCard(l10n),
+                    const SizedBox(height: 16),
+                    _buildLastVisitCard(l10n),
+                    const SizedBox(height: 24),
+                    _buildSaveButton(l10n, appointmentService),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -224,68 +200,68 @@ class _AddEditAppointmentScreenState
     AppLocalizations l10n,
     AsyncValue<List<Patient>> patientsAsyncValue,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(l10n.patient, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _patientSearchController,
-              decoration: InputDecoration(
-                labelText: l10n.searchPatient,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _navigateToAddPatient(),
-                ),
-              ),
-              onChanged: (value) => _filterPatients(value, patientsAsyncValue),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Checkbox(
-                  value: _showCurrentDayPatients,
-                  onChanged: (value) =>
-                      setState(() => _showCurrentDayPatients = value ?? false),
-                ),
-                Text(l10n.showCurrentDayPatients),
-              ],
-            ),
-            const SizedBox(height: 16),
             patientsAsyncValue.when(
-              data: (patients) {
-                final displayPatients = _showCurrentDayPatients
-                    ? patients.where((p) => _isCurrentDayPatient(p)).toList()
-                    : _filteredPatients.isNotEmpty
-                    ? _filteredPatients
-                    : patients;
-
-                return SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    itemCount: displayPatients.length,
-                    itemBuilder: (context, index) {
-                      final patient = displayPatients[index];
-                      final hasPreviousVisits = _hasPreviousVisits(patient);
-                      return ListTile(
-                        title: Text('${patient.name} ${patient.familyName}'),
-                        subtitle: Text('${l10n.age}: ${patient.age}'),
-                        trailing: hasPreviousVisits
-                            ? const Icon(Icons.history)
-                            : null,
-                        selected: _selectedPatient?.id == patient.id,
-                        onTap: () => setState(() => _selectedPatient = patient),
-                      );
-                    },
+              data: (patients) => DropdownButtonFormField<int>(
+                initialValue: _selectedPatient?.id,
+                decoration: InputDecoration(
+                  labelText: 'Select Patient',
+                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.outline),
                   ),
-                );
-              },
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surface,
+                ),
+                items: patients.map((patient) {
+                  return DropdownMenuItem<int>(
+                    value: patient.id,
+                    child: Text('${patient.name} ${patient.familyName}'),
+                  );
+                }).toList(),
+                onChanged: (patientId) => setState(
+                  () => _selectedPatient = patients.firstWhere(
+                    (p) => p.id == patientId,
+                  ),
+                ),
+              ),
               loading: () => const CircularProgressIndicator(),
-              error: (error, stack) => Text('${l10n.error}: $error'),
+              error: (error, stack) => Text(
+                '${l10n.error}: $error',
+                style: TextStyle(color: colorScheme.error),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _navigateToAddPatient(),
+                icon: Icon(Icons.add, color: colorScheme.primary),
+                label: Text(
+                  'Add New Patient',
+                  style: TextStyle(color: colorScheme.primary),
+                ),
+              ),
             ),
           ],
         ),
@@ -293,295 +269,46 @@ class _AddEditAppointmentScreenState
     );
   }
 
-  Widget _buildVisitDetailsSection(AppLocalizations l10n) {
+  Widget _buildAppointmentDateTimeSection(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.visitDetails,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                RadioMenuButton<bool>(
-                  value: true,
-                  groupValue: _createNewVisit,
-                  onChanged: (value) =>
-                      setState(() => _createNewVisit = value ?? true),
-                  child: Text(l10n.createNewVisit),
-                ),
-                RadioMenuButton<bool>(
-                  value: false,
-                  groupValue: _createNewVisit,
-                  onChanged: (value) =>
-                      setState(() => _createNewVisit = value ?? true),
-                  child: Text(l10n.selectExistingVisit),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_createNewVisit) ...[
-              TextFormField(
-                controller: _reasonForVisitController,
-                decoration: InputDecoration(labelText: l10n.reasonForVisit),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? l10n.requiredField : null,
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _visitNotesController,
-                decoration: InputDecoration(labelText: l10n.notes),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.emergency,
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              CheckboxListTile(
-                title: Text(l10n.isEmergency),
-                value: _isEmergency,
-                onChanged: (value) =>
-                    setState(() => _isEmergency = value ?? false),
-              ),
-              if (_isEmergency) ...[
-                DropdownButtonFormField<EmergencySeverity>(
-                  initialValue: _emergencySeverity,
-                  decoration: InputDecoration(
-                    labelText: l10n.emergencySeverity,
-                  ),
-                  items: EmergencySeverity.values.map((severity) {
-                    return DropdownMenuItem(
-                      value: severity,
-                      child: Text(severity.toString().split('.').last),
-                    );
-                  }).toList(),
-                  onChanged: (value) =>
-                      setState(() => _emergencySeverity = value!),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _healthAlertsController,
-                  decoration: InputDecoration(labelText: l10n.healthAlerts),
-                  maxLines: 2,
-                ),
-              ],
-            ] else ...[
-              if (_selectedPatient != null) ...[
-                FutureBuilder<List<Visit>>(
-                  future: ref
-                      .watch(visitServiceProvider)
-                      .getVisitsByPatientId(_selectedPatient!.id!),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    }
-                    if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    }
-                    final visits = snapshot.data ?? [];
-                    if (visits.isEmpty) {
-                      return const Text('No existing visits for this patient');
-                    }
-                    return DropdownButtonFormField<Visit>(
-                      initialValue: visits.cast<Visit?>().firstWhere(
-                        (visit) => visit?.id == _selectedVisit?.id,
-                        orElse: () => null,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: l10n.selectExistingVisit,
-                      ),
-                      items: visits.map((visit) {
-                        return DropdownMenuItem<Visit>(
-                          value: visit,
-                          child: Text(
-                            'Visit ${visit.visitNumber} - ${visit.dateTime.toLocal().toString().split(' ')[0]}',
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (Visit? newValue) {
-                        setState(() {
-                          _selectedVisit = newValue;
-                        });
-                      },
-                      validator: (value) =>
-                          value == null ? l10n.requiredField : null,
-                    );
-                  },
-                ),
-              ] else ...[
-                const Text('Please select a patient first'),
-              ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSessionDetailsSection(AppLocalizations l10n) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.sessionDetails,
+              'Appointment Date & Time',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: TextEditingController(
-                text: _numberOfSessions.toString(),
-              ),
-              decoration: InputDecoration(labelText: l10n.numberOfSessions),
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                final count = int.tryParse(value) ?? 1;
-                setState(() {
-                  _numberOfSessions = count;
-                  _updateSessionsCount();
-                });
-              },
-            ),
-            const SizedBox(height: 16),
-            ..._sessions.map((session) => _buildSessionForm(session, l10n)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSessionForm(SessionFormData session, AppLocalizations l10n) {
-    final totalAmount =
-        double.tryParse(session.totalAmountController.text) ?? 0.0;
-    final paidAmount =
-        double.tryParse(session.paidAmountController.text) ?? 0.0;
-    final unpaidAmount = totalAmount - paidAmount;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${l10n.session} ${session.sessionNumber}',
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: TextEditingController(
-                text: session.dateTime.toIso8601String(),
-              ),
+              controller: _dateTimeDisplayController,
               decoration: InputDecoration(
-                labelText: l10n.dateTime,
+                labelText: 'Appointment Date & Time',
+                labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.calendar_today),
-                  onPressed: () async => await _selectDateTime(session),
+                  icon: Icon(Icons.calendar_today, color: colorScheme.tertiary),
+                  onPressed: () async => await _selectAppointmentDateTime(),
                 ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: colorScheme.tertiary, width: 2),
+                ),
+                filled: true,
+                fillColor: colorScheme.surface,
               ),
               readOnly: true,
-            ),
-            const SizedBox(height: 16),
-            Text(l10n.payment, style: Theme.of(context).textTheme.titleSmall),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: session.totalAmountController,
-                    decoration: InputDecoration(labelText: l10n.totalAmount),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) => setState(() {}),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: session.paidAmountController,
-                    decoration: InputDecoration(labelText: l10n.paidAmount),
-                    keyboardType: TextInputType.number,
-                    onChanged: (value) => setState(() {}),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: unpaidAmount > 0
-                    ? Colors.red.shade50
-                    : Colors.green.shade50,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: unpaidAmount > 0
-                      ? Colors.red.shade200
-                      : Colors.green.shade200,
-                ),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Unpaid:',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: unpaidAmount > 0
-                          ? Colors.red.shade700
-                          : Colors.green.shade700,
-                    ),
-                  ),
-                  Text(
-                    unpaidAmount >= 0
-                        ? unpaidAmount.toStringAsFixed(2)
-                        : '0.00',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: unpaidAmount > 0
-                          ? Colors.red.shade700
-                          : Colors.green.shade700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPatientNotesSection(AppLocalizations l10n) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.patientNotes,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _patientNotesController,
-              decoration: InputDecoration(labelText: l10n.notes),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 8),
-            CheckboxListTile(
-              title: Text(l10n.blacklistPatient),
-              value: _isBlacklisted,
-              onChanged: (value) =>
-                  setState(() => _isBlacklisted = value ?? false),
+              validator: (value) =>
+                  value?.isEmpty ?? true ? 'Please select date and time' : null,
             ),
           ],
         ),
@@ -599,94 +326,35 @@ class _AddEditAppointmentScreenState
   }
 
   // Helper methods
-  void _filterPatients(
-    String query,
-    AsyncValue<List<Patient>> patientsAsyncValue,
-  ) {
-    patientsAsyncValue.maybeWhen(
-      data: (patients) {
-        setState(() {
-          _filteredPatients = patients.where((patient) {
-            final fullName = '${patient.name} ${patient.familyName}'
-                .toLowerCase();
-            return fullName.contains(query.toLowerCase());
-          }).toList();
-        });
-      },
-      orElse: () {},
-    );
-  }
-
-  bool _isCurrentDayPatient(Patient patient) {
-    // Check if patient has appointments today by checking if they have any visits
-    // For now, we'll check if they have any visits at all (simplified logic)
-    // In a full implementation, we'd check for appointments on today's date
-    return patient.id !=
-        null; // Simplified - assume patients with IDs have visits
-  }
-
-  bool _hasPreviousVisits(Patient patient) {
-    // Check if patient has any visits in the database
-    // For now, we'll use a simplified check
-    // In a full implementation, we'd query the visits table
-    return patient.id != null &&
-        patient.createdAt.isBefore(
-          DateTime.now().subtract(const Duration(days: 1)),
-        );
-  }
 
   void _navigateToAddPatient() {
     GoRouter.of(context).go('/patients/add');
   }
 
-  void _updateSessionsCount() {
-    if (_sessions.length < _numberOfSessions) {
-      // Add new sessions
-      for (int i = _sessions.length; i < _numberOfSessions; i++) {
-        _sessions.add(
-          SessionFormData(
-            sessionNumber: i + 1,
-            dateTime: DateTime.now().add(Duration(days: i)),
-            treatmentDetailsController: TextEditingController(),
-            notesController: TextEditingController(),
-            totalAmountController: TextEditingController(text: '0.0'),
-            paidAmountController: TextEditingController(text: '0.0'),
-          ),
-        );
-      }
-    } else if (_sessions.length > _numberOfSessions) {
-      // Remove excess sessions
-      for (int i = _sessions.length - 1; i >= _numberOfSessions; i--) {
-        _sessions[i].treatmentDetailsController.dispose();
-        _sessions[i].notesController.dispose();
-        _sessions[i].totalAmountController.dispose();
-        _sessions[i].paidAmountController.dispose();
-        _sessions.removeAt(i);
-      }
-    }
-  }
-
-  Future<void> _selectDateTime(SessionFormData session) async {
+  Future<void> _selectAppointmentDateTime() async {
     final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: session.dateTime,
+      initialDate: _appointmentDateTime,
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
     );
     if (pickedDate != null && mounted) {
       final TimeOfDay? pickedTime = await showTimePicker(
         context: context,
-        initialTime: TimeOfDay.fromDateTime(session.dateTime),
+        initialTime: TimeOfDay.fromDateTime(_appointmentDateTime),
       );
       if (pickedTime != null && mounted) {
         setState(() {
-          session.dateTime = DateTime(
+          _appointmentDateTime = DateTime(
             pickedDate.year,
             pickedDate.month,
             pickedDate.day,
             pickedTime.hour,
             pickedTime.minute,
           );
+          _dateTimeDisplayController.text = DateFormat(
+            'yyyy-MM-dd HH:mm',
+          ).format(_appointmentDateTime);
         });
       }
     }
@@ -705,62 +373,10 @@ class _AddEditAppointmentScreenState
     }
 
     try {
-      final visitService = ref.read(visitServiceProvider);
-      final sessionService = ref.read(sessionServiceProvider);
-      final patientService = ref.read(patientServiceProvider);
-
-      Visit visit;
-      if (_createNewVisit) {
-        // Create new visit
-        final nextVisitNumber = await visitService.getNextVisitNumber(
-          _selectedPatient!.id!,
-        );
-        visit = Visit(
-          patientId: _selectedPatient!.id!,
-          dateTime: DateTime.now(),
-          reasonForVisit: _reasonForVisitController.text,
-          notes: _visitNotesController.text,
-          visitNumber: nextVisitNumber,
-          isEmergency: _isEmergency,
-          emergencySeverity: _isEmergency
-              ? _emergencySeverity
-              : EmergencySeverity.low,
-          healthAlerts: _healthAlertsController.text,
-        );
-        final visitId = await visitService.addVisit(visit);
-        visit = visit.copyWith(id: visitId);
-      } else {
-        // Use existing visit
-        if (_selectedVisit == null) {
-          throw Exception('Please select an existing visit');
-        }
-        visit = _selectedVisit!;
-      }
-
-      // Create sessions
-      final createdSessions = <Session>[];
-      for (final sessionData in _sessions) {
-        final session = Session(
-          visitId: visit.id!,
-          sessionNumber: sessionData.sessionNumber,
-          dateTime: sessionData.dateTime,
-          notes: sessionData.notesController.text,
-          treatmentDetails: sessionData.treatmentDetailsController.text,
-          totalAmount:
-              double.tryParse(sessionData.totalAmountController.text) ?? 0.0,
-          paidAmount:
-              double.tryParse(sessionData.paidAmountController.text) ?? 0.0,
-        );
-        final sessionId = await sessionService.addSession(session);
-        createdSessions.add(session.copyWith(id: sessionId));
-      }
-
-      // Create appointment for the first session
-      final firstSession = createdSessions.first;
       final appointment = Appointment(
         id: widget.appointment?.id,
-        sessionId: firstSession.id!,
-        dateTime: firstSession.dateTime,
+        patientId: _selectedPatient!.id!,
+        dateTime: _appointmentDateTime,
       );
 
       if (widget.appointment == null) {
@@ -769,24 +385,8 @@ class _AddEditAppointmentScreenState
         await appointmentService.updateAppointment(appointment);
       }
 
-      // Update patient blacklist status if changed
-      if (_selectedPatient!.isBlacklisted != _isBlacklisted) {
-        final updatedPatient = _selectedPatient!.copyWith(
-          isBlacklisted: _isBlacklisted,
-        );
-        await patientService.updatePatient(updatedPatient);
-      }
-
-      // Update patient notes if provided
-      if (_patientNotesController.text.isNotEmpty) {
-        // Patient notes are stored in the patient record, no separate field needed
-        // The notes are already available in the form for future reference
-      }
-
       ref.invalidate(appointmentsProvider);
       ref.invalidate(todaysAppointmentsProvider);
-      ref.invalidate(visitsByPatientProvider(_selectedPatient!.id!));
-      ref.invalidate(patientsProvider(PatientFilter.all));
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -796,5 +396,648 @@ class _AddEditAppointmentScreenState
         ).showSnackBar(SnackBar(content: Text('${l10n.error}: $e')));
       }
     }
+  }
+
+  // Desktop-style card widgets
+  Widget _buildPatientSelectionCard(
+    AppLocalizations l10n,
+    AsyncValue<List<Patient>> patientsAsyncValue,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 180,
+      decoration: _buildThemedCardDecoration(colorScheme.primary),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary.withAlpha((255 * 0.1).round()),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.person,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Patient Selection',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: patientsAsyncValue.when(
+                data: (patients) => DropdownButtonFormField<int>(
+                  initialValue: _selectedPatient?.id,
+                  decoration: InputDecoration(
+                    labelText: 'Choose Patient',
+                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: colorScheme.outline),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: colorScheme.outline),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: colorScheme.surface,
+                  ),
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  items: patients.map((patient) {
+                    return DropdownMenuItem<int>(
+                      value: patient.id,
+                      child: Text(
+                        '${patient.name} ${patient.familyName}',
+                        style: TextStyle(color: colorScheme.onSurface),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (patientId) => setState(
+                    () => _selectedPatient = patients.firstWhere(
+                      (p) => p.id == patientId,
+                    ),
+                  ),
+                ),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: colorScheme.primary),
+                ),
+                error: (error, stack) => Center(
+                  child: Text(
+                    '${l10n.error}: $error',
+                    style: TextStyle(color: colorScheme.error),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => _navigateToAddPatient(),
+                icon: Icon(Icons.add, size: 18, color: colorScheme.primary),
+                label: Text(
+                  'Add New Patient',
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppointmentDateTimeCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 180,
+      decoration: _buildThemedCardDecoration(colorScheme.tertiary),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.tertiaryContainer.withAlpha(
+                      (255 * 0.1).round(),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today,
+                    size: 20,
+                    color: colorScheme.tertiary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Date & Time',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: TextFormField(
+                controller: _dateTimeDisplayController,
+                decoration: InputDecoration(
+                  labelText: 'Select Date & Time',
+                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      Icons.calendar_today,
+                      color: colorScheme.tertiary,
+                    ),
+                    onPressed: () async => await _selectAppointmentDateTime(),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: colorScheme.tertiary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surface,
+                ),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+                readOnly: true,
+                validator: (value) => value?.isEmpty ?? true
+                    ? 'Please select date and time'
+                    : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppointmentTypeCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 180,
+      decoration: _buildThemedCardDecoration(colorScheme.secondary),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer.withAlpha(
+                      (255 * 0.1).round(),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.category,
+                    size: 20,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Appointment Type',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                initialValue: 'consultation',
+                decoration: InputDecoration(
+                  labelText: 'Select Type',
+                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(
+                      color: colorScheme.secondary,
+                      width: 2,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surface,
+                ),
+                style: TextStyle(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'consultation',
+                    child: Text('Consultation'),
+                  ),
+                  DropdownMenuItem(value: 'followup', child: Text('Follow-up')),
+                  DropdownMenuItem(
+                    value: 'emergency',
+                    child: Text('Emergency'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'procedure',
+                    child: Text('Procedure'),
+                  ),
+                ],
+                onChanged: (value) {
+                  // Handle appointment type change
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentStatusCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 280,
+      decoration: _buildThemedCardDecoration(colorScheme.primary),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer.withAlpha(
+                      (255 * 0.1).round(),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.payment,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Payment Status',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _totalCostController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: r'Total Cost ($)',
+                labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                prefixIcon: Icon(
+                  Icons.attach_money,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                ),
+                filled: true,
+                fillColor: colorScheme.surface,
+              ),
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
+              onChanged: (value) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _paidController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: r'Amount Paid ($)',
+                labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
+                prefixIcon: Icon(
+                  Icons.check_circle,
+                  color: colorScheme.primary,
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.outline),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: colorScheme.primary, width: 2),
+                ),
+                filled: true,
+                fillColor: colorScheme.surface,
+              ),
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.w500,
+              ),
+              onChanged: (value) => setState(() {}),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _unpaidController,
+              readOnly: true,
+              decoration: InputDecoration(
+                labelText: 'Balance Due',
+                labelStyle: TextStyle(
+                  fontWeight: _unpaid == 0 ? FontWeight.w500 : FontWeight.bold,
+                  color: _getUnpaidColor(),
+                ),
+                prefixIcon: Icon(
+                  _unpaid == 0
+                      ? Icons.balance
+                      : (_unpaid > 0 ? Icons.warning : Icons.check_circle),
+                  color: _unpaid == 0
+                      ? colorScheme.onSurfaceVariant
+                      : (_unpaid > 0
+                            ? colorScheme.error
+                            : colorScheme.tertiary),
+                  size: 20,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: _unpaid == 0
+                        ? colorScheme.outline
+                        : (_unpaid > 0
+                              ? colorScheme.error
+                              : colorScheme.tertiary),
+                  ),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: _unpaid == 0
+                        ? colorScheme.outline
+                        : (_unpaid > 0
+                              ? colorScheme.error
+                              : colorScheme.tertiary),
+                  ),
+                ),
+                filled: true,
+                fillColor: _unpaid == 0
+                    ? colorScheme.surface
+                    : colorScheme.surfaceContainerHighest.withAlpha(
+                        (255 * 0.2).round(),
+                      ),
+              ),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLastVisitCard(AppLocalizations l10n) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      height: 180,
+      decoration: _buildThemedCardDecoration(colorScheme.secondary),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.secondaryContainer.withAlpha(
+                      (255 * 0.1).round(),
+                    ),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.history,
+                    size: 20,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Visit History',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: _selectedPatient != null
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.person,
+                              size: 18,
+                              color: colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '${_selectedPatient!.name} ${_selectedPatient!.familyName}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today,
+                              size: 18,
+                              color: colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Last visit: ${_selectedPatient!.createdAt.toLocal().toString().split(' ')[0]}',
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 32,
+                            color: colorScheme.outline,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Select a patient to view\nvisit history',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButtonLarge(
+    AppLocalizations l10n,
+    dynamic appointmentService,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: SizedBox(
+        width: 150, // Adjusted width
+        height: 50, // Adjusted height
+        child: ElevatedButton(
+          onPressed: () async =>
+              await _saveAppointment(l10n, appointmentService),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colorScheme.primary,
+            foregroundColor: colorScheme.onPrimary,
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            textStyle: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          child: const Text('Add/Edit'),
+        ),
+      ),
+    );
+  }
+
+  Color _getUnpaidColor() {
+    if (_unpaid == 0) {
+      return Colors.white;
+    } else if (_unpaid > 0) {
+      return Colors.red;
+    } else {
+      return Colors.green;
+    }
+  }
+
+  BoxDecoration _buildThemedCardDecoration(Color primaryColor) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          primaryColor.withAlpha((255 * 0.05).round()),
+          colorScheme.surface,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: primaryColor.withAlpha((255 * 0.2).round()),
+        width: 1,
+      ),
+    );
   }
 }

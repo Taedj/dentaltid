@@ -154,3 +154,33 @@ The goal is to create a modern, intuitive, and visually appealing user interface
 - **Resolved `unnecessary_brace_in_string_interps` warnings:**
     - Removed unnecessary braces from string interpolation for `patientId` in `lib/src/features/patients/presentation/add_edit_patient_screen.dart`.
     - Verified that `flutter analyze` now reports "No issues found!".
+- **Resolved `missing_identifier` and `prefer_interpolation_to_compose_strings` issues in `lib/src/features/appointments/presentation/add_edit_appointment_screen.dart`**:
+    - Fixed `missing_identifier` errors by using raw strings (`r'...'`) for `labelText` properties containing dollar signs in `InputDecoration` widgets within `_buildPaymentStatusCard`.
+    - Addressed `prefer_interpolation_to_compose_strings` warnings by ensuring correct string interpolation syntax (e.g., `${l10n.error}: $error`).
+    - Ran `dart fix --apply` and `dart format .` to automatically apply fixes and format the code.
+    - Verified that `flutter analyze` now reports "No issues found!".
+- **Organized UI grid layout spacing and colors in `lib/src/features/appointments/presentation/add_edit_appointment_screen.dart`**:
+    - Centralized theme definitions in `lib/src/core/theme.dart` using `ColorScheme.fromSeed` for both light and dark themes.
+    - Updated `lib/src/core/theme_provider.dart` to use these centralized themes and `ColorScheme.fromSeed` for other custom themes.
+    - Created a helper function `_buildThemedCardDecoration` to generate consistent `BoxDecoration` for cards using theme colors.
+    - Refactored all card widgets (`_buildPatientSelectionCard`, `_buildAppointmentDateTimeCard`, `_buildAppointmentTypeCard`, `_buildPaymentStatusCard`, `_buildLastVisitCard`) to use theme-consistent colors and the new helper function.
+    - Refactored `_buildPatientSelectionSection` and `_buildAppointmentDateTimeSection` to use theme-consistent colors.
+    - Standardized spacing (`SizedBox` and `Padding`) in the main `build` method for consistent visual separation.
+    - Resolved `argument_type_not_assignable` errors by changing `CardTheme` to `CardThemeData` in `theme.dart` and `theme_provider.dart`.
+    - Resolved `argument_type_not_assignable` errors by modifying `_buildThemedCardDecoration` to accept a `Color` and updating its calls accordingly.
+    - Resolved `deprecated_member_use` warnings by replacing `.withOpacity()` with `.withAlpha()` and `colorScheme.surfaceVariant` with `colorScheme.surfaceContainerHighest`.
+    - Verified that `flutter analyze` now reports "No issues found!".
+- **Fixed "select date and time" bug in `lib/src/features/appointments/presentation/add_edit_appointment_screen.dart`**:
+    - Added `intl` package dependency.
+    - Imported `package:intl/intl.dart`.
+    - Modified `_selectAppointmentDateTime()` to update `_dateTimeDisplayController.text` with a formatted string of `_appointmentDateTime` after `setState()`.
+    - Modified `initState()` to set `_dateTimeDisplayController.text` with the formatted `_appointmentDateTime` if `widget.appointment` is not null.
+    - Ran `flutter analyze` and `dart format .` to ensure code quality.
+    - Verified the fix by running the app (`rapp`).
+- **Implemented UI changes in `lib/src/features/appointments/presentation/add_edit_appointment_screen.dart`**:
+    - Changed "Balance Due" text color to white and bold when `_unpaid == 0`.
+    - Adjusted the `fillColor` of the "Balance Due" `TextFormField` to `colorScheme.surface` when `_unpaid == 0` (reverted to previous background color).
+    - Changed the "UPDATE APPOINTMENT" button text to "Add/Edit".
+    - Adjusted the button dimensions (`width: 150`, `height: 50`) and used theme-consistent colors (`colorScheme.primary` for `backgroundColor` and `colorScheme.onPrimary` for `foregroundColor`) for the "Add/Edit" button.
+    - Ran `flutter analyze` and `dart format .` to ensure code quality.
+    - Verified the changes by running the app (`rapp`).

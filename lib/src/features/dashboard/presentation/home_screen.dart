@@ -20,7 +20,9 @@ class HomeScreen extends ConsumerWidget {
     );
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final l10n = AppLocalizations.of(context)!;
-    final userProfileAsyncValue = ref.watch(userProfileProvider); // Watch the user profile provider
+    final userProfileAsyncValue = ref.watch(
+      userProfileProvider,
+    ); // Watch the user profile provider
 
     return Scaffold(
       body: Column(
@@ -76,7 +78,9 @@ class HomeScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            DateFormat('EEEE, MMMM d, yyyy').format(currentTime),
+                            DateFormat(
+                              'EEEE, MMMM d, yyyy',
+                            ).format(currentTime),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,

@@ -2,30 +2,28 @@ import 'package:dentaltid/src/features/appointments/domain/appointment_status.da
 
 class Appointment {
   final int? id;
-  final int sessionId;
+  final int patientId;
   final DateTime dateTime; // Combined date and time
   final AppointmentStatus status;
 
-  // Temporary getter for backward compatibility - will be removed when UI is updated
-  int get patientId => sessionId;
-
   Appointment({
     this.id,
-    required this.sessionId,
+    required this.patientId,
     required this.dateTime,
     this.status = AppointmentStatus.waiting,
   });
 
   Map<String, dynamic> toJson() => {
     'id': id,
-    'sessionId': sessionId,
+    'sessionId':
+        patientId, // Use sessionId column but keep patientId logic for now
     'dateTime': dateTime.toIso8601String(), // Store combined DateTime
     'status': status.toString(),
   };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
     id: json['id'],
-    sessionId: json['sessionId'],
+    patientId: json['patientId'] ?? json['sessionId'], // Backward compatibility
     dateTime: DateTime.parse(json['dateTime']), // Parse combined DateTime
     status: AppointmentStatus.values.firstWhere(
       (e) => e.toString() == json['status'],
