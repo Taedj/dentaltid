@@ -142,6 +142,16 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     IconButton(
+                                      icon: const Icon(Icons.person),
+                                      tooltip: 'View Profile',
+                                      onPressed: () {
+                                        context.go(
+                                          '/patients/profile',
+                                          extra: patient,
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
                                       icon: const Icon(Icons.edit),
                                       onPressed: () {
                                         context.go(
@@ -300,6 +310,16 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                               DataCell(
                                 Row(
                                   children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.person),
+                                      tooltip: 'View Profile',
+                                      onPressed: () {
+                                        context.go(
+                                          '/patients/profile',
+                                          extra: patient,
+                                        );
+                                      },
+                                    ),
                                     IconButton(
                                       icon: const Icon(Icons.edit),
                                       onPressed: () {

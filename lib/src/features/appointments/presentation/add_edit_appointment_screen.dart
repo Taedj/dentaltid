@@ -1,7 +1,11 @@
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/patients/application/patient_appointments_provider.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
+import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
+import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -36,6 +40,9 @@ class _AddEditAppointmentScreenState
   // Date time display controller
   late TextEditingController _dateTimeDisplayController;
 
+  // Appointment type
+  late String _selectedAppointmentType;
+
   double get _totalCost => double.tryParse(_totalCostController.text) ?? 0.0;
   double get _paid => double.tryParse(_paidController.text) ?? 0.0;
   double get _unpaid => _totalCost - _paid;
@@ -43,6 +50,7 @@ class _AddEditAppointmentScreenState
   @override
   void initState() {
     super.initState();
+    _selectedAppointmentType = 'consultation';
     _dateTimeDisplayController = TextEditingController();
     _unpaidController = TextEditingController();
     _loadExistingDataIfEditing();
@@ -61,12 +69,32 @@ class _AddEditAppointmentScreenState
           throw Exception('Patient not found');
         }
 
+        // Load transaction data
+        final financeService = ref.read(financeServiceProvider);
+        final transactions = await financeService.getTransactionsBySessionId(
+          widget.appointment!.id!,
+        );
+
         setState(() {
           _selectedPatient = patient;
           _appointmentDateTime = widget.appointment!.dateTime;
+          _selectedAppointmentType =
+              widget.appointment!.appointmentType.isNotEmpty
+              ? widget.appointment!.appointmentType
+              : 'consultation';
           _dateTimeDisplayController.text = DateFormat(
             'yyyy-MM-dd HH:mm',
           ).format(_appointmentDateTime);
+
+          // Populate payment fields with existing transaction data
+          if (transactions.isNotEmpty) {
+            final latestTransaction = transactions.reduce(
+              (a, b) => a.date.isAfter(b.date) ? a : b,
+            );
+            _totalCostController.text = latestTransaction.totalAmount
+                .toString();
+            _paidController.text = latestTransaction.paidAmount.toString();
+          }
         });
       } catch (e) {
         // Handle error loading existing data
@@ -93,9 +121,12 @@ class _AddEditAppointmentScreenState
     final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
     final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
+    final currency = ref.watch(currencyProvider);
 
     // Update unpaid controller text
-    _unpaidController.text = '\$${_unpaid.toStringAsFixed(2)}';
+    _unpaidController.text = NumberFormat.currency(
+      symbol: currency,
+    ).format(_unpaid);
 
     return Scaffold(
       appBar: AppBar(
@@ -157,7 +188,7 @@ class _AddEditAppointmentScreenState
                               flex: 2,
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 8.0),
-                                child: _buildPaymentStatusCard(l10n),
+                                child: _buildPaymentStatusCard(l10n, currency),
                               ),
                             ),
                             Expanded(
@@ -177,7 +208,7 @@ class _AddEditAppointmentScreenState
                     // Narrow screen: Single column layout
                     _buildPatientSelectionSection(l10n, patientsAsyncValue),
                     const SizedBox(height: 16),
-                    _buildPaymentStatusCard(l10n),
+                    _buildPaymentStatusCard(l10n, currency),
                     const SizedBox(height: 16),
                     _buildAppointmentDateTimeSection(l10n),
                     const SizedBox(height: 16),
@@ -373,20 +404,41 @@ class _AddEditAppointmentScreenState
     }
 
     try {
-      final appointment = Appointment(
+      var appointment = Appointment(
         id: widget.appointment?.id,
         patientId: _selectedPatient!.id!,
         dateTime: _appointmentDateTime,
+        appointmentType: _selectedAppointmentType,
       );
 
       if (widget.appointment == null) {
-        await appointmentService.addAppointment(appointment);
+        final savedAppointment = await appointmentService.addAppointment(
+          appointment,
+        );
+        // Use the saved appointment's ID for the transaction
+        appointment = savedAppointment;
       } else {
         await appointmentService.updateAppointment(appointment);
       }
 
+      // Save payment transaction if there's a total cost or paid amount
+      if (_totalCost > 0 || _paid > 0) {
+        final financeService = ref.read(financeServiceProvider);
+        final transaction = Transaction(
+          sessionId: appointment.id!, // Use the actual appointment ID
+          description: 'Appointment payment for ${appointment.appointmentType}',
+          totalAmount: _totalCost,
+          paidAmount: _paid,
+          type: TransactionType.income,
+          date: DateTime.now(),
+        );
+        await financeService.addTransaction(transaction, invalidate: false);
+      }
+
       ref.invalidate(appointmentsProvider);
       ref.invalidate(todaysAppointmentsProvider);
+      // Also invalidate patient-specific appointments provider
+      ref.invalidate(patientAppointmentsProvider(appointment.patientId));
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -652,7 +704,7 @@ class _AddEditAppointmentScreenState
             const SizedBox(height: 16),
             Expanded(
               child: DropdownButtonFormField<String>(
-                initialValue: 'consultation',
+                initialValue: _selectedAppointmentType,
                 decoration: InputDecoration(
                   labelText: 'Select Type',
                   labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -693,9 +745,9 @@ class _AddEditAppointmentScreenState
                     child: Text('Procedure'),
                   ),
                 ],
-                onChanged: (value) {
-                  // Handle appointment type change
-                },
+                onChanged: (value) => setState(
+                  () => _selectedAppointmentType = value ?? 'consultation',
+                ),
               ),
             ),
           ],
@@ -704,7 +756,7 @@ class _AddEditAppointmentScreenState
     );
   }
 
-  Widget _buildPaymentStatusCard(AppLocalizations l10n) {
+  Widget _buildPaymentStatusCard(AppLocalizations l10n, [String? currency]) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: 280,

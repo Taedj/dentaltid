@@ -29,7 +29,10 @@ class FinanceService {
 
   FinanceService(this._repository, this._auditService, this._ref);
 
-  Future<void> addTransaction(Transaction transaction) async {
+  Future<void> addTransaction(
+    Transaction transaction, {
+    bool invalidate = true,
+  }) async {
     await _repository.createTransaction(transaction);
     _auditService.logEvent(
       AuditAction.createTransaction,
@@ -37,21 +40,28 @@ class FinanceService {
           'Transaction of type ${transaction.type} for amount ${transaction.totalAmount} added.',
     );
     // Invalidate transaction providers to refresh the UI
-    _ref.invalidate(transactionsProvider);
+    if (invalidate) {
+      _ref.invalidate(transactionsProvider);
+    }
   }
 
   Future<List<Transaction>> getTransactions() async {
     return await _repository.getTransactions();
   }
 
-  Future<void> updateTransaction(Transaction transaction) async {
+  Future<void> updateTransaction(
+    Transaction transaction, {
+    bool invalidate = true,
+  }) async {
     await _repository.updateTransaction(transaction);
     _auditService.logEvent(
       AuditAction.updateTransaction,
       details: 'Transaction updated.',
     );
     // Invalidate transaction providers to refresh the UI
-    _ref.invalidate(transactionsProvider);
+    if (invalidate) {
+      _ref.invalidate(transactionsProvider);
+    }
   }
 
   Future<void> deleteTransaction(int id) async {
@@ -66,5 +76,17 @@ class FinanceService {
 
   Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {
     return await _repository.getTransactionsBySessionId(sessionId);
+  }
+
+  Future<String> getPaymentStatusForAppointment(int appointmentId) async {
+    final transactions = await getTransactionsBySessionId(appointmentId);
+    if (transactions.isEmpty) {
+      return 'Unpaid';
+    }
+    // Assuming the latest transaction determines the status
+    final latestTransaction = transactions.reduce(
+      (a, b) => a.date.isAfter(b.date) ? a : b,
+    );
+    return latestTransaction.status.toString().split('.').last;
   }
 }

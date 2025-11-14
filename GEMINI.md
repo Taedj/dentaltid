@@ -184,3 +184,17 @@ The goal is to create a modern, intuitive, and visually appealing user interface
     - Adjusted the button dimensions (`width: 150`, `height: 50`) and used theme-consistent colors (`colorScheme.primary` for `backgroundColor` and `colorScheme.onPrimary` for `foregroundColor`) for the "Add/Edit" button.
     - Ran `flutter analyze` and `dart format .` to ensure code quality.
     - Verified the changes by running the app (`rapp`).
+- **Resolved `flutter analyze` issues in `lib/src/features/patients/presentation/patient_profile_screen.dart` and `lib/src/features/appointments/presentation/add_edit_appointment_screen.dart`**:
+    - Fixed `deprecated_member_use` by replacing `value` with `initialValue` in `DropdownButtonFormField` in both files.
+    - Fixed `use_build_context_synchronously` by adding `if (mounted)` checks before using `ScaffoldMessenger.of(context)`.
+    - Ran `dart format .` to ensure consistent code formatting.
+    - Verified that `flutter analyze` now reports "No issues found!".
+- **Refactored Patient Visit Management for Real-time Editing**:
+    - Created `lib/src/features/patients/application/patient_appointments_provider.dart` to manage patient appointments using `StateNotifierProvider`.
+    - Refactored `lib/src/features/patients/presentation/patient_profile_screen.dart` to be a `ConsumerWidget`.
+    - Refactored `VisitsListWidget` to be a `ConsumerWidget` and use `patientAppointmentsProvider`.
+    - Refactored `VisitCard` to be a `ConsumerStatefulWidget` and use `ref.read` for services and `ref.invalidate` to refresh the appointment list.
+    - Fixed `deprecated_member_use` by replacing `value` with `initialValue` in `DropdownButtonFormField` in `VisitCard`.
+    - Fixed `unreachable_switch_default` by removing the `default` case in `_getStatusColor` in `VisitCard`.
+    - Ran `dart format .` to ensure consistent code formatting.
+    - Verified that `flutter analyze` now reports "No issues found!".

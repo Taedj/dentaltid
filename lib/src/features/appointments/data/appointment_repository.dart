@@ -9,9 +9,10 @@ class AppointmentRepository {
 
   static const String _tableName = 'appointments';
 
-  Future<void> createAppointment(Appointment appointment) async {
+  Future<Appointment> createAppointment(Appointment appointment) async {
     final db = await _databaseService.database;
-    await db.insert(_tableName, appointment.toJson());
+    final id = await db.insert(_tableName, appointment.toJson());
+    return appointment.copyWith(id: id);
   }
 
   Future<List<Appointment>> getAppointments() async {
@@ -59,14 +60,19 @@ class AppointmentRepository {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
-      where: 'sessionId = ? AND dateTime = ?',
-      whereArgs: [patientId, dateTime.toIso8601String()],
+      where: 'sessionId = ?',
+      whereArgs: [patientId],
     );
-    if (maps.isNotEmpty) {
-      return Appointment.fromJson(maps.first);
-    } else {
-      return null;
+    // Check if there's an appointment within 30 minutes of the requested time
+    for (final map in maps) {
+      final existingDateTime = DateTime.parse(map['dateTime']);
+      final difference = existingDateTime.difference(dateTime).inMinutes.abs();
+      if (difference < 30) {
+        // Allow minimum 30-minute slots
+        return Appointment.fromJson(map);
+      }
     }
+    return null;
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
@@ -139,6 +145,19 @@ class AppointmentRepository {
         ...emergencyPatientIds,
       ],
       orderBy: 'dateTime ASC',
+    );
+    return List.generate(maps.length, (i) {
+      return Appointment.fromJson(maps[i]);
+    });
+  }
+
+  Future<List<Appointment>> getAppointmentsForPatient(int patientId) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'sessionId = ?',
+      whereArgs: [patientId],
+      orderBy: 'dateTime DESC', // Most recent first
     );
     return List.generate(maps.length, (i) {
       return Appointment.fromJson(maps[i]);

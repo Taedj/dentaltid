@@ -99,7 +99,7 @@ class AppointmentService {
 
   AppointmentService(this._repository, this._auditService);
 
-  Future<void> addAppointment(Appointment appointment) async {
+  Future<Appointment> addAppointment(Appointment appointment) async {
     try {
       // Check for existing appointment with same patient and dateTime
       final existingAppointment = await _repository
@@ -109,19 +109,22 @@ class AppointmentService {
           );
       if (existingAppointment != null) {
         throw DuplicateEntryException(
-          'An appointment for this patient at this date and time already exists.',
+          'An appointment for this patient already exists within 30 minutes of the requested time.',
           entity: 'Appointment',
           duplicateValue:
-              'Patient ID: ${appointment.patientId}, DateTime: ${appointment.dateTime}',
+              'Patient ID: ${appointment.patientId}, Requested: ${appointment.dateTime}, Existing: ${existingAppointment.dateTime}',
         );
       }
-      await _repository.createAppointment(appointment);
+      final createdAppointment = await _repository.createAppointment(
+        appointment,
+      );
       _auditService.logEvent(
         AuditAction.createAppointment,
         details:
-            'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} created.',
+            'Appointment for patient ${createdAppointment.patientId} on ${createdAppointment.dateTime} created.',
       );
       // Provider invalidation is handled by the UI to avoid circular dependencies
+      return createdAppointment;
     } catch (e) {
       // Log the error for debugging
       ErrorHandler.logError(e);
@@ -182,5 +185,9 @@ class AppointmentService {
     return await _repository.getTodaysAppointmentsForEmergencyPatients(
       emergencyPatientIds,
     );
+  }
+
+  Future<List<Appointment>> getAppointmentsForPatient(int patientId) async {
+    return await _repository.getAppointmentsForPatient(patientId);
   }
 }

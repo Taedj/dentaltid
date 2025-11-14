@@ -7,6 +7,7 @@ import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.d
 import 'package:dentaltid/src/features/finance/presentation/finance_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/add_edit_patient_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/patients_screen.dart';
+import 'package:dentaltid/src/features/patients/presentation/patient_profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/home_screen.dart';
@@ -20,9 +21,10 @@ final router = GoRouter(
     final user = FirebaseAuth.instance.currentUser;
     final isLoggingIn = state.matchedLocation == '/login';
 
-    if (user == null && !isLoggingIn) {
-      return '/login';
-    }
+    // Temporarily deactivate login redirect
+    // if (user == null && !isLoggingIn) {
+    //   return '/login';
+    // }
 
     if (user != null && isLoggingIn) {
       return '/';
@@ -80,6 +82,11 @@ final router = GoRouter(
               path: 'edit',
               builder: (context, state) =>
                   AddEditPatientScreen(patient: state.extra as dynamic),
+            ),
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) =>
+                  PatientProfileScreen(patient: state.extra as Patient),
             ),
           ],
         ),
