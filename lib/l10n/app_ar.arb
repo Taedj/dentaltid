@@ -150,6 +150,7 @@
   "expired": "منتهي الصلاحية",
   "lowStock": "مخزون منخفض",
   "deleteItem": "حذف العنصر",
+  "deleteItemButton": "حذف",
   "confirmDeleteItem": "هل أنت متأكد أنك تريد حذف هذا العنصر؟",
   "cancel": "إلغاء",
   "enterName": "الرجاء إدخال اسم",

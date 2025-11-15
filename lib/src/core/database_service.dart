@@ -4,7 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 12; // Incremented version
+  static const int _databaseVersion = 14; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -286,6 +286,18 @@ class DatabaseService {
       await db.execute('ALTER TABLE appointments ADD COLUMN treatment TEXT');
       await db.execute('ALTER TABLE appointments ADD COLUMN notes TEXT');
     }
+    if (oldVersion < 13) {
+      // Add thresholdDays to inventory table
+      await db.execute(
+        'ALTER TABLE inventory ADD COLUMN thresholdDays INTEGER DEFAULT 30',
+      );
+    }
+    if (oldVersion < 14) {
+      // Add lowStockThreshold to inventory table
+      await db.execute(
+        'ALTER TABLE inventory ADD COLUMN lowStockThreshold INTEGER DEFAULT 5',
+      );
+    }
   }
 
   Future<void> close() async {
@@ -347,7 +359,9 @@ class DatabaseService {
         name TEXT,
         quantity INTEGER,
         expirationDate TEXT,
-        supplier TEXT
+        supplier TEXT,
+        thresholdDays INTEGER DEFAULT 30,
+        lowStockThreshold INTEGER DEFAULT 5
       )
       ''');
     await db.execute('''

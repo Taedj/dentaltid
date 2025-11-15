@@ -4,6 +4,8 @@ class InventoryItem {
   final int quantity;
   final DateTime expirationDate;
   final String supplier;
+  final int thresholdDays;
+  final int lowStockThreshold;
 
   InventoryItem({
     this.id,
@@ -11,6 +13,8 @@ class InventoryItem {
     required this.quantity,
     required this.expirationDate,
     required this.supplier,
+    this.thresholdDays = 30,
+    this.lowStockThreshold = 5,
   });
 
   Map<String, dynamic> toJson() => {
@@ -19,6 +23,8 @@ class InventoryItem {
     'quantity': quantity,
     'expirationDate': expirationDate.toIso8601String(),
     'supplier': supplier,
+    'thresholdDays': thresholdDays,
+    'lowStockThreshold': lowStockThreshold,
   };
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
@@ -27,6 +33,8 @@ class InventoryItem {
     quantity: json['quantity'],
     expirationDate: DateTime.parse(json['expirationDate']),
     supplier: json['supplier'],
+    thresholdDays: json['thresholdDays'] ?? 30,
+    lowStockThreshold: json['lowStockThreshold'] ?? 5,
   );
 
   InventoryItem copyWith({
@@ -35,6 +43,8 @@ class InventoryItem {
     int? quantity,
     DateTime? expirationDate,
     String? supplier,
+    int? thresholdDays,
+    int? lowStockThreshold,
   }) {
     return InventoryItem(
       id: id ?? this.id,
@@ -42,6 +52,8 @@ class InventoryItem {
       quantity: quantity ?? this.quantity,
       expirationDate: expirationDate ?? this.expirationDate,
       supplier: supplier ?? this.supplier,
+      thresholdDays: thresholdDays ?? this.thresholdDays,
+      lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
     );
   }
 }

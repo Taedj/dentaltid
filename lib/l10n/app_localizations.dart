@@ -1006,6 +1006,12 @@ abstract class AppLocalizations {
   /// **'Delete Item'**
   String get deleteItem;
 
+  /// No description provided for @deleteItemButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteItemButton;
+
   /// No description provided for @confirmDeleteItem.
   ///
   /// In en, this message translates to:

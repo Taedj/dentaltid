@@ -468,6 +468,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deleteItem => 'حذف العنصر';
 
   @override
+  String get deleteItemButton => 'حذف';
+
+  @override
   String get confirmDeleteItem => 'هل أنت متأكد أنك تريد حذف هذا العنصر؟';
 
   @override

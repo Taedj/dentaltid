@@ -22,14 +22,214 @@ class InventoryScreen extends ConsumerStatefulWidget {
 
 class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _editFormKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _expirationDateController = TextEditingController();
   final _supplierController = TextEditingController();
+  final _thresholdDaysController = TextEditingController(text: '30');
+  final _lowStockThresholdController = TextEditingController(text: '5');
   InventorySortOption _sortOption = InventorySortOption.nameAsc;
   String _searchQuery = '';
   bool _showExpiredOnly = false;
   bool _showLowStockOnly = false;
+  InventoryItem? _editingItem;
+
+  void _showEditDialog(InventoryItem item) {
+    setState(() {
+      _editingItem = item;
+      _nameController.text = item.name;
+      _quantityController.text = item.quantity.toString();
+      _expirationDateController.text = item.expirationDate
+          .toIso8601String()
+          .split('T')[0];
+      _supplierController.text = item.supplier;
+      _thresholdDaysController.text = item.thresholdDays.toString();
+      _lowStockThresholdController.text = item.lowStockThreshold.toString();
+    });
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Item'),
+        content: Form(
+          key: _editFormKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(labelText: 'Name'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _quantityController,
+                  decoration: InputDecoration(labelText: 'Quantity'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter quantity';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _expirationDateController,
+                  decoration: InputDecoration(
+                    labelText: 'Expiration Date',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.calendar_today),
+                      onPressed: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.parse(
+                            _expirationDateController.text,
+                          ),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2101),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _expirationDateController.text = picked
+                                .toIso8601String()
+                                .split('T')[0];
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  keyboardType: TextInputType.datetime,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter date';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _supplierController,
+                  decoration: InputDecoration(labelText: 'Supplier'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter supplier';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _thresholdDaysController,
+                  decoration: InputDecoration(labelText: 'Threshold Days'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter threshold days';
+                    }
+                    final days = int.tryParse(value);
+                    if (days == null || days <= 0) {
+                      return 'Enter a positive number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _lowStockThresholdController,
+                  decoration: InputDecoration(labelText: 'Low Stock Threshold'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Enter low stock threshold';
+                    }
+                    final threshold = int.tryParse(value);
+                    if (threshold == null || threshold < 0) {
+                      return 'Enter a non-negative number';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _editingItem = null;
+                _nameController.clear();
+                _quantityController.clear();
+                _expirationDateController.clear();
+                _supplierController.clear();
+                _thresholdDaysController.text = '30';
+                _lowStockThresholdController.text = '5';
+                _lowStockThresholdController.text = '5';
+                _lowStockThresholdController.text = '5';
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (_editFormKey.currentState!.validate()) {
+                try {
+                  final updatedItem = InventoryItem(
+                    id: _editingItem!.id,
+                    name: _nameController.text,
+                    quantity: int.parse(_quantityController.text),
+                    expirationDate: DateTime.parse(
+                      _expirationDateController.text,
+                    ),
+                    supplier: _supplierController.text,
+                    thresholdDays: int.parse(_thresholdDaysController.text),
+                    lowStockThreshold: int.parse(
+                      _lowStockThresholdController.text,
+                    ),
+                  );
+                  await ref
+                      .read(inventoryServiceProvider)
+                      .updateInventoryItem(updatedItem);
+                  ref.invalidate(inventoryItemsProvider);
+                  setState(() {
+                    _editingItem = null;
+                    _nameController.clear();
+                    _quantityController.clear();
+                    _expirationDateController.clear();
+                    _supplierController.clear();
+                    _thresholdDaysController.text = '30';
+                    _lowStockThresholdController.text = '5';
+                  });
+                  if (context.mounted) {
+                    Navigator.of(context).pop();
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to update item: ${e.toString()}'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -37,6 +237,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     _quantityController.dispose();
     _expirationDateController.dispose();
     _supplierController.dispose();
+    _thresholdDaysController.dispose();
+    _lowStockThresholdController.dispose();
     super.dispose();
   }
 
@@ -226,6 +428,49 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       ),
                     ],
                   ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _thresholdDaysController,
+                          decoration: InputDecoration(
+                            labelText: 'Threshold Days',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Enter threshold days';
+                            }
+                            final days = int.tryParse(value);
+                            if (days == null || days <= 0) {
+                              return 'Enter a positive number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lowStockThresholdController,
+                          decoration: InputDecoration(
+                            labelText: 'Low Stock Threshold',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Enter low stock threshold';
+                            }
+                            final threshold = int.tryParse(value);
+                            if (threshold == null || threshold < 0) {
+                              return 'Enter a non-negative number';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
@@ -240,6 +485,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 _expirationDateController.text,
                               ),
                               supplier: _supplierController.text,
+                              thresholdDays: int.parse(
+                                _thresholdDaysController.text,
+                              ),
+                              lowStockThreshold: int.parse(
+                                _lowStockThresholdController.text,
+                              ),
                             );
                             await inventoryService.addInventoryItem(newItem);
                             ref.invalidate(inventoryItemsProvider);
@@ -247,11 +498,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             _quantityController.clear();
                             _expirationDateController.clear();
                             _supplierController.clear();
+                            _thresholdDaysController.text = '30';
                           } catch (e) {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('$l10n.error${e.toString()}'),
+                                  content: Text(
+                                    'Failed to add item: ${e.toString()}',
+                                  ),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -280,7 +534,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   final isExpired = item.expirationDate.isBefore(
                     DateTime.now(),
                   );
-                  final isLowStock = item.quantity <= 5;
+                  final isLowStock = item.quantity <= item.lowStockThreshold;
 
                   final matchesFilter =
                       (!_showExpiredOnly && !_showLowStockOnly) ||
@@ -319,7 +573,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     final isExpired = item.expirationDate.isBefore(
                       DateTime.now(),
                     );
-                    final isLowStock = item.quantity <= 5;
+                    final isLowStock = item.quantity <= item.lowStockThreshold;
                     final daysUntilExpiry = item.expirationDate
                         .difference(DateTime.now())
                         .inDays;
@@ -364,7 +618,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                               style: TextStyle(
                                 color: isExpired
                                     ? Colors.red
-                                    : daysUntilExpiry <= 30
+                                    : daysUntilExpiry <= item.thresholdDays
                                     ? Colors.orange
                                     : null,
                               ),
@@ -389,50 +643,61 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                               ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text(l10n.deleteItem),
-                                content: Text(l10n.confirmDeleteItem),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(false),
-                                    child: Text(l10n.cancel),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(true),
-                                    child: Text(
-                                      l10n.deleteItem.split(' ')[1],
-                                    ), // Just "Item" for the button
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true && item.id != null) {
-                              try {
-                                await inventoryService.deleteInventoryItem(
-                                  item.id!,
-                                );
-                                ref.invalidate(inventoryItemsProvider);
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        '$l10n.error${e.toString()}',
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showEditDialog(item),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(l10n.deleteItem),
+                                    content: Text(l10n.confirmDeleteItem),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(false),
+                                        child: Text(l10n.cancel),
                                       ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(true),
+                                        child: Text(
+                                          l10n.deleteItemButton,
+                                        ), // Delete button
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirmed == true && item.id != null) {
+                                  try {
+                                    await inventoryService.deleteInventoryItem(
+                                      item.id!,
+                                    );
+                                    ref.invalidate(inventoryItemsProvider);
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to delete item: ${e.toString()}',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 }
-                              }
-                            }
-                          },
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     );

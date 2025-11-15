@@ -9,6 +9,7 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart'; // Import the new provider
+import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -178,17 +179,41 @@ class HomeScreen extends ConsumerWidget {
 
                       SizedBox(width: spacing),
 
-                      // Emergency Alerts Card
+                      // Critical Alerts Card
                       _FlipCard3D(
                         width: cardWidth,
                         height: cardHeight,
-                        frontTitle: l10n.emergencyAlerts,
+                        frontTitle: 'Critical Alerts',
                         frontIcon: Icons.warning_amber,
-                        frontGradient: [
-                          Colors.red.shade400,
-                          Colors.red.shade800,
-                        ],
-                        backTitle: 'View Emergencies',
+                        frontGradient: inventoryItemsAsyncValue.maybeWhen(
+                          data: (items) {
+                            final now = DateTime.now();
+                            final expiringSoonCount = items.where((item) {
+                              final daysLeft = item.expirationDate
+                                  .difference(now)
+                                  .inDays;
+                              return daysLeft >= 0 &&
+                                  daysLeft < item.thresholdDays;
+                            }).length;
+                            final lowStockCount = items
+                                .where(
+                                  (item) =>
+                                      item.quantity <= item.lowStockThreshold,
+                                )
+                                .length;
+                            return (expiringSoonCount > 0 || lowStockCount > 0)
+                                ? [Colors.red.shade400, Colors.red.shade800]
+                                : [
+                                    const Color(0xFF1E4D2B),
+                                    const Color(0xFF2E5A3C),
+                                  ];
+                          },
+                          orElse: () => [
+                            const Color(0xFF1E4D2B),
+                            const Color(0xFF2E5A3C),
+                          ],
+                        ),
+                        backTitle: 'View Critical',
                         backIcon: Icons.warning,
                         onTap: () => context.go('/inventory'),
                         cardType: 'emergency',
@@ -202,14 +227,31 @@ class HomeScreen extends ConsumerWidget {
                               final daysLeft = item.expirationDate
                                   .difference(now)
                                   .inDays;
-                              return daysLeft >= 0 && daysLeft < 30;
+                              return daysLeft >= 0 &&
+                                  daysLeft < item.thresholdDays;
                             }).length;
+                            final lowStockCount = items
+                                .where(
+                                  (item) =>
+                                      item.quantity <= item.lowStockThreshold,
+                                )
+                                .length;
                             return Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   'Expiring Soon: $expiringSoonCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Low Stock: $lowStockCount',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -474,6 +516,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
   late Animation<double> _borderAnimation;
   bool _isFront = true;
   int _appointmentTabIndex = 0;
+  int _criticalAlertTabIndex = 0;
 
   @override
   void initState() {
@@ -765,67 +808,163 @@ class _FlipCard3DState extends State<_FlipCard3D>
                 final now = DateTime.now();
                 final expiringSoon = items.where((item) {
                   final daysLeft = item.expirationDate.difference(now).inDays;
-                  return daysLeft >= 0 && daysLeft < 30;
+                  return daysLeft >= 0 && daysLeft < item.thresholdDays;
                 }).toList();
+                final lowStock = items
+                    .where((item) => item.quantity <= item.lowStockThreshold)
+                    .toList();
 
-                if (expiringSoon.isEmpty) {
-                  return const Text(
-                    'No items expiring soon',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  );
+                List<InventoryItem> currentItems = [];
+                String tabTitle = '';
+                List<String> columns = [];
+                List<DataRow> rows = [];
+
+                switch (_criticalAlertTabIndex) {
+                  case 0:
+                    currentItems = expiringSoon;
+                    tabTitle = 'Expiring Soon';
+                    columns = ['Item Name', 'Countdown'];
+                    rows = currentItems.map((item) {
+                      final daysLeft = item.expirationDate
+                          .difference(now)
+                          .inDays;
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Text(
+                              item.name,
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: isRTL
+                                  ? TextAlign.right
+                                  : TextAlign.left,
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              '${daysLeft}d left',
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList();
+                    break;
+                  case 1:
+                    currentItems = lowStock;
+                    tabTitle = 'Low Stock';
+                    columns = ['Item Name', 'Current Quantity'];
+                    rows = currentItems.map((item) {
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Text(
+                              item.name,
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: isRTL
+                                  ? TextAlign.right
+                                  : TextAlign.left,
+                            ),
+                          ),
+                          DataCell(
+                            Text(
+                              '${item.quantity}',
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList();
+                    break;
                 }
-                return DataTable(
-                  border: TableBorder.all(
-                    color: Colors.white.withAlpha(100),
-                    width: 1,
-                  ),
-                  columns: [
-                    DataColumn(
-                      label: Text(
-                        'Item Name',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    DataColumn(
-                      label: Text(
-                        'Countdown',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                  rows: expiringSoon.map((item) {
-                    final daysLeft = item.expirationDate.difference(now).inDays;
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          Text(
-                            item.name,
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+
+                return Column(
+                  children: [
+                    // Tab buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                setState(() => _criticalAlertTabIndex = 0),
+                            style: TextButton.styleFrom(
+                              backgroundColor: _criticalAlertTabIndex == 0
+                                  ? Colors.white.withAlpha(50)
+                                  : Colors.transparent,
+                            ),
+                            child: Text(
+                              'Expiring Soon',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: _criticalAlertTabIndex == 0
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
                           ),
                         ),
-                        DataCell(
-                          Text(
-                            '${daysLeft}d left',
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: TextAlign.center,
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () =>
+                                setState(() => _criticalAlertTabIndex = 1),
+                            style: TextButton.styleFrom(
+                              backgroundColor: _criticalAlertTabIndex == 1
+                                  ? Colors.white.withAlpha(50)
+                                  : Colors.transparent,
+                            ),
+                            child: Text(
+                              'Low Stock',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: _criticalAlertTabIndex == 1
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    );
-                  }).toList(),
-                  dataTextStyle: const TextStyle(color: Colors.white),
-                  headingTextStyle: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+                    ),
+                    const SizedBox(height: 10),
+                    // Table
+                    if (currentItems.isEmpty)
+                      Text(
+                        'No $tabTitle items',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      )
+                    else
+                      DataTable(
+                        border: TableBorder.all(
+                          color: Colors.white.withAlpha(100),
+                          width: 1,
+                        ),
+                        columns: columns
+                            .map(
+                              (col) => DataColumn(
+                                label: Text(
+                                  col,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                        rows: rows,
+                        dataTextStyle: const TextStyle(color: Colors.white),
+                        headingTextStyle: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                  ],
                 );
               },
               loading: () => const CircularProgressIndicator(

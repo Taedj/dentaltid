@@ -471,6 +471,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteItem => 'Delete Item';
 
   @override
+  String get deleteItemButton => 'Delete';
+
+  @override
   String get confirmDeleteItem => 'Are you sure you want to delete this item?';
 
   @override

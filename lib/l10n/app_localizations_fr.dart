@@ -475,6 +475,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get deleteItem => 'Supprimer l\'article';
 
   @override
+  String get deleteItemButton => 'Supprimer';
+
+  @override
   String get confirmDeleteItem =>
       'Êtes-vous sûr de vouloir supprimer cet article ?';
 

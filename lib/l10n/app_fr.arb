@@ -150,6 +150,7 @@
   "expired": "Expiré",
   "lowStock": "Faible stock",
   "deleteItem": "Supprimer l'article",
+  "deleteItemButton": "Supprimer",
   "confirmDeleteItem": "Êtes-vous sûr de vouloir supprimer cet article ?",
   "cancel": "Annuler",
   "enterName": "Veuillez saisir un nom",

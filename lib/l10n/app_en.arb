@@ -150,6 +150,7 @@
   "expired": "Expired",
   "lowStock": "Low Stock",
   "deleteItem": "Delete Item",
+  "deleteItemButton": "Delete",
   "confirmDeleteItem": "Are you sure you want to delete this item?",
   "cancel": "Cancel",
   "enterName": "Please enter a name",

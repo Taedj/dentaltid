@@ -13,7 +13,6 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
   return InventoryService(
     ref.watch(inventoryRepositoryProvider),
     ref.watch(auditServiceProvider),
-    ref,
   );
 });
 
@@ -25,9 +24,8 @@ final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
 class InventoryService {
   final InventoryRepository _repository;
   final AuditService _auditService;
-  final Ref _ref;
 
-  InventoryService(this._repository, this._auditService, this._ref);
+  InventoryService(this._repository, this._auditService);
 
   Future<void> addInventoryItem(InventoryItem item) async {
     await _repository.createInventoryItem(item);
@@ -35,8 +33,6 @@ class InventoryService {
       AuditAction.createInventoryItem,
       details: 'Inventory item ${item.name} added.',
     );
-    // Invalidate inventory providers to refresh the UI
-    _ref.invalidate(inventoryItemsProvider);
   }
 
   Future<List<InventoryItem>> getInventoryItems() async {
@@ -49,8 +45,6 @@ class InventoryService {
       AuditAction.updateInventoryItem,
       details: 'Inventory item ${item.name} updated.',
     );
-    // Invalidate inventory providers to refresh the UI
-    _ref.invalidate(inventoryItemsProvider);
   }
 
   Future<void> deleteInventoryItem(int id) async {
@@ -59,7 +53,5 @@ class InventoryService {
       AuditAction.deleteInventoryItem,
       details: 'Inventory item with ID $id deleted.',
     );
-    // Invalidate inventory providers to refresh the UI
-    _ref.invalidate(inventoryItemsProvider);
   }
 }
