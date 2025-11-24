@@ -18,7 +18,7 @@ class DatabaseService {
   }
 
   Future<Database> _initDB() async {
-    databaseFactory = databaseFactoryFfi;
+
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _databaseName);
 

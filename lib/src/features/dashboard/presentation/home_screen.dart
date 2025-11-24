@@ -8,8 +8,9 @@ import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart'; // Import the new provider
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
+import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -23,19 +24,18 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final userProfileAsyncValue = ref.watch(
       userProfileProvider,
-    ); // Watch the user profile provider
+    );
 
     return Scaffold(
       body: Column(
         children: [
-          // Header with welcome message, date, and time
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  flex: 2, // Give more space to the welcome message
+                  flex: 2,
                   child: userProfileAsyncValue.when(
                     data: (userProfile) {
                       final dentistName = userProfile?.dentistName ?? 'Dr.';
@@ -67,7 +67,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 Expanded(
-                  flex: 1, // Space for date and time
+                  flex: 1,
                   child: StreamBuilder<DateTime>(
                     stream: Stream.periodic(
                       const Duration(seconds: 1),
@@ -104,37 +104,31 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-
-          // Centered 3D Flip Cards
           Expanded(
             child: Center(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  // Responsive card sizing based on screen width
                   double cardWidth;
                   if (constraints.maxWidth > 1400) {
-                    cardWidth = constraints.maxWidth * 0.26; // Larger screens
+                    cardWidth = constraints.maxWidth * 0.26;
                   } else if (constraints.maxWidth > 1000) {
-                    cardWidth = constraints.maxWidth * 0.29; // Medium screens
+                    cardWidth = constraints.maxWidth * 0.29;
                   } else if (constraints.maxWidth > 800) {
-                    cardWidth = constraints.maxWidth * 0.32; // Smaller screens
+                    cardWidth = constraints.maxWidth * 0.32;
                   } else {
                     cardWidth =
-                        constraints.maxWidth * 0.36; // Mobile/small screens
+                        constraints.maxWidth * 0.36;
                   }
-                  double cardHeight = cardWidth * 1.4; // Maintain aspect ratio
-
-                  // Responsive spacing and text scaling
-                  double spacing = cardWidth * 0.08; // 8% of card width
-                  double titleFontSize = cardWidth * 0.08; // 8% of card width
-                  double numberFontSize = cardWidth * 0.14; // 14% of card width
+                  double cardHeight = cardWidth * 1.4;
+                  double spacing = cardWidth * 0.08;
+                  double titleFontSize = cardWidth * 0.08;
+                  double numberFontSize = cardWidth * 0.14;
                   double subtitleFontSize =
-                      cardWidth * 0.06; // 6% of card width
+                      cardWidth * 0.06;
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Patients Card
                       _FlipCard3D(
                         width: cardWidth,
                         height: cardHeight,
@@ -179,7 +173,6 @@ class HomeScreen extends ConsumerWidget {
 
                       SizedBox(width: spacing),
 
-                      // Critical Alerts Card
                       _FlipCard3D(
                         width: cardWidth,
                         height: cardHeight,
@@ -274,7 +267,6 @@ class HomeScreen extends ConsumerWidget {
 
                       SizedBox(width: spacing),
 
-                      // Appointments Card
                       _FlipCard3D(
                         width: cardWidth,
                         height: cardHeight,
@@ -296,91 +288,149 @@ class HomeScreen extends ConsumerWidget {
                             final todaysAppointmentsAsync = ref.watch(
                               todaysAppointmentsProvider,
                             );
+                            final emergencyAppointmentsAsync = ref.watch(
+                              todaysEmergencyAppointmentsProvider,
+                            );
 
                             return todaysAppointmentsAsync.when(
                               data: (appointments) {
-                                final waiting = appointments
-                                    .where(
-                                      (a) =>
-                                          a.status == AppointmentStatus.waiting,
-                                    )
-                                    .toList();
-                                final inProgress = appointments
-                                    .where(
-                                      (a) =>
-                                          a.status ==
-                                          AppointmentStatus.inProgress,
-                                    )
-                                    .toList();
-                                final completed = appointments
-                                    .where(
-                                      (a) =>
-                                          a.status ==
-                                          AppointmentStatus.completed,
-                                    )
-                                    .toList();
+                                return emergencyAppointmentsAsync.when(
+                                  data: (emergencyAppointments) {
+                                    final emergencyAppointmentIds =
+                                        emergencyAppointments
+                                            .map((a) => a.id)
+                                            .toSet();
 
-                                return Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Waiting: ${waiting.length}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                    final waiting = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                                  AppointmentStatus.waiting &&
+                                              !emergencyAppointmentIds
+                                                  .contains(a.id),
+                                        )
+                                        .toList();
+                                    final inProgress = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                              AppointmentStatus.inProgress,
+                                        )
+                                        .toList();
+                                    final completed = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                              AppointmentStatus.completed,
+                                        )
+                                        .toList();
+
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Waiting: ${waiting.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Text(
+                                          'In Progress: ${inProgress.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Text(
+                                          'Completed: ${completed.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        EmergencyCounter(
+                                          emergencyCount:
+                                              emergencyAppointments.length,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                  loading: () {
+                                    // Show a loading state while emergency appointments are being fetched
+                                    final waiting = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                              AppointmentStatus.waiting,
+                                        )
+                                        .toList();
+                                    final inProgress = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                              AppointmentStatus.inProgress,
+                                        )
+                                        .toList();
+                                    final completed = appointments
+                                        .where(
+                                          (a) =>
+                                              a.status ==
+                                              AppointmentStatus.completed,
+                                        )
+                                        .toList();
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Waiting: ${waiting.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Text(
+                                          'In Progress: ${inProgress.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        Text(
+                                          'Completed: ${completed.length}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 14,
+                                          ),
+                                          textAlign: TextAlign.left,
+                                        ),
+                                        const EmergencyCounter(
+                                          emergencyCount: 0,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                  error: (e, s) {
+                                    // Handle error state for emergency appointments
+                                    return const Text(
+                                      'Error loading emergency appointments',
+                                      style: TextStyle(
+                                        color: Colors.red,
                                         fontSize: 14,
                                       ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                    Text(
-                                      'In Progress: ${inProgress.length}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                    Text(
-                                      'Completed: ${completed.length}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 14,
-                                      ),
-                                      textAlign: TextAlign.left,
-                                    ),
-                                    Consumer(
-                                      builder: (context, ref, child) {
-                                        final emergencyAppointmentsAsync = ref
-                                            .watch(
-                                              todaysEmergencyAppointmentsProvider,
-                                            );
-                                        return emergencyAppointmentsAsync.when(
-                                          data: (emergencyAppointments) => Text(
-                                            'Emergency: ${emergencyAppointments.length}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                            ),
-                                            textAlign: TextAlign.left,
-                                          ),
-                                          loading: () => const Text(
-                                            'Emergency: ...',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          error: (e, s) => const Text(
-                                            'Emergency: 0',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                    );
+                                  },
                                 );
                               },
                               loading: () => const Column(
@@ -551,7 +601,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) {
-        // Flip to back side when mouse enters the card
         if (_isFront) {
           _controller.forward();
           setState(() {
@@ -560,7 +609,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
         }
       },
       onExit: (_) {
-        // Flip back to front side when mouse leaves the card
         if (!_isFront) {
           _controller.reverse();
           setState(() {
@@ -576,7 +624,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
             ..setEntry(3, 2, 0.001)
             ..rotateY(angle);
 
-          // Animated border color
           final borderColor = Color.lerp(
             Colors.white.withAlpha(50),
             Colors.white.withAlpha(150),
@@ -606,7 +653,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                   : Transform(
                       transform: Matrix4.rotationY(
                         3.14159,
-                      ), // Flip text back to readable orientation
+                      ),
                       alignment: Alignment.center,
                       child: _buildBackCard(),
                     ),
@@ -638,7 +685,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
       ),
       child: Stack(
         children: [
-          // Decorative circles (adapted from the HTML design)
           Positioned(
             top: 20,
             left: 20,
@@ -675,8 +721,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
               ),
             ),
           ),
-
-          // Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
@@ -731,7 +775,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
   }
 
   Widget _buildCardDetails() {
-    // Get text direction based on locale
     final locale = Localizations.localeOf(context);
     final isRTL = ['ar', 'he', 'fa', 'ur'].contains(locale.languageCode);
 
@@ -771,10 +814,36 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     return DataRow(
                       cells: [
                         DataCell(
-                          Text(
-                            '${patient.name} ${patient.familyName}',
-                            style: const TextStyle(color: Colors.white),
-                            textAlign: isRTL ? TextAlign.right : TextAlign.left,
+                          GestureDetector(
+                            onTap: () {
+                              if (mounted) {
+                                Future.delayed(
+                                  const Duration(
+                                    milliseconds: 100,
+                                  ),
+                                  () {
+                                    if (mounted) {
+                                      // ignore: use_build_context_synchronously
+                                      context.go(
+                                        '/patients/profile',
+                                        extra: patient,
+                                      );
+                                    }
+                                  },
+                                );
+                              }
+                            },
+                            child: Text(
+                              '${patient.name} ${patient.familyName}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                decoration:
+                                    TextDecoration.underline,
+                              ),
+                              textAlign: isRTL
+                                  ? TextAlign.right
+                                  : TextAlign.left,
+                            ),
                           ),
                         ),
                       ],
@@ -881,7 +950,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
 
                 return Column(
                   children: [
-                    // Tab buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -928,7 +996,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
                       ],
                     ),
                     const SizedBox(height: 10),
-                    // Table
                     if (currentItems.isEmpty)
                       Text(
                         'No $tabTitle items',
@@ -1036,7 +1103,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
 
                         return Column(
                           children: [
-                            // Tab buttons
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
@@ -1106,7 +1172,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
                               ],
                             ),
                             const SizedBox(height: 10),
-                            // Table
                             if (currentPatients.isEmpty)
                               Text(
                                 'No $tabTitle appointments',
@@ -1137,14 +1202,33 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                   return DataRow(
                                     cells: [
                                       DataCell(
-                                        Text(
-                                          '${patient.name} ${patient.familyName}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
+                                        GestureDetector(
+                                          onTap: () {
+                                            Future.delayed(
+                                              const Duration(
+                                                milliseconds: 100,
+                                              ),
+                                              () {
+                                                if (!mounted) return;
+                                                // ignore: use_build_context_synchronously
+                                                context.go(
+                                                  '/patients/profile',
+                                                  extra: patient,
+                                                );
+                                              },
+                                            );
+                                          },
+                                          child: Text(
+                                            '${patient.name} ${patient.familyName}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                            textAlign: isRTL
+                                                ? TextAlign.right
+                                                : TextAlign.left,
                                           ),
-                                          textAlign: isRTL
-                                              ? TextAlign.right
-                                              : TextAlign.left,
                                         ),
                                       ),
                                     ],
@@ -1198,3 +1282,83 @@ class _FlipCard3DState extends State<_FlipCard3D>
     }
   }
 }
+
+class _EmergencyCounter extends StatefulWidget {
+  const _EmergencyCounter({required this.emergencyCount});
+
+  final int emergencyCount;
+
+  @override
+  State<_EmergencyCounter> createState() => _EmergencyCounterState();
+}
+
+class _EmergencyCounterState extends State<_EmergencyCounter>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Color?> _colorAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    if (widget.emergencyCount > 0) {
+      _animationController.repeat(reverse: true);
+    }
+
+    _colorAnimation = ColorTween(
+      begin: Colors.white,
+      end: Colors.red,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant _EmergencyCounter oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.emergencyCount > 0 && !_animationController.isAnimating) {
+      _animationController.repeat(reverse: true);
+    } else if (widget.emergencyCount == 0 && _animationController.isAnimating) {
+      _animationController.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _colorAnimation,
+      builder: (context, child) {
+        return Text(
+          'Emergency: ${widget.emergencyCount}',
+          style: TextStyle(
+            color: widget.emergencyCount > 0
+                ? _colorAnimation.value
+                : Colors.white,
+            fontSize: 14,
+            fontWeight:
+                widget.emergencyCount > 0 ? FontWeight.bold : FontWeight.normal,
+          ),
+          textAlign: TextAlign.left,
+        );
+      },
+    );
+  }
+}
+
+
+
+
+

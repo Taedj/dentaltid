@@ -69,28 +69,33 @@ final todaysAppointmentsProvider = FutureProvider<List<Appointment>>((
   return service.getTodaysAppointments();
 });
 
-final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
-  ref,
-) async {
-  final emergencyPatientsAsync = ref.watch(
-    patientsProvider(PatientFilter.emergency),
-  );
-  final repository = ref.watch(appointmentRepositoryProvider);
+final todaysEmergencyAppointmentsProvider =
+    FutureProvider<List<Appointment>>((ref) async {
+  final appointmentService = ref.watch(appointmentServiceProvider);
+  final patientService = ref.watch(patientServiceProvider);
 
-  return emergencyPatientsAsync.when(
-    data: (emergencyPatients) {
-      if (emergencyPatients.isEmpty) return Future.value([]);
-      final emergencyPatientIds = emergencyPatients
-          .where((p) => p.id != null)
-          .map((p) => p.id!)
-          .toList();
-      return repository.getTodaysAppointmentsForEmergencyPatients(
-        emergencyPatientIds,
-      );
-    },
-    loading: () => Future.value([]),
-    error: (error, stack) => Future.value([]),
-  );
+  // 1. Get all patients and create a set of emergency patient IDs for efficient lookup
+  final allPatients = await patientService.getPatients(PatientFilter.all);
+  final emergencyPatientIds = allPatients
+      .where((p) => p.isEmergency)
+      .map((p) => p.id)
+      .whereType<int>()
+      .toSet();
+
+  // 2. Get all of today's appointments
+  final todaysAppointments = await appointmentService.getTodaysAppointments();
+
+  // 3. Filter appointments based on the combined emergency conditions
+  return todaysAppointments
+      .where((a) {
+        final isEmergencyPatient = emergencyPatientIds.contains(a.patientId);
+        final isEmergencyType = a.appointmentType.toLowerCase() == 'emergency';
+        final isActive = a.status != AppointmentStatus.completed &&
+                         a.status != AppointmentStatus.cancelled;
+
+        return (isEmergencyPatient || isEmergencyType) && isActive;
+      })
+      .toList();
 });
 
 class AppointmentService {

@@ -22,6 +22,9 @@ void main() async {
     print('${record.level.name}: ${record.time}: ${record.message}');
   });
 
+  final log = Logger('Main');
+  log.info('Application starting...');
+
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi; // Set the database factory
@@ -40,6 +43,8 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> {
   @override
   Widget build(BuildContext context) {
+    final log = Logger('MyApp');
+    log.info('Building MyApp widget...');
     final locale = ref.watch(languageProvider);
     final theme = ref.watch(themeProvider);
 

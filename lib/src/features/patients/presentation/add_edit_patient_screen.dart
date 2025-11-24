@@ -4,6 +4,7 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart'; // Add this import
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {
   const AddEditPatientScreen({super.key, this.patient});
@@ -285,6 +286,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             ref.invalidate(
                               patientsProvider(PatientFilter.emergency),
                             );
+                            ref.invalidate(todaysEmergencyAppointmentsProvider);
                           } else {
                             await patientService.updatePatient(newPatient);
                             ref.invalidate(patientsProvider(PatientFilter.all));
@@ -294,6 +296,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             ref.invalidate(
                               patientsProvider(PatientFilter.emergency),
                             );
+                            ref.invalidate(todaysEmergencyAppointmentsProvider);
                           }
                           if (context.mounted) {
                             Navigator.pop(context);

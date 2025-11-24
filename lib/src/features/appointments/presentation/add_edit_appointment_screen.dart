@@ -437,6 +437,7 @@ class _AddEditAppointmentScreenState
 
       ref.invalidate(appointmentsProvider);
       ref.invalidate(todaysAppointmentsProvider);
+      ref.invalidate(todaysEmergencyAppointmentsProvider);
       // Also invalidate patient-specific appointments provider
       ref.invalidate(patientAppointmentsProvider(appointment.patientId));
 

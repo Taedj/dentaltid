@@ -257,6 +257,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                         );
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
+                                    ref.invalidate(
+                                        todaysEmergencyAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.startAppointment,
@@ -277,6 +279,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                         );
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
+                                    ref.invalidate(
+                                        todaysEmergencyAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.completeAppointment,
@@ -321,6 +325,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                         );
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
+                                    ref.invalidate(
+                                        todaysEmergencyAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.cancelAppointment,
@@ -358,6 +364,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                   );
                                   ref.invalidate(appointmentsProvider);
                                   ref.invalidate(todaysAppointmentsProvider);
+                                  ref.invalidate(
+                                      todaysEmergencyAppointmentsProvider);
                                 }
                               },
                             ),
