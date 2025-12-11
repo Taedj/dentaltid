@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/features/settings/application/finance_settings_provider.dart';
 
 import 'package:dentaltid/src/core/firebase_service.dart';
 
@@ -313,8 +314,102 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
               const Divider(height: 40),
               Text(
+                'Finance Settings',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SwitchListTile(
+                title: const Text('Include Inventory Costs'),
+                value: ref.watch(financeSettingsProvider).includeInventory,
+                onChanged: (value) {
+                  ref
+                      .read(financeSettingsProvider.notifier)
+                      .toggleInventory(value);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Include Appointments'),
+                value: ref.watch(financeSettingsProvider).includeAppointments,
+                onChanged: (value) {
+                  ref
+                      .read(financeSettingsProvider.notifier)
+                      .toggleAppointments(value);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Include Recurring Charges'),
+                value: ref.watch(financeSettingsProvider).includeRecurring,
+                onChanged: (value) {
+                  ref
+                      .read(financeSettingsProvider.notifier)
+                      .toggleRecurring(value);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Compact Numbers (e.g. 1K)'),
+                subtitle: const Text('Use short format for large numbers'),
+                value: ref.watch(financeSettingsProvider).useCompactNumbers,
+                onChanged: (value) {
+                  ref
+                      .read(financeSettingsProvider.notifier)
+                      .toggleCompactNumbers(value);
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextFormField(
+                  initialValue:
+                      ref
+                          .read(financeSettingsProvider)
+                          .monthlyBudgetCap
+                          ?.toString() ??
+                      '',
+                  decoration: const InputDecoration(
+                    labelText: 'Monthly Budget Cap',
+                    helperText: 'Leave empty for no limit',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (value) {
+                    final budget = double.tryParse(value);
+                    ref
+                        .read(financeSettingsProvider.notifier)
+                        .setMonthlyBudgetCap(budget);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: TextFormField(
+                  initialValue: ref
+                      .read(financeSettingsProvider)
+                      .taxRatePercentage
+                      .toString(),
+                  decoration: const InputDecoration(
+                    labelText: 'Tax Rate (%)',
+                    suffixText: '%',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onChanged: (value) {
+                    final rate = double.tryParse(value) ?? 0.0;
+                    ref
+                        .read(financeSettingsProvider.notifier)
+                        .setTaxRatePercentage(rate);
+                  },
+                ),
+              ),
+
+              const Divider(height: 40),
+              Text(
                 l10n.account,
                 style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () => context.go('/settings/profile'),
+                child: Text(l10n.editProfile),
               ),
               const SizedBox(height: 10),
               ElevatedButton(

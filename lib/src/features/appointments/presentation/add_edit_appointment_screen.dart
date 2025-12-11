@@ -120,7 +120,7 @@ class _AddEditAppointmentScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
-    final patientsAsyncValue = ref.watch(patientsProvider(PatientFilter.all));
+    final patientsAsyncValue = ref.watch(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
     final currency = ref.watch(currencyProvider);
 
     // Update unpaid controller text
@@ -244,7 +244,7 @@ class _AddEditAppointmentScreenState
               data: (patients) => DropdownButtonFormField<int>(
                 initialValue: _selectedPatient?.id,
                 decoration: InputDecoration(
-                  labelText: 'Select Patient',
+                  labelText: l10n.selectPatientLabel,
                   labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -289,7 +289,7 @@ class _AddEditAppointmentScreenState
                 onPressed: () => _navigateToAddPatient(),
                 icon: Icon(Icons.add, color: colorScheme.primary),
                 label: Text(
-                  'Add New Patient',
+                  l10n.addNewPatientButton,
                   style: TextStyle(color: colorScheme.primary),
                 ),
               ),
@@ -309,14 +309,14 @@ class _AddEditAppointmentScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Appointment Date & Time',
+              l10n.appointmentDateTimeTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _dateTimeDisplayController,
               decoration: InputDecoration(
-                labelText: 'Appointment Date & Time',
+                labelText: l10n.appointmentDateTimeTitle,
                 labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.calendar_today, color: colorScheme.tertiary),
@@ -339,7 +339,7 @@ class _AddEditAppointmentScreenState
               ),
               readOnly: true,
               validator: (value) =>
-                  value?.isEmpty ?? true ? 'Please select date and time' : null,
+                  value?.isEmpty ?? true ? l10n.selectDateTimeError : null,
             ),
           ],
         ),
@@ -431,6 +431,9 @@ class _AddEditAppointmentScreenState
           paidAmount: _paid,
           type: TransactionType.income,
           date: DateTime.now(),
+          sourceType: TransactionSourceType.appointment,
+          sourceId: appointment.id,
+          category: appointment.appointmentType,
         );
         await financeService.addTransaction(transaction, invalidate: false);
       }
@@ -482,7 +485,7 @@ class _AddEditAppointmentScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Patient Selection',
+                    l10n.patientSelectionTitle,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -498,7 +501,7 @@ class _AddEditAppointmentScreenState
                 data: (patients) => DropdownButtonFormField<int>(
                   initialValue: _selectedPatient?.id,
                   decoration: InputDecoration(
-                    labelText: 'Choose Patient',
+                    labelText: l10n.choosePatientLabel,
                     labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -556,7 +559,7 @@ class _AddEditAppointmentScreenState
                 onPressed: () => _navigateToAddPatient(),
                 icon: Icon(Icons.add, size: 18, color: colorScheme.primary),
                 label: Text(
-                  'Add New Patient',
+                  l10n.addNewPatientButton,
                   style: TextStyle(
                     color: colorScheme.primary,
                     fontWeight: FontWeight.w600,
@@ -605,7 +608,7 @@ class _AddEditAppointmentScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Date & Time',
+                    l10n.dateTimeLabel,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -620,7 +623,7 @@ class _AddEditAppointmentScreenState
               child: TextFormField(
                 controller: _dateTimeDisplayController,
                 decoration: InputDecoration(
-                  labelText: 'Select Date & Time',
+                  labelText: l10n.selectDateTimeLabel,
                   labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -653,7 +656,7 @@ class _AddEditAppointmentScreenState
                 ),
                 readOnly: true,
                 validator: (value) => value?.isEmpty ?? true
-                    ? 'Please select date and time'
+                    ? l10n.selectDateTimeError
                     : null,
               ),
             ),
@@ -692,7 +695,7 @@ class _AddEditAppointmentScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Appointment Type',
+                    l10n.appointmentTypeTitle,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -707,7 +710,7 @@ class _AddEditAppointmentScreenState
               child: DropdownButtonFormField<String>(
                 initialValue: _selectedAppointmentType,
                 decoration: InputDecoration(
-                  labelText: 'Select Type',
+                  labelText: l10n.selectTypeLabel,
                   labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -731,19 +734,19 @@ class _AddEditAppointmentScreenState
                   color: colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
                 ),
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: 'consultation',
-                    child: Text('Consultation'),
+                    child: Text(l10n.consultationType),
                   ),
-                  DropdownMenuItem(value: 'followup', child: Text('Follow-up')),
+                  DropdownMenuItem(value: 'followup', child: Text(l10n.followupType)),
                   DropdownMenuItem(
                     value: 'emergency',
-                    child: Text('Emergency'),
+                    child: Text(l10n.emergencyType),
                   ),
                   DropdownMenuItem(
                     value: 'procedure',
-                    child: Text('Procedure'),
+                    child: Text(l10n.procedureType),
                   ),
                 ],
                 onChanged: (value) => setState(
@@ -786,7 +789,7 @@ class _AddEditAppointmentScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Payment Status',
+                    l10n.paymentStatusTitle,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -801,7 +804,7 @@ class _AddEditAppointmentScreenState
               controller: _totalCostController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: r'Total Cost ($)',
+                labelText: l10n.totalCostLabel,
                 labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 prefixIcon: Icon(
                   Icons.attach_money,
@@ -834,7 +837,7 @@ class _AddEditAppointmentScreenState
               controller: _paidController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                labelText: r'Amount Paid ($)',
+                labelText: l10n.amountPaidLabel,
                 labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 prefixIcon: Icon(
                   Icons.check_circle,
@@ -867,7 +870,7 @@ class _AddEditAppointmentScreenState
               controller: _unpaidController,
               readOnly: true,
               decoration: InputDecoration(
-                labelText: 'Balance Due',
+                labelText: l10n.balanceDueLabel,
                 labelStyle: TextStyle(
                   fontWeight: _unpaid == 0 ? FontWeight.w500 : FontWeight.bold,
                   color: _getUnpaidColor(),
@@ -950,7 +953,7 @@ class _AddEditAppointmentScreenState
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'Visit History',
+                    l10n.visitHistoryTitle,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -997,7 +1000,7 @@ class _AddEditAppointmentScreenState
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Last visit: ${_selectedPatient!.createdAt.toLocal().toString().split(' ')[0]}',
+                              l10n.lastVisitLabel(_selectedPatient!.createdAt.toLocal().toString().split(' ')[0]),
                               style: TextStyle(
                                 color: colorScheme.onSurfaceVariant,
                                 fontSize: 14,
@@ -1018,7 +1021,7 @@ class _AddEditAppointmentScreenState
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Select a patient to view\nvisit history',
+                            l10n.selectPatientToViewHistory,
                             style: TextStyle(
                               color: colorScheme.onSurfaceVariant,
                               fontSize: 14,
@@ -1059,7 +1062,7 @@ class _AddEditAppointmentScreenState
               fontWeight: FontWeight.w600,
             ),
           ),
-          child: const Text('Add/Edit'),
+          child: Text(l10n.addEditButton),
         ),
       ),
     );

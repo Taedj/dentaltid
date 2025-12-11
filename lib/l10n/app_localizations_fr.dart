@@ -89,6 +89,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get changePassword => 'Changer le mot de passe';
 
   @override
+  String get editProfile => 'Modifier le profil';
+
+  @override
   String get currentPassword => 'Mot de passe actuel';
 
   @override
@@ -314,7 +317,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Êtes-vous sûr de vouloir supprimer ce patient ?';
 
   @override
-  String get todaysAppointmentsFlow => 'Flux des rendez-vous d\'aujourd\'hui';
+  String get todaysAppointmentsFlow => 'Rendez-vous d\'aujourd\'hui';
 
   @override
   String get waiting => 'En attente';
@@ -579,4 +582,489 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get blacklistPatient => 'Patient sur liste noire';
+
+  @override
+  String get noTransactionsFound =>
+      'Aucune transaction trouvée pour cette période';
+
+  @override
+  String get recurringCharges => 'Frais récurrents';
+
+  @override
+  String get noRecurringChargesFound => 'Aucun frais récurrent trouvé';
+
+  @override
+  String get addRecurringCharge => 'Ajouter une charge récurrente';
+
+  @override
+  String get editRecurringCharge => 'Modifier la charge récurrente';
+
+  @override
+  String get amount => 'Montant';
+
+  @override
+  String get frequency => 'Fréquence';
+
+  @override
+  String get startDate => 'Date de début';
+
+  @override
+  String get endDate => 'Date de fin';
+
+  @override
+  String get isActive => 'Est actif';
+
+  @override
+  String get transactions => 'Transactions';
+
+  @override
+  String get overview => 'Aperçu';
+
+  @override
+  String get dailySummary => 'Résumé quotidien';
+
+  @override
+  String get weeklySummary => 'Résumé hebdomadaire';
+
+  @override
+  String get monthlySummary => 'Résumé mensuel';
+
+  @override
+  String get yearlySummary => 'Résumé annuel';
+
+  @override
+  String get expenses => 'Dépenses';
+
+  @override
+  String get profit => 'Bénéfice';
+
+  @override
+  String get filters => 'Filtres';
+
+  @override
+  String get inventoryExpenses => 'Dépenses d\'inventaire';
+
+  @override
+  String get staffSalaries => 'Salaires du personnel';
+
+  @override
+  String get rent => 'Loyer';
+
+  @override
+  String get changeDate => 'Changer la date';
+
+  @override
+  String get transactionAddedSuccessfully => 'Transaction ajoutée avec succès';
+
+  @override
+  String get invalidAmount => 'Montant invalide';
+
+  @override
+  String get pleaseEnterAmount => 'Veuillez saisir un montant';
+
+  @override
+  String get viewDetails => 'Voir détails';
+
+  @override
+  String get criticalAlerts => 'Alertes critiques';
+
+  @override
+  String get viewCritical => 'Voir critiques';
+
+  @override
+  String get viewAppointments => 'Voir rendez-vous';
+
+  @override
+  String todayCount(int count) {
+    return 'Aujourd\'hui : $count';
+  }
+
+  @override
+  String waitingCount(int count) {
+    return 'En attente : $count';
+  }
+
+  @override
+  String inProgressCount(int count) {
+    return 'En cours : $count';
+  }
+
+  @override
+  String completedCount(int count) {
+    return 'Terminé : $count';
+  }
+
+  @override
+  String emergencyCountLabel(int count) {
+    return 'Urgences : $count';
+  }
+
+  @override
+  String get expiringSoon => 'Expire bientôt';
+
+  @override
+  String expiringSoonCount(int count) {
+    return 'Expire bientôt : $count';
+  }
+
+  @override
+  String lowStockCount(int count) {
+    return 'Stock faible : $count';
+  }
+
+  @override
+  String get patientName => 'Nom du patient';
+
+  @override
+  String get itemName => 'Nom de l\'article';
+
+  @override
+  String get countdown => 'Compte à rebours';
+
+  @override
+  String get currentQuantity => 'Quantité actuelle';
+
+  @override
+  String daysLeft(int days) {
+    return '${days}j restants';
+  }
+
+  @override
+  String get noPatientsToday => 'Aucun patient aujourd\'hui';
+
+  @override
+  String get noExpiringSoonItems => 'Aucun article expirant bientôt';
+
+  @override
+  String get noLowStockItems => 'Aucun article en stock faible';
+
+  @override
+  String get noWaitingAppointments => 'Aucun rendez-vous en attente';
+
+  @override
+  String get noEmergencyAppointments => 'Aucun rendez-vous d\'urgence';
+
+  @override
+  String get noCompletedAppointments => 'Aucun rendez-vous terminé';
+
+  @override
+  String get errorLoadingEmergencyAppointments =>
+      'Erreur lors du chargement des rendez-vous d\'urgence';
+
+  @override
+  String get errorLoadingAppointments =>
+      'Erreur lors du chargement des rendez-vous';
+
+  @override
+  String get errorLoadingPatientData =>
+      'Erreur lors du chargement des données patient';
+
+  @override
+  String get errorLoadingInventory =>
+      'Erreur lors du chargement de l\'inventaire';
+
+  @override
+  String get dateOfBirthLabel => 'Date de naissance';
+
+  @override
+  String get selectDateOfBirthError =>
+      'Veuillez sélectionner la date de naissance';
+
+  @override
+  String get invalidDateFormatError => 'Format de date invalide';
+
+  @override
+  String get patientSelectionTitle => 'Sélection du patient';
+
+  @override
+  String get choosePatientLabel => 'Choisir un patient';
+
+  @override
+  String get selectPatientLabel => 'Sélectionner un patient';
+
+  @override
+  String get addNewPatientButton => 'Ajouter un nouveau patient';
+
+  @override
+  String get appointmentDateTimeTitle => 'Date et heure du rendez-vous';
+
+  @override
+  String get dateTimeLabel => 'Date et heure';
+
+  @override
+  String get selectDateTimeLabel => 'Sélectionner la date et l\'heure';
+
+  @override
+  String get selectDateTimeError => 'Veuillez sélectionner la date et l\'heure';
+
+  @override
+  String get appointmentTypeTitle => 'Type de rendez-vous';
+
+  @override
+  String get selectTypeLabel => 'Sélectionner le type';
+
+  @override
+  String get paymentStatusTitle => 'Statut du paiement';
+
+  @override
+  String get consultationType => 'Consultation';
+
+  @override
+  String get followupType => 'Suivi';
+
+  @override
+  String get emergencyType => 'Urgence';
+
+  @override
+  String get procedureType => 'Procédure';
+
+  @override
+  String get failedToSaveItemError =>
+      'Échec de l\'enregistrement de l\'élément';
+
+  @override
+  String get failedToUseItemError => 'Échec de l\'utilisation de l\'élément';
+
+  @override
+  String get failedToDeleteItemError => 'Échec de la suppression de l\'élément';
+
+  @override
+  String get useTooltip => 'Utiliser';
+
+  @override
+  String get periodToday => 'Aujourd\'hui';
+
+  @override
+  String get periodThisWeek => 'Cette semaine';
+
+  @override
+  String get periodThisMonth => 'Ce mois-ci';
+
+  @override
+  String get periodThisYear => 'Cette année';
+
+  @override
+  String get periodGlobal => 'Global';
+
+  @override
+  String get periodCustom => 'Personnalisé';
+
+  @override
+  String get periodCustomDate => 'Date personnalisée';
+
+  @override
+  String get incomeTitle => 'Revenus';
+
+  @override
+  String get expensesTitle => 'Dépenses';
+
+  @override
+  String get netProfitTitle => 'Bénéfice net';
+
+  @override
+  String get taxLabel => 'Taxe';
+
+  @override
+  String get monthlyBudgetTitle => 'Budget mensuel';
+
+  @override
+  String get budgetExceededAlert => 'Budget dépassé !';
+
+  @override
+  String get recurringChargesTooltip => 'Frais récurrents';
+
+  @override
+  String get financeSettingsTooltip => 'Paramètres financiers';
+
+  @override
+  String get incomeType => 'Revenu';
+
+  @override
+  String get expenseType => 'Dépense';
+
+  @override
+  String get dateLabel => 'Date';
+
+  @override
+  String get categoryLabel => 'Catégorie';
+
+  @override
+  String get deleteRecurringChargeTitle => 'Supprimer les frais récurrents';
+
+  @override
+  String get deleteRecurringChargeContent =>
+      'Êtes-vous sûr de vouloir supprimer ces frais récurrents ?';
+
+  @override
+  String get transactionAddedSuccess => 'Transaction ajoutée avec succès';
+
+  @override
+  String get catRent => 'Loyer';
+
+  @override
+  String get catSalaries => 'Salaires';
+
+  @override
+  String get catInventory => 'Inventaire';
+
+  @override
+  String get catEquipment => 'Équipement';
+
+  @override
+  String get catMarketing => 'Marketing';
+
+  @override
+  String get catUtilities => 'Charges';
+
+  @override
+  String get catMaintenance => 'Entretien';
+
+  @override
+  String get catTaxes => 'Taxes';
+
+  @override
+  String get catOther => 'Autre';
+
+  @override
+  String get catProductSales => 'Ventes de produits';
+
+  @override
+  String get freqDaily => 'Quotidien';
+
+  @override
+  String get freqWeekly => 'Hebdomadaire';
+
+  @override
+  String get freqMonthly => 'Mensuel';
+
+  @override
+  String get freqQuarterly => 'Trimestriel';
+
+  @override
+  String get freqYearly => 'Annuel';
+
+  @override
+  String get freqCustom => 'Personnalisé';
+
+  @override
+  String get errorSavingRecurringCharge =>
+      'Erreur lors de l\'enregistrement des frais récurrents';
+
+  @override
+  String get editItem => 'Modifier l\'article';
+
+  @override
+  String get costPerUnit => 'Coût par unité';
+
+  @override
+  String get totalCost => 'Coût total';
+
+  @override
+  String get costType => 'Type de coût';
+
+  @override
+  String calculatedUnitCost(String currency, String cost) {
+    return 'Coût unitaire calculé: $currency$cost';
+  }
+
+  @override
+  String get enterCost => 'Veuillez entrer le coût';
+
+  @override
+  String get expiresDays => 'Expire (jours)';
+
+  @override
+  String get lowStockLevel => 'Niveau de stock faible';
+
+  @override
+  String useItemTitle(String itemName) {
+    return 'Utiliser $itemName';
+  }
+
+  @override
+  String currentStock(int quantity) {
+    return 'Stock actuel: $quantity';
+  }
+
+  @override
+  String get quantityToUse => 'Quantité à utiliser';
+
+  @override
+  String get unitsSuffix => 'unités';
+
+  @override
+  String get enterValidPositiveNumber =>
+      'Veuillez entrer un nombre positif valide';
+
+  @override
+  String get cannotUseMoreThanStock =>
+      'Impossible d\'utiliser plus que le stock actuel';
+
+  @override
+  String remainingStock(int quantity) {
+    return 'Stock restant: $quantity';
+  }
+
+  @override
+  String get confirmUse => 'Confirmer l\'utilisation';
+
+  @override
+  String get filterAll => 'Tous';
+
+  @override
+  String get filterToday => 'Aujourd\'hui';
+
+  @override
+  String get filterThisWeek => 'Cette semaine';
+
+  @override
+  String get filterThisMonth => 'Ce mois-ci';
+
+  @override
+  String get filterEmergency => 'Urgence';
+
+  @override
+  String get patientIdHeader => 'ID';
+
+  @override
+  String get dueHeader => 'Dû';
+
+  @override
+  String get totalCostLabel => 'Coût total (\$)';
+
+  @override
+  String get amountPaidLabel => 'Montant payé (\$)';
+
+  @override
+  String get balanceDueLabel => 'Solde dû';
+
+  @override
+  String get visitHistoryTitle => 'Historique des visites';
+
+  @override
+  String lastVisitLabel(String date) {
+    return 'Dernière visite: $date';
+  }
+
+  @override
+  String get selectPatientToViewHistory =>
+      'Sélectionnez un patient pour voir\nl\'historique des visites';
+
+  @override
+  String get addEditButton => 'Ajouter/Modifier';
+
+  @override
+  String get saveButton => 'Enregistrer';
+
+  @override
+  String get profitTrend => 'Tendance des Profits';
+
+  @override
+  String get expenseBreakdown => 'Répartition des dépenses';
+
+  @override
+  String get noExpensesInPeriod => 'Aucune dépense sur cette période';
+
+  @override
+  String get noDataToDisplay => 'Aucune donnée à afficher';
 }

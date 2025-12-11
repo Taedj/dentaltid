@@ -12,6 +12,20 @@ class AppointmentsScreen extends ConsumerStatefulWidget {
   final AppointmentStatus? status;
   const AppointmentsScreen({super.key, this.status});
 
+  String _getLocalizedStatus(BuildContext context, AppointmentStatus status) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (status) {
+      case AppointmentStatus.waiting:
+        return l10n.waiting;
+      case AppointmentStatus.inProgress:
+        return l10n.inProgress;
+      case AppointmentStatus.completed:
+        return l10n.completed;
+      case AppointmentStatus.cancelled:
+        return l10n.cancelled;
+    }
+  }
+
   @override
   ConsumerState<AppointmentsScreen> createState() => _AppointmentsScreenState();
 }
@@ -151,6 +165,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 }
 
                 return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: filteredAppointments.length,
                   itemBuilder: (context, index) {
                     final appointment = filteredAppointments[index];
@@ -212,11 +227,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                         leading: Icon(leadingIcon, color: iconColor, size: 32),
                         title: patientFuture.when(
                           data: (patient) => Text(
-                            patient?.name ?? 'Unknown Patient',
+                            patient?.name ?? l10n.unknownPatient,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          loading: () => const Text('Loading...'),
-                          error: (err, stack) => const Text('Error'),
+                          loading: () => Text(l10n.loading),
+                          error: (err, stack) => Text(l10n.errorLabel),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +249,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Chip(
-                              label: Text(appointment.status.name),
+                              label: Text(
+                                _getLocalizedStatus(context, appointment.status),
+                              ),
                               backgroundColor: statusColor.withAlpha(51),
                               labelStyle: TextStyle(color: statusColor),
                               padding: const EdgeInsets.symmetric(
@@ -258,7 +275,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
                                     ref.invalidate(
-                                        todaysEmergencyAppointmentsProvider);
+                                      todaysEmergencyAppointmentsProvider,
+                                    );
                                   }
                                 },
                                 tooltip: l10n.startAppointment,
@@ -280,7 +298,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
                                     ref.invalidate(
-                                        todaysEmergencyAppointmentsProvider);
+                                      todaysEmergencyAppointmentsProvider,
+                                    );
                                   }
                                 },
                                 tooltip: l10n.completeAppointment,
@@ -326,7 +345,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
                                     ref.invalidate(
-                                        todaysEmergencyAppointmentsProvider);
+                                      todaysEmergencyAppointmentsProvider,
+                                    );
                                   }
                                 },
                                 tooltip: l10n.cancelAppointment,
@@ -365,7 +385,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                   ref.invalidate(appointmentsProvider);
                                   ref.invalidate(todaysAppointmentsProvider);
                                   ref.invalidate(
-                                      todaysEmergencyAppointmentsProvider);
+                                    todaysEmergencyAppointmentsProvider,
+                                  );
                                 }
                               },
                             ),

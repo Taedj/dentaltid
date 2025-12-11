@@ -4,9 +4,18 @@ enum TransactionStatus { paid, unpaid }
 
 enum PaymentMethod { cash, card, insurance, bankTransfer, other }
 
+enum TransactionSourceType {
+  appointment,
+  inventory,
+  recurringCharge,
+  salary,
+  rent,
+  other,
+}
+
 class Transaction {
   final int? id;
-  final int? sessionId;
+  final int? sessionId; // This can be considered as appointmentId
   final String description;
   final double totalAmount;
   final double paidAmount;
@@ -14,6 +23,9 @@ class Transaction {
   final DateTime date;
   final TransactionStatus status;
   final PaymentMethod paymentMethod;
+  final TransactionSourceType sourceType;
+  final int? sourceId;
+  final String category;
 
   Transaction({
     this.id,
@@ -25,6 +37,9 @@ class Transaction {
     required this.date,
     this.status = TransactionStatus.unpaid,
     this.paymentMethod = PaymentMethod.cash,
+    required this.sourceType,
+    this.sourceId,
+    required this.category,
   });
 
   Map<String, dynamic> toJson() => {
@@ -37,6 +52,9 @@ class Transaction {
     'date': date.toIso8601String(),
     'status': status.toString(),
     'paymentMethod': paymentMethod.toString(),
+    'sourceType': sourceType.toString(),
+    'sourceId': sourceId,
+    'category': category,
   };
 
   factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
@@ -57,6 +75,12 @@ class Transaction {
       (e) => e.toString() == json['paymentMethod'],
       orElse: () => PaymentMethod.cash,
     ),
+    sourceType: TransactionSourceType.values.firstWhere(
+      (e) => e.toString() == json['sourceType'],
+      orElse: () => TransactionSourceType.other,
+    ),
+    sourceId: json['sourceId'],
+    category: json['category'] ?? '',
   );
 
   Transaction copyWith({
@@ -69,6 +93,9 @@ class Transaction {
     DateTime? date,
     TransactionStatus? status,
     PaymentMethod? paymentMethod,
+    TransactionSourceType? sourceType,
+    int? sourceId,
+    String? category,
   }) {
     return Transaction(
       id: id ?? this.id,
@@ -80,6 +107,9 @@ class Transaction {
       date: date ?? this.date,
       status: status ?? this.status,
       paymentMethod: paymentMethod ?? this.paymentMethod,
+      sourceType: sourceType ?? this.sourceType,
+      sourceId: sourceId ?? this.sourceId,
+      category: category ?? this.category,
     );
   }
 }

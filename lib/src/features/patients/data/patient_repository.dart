@@ -13,6 +13,13 @@ class PatientRepository {
     await db.insert(_tableName, patient.toJson());
   }
 
+  List<String> _getColumnsWithDue() {
+    return [
+      '*',
+      '(SELECT SUM(t.totalAmount - t.paidAmount) FROM transactions t JOIN appointments a ON t.sessionId = a.id WHERE a.sessionId = patients.id) as totalDue',
+    ];
+  }
+
   Future<List<Patient>> getPatients([
     PatientFilter filter = PatientFilter.all,
   ]) async {
@@ -56,6 +63,7 @@ class PatientRepository {
 
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
+      columns: _getColumnsWithDue(),
       where: where,
       whereArgs: whereArgs,
     );
@@ -86,6 +94,7 @@ class PatientRepository {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
+      columns: _getColumnsWithDue(),
       where: 'name = ? COLLATE NOCASE AND familyName = ? COLLATE NOCASE',
       whereArgs: [name, familyName],
     );
@@ -100,6 +109,7 @@ class PatientRepository {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
+      columns: _getColumnsWithDue(),
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -114,8 +124,22 @@ class PatientRepository {
     final db = await _databaseService.database;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
+      columns: _getColumnsWithDue(),
       where: 'isBlacklisted = ?',
       whereArgs: [1],
+    );
+    return List.generate(maps.length, (i) {
+      return Patient.fromJson(maps[i]);
+    });
+  }
+
+  Future<List<Patient>> searchPatients(String query) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      columns: _getColumnsWithDue(),
+      where: 'name LIKE ? OR familyName LIKE ? OR phoneNumber LIKE ?',
+      whereArgs: ['%$query%', '%$query%', '%$query%'],
     );
     return List.generate(maps.length, (i) {
       return Patient.fromJson(maps[i]);

@@ -18,6 +18,7 @@ class Patient {
   final String healthAlerts;
   final String phoneNumber;
   final bool isBlacklisted;
+  final double totalDue;
 
   Patient({
     this.id,
@@ -35,6 +36,7 @@ class Patient {
     this.healthAlerts = '',
     this.phoneNumber = '',
     this.isBlacklisted = false,
+    this.totalDue = 0.0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -71,6 +73,7 @@ class Patient {
     String? healthAlerts,
     String? phoneNumber,
     bool? isBlacklisted,
+    double? totalDue,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -88,6 +91,7 @@ class Patient {
       healthAlerts: healthAlerts ?? this.healthAlerts,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isBlacklisted: isBlacklisted ?? this.isBlacklisted,
+      totalDue: totalDue ?? this.totalDue,
     );
   }
 
@@ -112,5 +116,8 @@ class Patient {
     healthAlerts: json['healthAlerts'] ?? '',
     phoneNumber: json['phoneNumber'] ?? '',
     isBlacklisted: json['isBlacklisted'] == 1,
+    totalDue: json['totalDue'] != null
+        ? (json['totalDue'] as num).toDouble()
+        : 0.0,
   );
 }

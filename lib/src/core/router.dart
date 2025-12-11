@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/features/settings/presentation/profile_settings_screen.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
@@ -5,6 +6,9 @@ import 'package:dentaltid/src/features/settings/presentation/cloud_backups_scree
 import 'package:dentaltid/src/features/settings/presentation/settings_screen.dart';
 import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.dart';
 import 'package:dentaltid/src/features/finance/presentation/finance_screen.dart';
+import 'package:dentaltid/src/features/finance/presentation/recurring_charges_screen.dart';
+import 'package:dentaltid/src/features/finance/presentation/add_edit_recurring_charge_screen.dart';
+import 'package:dentaltid/src/features/finance/presentation/add_transaction_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/add_edit_patient_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/patients_screen.dart';
 import 'package:dentaltid/src/features/patients/presentation/patient_profile_screen.dart';
@@ -93,6 +97,29 @@ final router = GoRouter(
         GoRoute(
           path: '/finance',
           builder: (context, state) => const FinanceScreen(),
+          routes: [
+            GoRoute(
+              path: 'add-transaction',
+              builder: (context, state) => const AddTransactionScreen(),
+            ),
+            GoRoute(
+              path: 'recurring-charges',
+              builder: (context, state) => const RecurringChargesScreen(),
+              routes: [
+                GoRoute(
+                  path: 'add',
+                  builder: (context, state) =>
+                      const AddEditRecurringChargeScreen(),
+                ),
+                GoRoute(
+                  path: 'edit',
+                  builder: (context, state) => AddEditRecurringChargeScreen(
+                    recurringCharge: state.extra as dynamic,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/inventory',
@@ -105,6 +132,10 @@ final router = GoRouter(
             GoRoute(
               path: 'cloud-backups',
               builder: (context, state) => const CloudBackupsScreen(),
+            ),
+            GoRoute(
+              path: 'profile',
+              builder: (context, state) => const ProfileSettingsScreen(),
             ),
           ],
         ),

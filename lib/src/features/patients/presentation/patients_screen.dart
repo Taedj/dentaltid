@@ -6,9 +6,25 @@ import 'package:go_router/go_router.dart';
 import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:intl/intl.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'dart:ui' as ui;
+
+
+// Helper for PatientFilter localization
+String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
+  switch (filter) {
+    case PatientFilter.all: return l10n.filterAll;
+
+    case PatientFilter.today: return l10n.filterToday;
+    case PatientFilter.thisWeek: return l10n.filterThisWeek;
+    case PatientFilter.thisMonth: return l10n.filterThisMonth;
+    case PatientFilter.emergency: return l10n.filterEmergency;
+  }
+}
 
 class PatientsScreen extends ConsumerStatefulWidget {
   const PatientsScreen({super.key, this.filter});
@@ -21,11 +37,19 @@ class PatientsScreen extends ConsumerStatefulWidget {
 
 class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   late PatientFilter _selectedFilter;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _selectedFilter = widget.filter ?? PatientFilter.all;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _exportPatientsToCsv() async {
@@ -75,41 +99,84 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final patientsAsyncValue = ref.watch(patientsProvider(_selectedFilter));
+    final patientsAsyncValue = ref.watch(
+      patientsProvider(
+        PatientListConfig(filter: _selectedFilter, query: _searchController.text),
+      ),
+    );
     final patientService = ref.watch(patientServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.patients),
+        title:
+            _isSearching
+                ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: '${l10n.name}, ${l10n.familyName} or Phone...',
+                    border: InputBorder.none,
+                    hintStyle: const TextStyle(color: Colors.white70),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (value) {
+                    setState(() {});
+                  },
+                )
+                : Text(l10n.patients),
         actions: [
-          DropdownButton<PatientFilter>(
-            value: _selectedFilter,
-            onChanged: (PatientFilter? newValue) {
-              setState(() {
-                _selectedFilter = newValue!;
-              });
-            },
-            items: PatientFilter.values.map<DropdownMenuItem<PatientFilter>>((
-              PatientFilter value,
-            ) {
-              return DropdownMenuItem<PatientFilter>(
-                value: value,
-                child: Text(value.toString().split('.').last),
-              );
-            }).toList(),
-          ),
-          IconButton(
-            icon: const Icon(Icons.download),
-            onPressed: () async {
-              await _exportPatientsToCsv();
-            },
-          ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                setState(() {
+                  _isSearching = true;
+                });
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  _isSearching = false;
+                  _searchController.clear();
+                });
+              },
+            ),
+          if (!_isSearching)
+            DropdownButton<PatientFilter>(
+              value: _selectedFilter,
+              onChanged: (PatientFilter? newValue) {
+                setState(() {
+                  _selectedFilter = newValue!;
+                });
+              },
+              items: PatientFilter.values.map<DropdownMenuItem<PatientFilter>>((
+                PatientFilter value,
+              ) {
+                return DropdownMenuItem<PatientFilter>(
+                  value: value,
+                  child: Text(_getLocalizedFilterName(l10n, value)),
+                );
+              }).toList(),
+            ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.download),
+              onPressed: () async {
+                await _exportPatientsToCsv();
+              },
+            ),
         ],
       ),
       body: patientsAsyncValue.when(
         data: (patients) {
           if (patients.isEmpty) {
+            if (_isSearching) {
+              return Center(child: Text('No patients found matching " ${_searchController.text}"'));
+            }
             return Center(child: Text(l10n.noPatientsYet));
           }
           return LayoutBuilder(
@@ -117,6 +184,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               if (constraints.maxWidth < 600) {
                 // Narrow screen: ListView of Cards
                 return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: patients.length,
                   itemBuilder: (context, index) {
                     final patient = patients[index];
@@ -138,6 +206,18 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   Text(
                                     '${l10n.phoneNumber} ${patient.phoneNumber}',
                                   ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Due: ${NumberFormat.currency(
+                                    symbol: ref.watch(currencyProvider),
+                                  ).format(patient.totalDue)}',
+                                  style: TextStyle(
+                                    color: patient.totalDue > 0
+                                        ? Colors.red
+                                        : Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
@@ -176,7 +256,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                             patient.id!,
                                           );
                                           ref.invalidate(
-                                            patientsProvider(_selectedFilter),
+                                            patientsProvider(
+                                               PatientListConfig(filter: _selectedFilter, query: _searchController.text),
+                                            ),
                                           ); // Invalidate to refresh
                                         }
                                       },
@@ -198,24 +280,31 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Directionality(
                     textDirection: isRTL
-                        ? TextDirection.rtl
-                        : TextDirection.ltr,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+                        ? ui.TextDirection.rtl
+                        : ui.TextDirection.ltr,
+                    child: Align(
+                      alignment: isRTL ? Alignment.topRight : Alignment.topLeft,
+                      child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.only(bottom: 80),
+                        scrollDirection: Axis.horizontal,
                       child: DataTable(
                         border: TableBorder.all(color: Colors.white),
                         columns: <DataColumn>[
-                          DataColumn(label: Text('N°')),
+                          DataColumn(label: Text(l10n.patientIdHeader)),
                           DataColumn(label: Text(l10n.name)),
                           DataColumn(label: Text(l10n.familyName)),
                           DataColumn(label: Text(l10n.age)),
                           DataColumn(label: Text(l10n.healthState)),
                           DataColumn(label: Text(l10n.phoneNumber)),
+                          DataColumn(label: Text(l10n.dueHeader)),
                           DataColumn(label: Text(l10n.actions)),
                         ],
                         rows: patients.asMap().entries.map((entry) {
                           final index = entry.key;
                           final patient = entry.value;
+                          final config = PatientListConfig(filter: _selectedFilter, query: _searchController.text);
                           return DataRow(
                             cells: <DataCell>[
                               DataCell(Text((index + 1).toString())),
@@ -233,7 +322,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     );
                                   },
                                   patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
+                                  config: config,
                                 ),
                               ),
                               DataCell(
@@ -250,7 +339,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     );
                                   },
                                   patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
+                                  config: config,
                                 ),
                               ),
                               DataCell(
@@ -269,7 +358,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     );
                                   },
                                   patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
+                                  config: config,
                                   isNumeric: true,
                                 ),
                               ),
@@ -287,7 +376,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     );
                                   },
                                   patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
+                                  config: config,
                                 ),
                               ),
                               DataCell(
@@ -304,7 +393,20 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                     );
                                   },
                                   patientsProvider: patientsProvider,
-                                  selectedFilter: _selectedFilter,
+                                  config: config,
+                                ),
+                              ),
+                              DataCell(
+                                Text(
+                                  NumberFormat.currency(
+                                    symbol: ref.watch(currencyProvider),
+                                  ).format(patient.totalDue),
+                                  style: TextStyle(
+                                    color: patient.totalDue > 0
+                                        ? Colors.red
+                                        : Colors.green,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                               DataCell(
@@ -345,7 +447,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                             patient.id!,
                                           );
                                           ref.invalidate(
-                                            patientsProvider(_selectedFilter),
+                                            patientsProvider(
+                                               PatientListConfig(filter: _selectedFilter, query: _searchController.text),
+                                            ),
                                           ); // Invalidate to refresh
                                         }
                                       },
@@ -358,6 +462,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                         }).toList(),
                       ),
                     ),
+                  ),
+                  ),
                   ),
                 );
               }

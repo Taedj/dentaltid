@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 
+import 'package:equatable/equatable.dart';
+
 final patientRepositoryProvider = Provider<PatientRepository>((ref) {
   return PatientRepository(DatabaseService.instance);
 });
@@ -17,13 +19,31 @@ final patientServiceProvider = Provider<PatientService>((ref) {
   );
 });
 
+
+
+class PatientListConfig extends Equatable {
+  final PatientFilter filter;
+  final String query;
+
+  const PatientListConfig({
+    this.filter = PatientFilter.all,
+    this.query = '',
+  });
+
+  @override
+  List<Object> get props => [filter, query];
+}
+
 final patientsProvider =
-    AutoDisposeFutureProvider.family<List<Patient>, PatientFilter>((
+    AutoDisposeFutureProvider.family<List<Patient>, PatientListConfig>((
       ref,
-      filter,
+      config,
     ) async {
       final service = ref.watch(patientServiceProvider);
-      return service.getPatients(filter);
+      if (config.query.isNotEmpty) {
+        return service.searchPatients(config.query);
+      }
+      return service.getPatients(config.filter);
     });
 
 final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
@@ -203,6 +223,19 @@ class PatientService {
       ErrorHandler.logError(e);
       throw ServiceException(
         'Failed to retrieve blacklisted patients',
+        service: 'PatientService',
+        originalError: e,
+      );
+    }
+  }
+
+  Future<List<Patient>> searchPatients(String query) async {
+    try {
+      return await _repository.searchPatients(query);
+    } catch (e) {
+      ErrorHandler.logError(e);
+      throw ServiceException(
+        'Failed to search patients',
         service: 'PatientService',
         originalError: e,
       );

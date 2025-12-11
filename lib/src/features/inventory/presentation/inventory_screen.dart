@@ -1,6 +1,8 @@
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter/material.dart';
+import 'package:dentaltid/src/features/inventory/presentation/add_inventory_dialog.dart';
+import 'package:dentaltid/src/features/inventory/presentation/use_inventory_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
@@ -21,224 +23,76 @@ class InventoryScreen extends ConsumerStatefulWidget {
 }
 
 class _InventoryScreenState extends ConsumerState<InventoryScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _editFormKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _expirationDateController = TextEditingController();
-  final _supplierController = TextEditingController();
-  final _thresholdDaysController = TextEditingController(text: '30');
-  final _lowStockThresholdController = TextEditingController(text: '5');
   InventorySortOption _sortOption = InventorySortOption.nameAsc;
   String _searchQuery = '';
   bool _showExpiredOnly = false;
   bool _showLowStockOnly = false;
-  InventoryItem? _editingItem;
 
-  void _showEditDialog(InventoryItem item) {
-    setState(() {
-      _editingItem = item;
-      _nameController.text = item.name;
-      _quantityController.text = item.quantity.toString();
-      _expirationDateController.text = item.expirationDate
-          .toIso8601String()
-          .split('T')[0];
-      _supplierController.text = item.supplier;
-      _thresholdDaysController.text = item.thresholdDays.toString();
-      _lowStockThresholdController.text = item.lowStockThreshold.toString();
-    });
-
-    showDialog(
+  Future<void> _showAddEditDialog({InventoryItem? item}) async {
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Item'),
-        content: Form(
-          key: _editFormKey,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(labelText: 'Name'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter name';
-                    }
-                    return null;
-                  },
+      builder: (context) => AddInventoryItemDialog(
+        item: item,
+        onSave: (newItem) async {
+          try {
+            if (newItem.id == null) {
+              await ref
+                  .read(inventoryServiceProvider)
+                  .addInventoryItem(newItem);
+            } else {
+              await ref
+                  .read(inventoryServiceProvider)
+                  .updateInventoryItem(newItem);
+            }
+            ref.invalidate(inventoryItemsProvider);
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${l10n.failedToSaveItemError}: ${e.toString()}'),
+                  backgroundColor: Colors.red,
                 ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _quantityController,
-                  decoration: InputDecoration(labelText: 'Quantity'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter quantity';
-                    }
-                    return null;
-                  },
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _showUseDialog(InventoryItem item) async {
+    final l10n = AppLocalizations.of(context)!;
+    await showDialog(
+      context: context,
+      builder: (context) => UseInventoryItemDialog(
+        item: item,
+        onUse: (quantity) async {
+          try {
+            final updatedItem = item.copyWith(
+              quantity: item.quantity - quantity,
+            );
+            await ref
+                .read(inventoryServiceProvider)
+                .updateInventoryItem(updatedItem);
+            ref.invalidate(inventoryItemsProvider);
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${l10n.failedToUseItemError}: ${e.toString()}'),
+                  backgroundColor: Colors.red,
                 ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _expirationDateController,
-                  decoration: InputDecoration(
-                    labelText: 'Expiration Date',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () async {
-                        final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.parse(
-                            _expirationDateController.text,
-                          ),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2101),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _expirationDateController.text = picked
-                                .toIso8601String()
-                                .split('T')[0];
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                  keyboardType: TextInputType.datetime,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter date';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _supplierController,
-                  decoration: InputDecoration(labelText: 'Supplier'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter supplier';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _thresholdDaysController,
-                  decoration: InputDecoration(labelText: 'Threshold Days'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter threshold days';
-                    }
-                    final days = int.tryParse(value);
-                    if (days == null || days <= 0) {
-                      return 'Enter a positive number';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _lowStockThresholdController,
-                  decoration: InputDecoration(labelText: 'Low Stock Threshold'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Enter low stock threshold';
-                    }
-                    final threshold = int.tryParse(value);
-                    if (threshold == null || threshold < 0) {
-                      return 'Enter a non-negative number';
-                    }
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                _editingItem = null;
-                _nameController.clear();
-                _quantityController.clear();
-                _expirationDateController.clear();
-                _supplierController.clear();
-                _thresholdDaysController.text = '30';
-                _lowStockThresholdController.text = '5';
-                _lowStockThresholdController.text = '5';
-                _lowStockThresholdController.text = '5';
-              });
-              Navigator.of(context).pop();
-            },
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (_editFormKey.currentState!.validate()) {
-                try {
-                  final updatedItem = InventoryItem(
-                    id: _editingItem!.id,
-                    name: _nameController.text,
-                    quantity: int.parse(_quantityController.text),
-                    expirationDate: DateTime.parse(
-                      _expirationDateController.text,
-                    ),
-                    supplier: _supplierController.text,
-                    thresholdDays: int.parse(_thresholdDaysController.text),
-                    lowStockThreshold: int.parse(
-                      _lowStockThresholdController.text,
-                    ),
-                  );
-                  await ref
-                      .read(inventoryServiceProvider)
-                      .updateInventoryItem(updatedItem);
-                  ref.invalidate(inventoryItemsProvider);
-                  setState(() {
-                    _editingItem = null;
-                    _nameController.clear();
-                    _quantityController.clear();
-                    _expirationDateController.clear();
-                    _supplierController.clear();
-                    _thresholdDaysController.text = '30';
-                    _lowStockThresholdController.text = '5';
-                  });
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Failed to update item: ${e.toString()}'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+              );
+            }
+          }
+        },
       ),
     );
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _quantityController.dispose();
-    _expirationDateController.dispose();
-    _supplierController.dispose();
-    _thresholdDaysController.dispose();
-    _lowStockThresholdController.dispose();
     super.dispose();
   }
 
@@ -328,196 +182,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest
+                    .withAlpha((255 * 0.3).round()),
               ),
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
                 });
               },
-            ),
-          ),
-          // Add Item Form
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: InputDecoration(labelText: l10n.name),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.enterName;
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _quantityController,
-                          decoration: InputDecoration(labelText: l10n.quantity),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.enterQuantity;
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _expirationDateController,
-                          decoration: InputDecoration(
-                            labelText: l10n.expirationDate,
-                            suffixIcon: IconButton(
-                              icon: const Icon(Icons.calendar_today),
-                              onPressed: () async {
-                                final DateTime? picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime.now().add(
-                                    const Duration(days: 30),
-                                  ), // Default to 30 days from now
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime(2101),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    _expirationDateController.text = picked
-                                        .toIso8601String()
-                                        .split('T')[0];
-                                  });
-                                }
-                              },
-                            ),
-                          ),
-                          keyboardType: TextInputType.datetime,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.enterDate; // Reusing this key
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _supplierController,
-                          decoration: InputDecoration(labelText: l10n.supplier),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return l10n.enterSupplier;
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _thresholdDaysController,
-                          decoration: InputDecoration(
-                            labelText: 'Threshold Days',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Enter threshold days';
-                            }
-                            final days = int.tryParse(value);
-                            if (days == null || days <= 0) {
-                              return 'Enter a positive number';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _lowStockThresholdController,
-                          decoration: InputDecoration(
-                            labelText: 'Low Stock Threshold',
-                          ),
-                          keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Enter low stock threshold';
-                            }
-                            final threshold = int.tryParse(value);
-                            if (threshold == null || threshold < 0) {
-                              return 'Enter a non-negative number';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          try {
-                            final newItem = InventoryItem(
-                              name: _nameController.text,
-                              quantity: int.parse(_quantityController.text),
-                              expirationDate: DateTime.parse(
-                                _expirationDateController.text,
-                              ),
-                              supplier: _supplierController.text,
-                              thresholdDays: int.parse(
-                                _thresholdDaysController.text,
-                              ),
-                              lowStockThreshold: int.parse(
-                                _lowStockThresholdController.text,
-                              ),
-                            );
-                            await inventoryService.addInventoryItem(newItem);
-                            ref.invalidate(inventoryItemsProvider);
-                            _nameController.clear();
-                            _quantityController.clear();
-                            _expirationDateController.clear();
-                            _supplierController.clear();
-                            _thresholdDaysController.text = '30';
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Failed to add item: ${e.toString()}',
-                                  ),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
-                          }
-                        }
-                      },
-                      child: Text(l10n.addItem),
-                    ),
-                  ),
-                ],
-              ),
             ),
           ),
           // Items List
@@ -567,6 +239,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 }
 
                 return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: filteredItems.length,
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
@@ -584,9 +257,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         vertical: 4,
                       ),
                       color: isExpired
-                          ? Colors.red.withValues(alpha: 0.1)
+                          ? Colors.red.withAlpha((255 * 0.1).round())
                           : isLowStock
-                          ? Colors.orange.withValues(alpha: 0.1)
+                          ? Colors.orange.withAlpha((255 * 0.1).round())
                           : null,
                       child: ListTile(
                         leading: Icon(
@@ -647,8 +320,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle,
+                                color: Colors.green,
+                              ),
+                              tooltip: l10n.useTooltip,
+                              onPressed: () => _showUseDialog(item),
+                            ),
+                            IconButton(
                               icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _showEditDialog(item),
+                              onPressed: () => _showAddEditDialog(item: item),
                             ),
                             IconButton(
                               icon: const Icon(Icons.delete, color: Colors.red),
@@ -687,7 +368,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                       ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            'Failed to delete item: ${e.toString()}',
+                                            '${l10n.failedToDeleteItemError}: ${e.toString()}',
                                           ),
                                           backgroundColor: Colors.red,
                                         ),
@@ -710,6 +391,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddEditDialog(),
+        icon: const Icon(Icons.add),
+        label: Text(l10n.addItem),
       ),
     );
   }

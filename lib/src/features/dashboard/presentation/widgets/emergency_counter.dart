@@ -26,14 +26,8 @@ class _EmergencyCounterState extends State<EmergencyCounter>
       _animationController.repeat(reverse: true);
     }
 
-    _colorAnimation = ColorTween(
-      begin: Colors.white,
-      end: Colors.red,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+    _colorAnimation = ColorTween(begin: Colors.white, end: Colors.red).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -65,8 +59,9 @@ class _EmergencyCounterState extends State<EmergencyCounter>
                 ? _colorAnimation.value
                 : Colors.white,
             fontSize: 14,
-            fontWeight:
-                widget.emergencyCount > 0 ? FontWeight.bold : FontWeight.normal,
+            fontWeight: widget.emergencyCount > 0
+                ? FontWeight.bold
+                : FontWeight.normal,
           ),
           textAlign: TextAlign.left,
         );

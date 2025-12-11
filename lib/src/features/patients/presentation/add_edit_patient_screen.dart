@@ -142,7 +142,7 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                 TextFormField(
                   controller: _dateOfBirthController,
                   decoration: InputDecoration(
-                    labelText: 'Date of Birth',
+                    labelText: l10n.dateOfBirthLabel,
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.calendar_today),
                       onPressed: () => _selectDateOfBirth(context),
@@ -151,10 +151,10 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                   readOnly: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please select date of birth';
+                      return l10n.selectDateOfBirthError;
                     }
                     if (DateTime.tryParse(value) == null) {
-                      return 'Invalid date format';
+                      return l10n.invalidDateFormatError;
                     }
                     return null;
                   },
@@ -279,22 +279,22 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
 
                           if (widget.patient == null) {
                             await patientService.addPatient(newPatient);
-                            ref.invalidate(patientsProvider(PatientFilter.all));
+                            ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
-                              patientsProvider(PatientFilter.today),
+                              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
                             );
                             ref.invalidate(
-                              patientsProvider(PatientFilter.emergency),
+                              patientsProvider(const PatientListConfig(filter: PatientFilter.emergency)),
                             );
                             ref.invalidate(todaysEmergencyAppointmentsProvider);
                           } else {
                             await patientService.updatePatient(newPatient);
-                            ref.invalidate(patientsProvider(PatientFilter.all));
+                            ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
-                              patientsProvider(PatientFilter.today),
+                              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
                             );
                             ref.invalidate(
-                              patientsProvider(PatientFilter.emergency),
+                              patientsProvider(const PatientListConfig(filter: PatientFilter.emergency)),
                             );
                             ref.invalidate(todaysEmergencyAppointmentsProvider);
                           }

@@ -11,20 +11,29 @@ import 'package:dentaltid/src/features/appointments/domain/appointment_status.da
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
+import 'package:logging/logging.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  String _replaceArabicNumber(String input) {
+    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+    for (int i = 0; i < english.length; i++) {
+      input = input.replaceAll(arabic[i], english[i]);
+    }
+    return input;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final todayPatientsAsyncValue = ref.watch(
-      patientsProvider(PatientFilter.today),
+      patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
     );
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final l10n = AppLocalizations.of(context)!;
-    final userProfileAsyncValue = ref.watch(
-      userProfileProvider,
-    );
+    final userProfileAsyncValue = ref.watch(userProfileProvider);
 
     return Scaffold(
       body: Column(
@@ -35,38 +44,6 @@ class HomeScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  flex: 2,
-                  child: userProfileAsyncValue.when(
-                    data: (userProfile) {
-                      final dentistName = userProfile?.dentistName ?? 'Dr.';
-                      return Text(
-                        '${l10n.welcomeDr} $dentistName',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.left,
-                      );
-                    },
-                    loading: () => Text(
-                      l10n.welcomeDr,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                    error: (e, s) => Text(
-                      l10n.welcomeDr,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.left,
-                    ),
-                  ),
-                ),
-                Expanded(
                   flex: 1,
                   child: StreamBuilder<DateTime>(
                     stream: Stream.periodic(
@@ -76,29 +53,68 @@ class HomeScreen extends ConsumerWidget {
                     builder: (context, snapshot) {
                       final currentTime = snapshot.data ?? DateTime.now();
                       return Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            DateFormat(
-                              'EEEE, MMMM d, yyyy',
-                            ).format(currentTime),
+                            _replaceArabicNumber(
+                              DateFormat.yMMMMEEEEd(l10n.localeName)
+                                  .format(currentTime),
+                            ),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                             ),
-                            textAlign: TextAlign.right,
                           ),
                           Text(
-                            DateFormat('HH:mm:ss').format(currentTime),
+                            _replaceArabicNumber(
+                              DateFormat.Hms(
+                                l10n.localeName,
+                              ).format(currentTime),
+                            ),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
                             ),
-                            textAlign: TextAlign.right,
                           ),
                         ],
                       );
                     },
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: userProfileAsyncValue.when(
+                    data: (userProfile) {
+                      final log = Logger('HomeScreen');
+                      log.info(
+                        'Building with user profile: ${userProfile?.toJson()}',
+                      );
+                      final dentistName = userProfile?.dentistName ?? '';
+                      return Text(
+                        '${l10n.welcomeDr} $dentistName',
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.end,
+                      );
+                    },
+                    loading: () => Text(
+                      l10n.welcomeDr,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
+                    error: (e, s) => Text(
+                      l10n.welcomeDr,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.end,
+                    ),
                   ),
                 ),
               ],
@@ -116,15 +132,13 @@ class HomeScreen extends ConsumerWidget {
                   } else if (constraints.maxWidth > 800) {
                     cardWidth = constraints.maxWidth * 0.32;
                   } else {
-                    cardWidth =
-                        constraints.maxWidth * 0.36;
+                    cardWidth = constraints.maxWidth * 0.36;
                   }
                   double cardHeight = cardWidth * 1.4;
                   double spacing = cardWidth * 0.08;
                   double titleFontSize = cardWidth * 0.08;
                   double numberFontSize = cardWidth * 0.14;
-                  double subtitleFontSize =
-                      cardWidth * 0.06;
+                  double subtitleFontSize = cardWidth * 0.06;
 
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -138,7 +152,7 @@ class HomeScreen extends ConsumerWidget {
                           Colors.blue.shade400,
                           Colors.blue.shade800,
                         ],
-                        backTitle: 'View Details',
+                        backTitle: l10n.viewDetails,
                         backIcon: Icons.visibility,
                         onTap: () => context.go('/patients'),
                         cardType: 'patients',
@@ -151,7 +165,7 @@ class HomeScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Today: ${patients.length}',
+                                l10n.todayCount(patients.length),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 14,
@@ -176,7 +190,7 @@ class HomeScreen extends ConsumerWidget {
                       _FlipCard3D(
                         width: cardWidth,
                         height: cardHeight,
-                        frontTitle: 'Critical Alerts',
+                        frontTitle: l10n.criticalAlerts,
                         frontIcon: Icons.warning_amber,
                         frontGradient: inventoryItemsAsyncValue.maybeWhen(
                           data: (items) {
@@ -206,7 +220,7 @@ class HomeScreen extends ConsumerWidget {
                             const Color(0xFF2E5A3C),
                           ],
                         ),
-                        backTitle: 'View Critical',
+                        backTitle: l10n.viewCritical,
                         backIcon: Icons.warning,
                         onTap: () => context.go('/inventory'),
                         cardType: 'emergency',
@@ -234,7 +248,7 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Expiring Soon: $expiringSoonCount',
+                                  l10n.expiringSoonCount(expiringSoonCount),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -244,7 +258,7 @@ class HomeScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Low Stock: $lowStockCount',
+                                  l10n.lowStockCount(lowStockCount),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -276,7 +290,7 @@ class HomeScreen extends ConsumerWidget {
                           Colors.teal.shade400,
                           Colors.teal.shade800,
                         ],
-                        backTitle: 'View Appointments',
+                        backTitle: l10n.viewAppointments,
                         backIcon: Icons.calendar_today,
                         onTap: () => context.go('/appointments'),
                         cardType: 'appointments',
@@ -306,8 +320,9 @@ class HomeScreen extends ConsumerWidget {
                                           (a) =>
                                               a.status ==
                                                   AppointmentStatus.waiting &&
-                                              !emergencyAppointmentIds
-                                                  .contains(a.id),
+                                              !emergencyAppointmentIds.contains(
+                                                a.id,
+                                              ),
                                         )
                                         .toList();
                                     final inProgress = appointments
@@ -332,7 +347,7 @@ class HomeScreen extends ConsumerWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Waiting: ${waiting.length}',
+                                          l10n.waitingCount(waiting.length),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -340,7 +355,7 @@ class HomeScreen extends ConsumerWidget {
                                           textAlign: TextAlign.left,
                                         ),
                                         Text(
-                                          'In Progress: ${inProgress.length}',
+                                          l10n.inProgressCount(inProgress.length),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -348,7 +363,7 @@ class HomeScreen extends ConsumerWidget {
                                           textAlign: TextAlign.left,
                                         ),
                                         Text(
-                                          'Completed: ${completed.length}',
+                                          l10n.completedCount(completed.length),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -423,9 +438,9 @@ class HomeScreen extends ConsumerWidget {
                                   },
                                   error: (e, s) {
                                     // Handle error state for emergency appointments
-                                    return const Text(
-                                      'Error loading emergency appointments',
-                                      style: TextStyle(
+                                    return Text(
+                                      l10n.errorLoadingEmergencyAppointments,
+                                      style: const TextStyle(
                                         color: Colors.red,
                                         fontSize: 14,
                                       ),
@@ -651,9 +666,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
               child: _isFront
                   ? _buildFrontCard()
                   : Transform(
-                      transform: Matrix4.rotationY(
-                        3.14159,
-                      ),
+                      transform: Matrix4.rotationY(3.14159),
                       alignment: Alignment.center,
                       child: _buildBackCard(),
                     ),
@@ -775,6 +788,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
   }
 
   Widget _buildCardDetails() {
+    final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
     final isRTL = ['ar', 'he', 'fa', 'ur'].contains(locale.languageCode);
 
@@ -783,13 +797,13 @@ class _FlipCard3DState extends State<_FlipCard3D>
         return Consumer(
           builder: (context, ref, child) {
             final todayPatientsAsync = ref.watch(
-              patientsProvider(PatientFilter.today),
+              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
             );
             return todayPatientsAsync.when(
               data: (patients) {
                 if (patients.isEmpty) {
-                  return const Text(
-                    'No patients today',
+                  return Text(
+                    l10n.noPatientsToday,
                     style: TextStyle(color: Colors.white70, fontSize: 12),
                     textAlign: TextAlign.center,
                   );
@@ -802,7 +816,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                   columns: [
                     DataColumn(
                       label: Text(
-                        'Patient Name',
+                        l10n.patientName,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -818,9 +832,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                             onTap: () {
                               if (mounted) {
                                 Future.delayed(
-                                  const Duration(
-                                    milliseconds: 100,
-                                  ),
+                                  const Duration(milliseconds: 100),
                                   () {
                                     if (mounted) {
                                       // ignore: use_build_context_synchronously
@@ -837,8 +849,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                               '${patient.name} ${patient.familyName}',
                               style: const TextStyle(
                                 color: Colors.white,
-                                decoration:
-                                    TextDecoration.underline,
+                                decoration: TextDecoration.underline,
                               ),
                               textAlign: isRTL
                                   ? TextAlign.right
@@ -859,9 +870,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
               loading: () => const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
-              error: (e, s) => const Text(
-                'Error loading patients',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+              error: (e, s) => Text(
+                l10n.errorLoadingPatientData,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             );
@@ -891,8 +902,8 @@ class _FlipCard3DState extends State<_FlipCard3D>
                 switch (_criticalAlertTabIndex) {
                   case 0:
                     currentItems = expiringSoon;
-                    tabTitle = 'Expiring Soon';
-                    columns = ['Item Name', 'Countdown'];
+                    tabTitle = l10n.expiringSoon;
+                    columns = [l10n.itemName, l10n.countdown];
                     rows = currentItems.map((item) {
                       final daysLeft = item.expirationDate
                           .difference(now)
@@ -910,7 +921,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                           ),
                           DataCell(
                             Text(
-                              '${daysLeft}d left',
+                              l10n.daysLeft(daysLeft),
                               style: const TextStyle(color: Colors.white),
                               textAlign: TextAlign.center,
                             ),
@@ -921,8 +932,8 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     break;
                   case 1:
                     currentItems = lowStock;
-                    tabTitle = 'Low Stock';
-                    columns = ['Item Name', 'Current Quantity'];
+                    tabTitle = l10n.lowStock;
+                    columns = [l10n.itemName, l10n.currentQuantity];
                     rows = currentItems.map((item) {
                       return DataRow(
                         cells: [
@@ -962,13 +973,16 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                   ? Colors.white.withAlpha(50)
                                   : Colors.transparent,
                             ),
-                            child: Text(
-                              'Expiring Soon',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: _criticalAlertTabIndex == 0
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                l10n.expiringSoon,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: _criticalAlertTabIndex == 0
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
                               ),
                             ),
                           ),
@@ -982,13 +996,16 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                   ? Colors.white.withAlpha(50)
                                   : Colors.transparent,
                             ),
-                            child: Text(
-                              'Low Stock',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: _criticalAlertTabIndex == 1
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                l10n.lowStock,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: _criticalAlertTabIndex == 1
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                ),
                               ),
                             ),
                           ),
@@ -998,7 +1015,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     const SizedBox(height: 10),
                     if (currentItems.isEmpty)
                       Text(
-                        'No $tabTitle items',
+                        _criticalAlertTabIndex == 0 ? l10n.noExpiringSoonItems : l10n.noLowStockItems,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -1006,29 +1023,33 @@ class _FlipCard3DState extends State<_FlipCard3D>
                         textAlign: TextAlign.center,
                       )
                     else
-                      DataTable(
-                        border: TableBorder.all(
-                          color: Colors.white.withAlpha(100),
-                          width: 1,
-                        ),
-                        columns: columns
-                            .map(
-                              (col) => DataColumn(
-                                label: Text(
-                                  col,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          border: TableBorder.all(
+                            color: Colors.white.withAlpha(100),
+                            width: 1,
+                          ),
+                          columns: columns
+                              .map(
+                                (col) => DataColumn(
+                                  label: Text(
+                                    col,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            )
-                            .toList(),
-                        rows: rows,
-                        dataTextStyle: const TextStyle(color: Colors.white),
-                        headingTextStyle: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                              )
+                              .toList(),
+                          rows: rows,
+                          dataTextStyle: const TextStyle(color: Colors.white),
+                          headingTextStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                   ],
@@ -1037,9 +1058,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
               loading: () => const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
-              error: (e, s) => const Text(
-                'Error loading inventory',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+              error: (e, s) => Text(
+                l10n.errorLoadingInventory,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             );
@@ -1053,7 +1074,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
               todaysAppointmentsProvider,
             );
             final allPatientsAsync = ref.watch(
-              patientsProvider(PatientFilter.all),
+              patientsProvider(const PatientListConfig(filter: PatientFilter.all)),
             );
             final emergencyAppointmentsAsync = ref.watch(
               todaysEmergencyAppointmentsProvider,
@@ -1083,21 +1104,21 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = 'Waiting';
+                            tabTitle = l10n.waiting;
                             break;
                           case 1:
                             currentPatients = emergencyAppointments
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = 'Emergency';
+                            tabTitle = l10n.emergency;
                             break;
                           case 2:
                             currentPatients = completed
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = 'Completed';
+                            tabTitle = l10n.completed;
                             break;
                         }
 
@@ -1117,7 +1138,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                           : Colors.transparent,
                                     ),
                                     child: Text(
-                                      'Waiting',
+                                      l10n.waiting,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: _appointmentTabIndex == 0
@@ -1138,7 +1159,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                           : Colors.transparent,
                                     ),
                                     child: Text(
-                                      'Emergency',
+                                      l10n.emergency,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: _appointmentTabIndex == 1
@@ -1159,7 +1180,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                           : Colors.transparent,
                                     ),
                                     child: Text(
-                                      'Completed',
+                                      l10n.completed,
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: _appointmentTabIndex == 2
@@ -1174,7 +1195,11 @@ class _FlipCard3DState extends State<_FlipCard3D>
                             const SizedBox(height: 10),
                             if (currentPatients.isEmpty)
                               Text(
-                                'No $tabTitle appointments',
+                                _appointmentTabIndex == 0
+                                    ? l10n.noWaitingAppointments
+                                    : _appointmentTabIndex == 1
+                                        ? l10n.noEmergencyAppointments
+                                        : l10n.noCompletedAppointments,
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,
@@ -1190,7 +1215,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                 columns: [
                                   DataColumn(
                                     label: Text(
-                                      'Patient Name',
+                                      l10n.patientName,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -1205,9 +1230,7 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                         GestureDetector(
                                           onTap: () {
                                             Future.delayed(
-                                              const Duration(
-                                                milliseconds: 100,
-                                              ),
+                                              const Duration(milliseconds: 100),
                                               () {
                                                 if (!mounted) return;
                                                 // ignore: use_build_context_synchronously
@@ -1248,9 +1271,12 @@ class _FlipCard3DState extends State<_FlipCard3D>
                       loading: () => const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
-                      error: (e, s) => const Text(
-                        'Error loading emergency appointments',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      error: (e, s) => Text(
+                        l10n.errorLoadingEmergencyAppointments,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -1258,9 +1284,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
                   loading: () => const CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
-                  error: (e, s) => const Text(
-                    'Error loading appointments',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  error: (e, s) => Text(
+                    l10n.errorLoadingAppointments,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
                     textAlign: TextAlign.center,
                   ),
                 );
@@ -1268,9 +1294,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
               loading: () => const CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
-              error: (e, s) => const Text(
-                'Error loading patient data',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
+              error: (e, s) => Text(
+                l10n.errorLoadingPatientData,
+                style: const TextStyle(color: Colors.white70, fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             );
@@ -1309,14 +1335,8 @@ class _EmergencyCounterState extends State<_EmergencyCounter>
       _animationController.repeat(reverse: true);
     }
 
-    _colorAnimation = ColorTween(
-      begin: Colors.white,
-      end: Colors.red,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+    _colorAnimation = ColorTween(begin: Colors.white, end: Colors.red).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -1348,8 +1368,9 @@ class _EmergencyCounterState extends State<_EmergencyCounter>
                 ? _colorAnimation.value
                 : Colors.white,
             fontSize: 14,
-            fontWeight:
-                widget.emergencyCount > 0 ? FontWeight.bold : FontWeight.normal,
+            fontWeight: widget.emergencyCount > 0
+                ? FontWeight.bold
+                : FontWeight.normal,
           ),
           textAlign: TextAlign.left,
         );
@@ -1357,8 +1378,3 @@ class _EmergencyCounterState extends State<_EmergencyCounter>
     );
   }
 }
-
-
-
-
-

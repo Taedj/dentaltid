@@ -208,6 +208,9 @@ class _VisitCardState extends ConsumerState<VisitCard> {
           paidAmount: amountPaid,
           type: TransactionType.income,
           date: DateTime.now(),
+          sourceType: TransactionSourceType.appointment,
+          sourceId: widget.appointment.id,
+          category: selectedAppointmentType,
         );
         await financeService.addTransaction(newTransaction, invalidate: false);
       }

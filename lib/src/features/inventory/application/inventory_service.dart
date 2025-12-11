@@ -4,6 +4,8 @@ import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
+import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
   return InventoryRepository(DatabaseService.instance);
@@ -13,6 +15,7 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
   return InventoryService(
     ref.watch(inventoryRepositoryProvider),
     ref.watch(auditServiceProvider),
+    ref.watch(financeServiceProvider),
   );
 });
 
@@ -24,27 +27,68 @@ final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
 class InventoryService {
   final InventoryRepository _repository;
   final AuditService _auditService;
+  final FinanceService _financeService;
 
-  InventoryService(this._repository, this._auditService);
+  InventoryService(this._repository, this._auditService, this._financeService);
 
-  Future<void> addInventoryItem(InventoryItem item) async {
-    await _repository.createInventoryItem(item);
+  Future<InventoryItem> addInventoryItem(InventoryItem item) async {
+    final newItem = await _repository.createInventoryItem(item);
     _auditService.logEvent(
       AuditAction.createInventoryItem,
       details: 'Inventory item ${item.name} added.',
     );
+
+    final transaction = Transaction(
+      description: 'Purchase of ${item.name}',
+      totalAmount: item.cost * item.quantity,
+      type: TransactionType.expense,
+      date: DateTime.now(),
+      sourceType: TransactionSourceType.inventory,
+      sourceId: newItem.id,
+      category: 'Inventory',
+    );
+    await _financeService.addTransaction(transaction);
+    return newItem;
   }
 
   Future<List<InventoryItem>> getInventoryItems() async {
     return await _repository.getInventoryItems();
   }
 
+  Future<InventoryItem?> getInventoryItem(int id) async {
+    return await _repository.getInventoryItemById(id);
+  }
+
   Future<void> updateInventoryItem(InventoryItem item) async {
+    final oldItem = await getInventoryItem(item.id!);
+    if (oldItem == null) {
+      throw Exception('Item not found');
+    }
+
     await _repository.updateInventoryItem(item);
     _auditService.logEvent(
       AuditAction.updateInventoryItem,
       details: 'Inventory item ${item.name} updated.',
     );
+
+    final quantityDiff = item.quantity - oldItem.quantity;
+    if (quantityDiff != 0) {
+      if (quantityDiff > 0) {
+        // Only create a transaction if we are adding stock (Purchase)
+        // Reducing stock (Usage) is not an expense, as the cost was already incurred upon purchase.
+        final transaction = Transaction(
+          description: 'Purchase of ${item.name}',
+          totalAmount: item.cost * quantityDiff,
+          type: TransactionType.expense,
+          date: DateTime.now(),
+          sourceType: TransactionSourceType.inventory,
+          sourceId: item.id,
+          category: 'Inventory',
+        );
+        await _financeService.addTransaction(transaction);
+      }
+      // If quantityDiff < 0, it's usage, no financial transaction needed.
+    }
   }
 
   Future<void> deleteInventoryItem(int id) async {

@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,8 @@ import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:uuid/uuid.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 enum AuthMode { login, register }
 
@@ -26,7 +29,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _dentistNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _medicalLicenseNumberController = TextEditingController();
-  final _licenseController = TextEditingController();
+  final _licenseController =
+      TextEditingController(); // Kept for consistency if needed, though unused in form
   final _formKey = GlobalKey<FormState>();
 
   final FirebaseService _firebaseService = FirebaseService();
@@ -90,6 +94,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
 
           await _firebaseService.createUserProfile(userProfile, licenseKey);
+          ref.invalidate(userProfileProvider);
         }
       } else {
         await _firebaseService.signInWithEmailAndPassword(
@@ -152,298 +157,549 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
   }
 
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri)) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not launch $url')));
+      }
+    }
+  }
+
+  void _showContactDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Contact Developer',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Dr. Tidjani Ahmed ZITOUNI',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+            InkWell(
+              onTap: () => _launchUrl('mailto:zitounitidjani@gmail.com'),
+              child: Row(
+                children: [
+                  const Icon(Icons.email, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'zitounitidjani@gmail.com',
+                      style: GoogleFonts.poppins(
+                        color: Colors.blue,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => _launchUrl('tel:+213657293332'),
+              child: Row(
+                children: [
+                  const Icon(Icons.phone, color: Colors.green),
+                  const SizedBox(width: 8),
+                  Text(
+                    '+213 657 293 332',
+                    style: GoogleFonts.poppins(
+                      color: Colors.green,
+                      decoration: TextDecoration.underline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [colorScheme.primary, colorScheme.primaryContainer],
+      body: Stack(
+        children: [
+          // Background Gradient
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDark
+                    ? [
+                        Colors.grey.shade900,
+                        const Color(0xFF1E2746), // Deep Navy
+                      ]
+                    : [
+                        const Color(0xFFE3F2FD), // Light Blue
+                        const Color(0xFFBBDEFB), // Blue 100
+                      ],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              children: [
-                // DentalTid Logo and Branding
-                const SizedBox(height: 40),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: colorScheme.onPrimary.withAlpha(25),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Column(
-                    children: [
-                      // Dental Icon (using emoji as placeholder)
-                      Text('🦷', style: TextStyle(fontSize: 60)),
-                      const SizedBox(height: 16),
-                      Text(
-                        'DentalTid',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimary,
-                        ),
-                      ),
-                      Text(
-                        'Professional Dental Management',
-                        style: TextStyle(
-                          color: colorScheme.onPrimary.withAlpha(178),
-                        ),
-                      ),
-                    ],
-                  ),
+
+          // Background Pattern (Optional - subtle circles)
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primary.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primary.withOpacity(0.1),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 24,
                 ),
-
-                const SizedBox(height: 40),
-
-                // Auth Form
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: theme.cardColor,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: theme.shadowColor.withAlpha(50),
-                        blurRadius: 10,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          _authMode == AuthMode.login
-                              ? 'Welcome Back'
-                              : 'Create Account',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-
-                        // Email Field
-                        TextFormField(
-                          controller: _emailController,
-                          decoration: InputDecoration(
-                            labelText: 'Email Address',
-                            prefixIcon: const Icon(Icons.email),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            // ignore: deprecated_member_use
-                            if (!RegExp(
-                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                            ).hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Password Field
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: const Icon(Icons.lock),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            if (_authMode == AuthMode.register &&
-                                value.length < 8) {
-                              return 'Password must be at least 8 characters';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        if (_authMode == AuthMode.register) ...[
-                          const SizedBox(height: 16),
-
-                          // Clinic Name
-                          TextFormField(
-                            controller: _clinicNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Clinic Name',
-                              prefixIcon: const Icon(Icons.business),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your clinic name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Dentist Name
-                          TextFormField(
-                            controller: _dentistNameController,
-                            decoration: InputDecoration(
-                              labelText: 'Your Name',
-                              prefixIcon: const Icon(Icons.person),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your name';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Phone Number
-                          TextFormField(
-                            controller: _phoneNumberController,
-                            decoration: InputDecoration(
-                              labelText: 'Phone Number',
-                              prefixIcon: const Icon(Icons.phone),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            keyboardType: TextInputType.phone,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return null; // Phone number is optional
-                              }
-                              // ignore: deprecated_member_use
-                              if (!RegExp(
-                                r'^\+?[0-9]{7,15}$',
-                              ).hasMatch(value)) {
-                                return 'Please enter a valid phone number';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Medical License Number
-                          TextFormField(
-                            controller: _medicalLicenseNumberController,
-                            decoration: InputDecoration(
-                              labelText: 'Medical License Number',
-                              prefixIcon: const Icon(Icons.medical_services),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your medical license number';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Terms and Conditions
-                          CheckboxListTile(
-                            title: const Text(
-                              'I accept the Terms and Conditions',
-                            ),
-                            value: _acceptTerms,
-                            onChanged: (value) {
-                              setState(() => _acceptTerms = value ?? false);
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // --- Branding Section ---
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor.withOpacity(0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
                           ),
                         ],
+                      ),
+                      child: const Icon(
+                        Icons
+                            .medical_services_outlined, // More professional icon
+                        size: 56,
+                        color: Color(0xFF1976D2), // Professional Blue
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'DentalTid',
+                      style: GoogleFonts.montserrat(
+                        // Premium Font
+                        fontSize: 38,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : const Color(0xFF1565C0),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Professional Dental Management',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: isDark
+                            ? Colors.grey.shade300
+                            : Colors.grey.shade700,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                        const SizedBox(height: 24),
-
-                        // Auth Button
-                        ElevatedButton(
-                          onPressed: _isLoading ? null : _authenticate,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
+                    // --- Auth Form Section ---
+                    Container(
+                      constraints: const BoxConstraints(maxWidth: 450),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 24,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 30,
+                            offset: const Offset(0, 15),
                           ),
-                          child: _isLoading
-                              ? SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      colorScheme.onPrimary,
-                                    ),
+                        ],
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              _authMode == AuthMode.login
+                                  ? 'Welcome Back'
+                                  : 'Join DentalTid',
+                              style: GoogleFonts.poppins(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: theme.textTheme.titleLarge?.color,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Email Field
+                            TextFormField(
+                              controller: _emailController,
+                              style: GoogleFonts.poppins(),
+                              decoration: InputDecoration(
+                                labelText: 'Email Address',
+                                prefixIcon: const Icon(Icons.email_outlined),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
                                   ),
-                                )
-                              : Text(
-                                  _authMode == AuthMode.login
-                                      ? 'Login'
-                                      : 'Create Free Account',
-                                  style: const TextStyle(fontSize: 16),
                                 ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade50,
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                }
+                                if (!RegExp(
+                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                ).hasMatch(value)) {
+                                  return 'Please enter a valid email';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Password Field
+                            TextFormField(
+                              controller: _passwordController,
+                              style: GoogleFonts.poppins(),
+                              decoration: InputDecoration(
+                                labelText: 'Password',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: colorScheme.primary,
+                                    width: 2,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: isDark
+                                    ? Colors.grey.shade800
+                                    : Colors.grey.shade50,
+                              ),
+                              obscureText: true,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your password';
+                                }
+                                if (_authMode == AuthMode.register &&
+                                    value.length < 8) {
+                                  return 'Password must be at least 8 characters';
+                                }
+                                return null;
+                              },
+                            ),
+
+                            if (_authMode == AuthMode.register) ...[
+                              const SizedBox(height: 12),
+
+                              // Clinic Name
+                              TextFormField(
+                                controller: _clinicNameController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Clinic Name',
+                                  prefixIcon: const Icon(
+                                    Icons.business_outlined,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your clinic name';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Dentist Name
+                              TextFormField(
+                                controller: _dentistNameController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Your Name (e.g. Dr. Smith)',
+                                  prefixIcon: const Icon(Icons.person_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your name';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Phone Number
+                              TextFormField(
+                                controller: _phoneNumberController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Phone Number',
+                                  prefixIcon: const Icon(Icons.phone_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                keyboardType: TextInputType.phone,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return null;
+                                  }
+                                  if (!RegExp(
+                                    r'^\+?[0-9]{7,15}$',
+                                  ).hasMatch(value)) {
+                                    return 'Please enter a valid phone number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Medical License Number
+                              TextFormField(
+                                controller: _medicalLicenseNumberController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Medical License Number',
+                                  prefixIcon: const Icon(Icons.badge_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your medical license number';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Terms and Conditions
+                              CheckboxListTile(
+                                title: Text(
+                                  'I accept the Terms and Conditions',
+                                  style: GoogleFonts.poppins(fontSize: 12),
+                                ),
+                                value: _acceptTerms,
+                                onChanged: (value) {
+                                  setState(() => _acceptTerms = value ?? false);
+                                },
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ],
+
+                            const SizedBox(height: 24),
+
+                            // Auth Button
+                            ElevatedButton(
+                              onPressed: _isLoading ? null : _authenticate,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                backgroundColor: colorScheme.primary,
+                                elevation: 4,
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 24,
+                                      width: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      _authMode == AuthMode.login
+                                          ? 'SIGN IN'
+                                          : 'CREATE ACCOUNT',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Switch Auth Mode
+                            TextButton(
+                              onPressed: _switchAuthMode,
+                              child: Text(
+                                _authMode == AuthMode.login
+                                    ? "Don't have an account? Sign up"
+                                    : 'Already have an account? Sign in',
+                                style: GoogleFonts.poppins(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                    ),
 
-                        const SizedBox(height: 16),
+                    const SizedBox(height: 32),
 
-                        // Switch Auth Mode
-                        TextButton(
-                          onPressed: _switchAuthMode,
-                          child: Text(
-                            _authMode == AuthMode.login
-                                ? "Don't have an account? Sign up"
-                                : 'Already have an account? Login',
-                            style: TextStyle(color: colorScheme.primary),
+                    // --- Footer Branding ---
+                    Column(
+                      children: [
+                        Text(
+                          'Powered by',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Taedj Dev',
+                          style: GoogleFonts.audiowide(
+                            // Distinct tech/brand font
+                            fontSize: 18,
+                            color: isDark
+                                ? Colors.blue.shade200
+                                : Colors.blue.shade800,
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-
-                const SizedBox(height: 24),
-
-                // Footer
-                Text(
-                  '© 2025 DentalTid. Professional dental practice management.',
-                  style: TextStyle(
-                    color: colorScheme.onPrimary.withAlpha(178),
-                    fontSize: 12,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+
+          // --- Contact Us Floating Button ---
+          Positioned(
+            top: 16,
+            right: 16,
+            child: SafeArea(
+              child: FloatingActionButton.extended(
+                onPressed: _showContactDialog,
+                backgroundColor: theme.cardColor.withOpacity(0.9),
+                elevation: 4,
+                icon: const Icon(Icons.support_agent, color: Colors.blue),
+                label: Text(
+                  'Contact Us',
+                  style: GoogleFonts.poppins(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

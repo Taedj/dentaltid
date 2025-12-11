@@ -69,8 +69,9 @@ final todaysAppointmentsProvider = FutureProvider<List<Appointment>>((
   return service.getTodaysAppointments();
 });
 
-final todaysEmergencyAppointmentsProvider =
-    FutureProvider<List<Appointment>>((ref) async {
+final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
+  ref,
+) async {
   final appointmentService = ref.watch(appointmentServiceProvider);
   final patientService = ref.watch(patientServiceProvider);
 
@@ -86,16 +87,15 @@ final todaysEmergencyAppointmentsProvider =
   final todaysAppointments = await appointmentService.getTodaysAppointments();
 
   // 3. Filter appointments based on the combined emergency conditions
-  return todaysAppointments
-      .where((a) {
-        final isEmergencyPatient = emergencyPatientIds.contains(a.patientId);
-        final isEmergencyType = a.appointmentType.toLowerCase() == 'emergency';
-        final isActive = a.status != AppointmentStatus.completed &&
-                         a.status != AppointmentStatus.cancelled;
+  return todaysAppointments.where((a) {
+    final isEmergencyPatient = emergencyPatientIds.contains(a.patientId);
+    final isEmergencyType = a.appointmentType.toLowerCase() == 'emergency';
+    final isActive =
+        a.status != AppointmentStatus.completed &&
+        a.status != AppointmentStatus.cancelled;
 
-        return (isEmergencyPatient || isEmergencyType) && isActive;
-      })
-      .toList();
+    return (isEmergencyPatient || isEmergencyType) && isActive;
+  }).toList();
 });
 
 class AppointmentService {

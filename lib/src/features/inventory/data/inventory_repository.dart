@@ -8,9 +8,10 @@ class InventoryRepository {
 
   static const String _tableName = 'inventory';
 
-  Future<void> createInventoryItem(InventoryItem item) async {
+  Future<InventoryItem> createInventoryItem(InventoryItem item) async {
     final db = await _databaseService.database;
-    await db.insert(_tableName, item.toJson());
+    final id = await db.insert(_tableName, item.toJson());
+    return item.copyWith(id: id);
   }
 
   Future<List<InventoryItem>> getInventoryItems() async {
@@ -34,5 +35,18 @@ class InventoryRepository {
   Future<void> deleteInventoryItem(int id) async {
     final db = await _databaseService.database;
     await db.delete(_tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<InventoryItem?> getInventoryItemById(int id) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return InventoryItem.fromJson(maps.first);
+    }
+    return null;
   }
 }

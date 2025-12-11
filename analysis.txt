@@ -1,0 +1,38 @@
+Analyzing dentaltid...                                          
+
+warning - The value of the local variable 'tabTitle' isn't used - lib\src\features\dashboard\presentation\home_screen.dart:885:24 - unused_local_variable
+warning - The value of the local variable 'tabTitle' isn't used - lib\src\features\dashboard\presentation\home_screen.dart:1076:32 - unused_local_variable
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\add_edit_recurring_charge_screen.dart:122:37 - undefined_identifier
+  error - Invalid constant value - lib\src\features\finance\presentation\add_transaction_screen.dart:127:33 - invalid_constant
+  error - The values in a const list literal must be constants - lib\src\features\finance\presentation\add_transaction_screen.dart:127:33 - non_constant_list_element
+  error - Invalid constant value - lib\src\features\finance\presentation\add_transaction_screen.dart:132:33 - invalid_constant
+  error - The values in a const list literal must be constants - lib\src\features\finance\presentation\add_transaction_screen.dart:132:33 - non_constant_list_element
+  error - Invalid constant value - lib\src\features\finance\presentation\add_transaction_screen.dart:173:32 - invalid_constant
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\src\features\finance\presentation\add_transaction_screen.dart:184:17 - deprecated_member_use
+  error - Invalid constant value - lib\src\features\finance\presentation\add_transaction_screen.dart:186:30 - invalid_constant
+   info - The private field _includeRecurringCharges could be 'final' - lib\src\features\finance\presentation\finance_screen.dart:24:8 - prefer_final_fields
+   info - The private field _includeInventoryExpenses could be 'final' - lib\src\features\finance\presentation\finance_screen.dart:25:8 - prefer_final_fields
+   info - The private field _includeStaffSalaries could be 'final' - lib\src\features\finance\presentation\finance_screen.dart:26:8 - prefer_final_fields
+   info - The private field _includeRent could be 'final' - lib\src\features\finance\presentation\finance_screen.dart:27:8 - prefer_final_fields
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:102:22 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:105:29 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:109:29 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:112:29 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:115:29 - undefined_identifier
+  error - Invalid constant value - lib\src\features\finance\presentation\finance_screen.dart:320:33 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\finance\presentation\finance_screen.dart:335:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\finance\presentation\finance_screen.dart:339:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\finance\presentation\finance_screen.dart:340:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\finance\presentation\finance_screen.dart:413:38 - deprecated_member_use
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:492:19 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\finance\presentation\finance_screen.dart:530:23 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\inventory\presentation\inventory_screen.dart:52:36 - undefined_identifier
+  error - Undefined name 'l10n' - lib\src\features\inventory\presentation\inventory_screen.dart:81:36 - undefined_identifier
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:275:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:287:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:306:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:310:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:359:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\src\features\security\presentation\auth_screen.dart:689:50 - deprecated_member_use
+warning - Unused import: 'package:dentaltid/src/features/patients/domain/patient.dart' - test\features\patients\data\patient_repository_test.dart:5:8 - unused_import
+

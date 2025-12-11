@@ -1,0 +1,37 @@
+Building Windows application...                                 
+CMake Deprecation Warning at D:/work/Dev/DentalTid/dentaltid/build/windows/x64/extracted/firebase_cpp_sdk_windows/CMakeLists.txt:17 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+
+
+lib/src/features/dashboard/presentation/home_screen.dart(871,42): error G297C951C: Can't find '}' to match '{'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1286,1): error G85CCD27E: Expected a declaration, but got '}'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1041,15): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1041,16): error G25387D61: Expected an identifier, but got ','. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1041,16): error G5BADBE1C: Unexpected token ';'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1043,12): error G25387D61: Expected an identifier, but got ','. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1043,11): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1043,12): error G5BADBE1C: Unexpected token ';'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1044,9): error G25387D61: Expected an identifier, but got ')'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1043,12): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1044,9): error G5BADBE1C: Unexpected token ';'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,7): error G8AC5CCFA: 'case' can't be used as an identifier because it's a keyword. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,7): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,12): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,26): error G25387D61: Expected an identifier, but got ':'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,26): error G5BADBE1C: Unexpected token ';'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1282,7): error GD47C1867: 'default' can't be used as an identifier because it's a keyword. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1282,7): error G67247B7E: Expected ';' after this. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1282,14): error G25387D61: Expected an identifier, but got ':'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1282,14): error G5BADBE1C: Unexpected token ';'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1038,22): error G4127D1E8: The getter 'errorLoadingInventory' isn't defined for the type 'AppLocalizations'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(873,44): error GA7C8A1BB: Too many positional arguments: 0 allowed, but 1 found. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1046,7): error G4127D1E8: The getter 'case' isn't defined for the type '_FlipCard3DState'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+lib/src/features/dashboard/presentation/home_screen.dart(1282,7): error G4127D1E8: The getter 'default' isn't defined for the type '_FlipCard3DState'. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(254,5): error MSB8066: Custom build for 'D:\work\Dev\DentalTid\dentaltid\build\windows\x64\CMakeFiles\17ccaf2bbc8860e6837b095550830e21\flutter_windows.dll.rule;D:\work\Dev\DentalTid\dentaltid\build\windows\x64\CMakeFiles\b109ce34d2285b94452670c43a4f7868\flutter_assemble.rule' exited with code 1. [D:\work\Dev\DentalTid\dentaltid\build\windows\x64\flutter\flutter_assemble.vcxproj]
+Building Windows application...                                    31,9s
+Build process failed.

@@ -1,12 +1,16 @@
+import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
+import 'package:dentaltid/src/features/finance/presentation/finance_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dentaltid/src/features/finance/presentation/finance_chart.dart';
-import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-
-enum TransactionSortOption { dateDesc, dateAsc, amountDesc, amountAsc, type }
+import 'package:dentaltid/src/features/finance/application/recurring_charge_service.dart';
+import 'package:dentaltid/src/features/finance/domain/finance_filters.dart';
+import 'package:dentaltid/src/features/settings/application/finance_settings_provider.dart';
+import 'package:intl/intl.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -16,474 +20,515 @@ class FinanceScreen extends ConsumerStatefulWidget {
 }
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _descriptionController = TextEditingController();
-  final _totalAmountController = TextEditingController();
-  final _paidAmountController = TextEditingController();
-  TransactionType _selectedType = TransactionType.income;
-  PaymentMethod _selectedPaymentMethod = PaymentMethod.cash;
-  TransactionSortOption _sortOption = TransactionSortOption.dateDesc;
-  String _searchQuery = '';
-  TransactionType? _filterType;
+  // State for filters
+  bool _includeRecurringCharges = true;
+  bool _includeInventoryExpenses = true;
+  bool _includeStaffSalaries = true;
+  bool _includeRent = true;
+  late DateTimeRange _selectedDateRange;
+  String _selectedFilterKey = 'month'; // 'today', 'week', 'month', 'year', 'global', 'custom'
 
   @override
-  void dispose() {
-    _descriptionController.dispose();
-    _totalAmountController.dispose();
-    _paidAmountController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Initialize with 'This Month' logic directly
+    final now = DateTime.now();
+    _selectedDateRange = DateTimeRange(
+      start: DateTime(now.year, now.month, 1),
+      end: DateTime(now.year, now.month + 1, 0, 23, 59, 59),
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _generateRecurringTransactions();
+    });
+  }
+
+  Future<void> _generateRecurringTransactions() async {
+    final recurringChargeService = ref.read(recurringChargeServiceProvider);
+    final now = DateTime.now();
+    // Generate for a reasonable window around "now" to ensure data exists
+    final periodStart = DateTime(now.year, now.month - 12, now.day);
+    final periodEnd = DateTime(now.year, now.month + 12, 0);
+    await recurringChargeService.generateTransactionsForRecurringCharges(
+      periodStart,
+      periodEnd,
+    );
+    // Optional: Refresh if needed, but usually the stream updates automatically
+    // ref.invalidate(financeServiceProvider);
+  }
+
+  void _setDuration(String key) {
+    if (!mounted) return;
+    
+    final now = DateTime.now();
+    DateTime start;
+    DateTime end = now;
+
+    switch (key) {
+      case 'today':
+        start = DateTime(now.year, now.month, now.day);
+        end = DateTime(now.year, now.month, now.day, 23, 59, 59);
+        break;
+      case 'week':
+        // Find the last Monday (or Sunday depending on locale, using Monday here)
+        start = now.subtract(Duration(days: now.weekday - 1));
+        start = DateTime(start.year, start.month, start.day);
+        end = start.add(const Duration(days: 6, hours: 23, minutes: 59));
+        break;
+      case 'month':
+        start = DateTime(now.year, now.month, 1);
+        end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+        break;
+      case 'year':
+        start = DateTime(now.year, 1, 1);
+        end = DateTime(now.year, 12, 31, 23, 59, 59);
+        break;
+      case 'global':
+        start = DateTime(2000); // Far past
+        end = DateTime(2100); // Far future
+        break;
+      default:
+        return;
+    }
+
+    setState(() {
+      _selectedFilterKey = key;
+      _selectedDateRange = DateTimeRange(start: start, end: end);
+    });
+  }
+
+  void _showDateRangePicker() async {
+    final newDateRange = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: _selectedDateRange,
+    );
+    if (newDateRange != null) {
+      setState(() {
+        _selectedFilterKey = 'custom';
+        _selectedDateRange = newDateRange;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final currency = ref.watch(currencyProvider);
-    final transactionsAsyncValue = ref.watch(transactionsProvider);
-    final financeService = ref.watch(financeServiceProvider);
+    final filters = FinanceFilters(
+      dateRange: _selectedDateRange,
+      includeRecurringCharges: _includeRecurringCharges,
+      includeInventoryExpenses: _includeInventoryExpenses,
+      includeStaffSalaries: _includeStaffSalaries,
+      includeRent: _includeRent,
+    );
+    final transactionsAsyncValue = ref.watch(
+      filteredTransactionsProvider(filters),
+    );
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final currency = ref.watch(currencyProvider);
+    final financeSettings = ref.watch(financeSettingsProvider);
+    final monthlyBudget = financeSettings.monthlyBudgetCap;
+    final currentLocale = ref.watch(languageProvider);
+    // Removed currentLocale from here
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.finance),
-          bottom: TabBar(
-            tabs: [
-              Tab(text: l10n.addTransaction),
-              Tab(text: l10n.financialSummary),
-            ],
+    // Budget Alert Logic
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.finance),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.credit_card),
+            onPressed: () => context.go('/finance/recurring-charges'),
+            tooltip: l10n.recurringChargesTooltip,
           ),
-        ),
-        body: TabBarView(
-          children: [
-            // Add Transaction Tab
-            Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: <Widget>[
-                            TextFormField(
-                              controller: _descriptionController,
-                              decoration: InputDecoration(
-                                labelText: l10n.description,
-                              ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return l10n.enterDescription;
-                                }
-                                return null;
-                              },
-                            ),
-                            TextFormField(
-                              controller: _totalAmountController,
-                              decoration: InputDecoration(
-                                labelText: l10n.totalAmount,
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return l10n.enterTotalAmount;
-                                }
-                                final amount = double.tryParse(value);
-                                if (amount == null || amount <= 0) {
-                                  return l10n.enterValidPositiveAmount;
-                                }
-                                return null;
-                              },
-                            ),
-                            TextFormField(
-                              controller: _paidAmountController,
-                              decoration: InputDecoration(
-                                labelText: l10n.paidAmount,
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return l10n.enterPaidAmount;
-                                }
-                                final paidAmount = double.tryParse(value);
-                                if (paidAmount == null || paidAmount < 0) {
-                                  return l10n.enterValidNonNegativeAmount;
-                                }
-                                return null;
-                              },
-                            ),
-                            DropdownButtonFormField<TransactionType>(
-                              initialValue: _selectedType,
-                              decoration: InputDecoration(labelText: l10n.type),
-                              onChanged: (TransactionType? newValue) {
-                                setState(() {
-                                  _selectedType = newValue!;
-                                });
-                              },
-                              items: TransactionType.values
-                                  .map<DropdownMenuItem<TransactionType>>((
-                                    TransactionType value,
-                                  ) {
-                                    return DropdownMenuItem<TransactionType>(
-                                      value: value,
-                                      child: Text(
-                                        value == TransactionType.income
-                                            ? l10n.income
-                                            : l10n.expense,
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                            ),
-                            DropdownButtonFormField<PaymentMethod>(
-                              initialValue: _selectedPaymentMethod,
-                              decoration: InputDecoration(
-                                labelText: l10n.paymentMethod,
-                              ),
-                              onChanged: (PaymentMethod? newValue) {
-                                setState(() {
-                                  _selectedPaymentMethod = newValue!;
-                                });
-                              },
-                              items: PaymentMethod.values
-                                  .map<DropdownMenuItem<PaymentMethod>>((
-                                    PaymentMethod value,
-                                  ) {
-                                    return DropdownMenuItem<PaymentMethod>(
-                                      value: value,
-                                      child: Text(
-                                        value == PaymentMethod.cash
-                                            ? l10n.cash
-                                            : value == PaymentMethod.card
-                                            ? l10n.card
-                                            : l10n.bankTransfer,
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        try {
-                          final totalAmount = double.parse(
-                            _totalAmountController.text,
-                          );
-                          final paidAmount = double.parse(
-                            _paidAmountController.text,
-                          );
-                          final status = paidAmount >= totalAmount
-                              ? TransactionStatus.paid
-                              : TransactionStatus.unpaid;
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.go('/settings'),
+            tooltip: l10n.financeSettingsTooltip,
+          ),
+        ],
+      ),
+      body: transactionsAsyncValue.when(
+        data: (transactions) {
+          // Calculate Summaries
+          double totalIncome = 0;
+          double totalExpense = 0;
+          for (var t in transactions) {
+            if (t.type == TransactionType.income) {
+              totalIncome += t.totalAmount;
+            } else {
+              totalExpense += t.totalAmount;
+            }
+          }
+          double netProfit = totalIncome - totalExpense;
 
-                          final newTransaction = Transaction(
-                            description: _descriptionController.text,
-                            totalAmount: totalAmount,
-                            paidAmount: paidAmount,
-                            type: _selectedType,
-                            date: DateTime.now(),
-                            status: status,
-                            paymentMethod: _selectedPaymentMethod,
-                          );
-                          await financeService.addTransaction(newTransaction);
-                          ref.invalidate(transactionsProvider);
-                          _descriptionController.clear();
-                          _totalAmountController.clear();
-                          _paidAmountController.clear();
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('$l10n.error${e.toString()}'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
-                      }
-                    },
-                    child: Text(l10n.addTransaction),
-                  ),
-                ),
-              ],
-            ),
-
-            // Financial Summary Tab
-            Column(
-              children: [
-                // Controls Row
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: l10n.searchTransactions,
-                            prefixIcon: const Icon(Icons.search),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            filled: true,
-                            fillColor: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withValues(alpha: 0.3),
-                          ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchQuery = value.toLowerCase();
-                            });
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            children: [
+              // 1. Duration Selectors (Chips)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (var entry in {
+                      'today': l10n.periodToday,
+                      'week': l10n.periodThisWeek,
+                      'month': l10n.periodThisMonth,
+                      'year': l10n.periodThisYear,
+                      'global': l10n.periodGlobal,
+                    }.entries)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: ChoiceChip(
+                          label: Text(entry.value),
+                          selected: _selectedFilterKey == entry.key,
+                          onSelected: (selected) {
+                            if (selected) _setDuration(entry.key);
                           },
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<TransactionType?>(
-                        icon: const Icon(Icons.filter_list),
-                        onSelected: (TransactionType? type) {
-                          setState(() {
-                            _filterType = type;
-                          });
-                        },
-                        itemBuilder: (BuildContext context) => [
-                          PopupMenuItem<TransactionType?>(
-                            value: null,
-                            child: Text(l10n.allTypes),
-                          ),
-                          ...TransactionType.values.map(
-                            (type) => PopupMenuItem<TransactionType?>(
-                              value: type,
-                              child: Text(
-                                type == TransactionType.income
-                                    ? l10n.income
-                                    : l10n.expense,
-                              ),
-                            ),
-                          ),
-                        ],
+                    ActionChip(
+                      label: Text(
+                        _selectedFilterKey == 'custom'
+                            ? '${DateFormat.MMMd().format(_selectedDateRange.start)} - ${DateFormat.MMMd().format(_selectedDateRange.end)}'
+                            : l10n.periodCustomDate,
                       ),
-                      const SizedBox(width: 8),
-                      PopupMenuButton<TransactionSortOption>(
-                        icon: const Icon(Icons.sort),
-                        onSelected: (TransactionSortOption option) {
-                          setState(() {
-                            _sortOption = option;
-                          });
-                        },
-                        itemBuilder: (BuildContext context) =>
-                            <PopupMenuEntry<TransactionSortOption>>[
-                              PopupMenuItem<TransactionSortOption>(
-                                value: TransactionSortOption.dateDesc,
-                                child: Text(l10n.dateNewestFirst),
-                              ),
-                              PopupMenuItem<TransactionSortOption>(
-                                value: TransactionSortOption.dateAsc,
-                                child: Text(l10n.dateOldestFirst),
-                              ),
-                              PopupMenuItem<TransactionSortOption>(
-                                value: TransactionSortOption.amountDesc,
-                                child: Text(l10n.amountHighestFirst),
-                              ),
-                              PopupMenuItem<TransactionSortOption>(
-                                value: TransactionSortOption.amountAsc,
-                                child: Text(l10n.amountLowestFirst),
-                              ),
-                              PopupMenuItem<TransactionSortOption>(
-                                value: TransactionSortOption.type,
-                                child: Text(l10n.type),
-                              ),
-                            ],
+                      avatar: const Icon(Icons.calendar_today, size: 16),
+                      onPressed: _showDateRangePicker,
+                      backgroundColor: _selectedFilterKey == 'custom'
+                          ? theme.colorScheme.secondaryContainer
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // 2. KPI Cards (Overview)
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildKpiCard(
+                      context,
+                      l10n.incomeTitle,
+                      totalIncome,
+                      Colors.green,
+                      currency,
+                      currentLocale,
+                      useCompactNumbers: financeSettings.useCompactNumbers,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiCard(
+                      context,
+                      l10n.expensesTitle,
+                      totalExpense,
+                      Colors.red,
+                      currency,
+                      currentLocale,
+                      useCompactNumbers: financeSettings.useCompactNumbers,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _buildKpiCard(
+                      context,
+                      l10n.netProfitTitle,
+                      netProfit,
+                      netProfit >= 0
+                          ? theme.colorScheme.primary
+                          : Colors.orange,
+                      currency,
+                      currentLocale,
+                      isBold: true,
+                      useCompactNumbers: financeSettings.useCompactNumbers,
+                      subtitle: financeSettings.taxRatePercentage > 0
+                          ? '${l10n.taxLabel}: ${financeSettings.taxRatePercentage}% (${_formatCurrency(netProfit * (financeSettings.taxRatePercentage / 100), currency, currentLocale, useCompact: financeSettings.useCompactNumbers)})'
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // 2.5 Budget Progress (If Enabled)
+              if (monthlyBudget != null && monthlyBudget > 0) ...[
+                _buildBudgetCard(
+                  context,
+                  totalExpense,
+                  monthlyBudget,
+                  currency,
+                  currentLocale,
+                  useCompactNumbers: financeSettings.useCompactNumbers,
+                ),
+                const SizedBox(height: 24),
+              ],
+
+              // 3. New Advanced Charts
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: FinanceChart(transactions: transactions),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // 4. Detailed Transaction List
+              Text(l10n.transactions, style: theme.textTheme.headlineSmall),
+              const SizedBox(height: 8),
+              if (transactions.isEmpty)
+                Padding(
+                  padding: EdgeInsets.all(32.0),
+                  child: Center(
+                    child: Text(l10n.noTransactionsFound),
+                  ),
+                )
+              else
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: transactions.length,
+                  itemBuilder: (context, index) {
+                    final transaction = transactions[index];
+                    final isIncome = transaction.type == TransactionType.income;
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      elevation: 0,
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withOpacity(0.3),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: isIncome
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
+                          child: Icon(
+                            isIncome
+                                ? Icons.arrow_downward
+                                : Icons.arrow_upward,
+                            color: isIncome ? Colors.green : Colors.red,
+                            size: 20,
+                          ),
+                        ),
+                        title: Text(
+                          transaction.description,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        subtitle: Text(
+                          '${DateFormat.yMMMd().format(transaction.date.toLocal())} • ${transaction.category}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        trailing: Text(
+                          '${isIncome ? '+' : '-'}${_formatCurrency(transaction.totalAmount, currency, currentLocale, useCompact: false)}',
+                          style: TextStyle(
+                            color: isIncome ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
                       ),
-                    ],
+                    );
+                  },
+                ),
+            ],
+          );
+        },
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/finance/add-transaction'),
+        label: Text(l10n.addTransaction),
+        icon: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildKpiCard(
+    BuildContext context,
+    String title,
+    double amount,
+    Color color,
+    String currency,
+    Locale locale, {
+    bool isBold = false,
+    String? subtitle,
+    bool useCompactNumbers = true,
+  }) {
+    final theme = Theme.of(context);
+    final formattedAmount = _formatCurrency(
+      amount,
+      currency,
+      locale,
+      useCompact: useCompactNumbers,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              formattedAmount,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: color,
+                fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBudgetCard(
+    BuildContext context,
+    double currentExpense,
+    double budgetCap,
+    String currency,
+    Locale locale, {
+    bool useCompactNumbers = true,
+  }) {
+    final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
+    final percent = (currentExpense / budgetCap).clamp(0.0, 1.0);
+    final isOverBudget = currentExpense > budgetCap;
+
+    final formattedExpense = _formatCurrency(
+      currentExpense,
+      currency,
+      locale,
+      useCompact: useCompactNumbers,
+    );
+    final formattedBudget = _formatCurrency(
+      budgetCap,
+      currency,
+      locale,
+      useCompact: useCompactNumbers,
+    );
+
+    return Card(
+      elevation: 0,
+      color: theme.colorScheme.surfaceContainerHighest.withAlpha(50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.monthlyBudgetTitle,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Expanded(
-                  child: transactionsAsyncValue.when(
-                    data: (transactions) {
-                      if (transactions.isEmpty) {
-                        return Center(child: Text(l10n.noTransactionsYet));
-                      }
-
-                      // Filter transactions
-                      var filteredTransactions = transactions.where((
-                        transaction,
-                      ) {
-                        final matchesSearch =
-                            _searchQuery.isEmpty ||
-                            transaction.description.toLowerCase().contains(
-                              _searchQuery,
-                            ) ||
-                            transaction.totalAmount.toString().contains(
-                              _searchQuery,
-                            );
-
-                        final matchesFilter =
-                            _filterType == null ||
-                            transaction.type == _filterType;
-
-                        return matchesSearch && matchesFilter;
-                      }).toList();
-
-                      // Sort transactions
-                      filteredTransactions.sort((a, b) {
-                        switch (_sortOption) {
-                          case TransactionSortOption.dateDesc:
-                            return b.date.compareTo(a.date);
-                          case TransactionSortOption.dateAsc:
-                            return a.date.compareTo(b.date);
-                          case TransactionSortOption.amountDesc:
-                            return b.totalAmount.compareTo(a.totalAmount);
-                          case TransactionSortOption.amountAsc:
-                            return a.totalAmount.compareTo(b.totalAmount);
-                          case TransactionSortOption.type:
-                            return a.type.toString().compareTo(
-                              b.type.toString(),
-                            );
-                        }
-                      });
-
-                      double totalPaid = 0;
-                      double totalUnpaid = 0;
-                      for (var t in filteredTransactions) {
-                        totalPaid += t.paidAmount;
-                        totalUnpaid += (t.totalAmount - t.paidAmount);
-                      }
-
-                      return Column(
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: FinanceChart(
-                              transactions: filteredTransactions,
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  '${l10n.paid} $currency${totalPaid.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                                Text(
-                                  '${l10n.unpaid} $currency${totalUnpaid.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: ListView.builder(
-                              itemCount: filteredTransactions.length,
-                              itemBuilder: (context, index) {
-                                final transaction = filteredTransactions[index];
-                                return Card(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 4,
-                                  ),
-                                  elevation: 2,
-                                  child: ListTile(
-                                    leading: Icon(
-                                      transaction.type == TransactionType.income
-                                          ? Icons.arrow_upward
-                                          : Icons.arrow_downward,
-                                      color:
-                                          transaction.type ==
-                                              TransactionType.income
-                                          ? Colors.green
-                                          : Colors.red,
-                                    ),
-                                    title: Text(
-                                      transaction.description,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    subtitle: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${l10n.date} ${transaction.date.toLocal().toString().split(' ')[0]}',
-                                        ),
-                                        Text(
-                                          '${l10n.method} ${transaction.paymentMethod == PaymentMethod.cash
-                                              ? l10n.cash
-                                              : transaction.paymentMethod == PaymentMethod.card
-                                              ? l10n.card
-                                              : l10n.bankTransfer}',
-                                        ),
-                                      ],
-                                    ),
-                                    trailing: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          '$currency${transaction.totalAmount.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                transaction.type ==
-                                                    TransactionType.income
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                        ),
-                                        Text(
-                                          transaction.status
-                                              .toString()
-                                              .split('.')
-                                              .last,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color:
-                                                transaction.status ==
-                                                    TransactionStatus.paid
-                                                ? Colors.green
-                                                : Colors.orange,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (error, stack) =>
-                        Center(child: Text('Error: $error')),
+                Text(
+                  '$formattedExpense / $formattedBudget',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: isOverBudget
+                        ? Colors.red
+                        : theme.colorScheme.onSurface,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(
+              value: percent,
+              borderRadius: BorderRadius.circular(8),
+              minHeight: 12,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
+              color: isOverBudget
+                  ? Colors.red
+                  : (percent > 0.8 ? Colors.orange : Colors.green),
+            ),
+            if (isOverBudget)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.warning_amber,
+                      size: 16,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      l10n.budgetExceededAlert,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatCurrency(
+    double amount,
+    String currency,
+    Locale locale, {
+    bool useCompact = true,
+  }) {
+    final formatter = useCompact
+        ? NumberFormat.compact(locale: locale.languageCode)
+        : NumberFormat.decimalPattern(locale.languageCode);
+
+    final formattedNumber = formatter.format(amount);
+
+    if (locale.languageCode == 'ar') {
+      return '$currency $formattedNumber'; // Left for AR
+    } else {
+      return '$formattedNumber $currency'; // Right for EN/FR
+    }
   }
 }

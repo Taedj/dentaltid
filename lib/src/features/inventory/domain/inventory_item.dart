@@ -6,6 +6,7 @@ class InventoryItem {
   final String supplier;
   final int thresholdDays;
   final int lowStockThreshold;
+  final double cost;
 
   InventoryItem({
     this.id,
@@ -15,6 +16,7 @@ class InventoryItem {
     required this.supplier,
     this.thresholdDays = 30,
     this.lowStockThreshold = 5,
+    required this.cost,
   });
 
   Map<String, dynamic> toJson() => {
@@ -25,6 +27,7 @@ class InventoryItem {
     'supplier': supplier,
     'thresholdDays': thresholdDays,
     'lowStockThreshold': lowStockThreshold,
+    'cost': cost,
   };
 
   factory InventoryItem.fromJson(Map<String, dynamic> json) => InventoryItem(
@@ -35,6 +38,7 @@ class InventoryItem {
     supplier: json['supplier'],
     thresholdDays: json['thresholdDays'] ?? 30,
     lowStockThreshold: json['lowStockThreshold'] ?? 5,
+    cost: json['cost'] ?? 0.0,
   );
 
   InventoryItem copyWith({
@@ -45,6 +49,7 @@ class InventoryItem {
     String? supplier,
     int? thresholdDays,
     int? lowStockThreshold,
+    double? cost,
   }) {
     return InventoryItem(
       id: id ?? this.id,
@@ -54,6 +59,7 @@ class InventoryItem {
       supplier: supplier ?? this.supplier,
       thresholdDays: thresholdDays ?? this.thresholdDays,
       lowStockThreshold: lowStockThreshold ?? this.lowStockThreshold,
+      cost: cost ?? this.cost,
     );
   }
 }

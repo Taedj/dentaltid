@@ -112,7 +112,7 @@ class FirebaseService {
         .doc(uid)
         .collection('profile')
         .doc('info')
-        .update(profile.toJson());
+        .set(profile.toJson(), SetOptions(merge: true));
   }
 
   // Patients Management

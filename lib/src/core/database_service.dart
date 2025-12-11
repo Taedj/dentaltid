@@ -4,7 +4,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 14; // Incremented version
+  static const int _databaseVersion = 15; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -18,7 +18,6 @@ class DatabaseService {
   }
 
   Future<Database> _initDB() async {
-
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, _databaseName);
 
@@ -298,6 +297,30 @@ class DatabaseService {
         'ALTER TABLE inventory ADD COLUMN lowStockThreshold INTEGER DEFAULT 5',
       );
     }
+    if (oldVersion < 15) {
+      // Add recurring_charges table
+      await db.execute('''
+        CREATE TABLE recurring_charges(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          amount REAL,
+          frequency TEXT,
+          startDate TEXT,
+          endDate TEXT,
+          patientId INTEGER,
+          isActive INTEGER,
+          description TEXT
+        )
+      ''');
+
+      // Add columns to transactions table
+      await db.execute('ALTER TABLE transactions ADD COLUMN sourceType TEXT');
+      await db.execute('ALTER TABLE transactions ADD COLUMN sourceId INTEGER');
+      await db.execute('ALTER TABLE transactions ADD COLUMN category TEXT');
+
+      // Add cost column to inventory table
+      await db.execute('ALTER TABLE inventory ADD COLUMN cost REAL');
+    }
   }
 
   Future<void> close() async {
@@ -350,7 +373,10 @@ class DatabaseService {
         type TEXT,
         date TEXT,
         status TEXT,
-        paymentMethod TEXT
+        paymentMethod TEXT,
+        sourceType TEXT,
+        sourceId INTEGER,
+        category TEXT
       )
       ''');
     await db.execute('''
@@ -361,7 +387,8 @@ class DatabaseService {
         expirationDate TEXT,
         supplier TEXT,
         thresholdDays INTEGER DEFAULT 30,
-        lowStockThreshold INTEGER DEFAULT 5
+        lowStockThreshold INTEGER DEFAULT 5,
+        cost REAL
       )
       ''');
     await db.execute('''
@@ -401,5 +428,18 @@ class DatabaseService {
         status TEXT DEFAULT 'scheduled'
       )
     ''');
+    await db.execute('''
+        CREATE TABLE recurring_charges(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          amount REAL,
+          frequency TEXT,
+          startDate TEXT,
+          endDate TEXT,
+          patientId INTEGER,
+          isActive INTEGER,
+          description TEXT
+        )
+      ''');
   }
 }

@@ -2,6 +2,7 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 
 class EditablePatientField extends ConsumerWidget {
   const EditablePatientField({
@@ -11,7 +12,7 @@ class EditablePatientField extends ConsumerWidget {
     required this.currentValue,
     required this.onUpdate,
     required this.patientsProvider,
-    required this.selectedFilter, // Re-added this
+    required this.config, // Re-added this
     this.isNumeric = false, // Re-added this
   });
 
@@ -19,9 +20,9 @@ class EditablePatientField extends ConsumerWidget {
   final String field;
   final String currentValue;
   final Function(Patient, String) onUpdate;
-  final AutoDisposeFutureProviderFamily<List<Patient>, PatientFilter>
+  final AutoDisposeFutureProviderFamily<List<Patient>, PatientListConfig>
   patientsProvider; // Changed type
-  final PatientFilter selectedFilter; // Re-added this
+  final PatientListConfig config; // Re-added this
   final bool isNumeric; // Re-added this
 
   @override
@@ -59,7 +60,7 @@ class EditablePatientField extends ConsumerWidget {
                   onPressed: () async {
                     await onUpdate(patient, controller.text);
                     ref.invalidate(
-                      patientsProvider(selectedFilter),
+                      patientsProvider(config),
                     ); // Corrected call
                     if (context.mounted) {
                       Navigator.of(context).pop();
