@@ -7,7 +7,6 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_ar.dart';
 import 'app_localizations_en.dart';
-import 'app_localizations_fr.dart';
 
 // ignore_for_file: type=lint
 
@@ -97,7 +96,6 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
     Locale('en'),
-    Locale('fr'),
   ];
 
   /// No description provided for @dashboard.
@@ -2115,6 +2113,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data to display'**
   String get noDataToDisplay;
+
+  /// No description provided for @cancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get cancelled;
+
+  /// No description provided for @unknownPatient.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Patient'**
+  String get unknownPatient;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @errorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorLabel;
 }
 
 class _AppLocalizationsDelegate
@@ -2128,7 +2150,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['ar', 'en', 'fr'].contains(locale.languageCode);
+      <String>['ar', 'en'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -2141,8 +2163,6 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsAr();
     case 'en':
       return AppLocalizationsEn();
-    case 'fr':
-      return AppLocalizationsFr();
   }
 
   throw FlutterError(

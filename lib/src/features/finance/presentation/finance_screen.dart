@@ -21,12 +21,13 @@ class FinanceScreen extends ConsumerStatefulWidget {
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   // State for filters
-  bool _includeRecurringCharges = true;
-  bool _includeInventoryExpenses = true;
-  bool _includeStaffSalaries = true;
-  bool _includeRent = true;
+  final bool _includeRecurringCharges = true;
+  final bool _includeInventoryExpenses = true;
+  final bool _includeStaffSalaries = true;
+  final bool _includeRent = true;
   late DateTimeRange _selectedDateRange;
-  String _selectedFilterKey = 'month'; // 'today', 'week', 'month', 'year', 'global', 'custom'
+  String _selectedFilterKey =
+      'month'; // 'today', 'week', 'month', 'year', 'global', 'custom'
 
   @override
   void initState() {
@@ -59,7 +60,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
   void _setDuration(String key) {
     if (!mounted) return;
-    
+
     final now = DateTime.now();
     DateTime start;
     DateTime end = now;
@@ -286,9 +287,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               if (transactions.isEmpty)
                 Padding(
                   padding: EdgeInsets.all(32.0),
-                  child: Center(
-                    child: Text(l10n.noTransactionsFound),
-                  ),
+                  child: Center(child: Text(l10n.noTransactionsFound)),
                 )
               else
                 ListView.builder(
@@ -302,12 +301,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                       margin: const EdgeInsets.symmetric(vertical: 4.0),
                       elevation: 0,
                       color: theme.colorScheme.surfaceContainerHighest
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: isIncome
-                              ? Colors.green.withOpacity(0.1)
-                              : Colors.red.withOpacity(0.1),
+                              ? Colors.green.withValues(alpha: 0.1)
+                              : Colors.red.withValues(alpha: 0.1),
                           child: Icon(
                             isIncome
                                 ? Icons.arrow_downward
@@ -380,7 +379,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: [
           BoxShadow(
-            color: theme.shadowColor.withOpacity(0.05),
+            color: theme.shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

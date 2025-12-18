@@ -57,8 +57,9 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Text(
                             _replaceArabicNumber(
-                              DateFormat.yMMMMEEEEd(l10n.localeName)
-                                  .format(currentTime),
+                              DateFormat.yMMMMEEEEd(
+                                l10n.localeName,
+                              ).format(currentTime),
                             ),
                             style: const TextStyle(
                               fontSize: 20,
@@ -355,7 +356,9 @@ class HomeScreen extends ConsumerWidget {
                                           textAlign: TextAlign.left,
                                         ),
                                         Text(
-                                          l10n.inProgressCount(inProgress.length),
+                                          l10n.inProgressCount(
+                                            inProgress.length,
+                                          ),
                                           style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 14,
@@ -797,7 +800,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
         return Consumer(
           builder: (context, ref, child) {
             final todayPatientsAsync = ref.watch(
-              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
+              patientsProvider(
+                const PatientListConfig(filter: PatientFilter.today),
+              ),
             );
             return todayPatientsAsync.when(
               data: (patients) {
@@ -895,14 +900,12 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     .toList();
 
                 List<InventoryItem> currentItems = [];
-                String tabTitle = '';
                 List<String> columns = [];
                 List<DataRow> rows = [];
 
                 switch (_criticalAlertTabIndex) {
                   case 0:
                     currentItems = expiringSoon;
-                    tabTitle = l10n.expiringSoon;
                     columns = [l10n.itemName, l10n.countdown];
                     rows = currentItems.map((item) {
                       final daysLeft = item.expirationDate
@@ -932,7 +935,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     break;
                   case 1:
                     currentItems = lowStock;
-                    tabTitle = l10n.lowStock;
                     columns = [l10n.itemName, l10n.currentQuantity];
                     rows = currentItems.map((item) {
                       return DataRow(
@@ -1015,7 +1017,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     const SizedBox(height: 10),
                     if (currentItems.isEmpty)
                       Text(
-                        _criticalAlertTabIndex == 0 ? l10n.noExpiringSoonItems : l10n.noLowStockItems,
+                        _criticalAlertTabIndex == 0
+                            ? l10n.noExpiringSoonItems
+                            : l10n.noLowStockItems,
                         style: const TextStyle(
                           color: Colors.white70,
                           fontSize: 12,
@@ -1023,7 +1027,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
                         textAlign: TextAlign.center,
                       )
                     else
-
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: DataTable(
@@ -1074,7 +1077,9 @@ class _FlipCard3DState extends State<_FlipCard3D>
               todaysAppointmentsProvider,
             );
             final allPatientsAsync = ref.watch(
-              patientsProvider(const PatientListConfig(filter: PatientFilter.all)),
+              patientsProvider(
+                const PatientListConfig(filter: PatientFilter.all),
+              ),
             );
             final emergencyAppointmentsAsync = ref.watch(
               todaysEmergencyAppointmentsProvider,
@@ -1096,7 +1101,6 @@ class _FlipCard3DState extends State<_FlipCard3D>
                     return emergencyAppointmentsAsync.when(
                       data: (emergencyAppointments) {
                         List<Patient> currentPatients = [];
-                        String tabTitle = '';
 
                         switch (_appointmentTabIndex) {
                           case 0:
@@ -1104,21 +1108,18 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = l10n.waiting;
                             break;
                           case 1:
                             currentPatients = emergencyAppointments
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = l10n.emergency;
                             break;
                           case 2:
                             currentPatients = completed
                                 .map((a) => patientMap[a.patientId])
                                 .whereType<Patient>()
                                 .toList();
-                            tabTitle = l10n.completed;
                             break;
                         }
 
@@ -1198,8 +1199,8 @@ class _FlipCard3DState extends State<_FlipCard3D>
                                 _appointmentTabIndex == 0
                                     ? l10n.noWaitingAppointments
                                     : _appointmentTabIndex == 1
-                                        ? l10n.noEmergencyAppointments
-                                        : l10n.noCompletedAppointments,
+                                    ? l10n.noEmergencyAppointments
+                                    : l10n.noCompletedAppointments,
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 12,

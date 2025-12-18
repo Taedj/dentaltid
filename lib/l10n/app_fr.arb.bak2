@@ -308,7 +308,6 @@
   "calculatedUnitCost": "Coût unitaire calculé: {currency}{cost}",
   "enterCost": "Veuillez entrer le coût",
   "expiresDays": "Expire (jours)",
-  "expiresDays": "Expire (jours)",
   "lowStockLevel": "Niveau de stock faible",
   "useItemTitle": "Utiliser {itemName}",
   "currentStock": "Stock actuel: {quantity}",

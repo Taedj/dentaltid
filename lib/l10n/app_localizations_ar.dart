@@ -1048,4 +1048,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get noDataToDisplay => 'لا توجد بيانات لعرضها';
+
+  @override
+  String get cancelled => 'ملغى';
+
+  @override
+  String get unknownPatient => 'مريض غير معروف';
+
+  @override
+  String get loading => 'جار التحميل...';
+
+  @override
+  String get errorLabel => 'خطأ';
 }

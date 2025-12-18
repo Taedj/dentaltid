@@ -88,9 +88,9 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         await financeService.addTransaction(transaction);
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.transactionAddedSuccess)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.transactionAddedSuccess)));
           context.pop();
         }
       } catch (e) {
@@ -181,7 +181,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
               // Category Dropdown
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 decoration: InputDecoration(
                   labelText: l10n.categoryLabel,
                   border: OutlineInputBorder(),
@@ -262,6 +262,7 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
       ),
     );
   }
+
   String _getLocalizedCategory(String category, AppLocalizations l10n) {
     switch (category) {
       case 'Rent':

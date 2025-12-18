@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/patients/data/patient_repository.dart';
-import 'package:dentaltid/src/features/patients/domain/patient.dart';
 
 void main() {
   late PatientRepository repository;
@@ -17,7 +16,7 @@ void main() {
   setUp(() async {
     // Use in-memory database
     database = await databaseFactory.openDatabase(inMemoryDatabasePath);
-    
+
     // Create tables (simplified for test)
     await database.execute('''
       CREATE TABLE patients(
@@ -55,7 +54,7 @@ void main() {
         category TEXT
       )
     ''');
-    
+
     await database.execute('''
       CREATE TABLE appointments(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,7 +89,7 @@ void main() {
       'diagnosis': 'None',
       'treatment': 'None',
       'payment': 0.0,
-      'severity': 'low'
+      'severity': 'low',
     });
 
     // 2. Create two appointments linked to the patient (via sessionId = patientId)
@@ -107,7 +106,7 @@ void main() {
     // 3. Create transactions linked to these appointments
     // Transaction 1: Total 100, Paid 20 -> Due 80
     await database.insert('transactions', {
-      'sessionId': appointmentId1, 
+      'sessionId': appointmentId1,
       'totalAmount': 100.0,
       'paidAmount': 20.0,
     });
@@ -134,13 +133,13 @@ void main() {
 class _TestDatabaseService implements DatabaseService {
   final Database _db;
   _TestDatabaseService(this._db);
-  
+
   @override
   Future<Database> get database async => _db;
-  
+
   @override
   Future<void> close() async => _db.close();
-  
+
   // Implement other members if necessary or throw UnimplementedError
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

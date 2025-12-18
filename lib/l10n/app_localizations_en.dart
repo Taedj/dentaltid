@@ -1053,4 +1053,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noDataToDisplay => 'No data to display';
+
+  @override
+  String get cancelled => 'Cancelled';
+
+  @override
+  String get unknownPatient => 'Unknown Patient';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get errorLabel => 'Error';
 }

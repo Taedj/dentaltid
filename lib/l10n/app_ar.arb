@@ -308,7 +308,6 @@
   "calculatedUnitCost": "تلكفة الوحدة المحسوبة: {currency}{cost}",
   "enterCost": "الرجاء إدخال التكلفة",
   "expiresDays": "تنتهي الصلاحية (أيام)",
-  "expiresDays": "تنتهي الصلاحية (أيام)",
   "lowStockLevel": "مستوى المخزون المنخفض",
   "useItemTitle": "استخدام {itemName}",
   "currentStock": "المخزون الحالي: {quantity}",

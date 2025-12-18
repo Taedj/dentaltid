@@ -250,7 +250,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                           children: [
                             Chip(
                               label: Text(
-                                _getLocalizedStatus(context, appointment.status),
+                                widget._getLocalizedStatus(
+                                  context,
+                                  appointment.status,
+                                ),
                               ),
                               backgroundColor: statusColor.withAlpha(51),
                               labelStyle: TextStyle(color: statusColor),

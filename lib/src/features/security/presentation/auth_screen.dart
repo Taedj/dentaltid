@@ -272,7 +272,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -284,7 +284,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               height: 200,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withValues(alpha: 0.1),
               ),
             ),
           ),
@@ -303,11 +303,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: theme.cardColor.withOpacity(0.9),
+                        color: theme.cardColor.withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -356,7 +356,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
+                            color: Colors.black.withValues(alpha: 0.1),
                             blurRadius: 30,
                             offset: const Offset(0, 15),
                           ),
@@ -686,7 +686,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             child: SafeArea(
               child: FloatingActionButton.extended(
                 onPressed: _showContactDialog,
-                backgroundColor: theme.cardColor.withOpacity(0.9),
+                backgroundColor: theme.cardColor.withValues(alpha: 0.9),
                 elevation: 4,
                 icon: const Icon(Icons.support_agent, color: Colors.blue),
                 label: Text(
