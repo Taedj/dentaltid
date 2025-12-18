@@ -372,4 +372,67 @@ class FirebaseService {
         .doc('info')
         .update({'lastSync': FieldValue.serverTimestamp()});
   }
+
+  // Managed Users (Staff) Management
+  Future<void> saveManagedUser(UserProfile staffProfile) async {
+    await _firestore
+        .collection('users')
+        .doc(staffProfile.managedByDentistId!)
+        .collection('managed_users')
+        .doc(staffProfile.uid)
+        .set(staffProfile.toJson());
+  }
+
+  Future<List<UserProfile>> getManagedUsers(String dentistUid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(dentistUid)
+        .collection('managed_users')
+        .get();
+
+    return snapshot.docs
+        .map((doc) => UserProfile.fromJson(doc.data()))
+        .toList();
+  }
+
+  Future<void> deleteManagedUser(String staffUid) async {
+    // First, find the dentist who manages this user
+    final query = await _firestore
+        .collectionGroup('managed_users')
+        .where('uid', isEqualTo: staffUid)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      final managedUserDoc = query.docs.first;
+      final dentistUid = managedUserDoc.reference.parent.parent!.id;
+
+      await _firestore
+          .collection('users')
+          .doc(dentistUid)
+          .collection('managed_users')
+          .doc(staffUid)
+          .delete();
+    }
+  }
+
+  // Authenticate managed user by PIN
+  Future<UserProfile?> authenticateManagedUser(
+    String dentistUid,
+    String username,
+    String pin,
+  ) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(dentistUid)
+        .collection('managed_users')
+        .where('username', isEqualTo: username)
+        .where('pin', isEqualTo: pin)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isNotEmpty) {
+      return UserProfile.fromJson(snapshot.docs.first.data());
+    }
+    return null;
+  }
 }

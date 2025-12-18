@@ -1,10 +1,13 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
+import 'package:dentaltid/src/core/network_discovery_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dentaltid/src/features/security/domain/user_role.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +16,7 @@ import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-enum AuthMode { login, register }
+enum AuthMode { login, register, staffLogin }
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -31,6 +34,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _medicalLicenseNumberController = TextEditingController();
   final _licenseController =
       TextEditingController(); // Kept for consistency if needed, though unused in form
+  final _usernameController = TextEditingController();
+  final _pinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   final FirebaseService _firebaseService = FirebaseService();
@@ -96,7 +101,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await _firebaseService.createUserProfile(userProfile, licenseKey);
           ref.invalidate(userProfileProvider);
         }
+      } else if (_authMode == AuthMode.staffLogin) {
+        // PIN-based authentication for managed users
+        await _authenticateStaff();
       } else {
+        // Email/password authentication for dentists
         await _firebaseService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
@@ -104,7 +113,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('userRole', UserRole.dentist.toString());
+      final userRole = _authMode == AuthMode.staffLogin
+          ? UserRole.assistant
+          : UserRole.dentist;
+      await prefs.setString('userRole', userRole.toString());
 
       ref
           .read(auditServiceProvider)
@@ -116,8 +128,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 '${_authMode == AuthMode.login ? 'User logged in' : 'User registered'}: ${_emailController.text}',
           );
 
-      if (!mounted) return;
-      context.go('/');
+      if (mounted) {
+        context.go('/');
+      }
     } on FirebaseAuthException catch (e) {
       String message = 'An error occurred, please check your credentials.';
       if (e.code == 'weak-password') {
@@ -129,9 +142,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       } else if (e.code == 'wrong-password') {
         message = 'Wrong password provided for that user.';
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.red),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -145,6 +160,177 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _authenticateStaff() async {
+    // For staff login, we need to find a dentist first
+    // In a real implementation, this would scan for available dentists on the LAN
+    // For now, we'll show a dentist selection dialog
+
+    // This is a simplified version - in production, this would discover dentists via LAN
+    final dentistProfiles = await _showDentistSelectionDialog();
+
+    if (dentistProfiles.isEmpty) {
+      throw Exception(
+        'No dentists found. Please ensure you are connected to the clinic network.',
+      );
+    }
+
+    // Try to authenticate with each available dentist
+    UserProfile? authenticatedUser;
+    for (final dentist in dentistProfiles) {
+      try {
+        authenticatedUser = await _firebaseService.authenticateManagedUser(
+          dentist.uid,
+          _usernameController.text.trim(),
+          _pinController.text.trim(),
+        );
+        if (authenticatedUser != null) break;
+      } catch (e) {
+        continue; // Try next dentist
+      }
+    }
+
+    if (authenticatedUser == null) {
+      throw Exception(
+        'Invalid username or PIN. Please check your credentials.',
+      );
+    }
+
+    // Store the authenticated managed user profile
+    // In a real app, this would be stored securely and used throughout the session
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      'managedUserProfile',
+      authenticatedUser.toJson().toString(),
+    );
+  }
+
+  Future<List<UserProfile>> _showDentistSelectionDialog() async {
+    final discoveryService = NetworkDiscoveryService();
+    List<DiscoveredServer> discoveredServers = [];
+
+    // Show loading dialog while discovering
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Discovering Dentists'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            const Text('Scanning for dental clinic servers on your network...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // Start discovery
+      await discoveryService.startDiscovery();
+
+      // Wait for discovery results (listen for 10 seconds)
+      final completer = Completer<List<DiscoveredServer>>();
+      StreamSubscription? subscription;
+
+      subscription = discoveryService.discoveredServers.listen((servers) {
+        discoveredServers = servers;
+        if (servers.isNotEmpty && !completer.isCompleted) {
+          // Found at least one server, complete after a short delay to allow for more discoveries
+          Future.delayed(const Duration(seconds: 3), () {
+            if (!completer.isCompleted) {
+              completer.complete(servers);
+            }
+          });
+        }
+      });
+
+      // Timeout after 10 seconds
+      Future.delayed(const Duration(seconds: 10), () {
+        if (!completer.isCompleted) {
+          completer.complete(discoveredServers);
+        }
+      });
+
+      final finalServers = await completer.future;
+      subscription.cancel();
+      discoveryService.stopDiscovery();
+
+      // Close loading dialog
+      if (!mounted) return [];
+      Navigator.of(context).pop();
+
+      if (finalServers.isEmpty) {
+        return [];
+      }
+
+      // Show selection dialog
+      final selectedDentist = await showDialog<UserProfile>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Select Dental Clinic'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: finalServers.length,
+              itemBuilder: (context, index) {
+                final server = finalServers[index];
+                return ListTile(
+                  leading: const Icon(Icons.business, color: Colors.blue),
+                  title: Text(server.clinicName),
+                  subtitle: Text(
+                    '${server.dentistName} - ${server.ipAddress}:${server.port}',
+                  ),
+                  onTap: () async {
+                    // Create a UserProfile for the selected dentist
+                    final dentistProfile = UserProfile(
+                      uid: server.id,
+                      email: '', // We don't have email for discovered dentists
+                      licenseKey: '', // Will be set from Firebase
+                      plan: SubscriptionPlan.free,
+                      status: SubscriptionStatus.active,
+                      licenseExpiry: DateTime.now().add(
+                        const Duration(days: 365),
+                      ),
+                      createdAt: DateTime.now(),
+                      lastLogin: DateTime.now(),
+                      lastSync: DateTime.now(),
+                      clinicName: server.clinicName,
+                      dentistName: server.dentistName,
+                      role: UserRole.dentist,
+                    );
+
+                    if (mounted) {
+                      Navigator.of(context).pop(dentistProfile);
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+
+      return selectedDentist != null ? [selectedDentist] : [];
+    } catch (e) {
+      discoveryService.stopDiscovery();
+
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      return [];
     }
   }
 
@@ -344,6 +530,62 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    // Login Mode Toggle - Hidden on Android (Dentist only)
+                    if (!Platform.isAndroid)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed:
+                                  _authMode == AuthMode.login ||
+                                      _authMode == AuthMode.register
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _authMode = AuthMode.login;
+                                        _formKey.currentState?.reset();
+                                      });
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    (_authMode == AuthMode.login ||
+                                        _authMode == AuthMode.register)
+                                    ? colorScheme.primary
+                                    : colorScheme.surface,
+                                foregroundColor:
+                                    (_authMode == AuthMode.login ||
+                                        _authMode == AuthMode.register)
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
+                              ),
+                              child: const Text('Dentist'),
+                            ),
+                            const SizedBox(width: 16),
+                            ElevatedButton(
+                              onPressed: _authMode == AuthMode.staffLogin
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        _authMode = AuthMode.staffLogin;
+                                        _formKey.currentState!.reset();
+                                      });
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _authMode == AuthMode.staffLogin
+                                    ? colorScheme.primary
+                                    : colorScheme.surface,
+                                foregroundColor: _authMode == AuthMode.staffLogin
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
+                              ),
+                              child: const Text('Client'),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     // --- Auth Form Section ---
                     Container(
                       constraints: const BoxConstraints(maxWidth: 450),
@@ -368,7 +610,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              _authMode == AuthMode.login
+                              _authMode == AuthMode.staffLogin
+                                  ? 'Client Login'
+                                  : _authMode == AuthMode.login
                                   ? 'Welcome Back'
                                   : 'Join DentalTid',
                               style: GoogleFonts.poppins(
@@ -380,92 +624,176 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            // Email Field
-                            TextFormField(
-                              controller: _emailController,
-                              style: GoogleFonts.poppins(),
-                              decoration: InputDecoration(
-                                labelText: 'Email Address',
-                                prefixIcon: const Icon(Icons.email_outlined),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
+                            if (_authMode == AuthMode.staffLogin) ...[
+                              // Username Field for Staff
+                              TextFormField(
+                                controller: _usernameController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Username',
+                                  prefixIcon: const Icon(Icons.person_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: colorScheme.primary,
-                                    width: 2,
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: colorScheme.primary,
+                                      width: 2,
+                                    ),
                                   ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
                                 ),
-                                filled: true,
-                                fillColor: isDark
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade50,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your username';
+                                  }
+                                  return null;
+                                },
                               ),
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your email';
-                                }
-                                if (!RegExp(
-                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                ).hasMatch(value)) {
-                                  return 'Please enter a valid email';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 12),
+                              const SizedBox(height: 12),
 
-                            // Password Field
-                            TextFormField(
-                              controller: _passwordController,
-                              style: GoogleFonts.poppins(),
-                              decoration: InputDecoration(
-                                labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: Colors.grey.shade300,
+                              // PIN Field for Staff
+                              TextFormField(
+                                controller: _pinController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'PIN (4 digits)',
+                                  prefixIcon: const Icon(Icons.pin_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(
-                                    color: colorScheme.primary,
-                                    width: 2,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
                                   ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
                                 ),
-                                filled: true,
-                                fillColor: isDark
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade50,
+                                keyboardType: TextInputType.number,
+                                maxLength: 4,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your PIN';
+                                  }
+                                  if (value.length != 4) {
+                                    return 'PIN must be 4 digits';
+                                  }
+                                  return null;
+                                },
                               ),
-                              obscureText: true,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter your password';
-                                }
-                                if (_authMode == AuthMode.register &&
-                                    value.length < 8) {
-                                  return 'Password must be at least 8 characters';
-                                }
-                                return null;
-                              },
-                            ),
+                            ] else ...[
+                              // Email Field for Dentists
+                              TextFormField(
+                                controller: _emailController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Email Address',
+                                  prefixIcon: const Icon(Icons.email_outlined),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                keyboardType: TextInputType.emailAddress,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your email';
+                                  }
+                                  if (!RegExp(
+                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                                  ).hasMatch(value)) {
+                                    return 'Please enter a valid email';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Password Field for Dentists
+                              TextFormField(
+                                controller: _passwordController,
+                                style: GoogleFonts.poppins(),
+                                decoration: InputDecoration(
+                                  labelText: 'Password',
+                                  prefixIcon: const Icon(Icons.lock_outline),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Colors.grey.shade300,
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: colorScheme.primary,
+                                      width: 2,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: isDark
+                                      ? Colors.grey.shade800
+                                      : Colors.grey.shade50,
+                                ),
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your password';
+                                  }
+                                  if (_authMode == AuthMode.register &&
+                                      value.length < 8) {
+                                    return 'Password must be at least 8 characters';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
 
                             if (_authMode == AuthMode.register) ...[
                               const SizedBox(height: 12),
@@ -615,7 +943,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       ),
                                     )
                                   : Text(
-                                      _authMode == AuthMode.login
+                                      _authMode == AuthMode.staffLogin
+                                          ? 'STAFF LOGIN'
+                                          : _authMode == AuthMode.login
                                           ? 'SIGN IN'
                                           : 'CREATE ACCOUNT',
                                       style: GoogleFonts.poppins(

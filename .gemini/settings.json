@@ -1,0 +1,20 @@
+{
+  "ui": {
+    "showStatusInTitle": true,
+    "hideTips": false,
+    "hideBanner": false,
+    "hideContextSummary": false,
+    "footer": {
+      "hideCWD": false,
+      "hideSandboxStatus": false,
+      "hideModelInfo": false,
+      "hideContextPercentage": false
+    },
+    "hideFooter": false,
+    "showMemoryUsage": true,
+    "showLineNumbers": false,
+    "showCitations": false,
+    "showModelInfoInChat": false,
+    "useFullWidth": true
+  }
+}

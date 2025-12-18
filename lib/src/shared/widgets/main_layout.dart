@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:dentaltid/src/features/security/domain/user_role.dart';
+import 'package:dentaltid/src/core/user_model.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key, required this.child});

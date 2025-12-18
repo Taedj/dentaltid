@@ -4,6 +4,7 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/cloud_backups_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/settings_screen.dart';
+import 'package:dentaltid/src/features/settings/presentation/staff_management_screen.dart';
 import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.dart';
 import 'package:dentaltid/src/features/finance/presentation/finance_screen.dart';
 import 'package:dentaltid/src/features/finance/presentation/recurring_charges_screen.dart';
@@ -18,19 +19,19 @@ import 'package:dentaltid/src/features/dashboard/presentation/home_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/appointments_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/add_edit_appointment_screen.dart';
 import 'package:dentaltid/src/shared/widgets/main_layout.dart';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 final router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) async {
-    final user = FirebaseAuth.instance.currentUser;
     final isLoggingIn = state.matchedLocation == '/login';
+    final isLoggedIn = FirebaseAuth.instance.currentUser != null;
 
-    // Temporarily deactivate login redirect
-    // if (user == null && !isLoggingIn) {
-    //   return '/login';
-    // }
-
-    if (user != null && isLoggingIn) {
+    if (!isLoggedIn && !isLoggingIn) {
+      return '/login';
+    }
+    
+    if (isLoggedIn && isLoggingIn) {
       return '/';
     }
 
@@ -136,6 +137,10 @@ final router = GoRouter(
             GoRoute(
               path: 'profile',
               builder: (context, state) => const ProfileSettingsScreen(),
+            ),
+            GoRoute(
+              path: 'staff-management',
+              builder: (context, state) => const StaffManagementScreen(),
             ),
           ],
         ),

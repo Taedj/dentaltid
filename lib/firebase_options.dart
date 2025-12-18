@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '698475695605',
     projectId: 'dentaltid',
     storageBucket: 'dentaltid.firebasestorage.app',
-    iosBundleId: 'com.example.dentaltid',
+    iosBundleId: 'com.taedjdev.dentaltid',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

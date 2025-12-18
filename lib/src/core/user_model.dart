@@ -2,6 +2,8 @@ enum SubscriptionPlan { free, trial, basic, professional, clinic, enterprise }
 
 enum SubscriptionStatus { active, expired, cancelled, suspended }
 
+enum UserRole { dentist, assistant, receptionist }
+
 class UserProfile {
   final String uid;
   final String email;
@@ -17,6 +19,13 @@ class UserProfile {
   final String? phoneNumber;
   final String? medicalLicenseNumber;
 
+  // For managed users (assistant/receptionist)
+  final bool isManagedUser;
+  final String? managedByDentistId; // UID of the dentist who manages this user
+  final UserRole role;
+  final String? username; // For managed users, instead of complex email
+  final String? pin; // PIN for managed users (hashed in production)
+
   UserProfile({
     required this.uid,
     required this.email,
@@ -31,6 +40,11 @@ class UserProfile {
     this.dentistName,
     this.phoneNumber,
     this.medicalLicenseNumber,
+    this.isManagedUser = false,
+    this.managedByDentistId,
+    this.role = UserRole.dentist,
+    this.username,
+    this.pin,
   });
 
   Map<String, dynamic> toJson() => {
@@ -47,6 +61,11 @@ class UserProfile {
     'dentistName': dentistName,
     'phoneNumber': phoneNumber,
     'medicalLicenseNumber': medicalLicenseNumber,
+    'isManagedUser': isManagedUser,
+    'managedByDentistId': managedByDentistId,
+    'role': role.toString(),
+    'username': username,
+    'pin': pin,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -69,6 +88,14 @@ class UserProfile {
     dentistName: json['dentistName'],
     phoneNumber: json['phoneNumber'],
     medicalLicenseNumber: json['medicalLicenseNumber'],
+    isManagedUser: json['isManagedUser'] ?? false,
+    managedByDentistId: json['managedByDentistId'],
+    role: UserRole.values.firstWhere(
+      (e) => e.toString() == json['role'],
+      orElse: () => UserRole.dentist,
+    ),
+    username: json['username'],
+    pin: json['pin'],
   );
 
   UserProfile copyWith({
@@ -85,6 +112,11 @@ class UserProfile {
     String? dentistName,
     String? phoneNumber,
     String? medicalLicenseNumber,
+    bool? isManagedUser,
+    String? managedByDentistId,
+    UserRole? role,
+    String? username,
+    String? pin,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -100,6 +132,11 @@ class UserProfile {
       dentistName: dentistName ?? this.dentistName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       medicalLicenseNumber: medicalLicenseNumber ?? this.medicalLicenseNumber,
+      isManagedUser: isManagedUser ?? this.isManagedUser,
+      managedByDentistId: managedByDentistId ?? this.managedByDentistId,
+      role: role ?? this.role,
+      username: username ?? this.username,
+      pin: pin ?? this.pin,
     );
   }
 }
