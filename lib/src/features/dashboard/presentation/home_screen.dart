@@ -11,7 +11,9 @@ import 'package:dentaltid/src/features/appointments/domain/appointment_status.da
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
+import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:logging/logging.dart';
+
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -38,6 +40,48 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: Column(
         children: [
+          // --- BROADCAST BANNER ---
+          StreamBuilder<List<BroadcastModel>>(
+            stream: BroadcastService().getActiveBroadcasts(),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+              
+              // Only show the latest one for now to avoid clutter
+              final latest = snapshot.data!.first;
+              
+              return Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: _getBroadcastColor(latest.type).withOpacity(0.1),
+                  border: Border.all(color: _getBroadcastColor(latest.type)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(_getBroadcastIcon(latest.type), color: _getBroadcastColor(latest.type)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(latest.title, style: TextStyle(fontWeight: FontWeight.bold, color: _getBroadcastColor(latest.type))),
+                          Text(latest.message),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        onPressed: () { 
+                            // TODO: Implement local dismiss (hide ID in shared_prefs)
+                        },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -91,13 +135,73 @@ class HomeScreen extends ConsumerWidget {
                         'Building with user profile: ${userProfile?.toJson()}',
                       );
                       final dentistName = userProfile?.dentistName ?? '';
-                      return Text(
-                        '${l10n.welcomeDr} $dentistName',
-                        style: const TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.end,
+                      final staffUsername = userProfile?.username ?? '';
+                      final isStaff = userProfile?.isManagedUser ?? false;
+
+                      // Status Logic
+                      String? statusText;
+                      Color statusColor = Colors.transparent;
+                      
+                      if (userProfile != null) {
+                        if (userProfile.isPremium) {
+                          statusText = l10n.premiumAccount;
+                          statusColor = Colors.green;
+                          
+                          if (userProfile.premiumExpiryDate != null) {
+                            final daysLeft = userProfile.premiumExpiryDate!.difference(DateTime.now()).inDays;
+                            if (daysLeft >= 0) {
+                              statusText = l10n.premiumDaysLeft(daysLeft);
+                            } else {
+                              statusText = l10n.premiumExpired;
+                              statusColor = Colors.red;
+                            }
+                          }
+                        } else if (userProfile.trialStartDate != null) {
+                          final daysUsed = DateTime.now().difference(userProfile.trialStartDate!).inDays;
+                          final daysLeft = 30 - daysUsed;
+                          if (daysLeft > 0) {
+                              statusText = l10n.trialVersionDaysLeft(daysLeft);
+                              statusColor = Colors.orange;
+                          } else {
+                              statusText = l10n.trialExpired;
+                              statusColor = Colors.red;
+                          }
+                        }
+                      }
+
+                      return Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                                isStaff 
+                                  ? '${l10n.welcome} $staffUsername'
+                                  : '${l10n.welcomeDr} $dentistName',
+                                style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.end,
+                            ),
+                            if (statusText != null)
+                                Container(
+                                    margin: const EdgeInsets.only(top: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                        color: statusColor.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: statusColor),
+                                    ),
+                                    child: Text(
+                                        statusText,
+                                        style: TextStyle(
+                                            color: statusColor,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14,
+                                        ),
+                                    ),
+                                ),
+                          ],
                       );
                     },
                     loading: () => Text(
@@ -541,23 +645,24 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _FlipCard3D extends StatefulWidget {
-  const _FlipCard3D({
-    required this.width,
-    required this.height,
-    required this.frontTitle,
-    required this.frontIcon,
-    required this.frontGradient,
-    required this.backTitle,
-    required this.backIcon,
-    required this.onTap,
-    required this.content,
-    required this.cardType,
-    this.titleFontSize = 18.0,
-    this.numberFontSize = 32.0,
-    this.subtitleFontSize = 12.0,
-  });
+  Color _getBroadcastColor(String type) {
+      switch(type) {
+          case 'warning': return Colors.orange;
+          case 'maintenance': return Colors.red;
+          default: return Colors.blue;
+      }
+  }
 
+  IconData _getBroadcastIcon(String type) {
+      switch(type) {
+          case 'warning': return Icons.warning;
+          case 'maintenance': return Icons.build;
+          default: return Icons.info;
+      }
+  }
+
+
+class _FlipCard3D extends ConsumerStatefulWidget {
   final double width;
   final double height;
   final String frontTitle;
@@ -572,11 +677,27 @@ class _FlipCard3D extends StatefulWidget {
   final double numberFontSize;
   final double subtitleFontSize;
 
+  const _FlipCard3D({
+    required this.width,
+    required this.height,
+    required this.frontTitle,
+    required this.frontIcon,
+    required this.frontGradient,
+    required this.backTitle,
+    required this.backIcon,
+    required this.onTap,
+    required this.content,
+    required this.cardType,
+    required this.titleFontSize,
+    required this.numberFontSize,
+    required this.subtitleFontSize,
+  });
+
   @override
-  State<_FlipCard3D> createState() => _FlipCard3DState();
+  ConsumerState<_FlipCard3D> createState() => _FlipCard3DState();
 }
 
-class _FlipCard3DState extends State<_FlipCard3D>
+class _FlipCard3DState extends ConsumerState<_FlipCard3D>
     with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;

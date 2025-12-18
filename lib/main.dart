@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/core/router.dart';
 import 'package:dentaltid/src/core/theme_provider.dart';
+import 'package:dentaltid/src/core/app_initializer.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:logging/logging.dart';
@@ -41,6 +42,15 @@ class MyApp extends ConsumerStatefulWidget {
 }
 
 class _MyAppState extends ConsumerState<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Initialize sync services in the background
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(appInitializerProvider).initialize();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final log = Logger('MyApp');

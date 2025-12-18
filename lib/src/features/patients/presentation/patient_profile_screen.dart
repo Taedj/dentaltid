@@ -216,6 +216,14 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       }
 
       ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
+      
+      // Invalidate finance providers
+      ref.invalidate(filteredTransactionsProvider);
+      ref.invalidate(actualTransactionsProvider);
+      ref.invalidate(dailySummaryProvider);
+      ref.invalidate(weeklySummaryProvider);
+      ref.invalidate(monthlySummaryProvider);
+      ref.invalidate(yearlySummaryProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -267,6 +275,14 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       await appointmentService.deleteAppointment(widget.appointment.id!);
 
       ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
+      
+      // Invalidate finance providers
+      ref.invalidate(filteredTransactionsProvider);
+      ref.invalidate(actualTransactionsProvider);
+      ref.invalidate(dailySummaryProvider);
+      ref.invalidate(weeklySummaryProvider);
+      ref.invalidate(monthlySummaryProvider);
+      ref.invalidate(yearlySummaryProvider);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -283,6 +299,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final currency = ref.watch(currencyProvider);
     final formattedDate = widget.appointment.dateTime.toLocal();
@@ -367,10 +384,10 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 amountPaidController.text.isNotEmpty)
             ? Text(
                 balanceDue < 0
-                    ? 'Overpaid: ${NumberFormat.currency(symbol: currency).format(-balanceDue)}'
+                    ? l10n.overpaid(NumberFormat.currency(symbol: currency).format(-balanceDue))
                     : balanceDue > 0
-                    ? 'Due: ${NumberFormat.currency(symbol: currency).format(balanceDue)}'
-                    : 'Fully Paid',
+                    ? l10n.due(NumberFormat.currency(symbol: currency).format(balanceDue))
+                    : l10n.fullyPaid,
                 style: TextStyle(
                   color: balanceDue < 0
                       ? Colors.green
@@ -391,25 +408,25 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 // Appointment Type Dropdown
                 DropdownButtonFormField<String>(
                   initialValue: selectedAppointmentType,
-                  decoration: const InputDecoration(
-                    labelText: 'Appointment Type',
+                  decoration: InputDecoration(
+                    labelText: l10n.appointmentTypeTitle,
                   ),
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: 'consultation',
-                      child: Text('Consultation'),
+                      child: Text(l10n.consultationType),
                     ),
                     DropdownMenuItem(
                       value: 'followup',
-                      child: Text('Follow-up'),
+                      child: Text(l10n.followupType),
                     ),
                     DropdownMenuItem(
                       value: 'emergency',
-                      child: Text('Emergency'),
+                      child: Text(l10n.emergencyType),
                     ),
                     DropdownMenuItem(
                       value: 'procedure',
-                      child: Text('Procedure'),
+                      child: Text(l10n.procedureType),
                     ),
                   ],
                   onChanged: (value) {
@@ -424,7 +441,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 // Status Dropdown
                 DropdownButtonFormField<AppointmentStatus>(
                   initialValue: selectedStatus,
-                  decoration: const InputDecoration(labelText: 'Status'),
+                  decoration: InputDecoration(labelText: l10n.status),
                   items: AppointmentStatus.values.map((status) {
                     return DropdownMenuItem(
                       value: status,
@@ -446,8 +463,8 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                     Expanded(
                       child: TextFormField(
                         controller: totalCostController,
-                        decoration: const InputDecoration(
-                          labelText: 'Total Cost',
+                        decoration: InputDecoration(
+                          labelText: l10n.totalCost,
                         ),
                         keyboardType: TextInputType.number,
                       ),
@@ -456,8 +473,8 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                     Expanded(
                       child: TextFormField(
                         controller: amountPaidController,
-                        decoration: const InputDecoration(
-                          labelText: 'Amount Paid',
+                        decoration: InputDecoration(
+                          labelText: l10n.paidAmount,
                         ),
                         keyboardType: TextInputType.number,
                       ),
@@ -466,7 +483,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Balance Due: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
+                  '${l10n.balanceDueLabel}: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: balanceDue > 0
@@ -480,22 +497,22 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 // Health Fields
                 TextFormField(
                   controller: healthStateController,
-                  decoration: const InputDecoration(labelText: 'Health State'),
+                  decoration: InputDecoration(labelText: l10n.healthState),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: diagnosisController,
-                  decoration: const InputDecoration(labelText: 'Diagnosis'),
+                  decoration: InputDecoration(labelText: l10n.diagnosis),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: treatmentController,
-                  decoration: const InputDecoration(labelText: 'Treatment'),
+                  decoration: InputDecoration(labelText: l10n.treatment),
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  decoration: InputDecoration(labelText: l10n.notes),
                   maxLines: 3,
                 ),
                 const SizedBox(height: 16),
@@ -504,7 +521,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: _saveChanges,
-                        child: const Text('Save Changes'),
+                        child: Text(l10n.saveButton),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -515,7 +532,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
                         ),
-                        child: const Text('Delete Visit'),
+                        child: Text(l10n.deleteVisit),
                       ),
                     ),
                   ],

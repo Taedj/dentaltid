@@ -7,6 +7,7 @@ import 'package:csv/csv.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
@@ -106,6 +107,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     );
     final patientService = ref.watch(patientServiceProvider);
     final l10n = AppLocalizations.of(context)!;
+    final userProfile = ref.watch(userProfileProvider).value;
 
     return Scaffold(
       appBar: AppBar(
@@ -124,7 +126,31 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                     setState(() {});
                   },
                 )
-                : Text(l10n.patients),
+                : Row(
+                  children: [
+                    Text(l10n.patients),
+                    if (userProfile != null && !userProfile.isPremium)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Container(
+                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                           decoration: BoxDecoration(
+                             color: Colors.orange.withOpacity(0.2),
+                             borderRadius: BorderRadius.circular(12),
+                             border: Border.all(color: Colors.orange),
+                           ),
+                           child: Text(
+                             '${userProfile.cumulativePatients}/100',
+                             style: const TextStyle(
+                               fontSize: 14,
+                               color: Colors.orange,
+                               fontWeight: FontWeight.bold,
+                             ),
+                           ),
+                        ),
+                      ),
+                  ],
+                ),
         actions: [
           if (!_isSearching)
             IconButton(

@@ -1,7 +1,12 @@
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
+import 'package:dentaltid/src/core/data_sync_service.dart';
+import 'package:dentaltid/src/core/sync_manager.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/patients/data/patient_repository.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
@@ -16,10 +21,9 @@ final patientServiceProvider = Provider<PatientService>((ref) {
   return PatientService(
     ref.watch(patientRepositoryProvider),
     ref.watch(auditServiceProvider),
+    ref,
   );
 });
-
-
 
 class PatientListConfig extends Equatable {
   final PatientFilter filter;
@@ -54,10 +58,11 @@ final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
 class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
+  final Ref _ref;
 
-  PatientService(this._repository, this._auditService);
+  PatientService(this._repository, this._auditService, this._ref);
 
-  Future<void> addPatient(Patient patient) async {
+  Future<void> addPatient(Patient patient, {bool broadcast = true}) async {
     try {
       // Validate input
       if (patient.name.trim().isEmpty) {
@@ -96,6 +101,11 @@ class PatientService {
         AuditAction.createPatient,
         details: 'Patient ${patient.name} ${patient.familyName} added.',
       );
+
+      // Broadcast change to other devices on the LAN
+      if (broadcast) {
+        _syncLocalChange(SyncDataType.patients, 'create', patient.toJson());
+      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException || e is DuplicateEntryException) {
@@ -144,7 +154,7 @@ class PatientService {
     }
   }
 
-  Future<void> updatePatient(Patient patient) async {
+  Future<void> updatePatient(Patient patient, {bool broadcast = true}) async {
     try {
       if (patient.id == null) {
         throw ValidationException(
@@ -178,6 +188,10 @@ class PatientService {
         AuditAction.updatePatient,
         details: 'Patient ${patient.name} ${patient.familyName} updated.',
       );
+
+      if (broadcast) {
+        _syncLocalChange(SyncDataType.patients, 'update', patient.toJson());
+      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) {
@@ -191,7 +205,7 @@ class PatientService {
     }
   }
 
-  Future<void> deletePatient(int id) async {
+  Future<void> deletePatient(int id, {bool broadcast = true}) async {
     try {
       final patient = await _repository.getPatientById(id);
       if (patient == null) {
@@ -203,6 +217,10 @@ class PatientService {
         AuditAction.deletePatient,
         details: 'Patient ${patient.name} ${patient.familyName} deleted.',
       );
+
+      if (broadcast) {
+        _syncLocalChange(SyncDataType.patients, 'delete', {'id': id});
+      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is NotFoundException) {
@@ -214,6 +232,28 @@ class PatientService {
         originalError: e,
       );
     }
+  }
+
+  void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {
+    try {
+      final userProfile = _ref.read(userProfileProvider).value;
+      if (userProfile == null) return;
+
+      final syncManager = _ref.read(syncManagerProvider);
+      if (userProfile.role == UserRole.dentist) {
+        syncManager.broadcastLocalChange(
+          type: type,
+          operation: operation,
+          data: data,
+        );
+      } else {
+        syncManager.sendToServer(
+          type: type,
+          operation: operation,
+          data: data,
+        );
+      }
+    } catch (_) {}
   }
 
   Future<List<Patient>> getBlacklistedPatients() async {

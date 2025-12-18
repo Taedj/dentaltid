@@ -19,6 +19,8 @@ class Patient {
   final String phoneNumber;
   final bool isBlacklisted;
   final double totalDue;
+  final DateTime? lastVisitDate;
+  final int visitCount;
 
   Patient({
     this.id,
@@ -37,6 +39,8 @@ class Patient {
     this.phoneNumber = '',
     this.isBlacklisted = false,
     this.totalDue = 0.0,
+    this.lastVisitDate,
+    this.visitCount = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -74,6 +78,8 @@ class Patient {
     String? phoneNumber,
     bool? isBlacklisted,
     double? totalDue,
+    DateTime? lastVisitDate,
+    int? visitCount,
   }) {
     return Patient(
       id: id ?? this.id,
@@ -92,6 +98,8 @@ class Patient {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isBlacklisted: isBlacklisted ?? this.isBlacklisted,
       totalDue: totalDue ?? this.totalDue,
+      lastVisitDate: lastVisitDate ?? this.lastVisitDate,
+      visitCount: visitCount ?? this.visitCount,
     );
   }
 
@@ -119,5 +127,9 @@ class Patient {
     totalDue: json['totalDue'] != null
         ? (json['totalDue'] as num).toDouble()
         : 0.0,
+    lastVisitDate: json['lastVisitDate'] != null
+        ? DateTime.parse(json['lastVisitDate'])
+        : null,
+    visitCount: json['visitCount'] ?? 0,
   );
 }

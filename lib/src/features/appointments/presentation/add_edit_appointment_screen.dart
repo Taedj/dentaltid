@@ -1,5 +1,7 @@
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_appointments_provider.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
@@ -120,7 +122,10 @@ class _AddEditAppointmentScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
-    final patientsAsyncValue = ref.watch(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
+    // Fetch only today's added patients by default for the selection menu
+    final patientsAsyncValue = ref.watch(
+      patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
+    );
     final currency = ref.watch(currencyProvider);
 
     // Update unpaid controller text
@@ -358,6 +363,176 @@ class _AddEditAppointmentScreenState
 
   // Helper methods
 
+  void _showPatientSelectionDialog(AppLocalizations l10n) {
+    final searchController = TextEditingController();
+    String query = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Consumer(
+              builder: (context, ref, child) {
+                final currency = ref.watch(currencyProvider);
+                return AlertDialog(
+                  title: Text(l10n.searchPatient),
+                  content: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: l10n.searchPatient,
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                searchController.clear();
+                                setState(() {
+                                  query = '';
+                                });
+                              },
+                            ),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              query = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: ref
+                              .watch(
+                                patientsProvider(
+                                  PatientListConfig(
+                                    filter: PatientFilter.all,
+                                    query: query,
+                                  ),
+                                ),
+                              )
+                              .when(
+                                data: (patients) {
+                                  if (patients.isEmpty) {
+                                    return Center(
+                                      child: Text(l10n.noPatientsYet),
+                                    );
+                                  }
+                                  return SingleChildScrollView(
+                                    scrollDirection: Axis.vertical,
+                                    child: SingleChildScrollView(
+                                      scrollDirection: Axis.horizontal,
+                                      child: DataTable(
+                                        showCheckboxColumn: false,
+                                        columns: [
+                                          DataColumn(label: Text(l10n.name)),
+                                          DataColumn(
+                                            label: Text(l10n.familyName),
+                                          ),
+                                          DataColumn(label: Text(l10n.age)),
+                                          DataColumn(
+                                            label: Text(l10n.healthState),
+                                          ),
+                                          DataColumn(
+                                            label: Text(l10n.phoneNumber),
+                                          ),
+                                          DataColumn(label: Text(l10n.dueHeader)),
+                                          DataColumn(
+                                            label: Text('Last Visit'),
+                                          ),
+                                          DataColumn(
+                                            label: Text('Visits'),
+                                          ),
+                                        ],
+                                        rows:
+                                            patients.map((patient) {
+                                              return DataRow(
+                                                onSelectChanged: (_) {
+                                                  this.setState(() {
+                                                    _selectedPatient = patient;
+                                                  });
+                                                  Navigator.of(context).pop();
+                                                },
+                                                cells: [
+                                                  DataCell(Text(patient.name)),
+                                                  DataCell(
+                                                    Text(patient.familyName),
+                                                  ),
+                                                  DataCell(
+                                                    Text(patient.age.toString()),
+                                                  ),
+                                                  DataCell(
+                                                    Text(patient.healthState),
+                                                  ),
+                                                  DataCell(
+                                                    Text(patient.phoneNumber),
+                                                  ),
+                                                  DataCell(
+                                                    Text(
+                                                      NumberFormat.currency(
+                                                        symbol: currency,
+                                                      ).format(patient.totalDue),
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  DataCell(
+                                                    Text(
+                                                      patient.lastVisitDate !=
+                                                              null
+                                                          ? DateFormat.yMMMd()
+                                                              .format(
+                                                                patient
+                                                                    .lastVisitDate!,
+                                                              )
+                                                          : '-',
+                                                    ),
+                                                  ),
+                                                  DataCell(
+                                                    Text(
+                                                      patient.visitCount
+                                                          .toString(),
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            }).toList(),
+                                      ),
+                                    ),
+                                  );
+                                },
+                                loading:
+                                    () => const Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                error:
+                                    (error, stack) =>
+                                        Center(child: Text('Error: $error')),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: Text(l10n.cancel),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        );
+      },
+    ).then((_) => searchController.dispose());
+  }
+
   void _navigateToAddPatient() {
     GoRouter.of(context).go('/patients/add');
   }
@@ -412,37 +587,91 @@ class _AddEditAppointmentScreenState
       );
 
       if (widget.appointment == null) {
+        
+        // License Limit Check
+        final userProfile = ref.read(userProfileProvider).value;
+        if (userProfile != null && !userProfile.isPremium) {
+            if (userProfile.cumulativeAppointments >= 100) {
+                _showLimitDialog(context);
+                return;
+            }
+        }
+
         final savedAppointment = await appointmentService.addAppointment(
           appointment,
         );
         // Use the saved appointment's ID for the transaction
         appointment = savedAppointment;
+
+        if (!mounted) return;
+
+        // Increment Counter
+        if (userProfile != null) {
+            ref.read(firebaseServiceProvider).incrementAppointmentCount(userProfile.uid).then((_) {
+                if (mounted) ref.invalidate(userProfileProvider);
+            });
+        }
+
       } else {
         await appointmentService.updateAppointment(appointment);
+        if (!mounted) return;
       }
 
-      // Save payment transaction if there's a total cost or paid amount
+      // Save or update payment transaction if there's a total cost or paid amount
       if (_totalCost > 0 || _paid > 0) {
         final financeService = ref.read(financeServiceProvider);
-        final transaction = Transaction(
-          sessionId: appointment.id!, // Use the actual appointment ID
-          description: 'Appointment payment for ${appointment.appointmentType}',
-          totalAmount: _totalCost,
-          paidAmount: _paid,
-          type: TransactionType.income,
-          date: DateTime.now(),
-          sourceType: TransactionSourceType.appointment,
-          sourceId: appointment.id,
-          category: appointment.appointmentType,
-        );
-        await financeService.addTransaction(transaction, invalidate: false);
+        
+        // Check if a transaction already exists for this appointment
+        final existingTransactions = await financeService.getTransactionsBySessionId(appointment.id!);
+        
+        if (existingTransactions.isNotEmpty) {
+          // Update the existing transaction (use the latest one if multiple exist)
+          final latestTransaction = existingTransactions.reduce(
+            (a, b) => a.date.isAfter(b.date) ? a : b,
+          );
+          
+          final updatedTransaction = latestTransaction.copyWith(
+            description: 'Appointment payment for ${appointment.appointmentType}',
+            totalAmount: _totalCost,
+            paidAmount: _paid,
+            category: appointment.appointmentType,
+            // Keep the original date or update it? Usually keep it or update to now?
+            // If it's an update to the appointment, we might want to keep the original transaction date
+            // but update the values.
+          );
+          await financeService.updateTransaction(updatedTransaction, invalidate: false);
+        } else {
+          // Create a new transaction
+          final transaction = Transaction(
+            sessionId: appointment.id!, // Use the actual appointment ID
+            description: 'Appointment payment for ${appointment.appointmentType}',
+            totalAmount: _totalCost,
+            paidAmount: _paid,
+            type: TransactionType.income,
+            date: DateTime.now(),
+            sourceType: TransactionSourceType.appointment,
+            sourceId: appointment.id,
+            category: appointment.appointmentType,
+          );
+          await financeService.addTransaction(transaction, invalidate: false);
+        }
       }
+
+      if (!mounted) return;
 
       ref.invalidate(appointmentsProvider);
       ref.invalidate(todaysAppointmentsProvider);
       ref.invalidate(todaysEmergencyAppointmentsProvider);
       // Also invalidate patient-specific appointments provider
       ref.invalidate(patientAppointmentsProvider(appointment.patientId));
+      
+      // Invalidate finance providers
+      ref.invalidate(filteredTransactionsProvider);
+      ref.invalidate(actualTransactionsProvider);
+      ref.invalidate(dailySummaryProvider);
+      ref.invalidate(weeklySummaryProvider);
+      ref.invalidate(monthlySummaryProvider);
+      ref.invalidate(yearlySummaryProvider);
 
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -452,6 +681,22 @@ class _AddEditAppointmentScreenState
         ).showSnackBar(SnackBar(content: Text('${l10n.error}: $e')));
       }
     }
+  }
+
+  void _showLimitDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Limit Reached'),
+          content: const Text('You have reached the limit of 100 created appointments for the Trial version.\nPlease upgrade to Premium to continue adding appointments.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            )
+          ],
+        ),
+      );
   }
 
   // Desktop-style card widgets
@@ -492,6 +737,11 @@ class _AddEditAppointmentScreenState
                       color: colorScheme.onSurface,
                     ),
                   ),
+                ),
+                IconButton(
+                  onPressed: () => _showPatientSelectionDialog(l10n),
+                  icon: Icon(Icons.search, color: colorScheme.primary),
+                  tooltip: 'Search all patients',
                 ),
               ],
             ),

@@ -1,10 +1,12 @@
 import 'dart:developer' as developer;
+import 'dart:io';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 15; // Incremented version
+  static const int _databaseVersion = 17; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -18,8 +20,16 @@ class DatabaseService {
   }
 
   Future<Database> _initDB() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, _databaseName);
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final dbFolderPath = join(documentsDir.path, 'DentalTid', 'databases');
+    
+    // Ensure the database directory exists
+    final dbFolder = Directory(dbFolderPath);
+    if (!await dbFolder.exists()) {
+      await dbFolder.create(recursive: true);
+    }
+
+    final path = join(dbFolderPath, _databaseName);
 
     return await openDatabase(
       path,
@@ -321,6 +331,43 @@ class DatabaseService {
       // Add cost column to inventory table
       await db.execute('ALTER TABLE inventory ADD COLUMN cost REAL');
     }
+    if (oldVersion < 16) {
+      await db.execute('''
+        CREATE TABLE managed_users(
+          uid TEXT PRIMARY KEY,
+          username TEXT,
+          pin TEXT,
+          role TEXT,
+          managedByDentistId TEXT,
+          clinicName TEXT,
+          dentistName TEXT,
+          phoneNumber TEXT,
+          medicalLicenseNumber TEXT,
+          plan TEXT,
+          status TEXT,
+          licenseKey TEXT,
+          licenseExpiry TEXT,
+          createdAt TEXT,
+          lastLogin TEXT,
+          lastSync TEXT,
+          isManagedUser INTEGER DEFAULT 1
+        )
+      ''');
+    }
+    if (oldVersion < 17) {
+      // Add missing columns to managed_users table to match UserProfile model
+      try {
+        await db.execute('ALTER TABLE managed_users ADD COLUMN email TEXT');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN trialStartDate TEXT');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN isPremium INTEGER DEFAULT 0');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN premiumExpiryDate TEXT');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativePatients INTEGER DEFAULT 0');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativeAppointments INTEGER DEFAULT 0');
+        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativeInventory INTEGER DEFAULT 0');
+      } catch (e, s) {
+        developer.log('Error upgrading managed_users table to v17: $e', error: e, stackTrace: s);
+      }
+    }
   }
 
   Future<void> close() async {
@@ -439,6 +486,34 @@ class DatabaseService {
           patientId INTEGER,
           isActive INTEGER,
           description TEXT
+        )
+      ''');
+    await db.execute('''
+        CREATE TABLE managed_users(
+          uid TEXT PRIMARY KEY,
+          email TEXT,
+          username TEXT,
+          pin TEXT,
+          role TEXT,
+          managedByDentistId TEXT,
+          clinicName TEXT,
+          dentistName TEXT,
+          phoneNumber TEXT,
+          medicalLicenseNumber TEXT,
+          plan TEXT,
+          status TEXT,
+          licenseKey TEXT,
+          licenseExpiry TEXT,
+          createdAt TEXT,
+          lastLogin TEXT,
+          lastSync TEXT,
+          trialStartDate TEXT,
+          isPremium INTEGER DEFAULT 0,
+          premiumExpiryDate TEXT,
+          cumulativePatients INTEGER DEFAULT 0,
+          cumulativeAppointments INTEGER DEFAULT 0,
+          cumulativeInventory INTEGER DEFAULT 0,
+          isManagedUser INTEGER DEFAULT 1
         )
       ''');
   }

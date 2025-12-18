@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
-import 'package:dentaltid/src/core/firebase_service.dart';
+import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,7 +15,6 @@ class StaffManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
-  final FirebaseService _firebaseService = FirebaseService();
   final Uuid _uuid = const Uuid();
   bool _isLoading = false;
 
@@ -35,8 +34,8 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     try {
       final currentUser = await ref.read(userProfileProvider.future);
       if (currentUser != null) {
-        // Load managed users from Firebase
-        _managedUsers = await _firebaseService.getManagedUsers(currentUser.uid);
+        final staffService = ref.read(staffServiceProvider);
+        _managedUsers = await staffService.getStaff(currentUser.uid);
       }
     } catch (e) {
       if (mounted) {
@@ -60,16 +59,16 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Add ${role == UserRole.assistant ? 'Assistant' : 'Receptionist'}',
+          role == UserRole.assistant ? l10n.addAssistant : l10n.addReceptionist,
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                hintText: 'Enter username for staff member',
+              decoration: InputDecoration(
+                labelText: l10n.username,
+                hintText: l10n.enterUsername,
               ),
             ),
             TextField(
@@ -90,7 +89,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Add Staff'),
+            child: Text(l10n.addStaff),
           ),
         ],
       ),
@@ -127,12 +126,13 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
             pin: pinController.text.trim(),
           );
 
-          await _firebaseService.saveManagedUser(newStaff);
+          final staffService = ref.read(staffServiceProvider);
+          await staffService.addStaff(newStaff);
           await _loadManagedUsers(); // Refresh the list
 
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Staff member added successfully')),
+              SnackBar(content: Text(l10n.staffAddedSuccess)),
             );
           }
         }
@@ -140,7 +140,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error adding staff: $e')));
+          ).showSnackBar(SnackBar(content: Text('${l10n.errorLabel}: $e')));
         }
       } finally {
         setState(() {
@@ -155,8 +155,8 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Staff Member'),
-        content: Text('Are you sure you want to remove ${staff.username}?'),
+        title: Text(l10n.deleteStaffTitle),
+        content: Text(l10n.deleteStaffConfirm(staff.username ?? '')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -165,7 +165,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -177,19 +177,20 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
       });
 
       try {
-        await _firebaseService.deleteManagedUser(staff.uid);
+        final staffService = ref.read(staffServiceProvider);
+        await staffService.deleteStaff(staff.uid);
         await _loadManagedUsers(); // Refresh the list
 
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Staff member removed')));
+          ).showSnackBar(SnackBar(content: Text(l10n.staffRemovedSuccess)));
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error removing staff: $e')));
+          ).showSnackBar(SnackBar(content: Text('${l10n.errorLabel}: $e')));
         }
       } finally {
         setState(() {
@@ -200,16 +201,17 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   }
 
   Future<void> _changeStaffPin(UserProfile staff) async {
+    final l10n = AppLocalizations.of(context)!;
     final pinController = TextEditingController();
 
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Change PIN'),
+        title: Text(l10n.changePin),
         content: TextField(
           controller: pinController,
-          decoration: const InputDecoration(
-            labelText: 'New PIN (4 digits)',
+          decoration: InputDecoration(
+            labelText: l10n.newPin,
             hintText: '0000-9999',
           ),
           keyboardType: TextInputType.number,
@@ -218,11 +220,11 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Update PIN'),
+            child: Text(l10n.updatePin),
           ),
         ],
       ),
@@ -235,19 +237,20 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
 
       try {
         final updatedStaff = staff.copyWith(pin: pinController.text.trim());
-        await _firebaseService.saveManagedUser(updatedStaff);
+        final staffService = ref.read(staffServiceProvider);
+        await staffService.updateStaff(updatedStaff);
         await _loadManagedUsers(); // Refresh the list
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('PIN updated successfully')),
+            SnackBar(content: Text(l10n.pinUpdatedSuccess)),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error updating PIN: $e')));
+          ).showSnackBar(SnackBar(content: Text('${l10n.errorLabel}: $e')));
         }
       } finally {
         setState(() {
@@ -257,10 +260,24 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
     }
   }
 
+  String _getLocalizedRole(UserRole role, AppLocalizations l10n) {
+    switch (role) {
+      case UserRole.dentist:
+        return l10n.roleDentist;
+      case UserRole.assistant:
+        return l10n.roleAssistant;
+      case UserRole.receptionist:
+        return l10n.roleReceptionist;
+      case UserRole.developer:
+        return l10n.roleDeveloper;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Staff Management')),
+      appBar: AppBar(title: Text(l10n.staffManagement)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -274,7 +291,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () => _addNewStaff(UserRole.assistant),
                           icon: const Icon(Icons.person_add),
-                          label: const Text('Add Assistant'),
+                          label: Text(l10n.addAssistant),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -282,21 +299,21 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                         child: ElevatedButton.icon(
                           onPressed: () => _addNewStaff(UserRole.receptionist),
                           icon: const Icon(Icons.person_add),
-                          label: const Text('Add Receptionist'),
+                          label: Text(l10n.addReceptionist),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Current Staff',
+                    l10n.currentStaff,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: _managedUsers.isEmpty
-                        ? const Center(
-                            child: Text('No staff members added yet'),
+                        ? Center(
+                            child: Text(l10n.noStaffAdded),
                           )
                         : ListView.builder(
                             itemCount: _managedUsers.length,
@@ -319,7 +336,7 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                                   ),
                                   title: Text(staff.username ?? 'Unknown'),
                                   subtitle: Text(
-                                    '${staff.role.toString().split('.').last} • PIN: ${staff.pin}',
+                                    '${_getLocalizedRole(staff.role, l10n)} • PIN: ${staff.pin}',
                                   ),
                                   trailing: PopupMenuButton<String>(
                                     onSelected: (value) {
@@ -333,13 +350,13 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
                                       }
                                     },
                                     itemBuilder: (context) => [
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'change_pin',
-                                        child: Text('Change PIN'),
+                                        child: Text(l10n.changePin),
                                       ),
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'delete',
-                                        child: Text('Remove Staff'),
+                                        child: Text(l10n.removeStaff),
                                       ),
                                     ],
                                   ),

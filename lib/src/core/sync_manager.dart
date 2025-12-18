@@ -13,6 +13,21 @@ import 'package:dentaltid/src/features/patients/application/patient_service.dart
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final syncManagerProvider = Provider<SyncManager>((ref) {
+  final manager = SyncManager(
+    patientService: ref.watch(patientServiceProvider),
+    appointmentService: ref.watch(appointmentServiceProvider),
+    financeService: ref.watch(financeServiceProvider),
+    inventoryService: ref.watch(inventoryServiceProvider),
+  );
+  
+  // Cleanup on provider disposal
+  ref.onDispose(() => manager.dispose());
+  
+  return manager;
+});
 
 /// Manager for coordinating data synchronization between devices
 class SyncManager {

@@ -185,6 +185,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeDr => 'Welcome Dr.';
 
   @override
+  String get welcome => 'Welcome';
+
+  @override
   String get totalNumberOfPatients => 'Total Number of Patients';
 
   @override
@@ -1065,4 +1068,151 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errorLabel => 'Error';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteTransaction => 'Delete Transaction';
+
+  @override
+  String get premiumAccount => 'Premium Account';
+
+  @override
+  String premiumDaysLeft(int days) {
+    return 'Premium: $days days left';
+  }
+
+  @override
+  String get premiumExpired => 'Premium Expired';
+
+  @override
+  String trialVersionDaysLeft(int days) {
+    return 'Trial Version: $days days left';
+  }
+
+  @override
+  String get trialExpired => 'Trial Expired';
+
+  @override
+  String get activatePremium => 'Activate Premium';
+
+  @override
+  String get financeSettings => 'Finance Settings';
+
+  @override
+  String get includeInventoryCosts => 'Include Inventory Costs';
+
+  @override
+  String get includeAppointments => 'Include Appointments';
+
+  @override
+  String get includeRecurringCharges => 'Include Recurring Charges';
+
+  @override
+  String get compactNumbers => 'Compact Numbers (e.g. 1K)';
+
+  @override
+  String get compactNumbersSubtitle => 'Use short format for large numbers';
+
+  @override
+  String get monthlyBudgetCap => 'Monthly Budget Cap';
+
+  @override
+  String get taxRatePercentage => 'Tax Rate (%)';
+
+  @override
+  String get staffManagement => 'Staff Management';
+
+  @override
+  String get addAssistant => 'Add Assistant';
+
+  @override
+  String get addReceptionist => 'Add Receptionist';
+
+  @override
+  String get currentStaff => 'Current Staff';
+
+  @override
+  String get noStaffAdded => 'No staff members added yet';
+
+  @override
+  String get changePin => 'Change PIN';
+
+  @override
+  String get removeStaff => 'Remove Staff';
+
+  @override
+  String get updatePin => 'Update PIN';
+
+  @override
+  String get newPin => 'New PIN (4 digits)';
+
+  @override
+  String get username => 'Username';
+
+  @override
+  String get enterUsername => 'Enter username for staff member';
+
+  @override
+  String get addStaff => 'Add Staff';
+
+  @override
+  String get staffAddedSuccess => 'Staff member added successfully';
+
+  @override
+  String get staffRemovedSuccess => 'Staff member removed';
+
+  @override
+  String get pinUpdatedSuccess => 'PIN updated successfully';
+
+  @override
+  String get deleteStaffTitle => 'Delete Staff Member';
+
+  @override
+  String deleteStaffConfirm(String username) {
+    return 'Are you sure you want to remove $username?';
+  }
+
+  @override
+  String get roleAssistant => 'Assistant';
+
+  @override
+  String get roleReceptionist => 'Receptionist';
+
+  @override
+  String get roleDentist => 'Dentist';
+
+  @override
+  String get roleDeveloper => 'Developer';
+
+  @override
+  String overpaid(String amount) {
+    return 'Overpaid: $amount';
+  }
+
+  @override
+  String due(String amount) {
+    return 'Due: $amount';
+  }
+
+  @override
+  String get fullyPaid => 'Fully Paid';
+
+  @override
+  String appointmentPaymentDescription(String type) {
+    return 'Appointment payment for $type';
+  }
+
+  @override
+  String get proratedLabel => 'Pro-rated';
+
+  @override
+  String get days => 'days';
+
+  @override
+  String get status => 'Status';
+
+  @override
+  String get deleteVisit => 'Delete Visit';
 }

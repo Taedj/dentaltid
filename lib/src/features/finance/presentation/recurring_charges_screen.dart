@@ -1,5 +1,6 @@
 import 'package:dentaltid/src/features/finance/application/recurring_charge_service.dart';
 import 'package:dentaltid/src/features/finance/domain/recurring_charge.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import this
@@ -57,6 +58,13 @@ class RecurringChargesScreen extends ConsumerWidget {
                           updatedCharge,
                         );
                         ref.invalidate(recurringChargesProvider);
+                        // Force refresh of finance tab
+                        ref.invalidate(filteredTransactionsProvider);
+                        ref.invalidate(actualTransactionsProvider);
+                        ref.invalidate(dailySummaryProvider);
+                        ref.invalidate(weeklySummaryProvider);
+                        ref.invalidate(monthlySummaryProvider);
+                        ref.invalidate(yearlySummaryProvider);
                       },
                     ),
                     IconButton(
@@ -91,6 +99,13 @@ class RecurringChargesScreen extends ConsumerWidget {
                             charge.id!,
                           );
                           ref.invalidate(recurringChargesProvider);
+                          // Force refresh of finance tab
+                          ref.invalidate(filteredTransactionsProvider);
+                          ref.invalidate(actualTransactionsProvider);
+                          ref.invalidate(dailySummaryProvider);
+                          ref.invalidate(weeklySummaryProvider);
+                          ref.invalidate(monthlySummaryProvider);
+                          ref.invalidate(yearlySummaryProvider);
                         }
                       },
                     ),

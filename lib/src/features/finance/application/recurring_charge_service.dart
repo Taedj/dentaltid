@@ -8,17 +8,29 @@ final recurringChargeServiceProvider = Provider<RecurringChargeService>((ref) {
   return RecurringChargeService(
     ref.watch(recurringChargeRepositoryProvider),
     ref.watch(financeServiceProvider),
+    ref,
   );
 });
 
 class RecurringChargeService {
   final RecurringChargeRepository _recurringChargeRepository;
   final FinanceService _financeService;
+  final Ref _ref;
 
-  RecurringChargeService(this._recurringChargeRepository, this._financeService);
+  RecurringChargeService(this._recurringChargeRepository, this._financeService, this._ref);
+
+  void _invalidateFinanceProviders() {
+    _ref.invalidate(filteredTransactionsProvider);
+    _ref.invalidate(actualTransactionsProvider);
+    _ref.invalidate(dailySummaryProvider);
+    _ref.invalidate(weeklySummaryProvider);
+    _ref.invalidate(monthlySummaryProvider);
+    _ref.invalidate(yearlySummaryProvider);
+  }
 
   Future<void> addRecurringCharge(RecurringCharge recurringCharge) async {
     await _recurringChargeRepository.createRecurringCharge(recurringCharge);
+    _invalidateFinanceProviders();
   }
 
   Future<List<RecurringCharge>> getAllRecurringCharges() async {
@@ -27,10 +39,12 @@ class RecurringChargeService {
 
   Future<void> updateRecurringCharge(RecurringCharge recurringCharge) async {
     await _recurringChargeRepository.updateRecurringCharge(recurringCharge);
+    _invalidateFinanceProviders();
   }
 
   Future<void> deleteRecurringCharge(int id) async {
     await _recurringChargeRepository.deleteRecurringCharge(id);
+    _invalidateFinanceProviders();
   }
 
   Future<void> generateTransactionsForRecurringCharges(
@@ -75,12 +89,16 @@ class RecurringChargeService {
           currentChargeDate.isBefore(periodEnd.add(const Duration(days: 1)))) {
         // Include transactions up to periodEnd
         // Check if a transaction for this charge on this date already exists
+        // Use a wider range for the date check to catch transactions regardless of time
+        final checkStart = DateTime(currentChargeDate.year, currentChargeDate.month, currentChargeDate.day);
+        final checkEnd = DateTime(currentChargeDate.year, currentChargeDate.month, currentChargeDate.day, 23, 59, 59);
+
         final existingTransactions = await _financeService
             .getTransactionsFiltered(
-              startDate: currentChargeDate,
-              endDate: currentChargeDate,
+              startDate: checkStart,
+              endDate: checkEnd,
               includedSourceTypes: {TransactionSourceType.recurringCharge},
-              category: charge.name, // Using name as category for consistency
+              category: charge.name,
             );
 
         final transactionAlreadyExists = existingTransactions.any(

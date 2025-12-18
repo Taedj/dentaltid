@@ -184,6 +184,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get welcomeDr => 'مرحباً د.';
 
   @override
+  String get welcome => 'مرحباً';
+
+  @override
   String get totalNumberOfPatients => 'إجمالي عدد المرضى';
 
   @override
@@ -1060,4 +1063,151 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get errorLabel => 'خطأ';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get deleteTransaction => 'حذف المعاملة';
+
+  @override
+  String get premiumAccount => 'حساب بريميوم';
+
+  @override
+  String premiumDaysLeft(int days) {
+    return 'بريميوم: متبقي $days يوم';
+  }
+
+  @override
+  String get premiumExpired => 'انتهى البريميوم';
+
+  @override
+  String trialVersionDaysLeft(int days) {
+    return 'النسخة التجريبية: متبقي $days يوم';
+  }
+
+  @override
+  String get trialExpired => 'انتهت الفترة التجريبية';
+
+  @override
+  String get activatePremium => 'تفعيل البريميوم';
+
+  @override
+  String get financeSettings => 'إعدادات المالية';
+
+  @override
+  String get includeInventoryCosts => 'تضمين تكاليف المخزون';
+
+  @override
+  String get includeAppointments => 'تضمين المواعيد';
+
+  @override
+  String get includeRecurringCharges => 'تضمين الرسوم المتكررة';
+
+  @override
+  String get compactNumbers => 'أرقام مدمجة (مثال: 1K)';
+
+  @override
+  String get compactNumbersSubtitle => 'استخدم تنسيقاً قصيراً للأرقام الكبيرة';
+
+  @override
+  String get monthlyBudgetCap => 'الحد الأقصى للميزانية الشهرية';
+
+  @override
+  String get taxRatePercentage => 'معدل الضريبة (%)';
+
+  @override
+  String get staffManagement => 'إدارة الموظفين';
+
+  @override
+  String get addAssistant => 'إضافة مساعد';
+
+  @override
+  String get addReceptionist => 'إضافة موظف استقبال';
+
+  @override
+  String get currentStaff => 'الموظفون الحاليون';
+
+  @override
+  String get noStaffAdded => 'لم يتم إضافة موظفين بعد';
+
+  @override
+  String get changePin => 'تغيير رمز PIN';
+
+  @override
+  String get removeStaff => 'إزالة الموظف';
+
+  @override
+  String get updatePin => 'تحديث رمز PIN';
+
+  @override
+  String get newPin => 'رمز PIN جديد (4 أرقام)';
+
+  @override
+  String get username => 'اسم المستخدم';
+
+  @override
+  String get enterUsername => 'أدخل اسم المستخدم للموظف';
+
+  @override
+  String get addStaff => 'إضافة موظف';
+
+  @override
+  String get staffAddedSuccess => 'تم إضافة الموظف بنجاح';
+
+  @override
+  String get staffRemovedSuccess => 'تم إزالة الموظف';
+
+  @override
+  String get pinUpdatedSuccess => 'تم تحديث رمز PIN بنجاح';
+
+  @override
+  String get deleteStaffTitle => 'حذف موظف';
+
+  @override
+  String deleteStaffConfirm(String username) {
+    return 'هل أنت متأكد أنك تريد إزالة $username؟';
+  }
+
+  @override
+  String get roleAssistant => 'مساعد';
+
+  @override
+  String get roleReceptionist => 'موظف استقبال';
+
+  @override
+  String get roleDentist => 'طبيب أسنان';
+
+  @override
+  String get roleDeveloper => 'مطور';
+
+  @override
+  String overpaid(String amount) {
+    return 'مدفوع بالزيادة: $amount';
+  }
+
+  @override
+  String due(String amount) {
+    return 'مستحق: $amount';
+  }
+
+  @override
+  String get fullyPaid => 'مدفوع بالكامل';
+
+  @override
+  String appointmentPaymentDescription(String type) {
+    return 'دفع موعد لـ $type';
+  }
+
+  @override
+  String get proratedLabel => 'تناسبي';
+
+  @override
+  String get days => 'أيام';
+
+  @override
+  String get status => 'الحالة';
+
+  @override
+  String get deleteVisit => 'حذف الزيارة';
 }

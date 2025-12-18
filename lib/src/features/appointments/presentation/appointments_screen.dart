@@ -1,12 +1,13 @@
-import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
-enum SortOption { dateTimeAsc, dateTimeDesc, patientId } // Updated enum
+enum SortOption { dateTimeAsc, dateTimeDesc, patientId }
 
 class AppointmentsScreen extends ConsumerStatefulWidget {
   final AppointmentStatus? status;
@@ -31,7 +32,7 @@ class AppointmentsScreen extends ConsumerStatefulWidget {
 }
 
 class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
-  SortOption _sortOption = SortOption.dateTimeDesc; // Updated default sort
+  SortOption _sortOption = SortOption.dateTimeDesc;
   String _searchQuery = '';
   bool _showUpcomingOnly = false;
   AppointmentStatus? _statusFilter;
@@ -48,9 +49,35 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
     final appointmentService = ref.watch(appointmentServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    final userProfile = ref.watch(userProfileProvider).value;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.appointments),
+        title: Row(
+          children: [
+            Text(l10n.appointments),
+            if (userProfile != null && !userProfile.isPremium)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withAlpha(51),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange),
+                    ),
+                    child: Text(
+                      '${userProfile.cumulativeAppointments}/100',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ),
+              ),
+          ],
+        ),
         actions: [
           if (_statusFilter != null)
             IconButton(
@@ -73,27 +100,25 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 _showUpcomingOnly = !_showUpcomingOnly;
               });
             },
-            tooltip: _showUpcomingOnly
-                ? l10n.showAllAppointments
-                : l10n.showUpcomingOnly,
+            tooltip: _showUpcomingOnly ? l10n.showAllAppointments : l10n.showUpcomingOnly,
           ),
           PopupMenuButton<SortOption>(
-            icon: const Icon(Icons.sort),
-            onSelected: (SortOption option) {
+            onSelected: (option) {
               setState(() {
                 _sortOption = option;
               });
             },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<SortOption>>[
-              PopupMenuItem<SortOption>(
-                value: SortOption.dateTimeDesc,
-                child: Text(l10n.dateNewestFirst),
-              ),
-              PopupMenuItem<SortOption>(
+            icon: const Icon(Icons.sort),
+            itemBuilder: (context) => [
+              PopupMenuItem(
                 value: SortOption.dateTimeAsc,
-                child: Text(l10n.dateOldestFirst),
+                child: Text(l10n.timeEarliestFirst),
               ),
-              PopupMenuItem<SortOption>(
+              PopupMenuItem(
+                value: SortOption.dateTimeDesc,
+                child: Text(l10n.timeLatestFirst),
+              ),
+              PopupMenuItem(
                 value: SortOption.patientId,
                 child: Text(l10n.patientId),
               ),
@@ -112,10 +137,6 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest.withAlpha(77),
               ),
               onChanged: (value) {
                 setState(() {
@@ -127,45 +148,36 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
           Expanded(
             child: appointmentsAsyncValue.when(
               data: (appointments) {
-                // Filter appointments
                 var filteredAppointments = appointments.where((appointment) {
-                  final matchesSearch =
-                      _searchQuery.isEmpty ||
-                      appointment.patientId.toString().contains(_searchQuery) ||
-                      appointment.dateTime.toLocal().toString().contains(
-                        _searchQuery,
-                      ); // Use dateTime
-
-                  final isUpcoming =
-                      !_showUpcomingOnly ||
-                      (appointment.status != AppointmentStatus.completed &&
-                          appointment.status != AppointmentStatus.cancelled);
-
-                  final statusMatch =
-                      _statusFilter == null ||
-                      appointment.status == _statusFilter;
-
+                  final matchesSearch = appointment.patientId
+                      .toString()
+                      .contains(_searchQuery);
+                  final isUpcoming = !_showUpcomingOnly ||
+                      appointment.dateTime.isAfter(DateTime.now());
+                  final statusMatch = _statusFilter == null || 
+                                     appointment.status == _statusFilter;
+                  
                   return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
 
-                // Sort appointments
-                filteredAppointments.sort((a, b) {
-                  switch (_sortOption) {
-                    case SortOption.dateTimeDesc: // Updated sort option
-                      return b.dateTime.compareTo(a.dateTime);
-                    case SortOption.dateTimeAsc: // Updated sort option
-                      return a.dateTime.compareTo(b.dateTime);
-                    case SortOption.patientId:
-                      return a.patientId.compareTo(b.patientId);
-                  }
-                });
+                // Sort
+                switch (_sortOption) {
+                  case SortOption.dateTimeAsc:
+                    filteredAppointments.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+                    break;
+                  case SortOption.dateTimeDesc:
+                    filteredAppointments.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+                    break;
+                  case SortOption.patientId:
+                    filteredAppointments.sort((a, b) => a.patientId.compareTo(b.patientId));
+                    break;
+                }
 
                 if (filteredAppointments.isEmpty) {
                   return Center(child: Text(l10n.noAppointmentsFound));
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: filteredAppointments.length,
                   itemBuilder: (context, index) {
                     final appointment = filteredAppointments[index];
@@ -238,10 +250,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                           children: [
                             const SizedBox(height: 4),
                             Text(
-                              '${l10n.date}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[0]}', // Display date part
+                              '${l10n.dateLabel}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[0]}',
                             ),
                             Text(
-                              '${l10n.timeHHMM}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[1].substring(0, 5)}', // Display time part
+                              '${l10n.timeHHMM}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[1].substring(0, 5)}',
                             ),
                           ],
                         ),
@@ -321,78 +333,31 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: Text(l10n.cancelAppointment),
-                                      content: Text(
-                                        l10n.confirmCancelAppointment,
-                                      ),
+                                      content: Text(l10n.confirmCancelAppointment),
                                       actions: [
                                         TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
+                                          onPressed: () => Navigator.pop(context, false),
                                           child: Text(l10n.cancel),
                                         ),
                                         TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(true),
+                                          onPressed: () => Navigator.pop(context, true),
                                           child: Text(l10n.confirm),
                                         ),
                                       ],
                                     ),
                                   );
-                                  if (confirmed == true &&
-                                      appointment.id != null) {
-                                    await appointmentService
-                                        .updateAppointmentStatus(
-                                          appointment.id!,
-                                          AppointmentStatus.cancelled,
-                                        );
+                                  if (confirmed == true && appointment.id != null) {
+                                    await appointmentService.updateAppointmentStatus(
+                                      appointment.id!,
+                                      AppointmentStatus.cancelled,
+                                    );
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
-                                    ref.invalidate(
-                                      todaysEmergencyAppointmentsProvider,
-                                    );
+                                    ref.invalidate(todaysEmergencyAppointmentsProvider);
                                   }
                                 },
                                 tooltip: l10n.cancelAppointment,
                               ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(l10n.deleteAppointment),
-                                    content: Text(
-                                      l10n.confirmDeleteAppointment,
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: Text(l10n.cancel),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: Text(
-                                          l10n.confirm,
-                                        ), // Use l10n.confirm
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                if (confirmed == true &&
-                                    appointment.id != null) {
-                                  await appointmentService.deleteAppointment(
-                                    appointment.id!,
-                                  );
-                                  ref.invalidate(appointmentsProvider);
-                                  ref.invalidate(todaysAppointmentsProvider);
-                                  ref.invalidate(
-                                    todaysEmergencyAppointmentsProvider,
-                                  );
-                                }
-                              },
-                            ),
                           ],
                         ),
                         onTap: () {
@@ -404,7 +369,7 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(child: Text('Error: $error')),
+              error: (err, stack) => Center(child: Text('Error: $err')),
             ),
           ),
         ],

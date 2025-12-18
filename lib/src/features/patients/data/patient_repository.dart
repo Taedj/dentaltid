@@ -17,6 +17,8 @@ class PatientRepository {
     return [
       '*',
       '(SELECT SUM(t.totalAmount - t.paidAmount) FROM transactions t JOIN appointments a ON t.sessionId = a.id WHERE a.sessionId = patients.id) as totalDue',
+      '(SELECT MAX(dateTime) FROM appointments WHERE sessionId = patients.id) as lastVisitDate',
+      '(SELECT COUNT(*) FROM appointments WHERE sessionId = patients.id) as visitCount',
     ];
   }
 

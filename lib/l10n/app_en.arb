@@ -56,6 +56,7 @@
   "confirmDeleteAppointment": "Are you sure you want to delete this appointment?",
   "confirm": "Confirm",
   "welcomeDr": "Welcome Dr.",
+  "welcome": "Welcome",
   "totalNumberOfPatients": "Total Number of Patients",
   "emergencyPatients": "Emergency Patients",
   "upcomingAppointments": "Upcoming Appointments",
@@ -434,5 +435,92 @@
   "cancelled": "Cancelled",
   "unknownPatient": "Unknown Patient",
   "loading": "Loading...",
-  "errorLabel": "Error"
+  "errorLabel": "Error",
+  "delete": "Delete",
+  "deleteTransaction": "Delete Transaction",
+  "premiumAccount": "Premium Account",
+  "premiumDaysLeft": "Premium: {days} days left",
+  "@premiumDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "premiumExpired": "Premium Expired",
+  "trialVersionDaysLeft": "Trial Version: {days} days left",
+  "@trialVersionDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trialExpired": "Trial Expired",
+  "activatePremium": "Activate Premium",
+  "financeSettings": "Finance Settings",
+  "includeInventoryCosts": "Include Inventory Costs",
+  "includeAppointments": "Include Appointments",
+  "includeRecurringCharges": "Include Recurring Charges",
+  "compactNumbers": "Compact Numbers (e.g. 1K)",
+  "compactNumbersSubtitle": "Use short format for large numbers",
+  "monthlyBudgetCap": "Monthly Budget Cap",
+  "taxRatePercentage": "Tax Rate (%)",
+  "staffManagement": "Staff Management",
+  "addAssistant": "Add Assistant",
+  "addReceptionist": "Add Receptionist",
+  "currentStaff": "Current Staff",
+  "noStaffAdded": "No staff members added yet",
+  "changePin": "Change PIN",
+  "removeStaff": "Remove Staff",
+  "updatePin": "Update PIN",
+  "newPin": "New PIN (4 digits)",
+  "username": "Username",
+  "enterUsername": "Enter username for staff member",
+  "addStaff": "Add Staff",
+  "staffAddedSuccess": "Staff member added successfully",
+  "staffRemovedSuccess": "Staff member removed",
+  "pinUpdatedSuccess": "PIN updated successfully",
+  "deleteStaffTitle": "Delete Staff Member",
+  "deleteStaffConfirm": "Are you sure you want to remove {username}?",
+  "@deleteStaffConfirm": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "roleAssistant": "Assistant",
+  "roleReceptionist": "Receptionist",
+  "roleDentist": "Dentist",
+  "roleDeveloper": "Developer",
+  "overpaid": "Overpaid: {amount}",
+  "@overpaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "due": "Due: {amount}",
+  "@due": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fullyPaid": "Fully Paid",
+  "appointmentPaymentDescription": "Appointment payment for {type}",
+  "@appointmentPaymentDescription": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "proratedLabel": "Pro-rated",
+  "days": "days",
+  "status": "Status",
+  "deleteVisit": "Delete Visit"
 }

@@ -1,4 +1,8 @@
 import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/core/data_sync_service.dart';
+import 'package:dentaltid/src/core/sync_manager.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/finance/data/finance_repository.dart';
 
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
@@ -56,6 +60,18 @@ final filteredTransactionsProvider =
         startDate: filters.dateRange.start,
         endDate: filters.dateRange.end,
         includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
+        showProRated: true,
+      );
+    });
+
+final actualTransactionsProvider =
+    FutureProvider.family<List<Transaction>, FinanceFilters>((ref, filters) {
+      final service = ref.watch(financeServiceProvider);
+      return service.getAdjustedTransactionsFiltered(
+        startDate: filters.dateRange.start,
+        endDate: filters.dateRange.end,
+        includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
+        showProRated: false,
       );
     });
 
@@ -127,6 +143,7 @@ class FinanceService {
     required DateTime startDate,
     required DateTime endDate,
     Set<TransactionSourceType>? includedSourceTypes,
+    bool showProRated = true,
   }) async {
     // 1. Fetch One-Off Transactions (Regular range)
     var effectiveIncluded =
@@ -150,6 +167,15 @@ class FinanceService {
       includeRecurring = false;
     }
 
+    if (!showProRated) {
+        // Return actual transactions as they are in the DB
+        return await _repository.getTransactionsFiltered(
+          startDate: startDate,
+          endDate: endDate,
+          includedSourceTypes: effectiveIncluded,
+        );
+    }
+
     final oneOffs = await _repository.getTransactionsFiltered(
       startDate: startDate,
       endDate: endDate,
@@ -158,121 +184,82 @@ class FinanceService {
           .toSet(),
     );
 
-    // 2. Processing Recurring Transactions
-    // If recurring charges are excluded, return early
     if (!includeRecurring) {
       return oneOffs;
     }
 
-    final adjustedRecurring = <Transaction>[];
+    // 2. Dynamic Pro-rating for Recurring Charges
+    // We calculate the contribution of each recurring charge to the current window
+    final recurringCharges = await _recurringChargeRepository.getAllRecurringCharges();
+    final proRatedTransactions = <Transaction>[];
 
-    // Fetch definitions to know frequency
-    final recurringChargeDefs = await _recurringChargeRepository
-        .getAllRecurringCharges();
-    final defsMap = {for (var d in recurringChargeDefs) d.id: d};
+    final daysInWindow = endDate.difference(startDate).inDays + 1;
+    
+    for (final charge in recurringCharges) {
+      if (!charge.isActive) continue;
+      
+      // Check if the charge's lifetime overlaps with our window
+      if (charge.startDate.isAfter(endDate)) continue;
+      if (charge.endDate != null && charge.endDate!.isBefore(startDate)) continue;
 
-    // Look back up to 1 year to find active recurring charges that might cover this period
-    // (e.g., A yearly charge starting Jan 1st covers Dec 31st)
-    final recurringSearchStart = startDate.subtract(const Duration(days: 366));
-
-    final rawRecurring = await _repository.getTransactionsFiltered(
-      startDate: recurringSearchStart,
-      endDate: endDate,
-      includedSourceTypes: {TransactionSourceType.recurringCharge},
-    );
-
-    // Filter Window (The Range user wants to see)
-    final filterWindowStart = startDate;
-    final filterWindowEnd = endDate;
-
-    for (final txn in rawRecurring) {
-      if (txn.sourceId == null || !defsMap.containsKey(txn.sourceId)) continue;
-      final definition = defsMap[txn.sourceId]!;
-
-      // Determine the "Billing Cycle" of this specific transaction
-      // e.g., if Monthly on Jan 1: Cycle is Jan 1 - Jan 31.
-      DateTime cycleStart = txn.date;
-      DateTime cycleEnd;
-
-      switch (definition.frequency) {
+      // Calculate daily rate
+      double dailyRate = 0;
+      switch (charge.frequency) {
         case RecurringChargeFrequency.daily:
-          cycleEnd = cycleStart
-              .add(const Duration(days: 1))
-              .subtract(const Duration(seconds: 1));
+          dailyRate = charge.amount;
           break;
         case RecurringChargeFrequency.weekly:
-          cycleEnd = cycleStart
-              .add(const Duration(days: 7))
-              .subtract(const Duration(seconds: 1));
+          dailyRate = charge.amount / 7;
           break;
         case RecurringChargeFrequency.monthly:
-          // Careful with month overflow
-          cycleEnd = DateTime(
-            cycleStart.year,
-            cycleStart.month + 1,
-            cycleStart.day,
-          ).subtract(const Duration(seconds: 1));
+          dailyRate = charge.amount / 30; // Approximation
           break;
         case RecurringChargeFrequency.quarterly:
-          cycleEnd = DateTime(
-            cycleStart.year,
-            cycleStart.month + 3,
-            cycleStart.day,
-          ).subtract(const Duration(seconds: 1));
+          dailyRate = charge.amount / 91;
           break;
         case RecurringChargeFrequency.yearly:
-          cycleEnd = DateTime(
-            cycleStart.year + 1,
-            cycleStart.month,
-            cycleStart.day,
-          ).subtract(const Duration(seconds: 1));
+          dailyRate = charge.amount / 365;
           break;
         case RecurringChargeFrequency.custom:
-          cycleEnd = definition.endDate ?? cycleStart;
+          if (charge.endDate != null) {
+             final totalDays = charge.endDate!.difference(charge.startDate).inDays + 1;
+             dailyRate = totalDays > 0 ? charge.amount / totalDays : charge.amount;
+          } else {
+             dailyRate = charge.amount / 30;
+          }
           break;
       }
 
-      // Calculate Intersection between Cycle and Filter Window
-      // Intersection Start = Max(CycleStart, FilterStart)
-      // Intersection End   = Min(CycleEnd, FilterEnd)
-
-      final intersectStart = cycleStart.isAfter(filterWindowStart)
-          ? cycleStart
-          : filterWindowStart;
-      final intersectEnd = cycleEnd.isBefore(filterWindowEnd)
-          ? cycleEnd
-          : filterWindowEnd;
-
-      if (intersectStart.isBefore(intersectEnd)) {
-        // Valid overlap
-        final overlapDuration = intersectEnd
-            .difference(intersectStart)
-            .inMilliseconds;
-        final cycleDuration = cycleEnd.difference(cycleStart).inMilliseconds;
-
-        if (cycleDuration > 0) {
-          final ratio = overlapDuration / cycleDuration;
-          final adjustedAmount = txn.totalAmount * ratio;
-
-          if (adjustedAmount > 0.01) {
-            // Filter distinct minimal amounts
-            adjustedRecurring.add(
-              txn.copyWith(
-                totalAmount: adjustedAmount,
-                description: '${txn.description} (Pro-rated)',
-              ),
-            );
-          }
-        }
+      // Calculate how many days of this charge fall into our window
+      final effectiveStart = charge.startDate.isAfter(startDate) ? charge.startDate : startDate;
+      final effectiveEnd = (charge.endDate != null && charge.endDate!.isBefore(endDate)) ? charge.endDate! : endDate;
+      
+      final overlappingDays = effectiveEnd.difference(effectiveStart).inDays + 1;
+      
+      if (overlappingDays > 0) {
+          final proRatedAmount = dailyRate * overlappingDays;
+          proRatedTransactions.add(
+            Transaction(
+              description: '${charge.name} (Pro-rated)',
+              totalAmount: proRatedAmount,
+              paidAmount: proRatedAmount, // Treat as "paid" for profit calculation
+              type: TransactionType.expense,
+              date: effectiveStart,
+              sourceType: TransactionSourceType.recurringCharge,
+              sourceId: charge.id,
+              category: charge.name,
+            ),
+          );
       }
     }
 
-    return [...oneOffs, ...adjustedRecurring];
+    return [...oneOffs, ...proRatedTransactions];
   }
 
   Future<void> addTransaction(
     Transaction transaction, {
     bool invalidate = true,
+    bool broadcast = true,
   }) async {
     await _repository.createTransaction(transaction);
     _auditService.logEvent(
@@ -280,9 +267,15 @@ class FinanceService {
       details:
           'Transaction of type ${transaction.type} for amount ${transaction.totalAmount} added.',
     );
+    
+    if (broadcast) {
+      _syncLocalChange(SyncDataType.transactions, 'create', transaction.toJson());
+    }
+
     if (invalidate) {
       // Invalidate all data providers
       _ref.invalidate(filteredTransactionsProvider);
+      _ref.invalidate(actualTransactionsProvider);
       _ref.invalidate(dailySummaryProvider);
       _ref.invalidate(weeklySummaryProvider);
       _ref.invalidate(monthlySummaryProvider);
@@ -297,14 +290,21 @@ class FinanceService {
   Future<void> updateTransaction(
     Transaction transaction, {
     bool invalidate = true,
+    bool broadcast = true,
   }) async {
     await _repository.updateTransaction(transaction);
     _auditService.logEvent(
       AuditAction.updateTransaction,
       details: 'Transaction updated.',
     );
+    
+    if (broadcast) {
+      _syncLocalChange(SyncDataType.transactions, 'update', transaction.toJson());
+    }
+
     if (invalidate) {
       _ref.invalidate(filteredTransactionsProvider);
+      _ref.invalidate(actualTransactionsProvider);
       _ref.invalidate(dailySummaryProvider);
       _ref.invalidate(weeklySummaryProvider);
       _ref.invalidate(monthlySummaryProvider);
@@ -312,17 +312,45 @@ class FinanceService {
     }
   }
 
-  Future<void> deleteTransaction(int id) async {
+  Future<void> deleteTransaction(int id, {bool broadcast = true}) async {
     await _repository.deleteTransaction(id);
     _auditService.logEvent(
       AuditAction.deleteTransaction,
       details: 'Transaction with ID $id deleted.',
     );
+    
+    if (broadcast) {
+      _syncLocalChange(SyncDataType.transactions, 'delete', {'id': id});
+    }
+
     _ref.invalidate(filteredTransactionsProvider);
+    _ref.invalidate(actualTransactionsProvider);
     _ref.invalidate(dailySummaryProvider);
     _ref.invalidate(weeklySummaryProvider);
     _ref.invalidate(monthlySummaryProvider);
     _ref.invalidate(yearlySummaryProvider);
+  }
+
+  void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {
+    try {
+      final userProfile = _ref.read(userProfileProvider).value;
+      if (userProfile == null) return;
+
+      final syncManager = _ref.read(syncManagerProvider);
+      if (userProfile.role == UserRole.dentist) {
+        syncManager.broadcastLocalChange(
+          type: type,
+          operation: operation,
+          data: data,
+        );
+      } else {
+        syncManager.sendToServer(
+          type: type,
+          operation: operation,
+          data: data,
+        );
+      }
+    } catch (_) {}
   }
 
   Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {
@@ -369,7 +397,7 @@ class FinanceService {
 
       if (categoryMatch) {
         if (transaction.type == TransactionType.income) {
-          income += transaction.totalAmount;
+          income += transaction.paidAmount;
         } else {
           expense += transaction.totalAmount;
         }

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_ar.dart';
 import 'app_localizations_en.dart';
+import 'app_localizations_fr.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +97,7 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('ar'),
     Locale('en'),
+    Locale('fr'),
   ];
 
   /// No description provided for @dashboard.
@@ -439,6 +441,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Welcome Dr.'**
   String get welcomeDr;
+
+  /// No description provided for @welcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get welcome;
 
   /// No description provided for @totalNumberOfPatients.
   ///
@@ -2137,6 +2145,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Error'**
   String get errorLabel;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @deleteTransaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Transaction'**
+  String get deleteTransaction;
+
+  /// No description provided for @premiumAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Account'**
+  String get premiumAccount;
+
+  /// No description provided for @premiumDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium: {days} days left'**
+  String premiumDaysLeft(int days);
+
+  /// No description provided for @premiumExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Expired'**
+  String get premiumExpired;
+
+  /// No description provided for @trialVersionDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial Version: {days} days left'**
+  String trialVersionDaysLeft(int days);
+
+  /// No description provided for @trialExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial Expired'**
+  String get trialExpired;
+
+  /// No description provided for @activatePremium.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Premium'**
+  String get activatePremium;
+
+  /// No description provided for @financeSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Finance Settings'**
+  String get financeSettings;
+
+  /// No description provided for @includeInventoryCosts.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Inventory Costs'**
+  String get includeInventoryCosts;
+
+  /// No description provided for @includeAppointments.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Appointments'**
+  String get includeAppointments;
+
+  /// No description provided for @includeRecurringCharges.
+  ///
+  /// In en, this message translates to:
+  /// **'Include Recurring Charges'**
+  String get includeRecurringCharges;
+
+  /// No description provided for @compactNumbers.
+  ///
+  /// In en, this message translates to:
+  /// **'Compact Numbers (e.g. 1K)'**
+  String get compactNumbers;
+
+  /// No description provided for @compactNumbersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use short format for large numbers'**
+  String get compactNumbersSubtitle;
+
+  /// No description provided for @monthlyBudgetCap.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly Budget Cap'**
+  String get monthlyBudgetCap;
+
+  /// No description provided for @taxRatePercentage.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax Rate (%)'**
+  String get taxRatePercentage;
+
+  /// No description provided for @staffManagement.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff Management'**
+  String get staffManagement;
+
+  /// No description provided for @addAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Assistant'**
+  String get addAssistant;
+
+  /// No description provided for @addReceptionist.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Receptionist'**
+  String get addReceptionist;
+
+  /// No description provided for @currentStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Staff'**
+  String get currentStaff;
+
+  /// No description provided for @noStaffAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No staff members added yet'**
+  String get noStaffAdded;
+
+  /// No description provided for @changePin.
+  ///
+  /// In en, this message translates to:
+  /// **'Change PIN'**
+  String get changePin;
+
+  /// No description provided for @removeStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Staff'**
+  String get removeStaff;
+
+  /// No description provided for @updatePin.
+  ///
+  /// In en, this message translates to:
+  /// **'Update PIN'**
+  String get updatePin;
+
+  /// No description provided for @newPin.
+  ///
+  /// In en, this message translates to:
+  /// **'New PIN (4 digits)'**
+  String get newPin;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @enterUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter username for staff member'**
+  String get enterUsername;
+
+  /// No description provided for @addStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Staff'**
+  String get addStaff;
+
+  /// No description provided for @staffAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff member added successfully'**
+  String get staffAddedSuccess;
+
+  /// No description provided for @staffRemovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff member removed'**
+  String get staffRemovedSuccess;
+
+  /// No description provided for @pinUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN updated successfully'**
+  String get pinUpdatedSuccess;
+
+  /// No description provided for @deleteStaffTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Staff Member'**
+  String get deleteStaffTitle;
+
+  /// No description provided for @deleteStaffConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to remove {username}?'**
+  String deleteStaffConfirm(String username);
+
+  /// No description provided for @roleAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get roleAssistant;
+
+  /// No description provided for @roleReceptionist.
+  ///
+  /// In en, this message translates to:
+  /// **'Receptionist'**
+  String get roleReceptionist;
+
+  /// No description provided for @roleDentist.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist'**
+  String get roleDentist;
+
+  /// No description provided for @roleDeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer'**
+  String get roleDeveloper;
+
+  /// No description provided for @overpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Overpaid: {amount}'**
+  String overpaid(String amount);
+
+  /// No description provided for @due.
+  ///
+  /// In en, this message translates to:
+  /// **'Due: {amount}'**
+  String due(String amount);
+
+  /// No description provided for @fullyPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Fully Paid'**
+  String get fullyPaid;
+
+  /// No description provided for @appointmentPaymentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment payment for {type}'**
+  String appointmentPaymentDescription(String type);
+
+  /// No description provided for @proratedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pro-rated'**
+  String get proratedLabel;
+
+  /// No description provided for @days.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get days;
+
+  /// No description provided for @status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status;
+
+  /// No description provided for @deleteVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Visit'**
+  String get deleteVisit;
 }
 
 class _AppLocalizationsDelegate
@@ -2150,7 +2428,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['ar', 'en'].contains(locale.languageCode);
+      <String>['ar', 'en', 'fr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -2163,6 +2441,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsAr();
     case 'en':
       return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
   }
 
   throw FlutterError(

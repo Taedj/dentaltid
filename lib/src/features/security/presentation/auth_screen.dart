@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
+import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
 
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:dentaltid/src/core/network_discovery_service.dart';
+import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,8 +35,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _dentistNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _medicalLicenseNumberController = TextEditingController();
-  final _licenseController =
-      TextEditingController(); // Kept for consistency if needed, though unused in form
   final _usernameController = TextEditingController();
   final _pinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -44,6 +45,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   bool _acceptTerms = false;
 
+  bool _rememberMe = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -52,8 +61,78 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _dentistNameController.dispose();
     _phoneNumberController.dispose();
     _medicalLicenseNumberController.dispose();
-    _licenseController.dispose();
+    _usernameController.dispose();
+    _pinController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool('remember_me') ?? false;
+
+    if (rememberMe) {
+      if (mounted) setState(() => _rememberMe = true);
+
+      // Check if we have a cached profile for offline access
+      final cachedProfileJson = prefs.getString('cached_user_profile');
+      if (cachedProfileJson != null) {
+        try {
+          final profileMap = Map<String, dynamic>.from(
+              // Using a simplified parsing approach assuming standard json decode
+              // In production we imported dart:convert at file top
+              // but here I'll rely on the existing imports or add it if needed.
+              // Actually dart:convert is imported in firebase_service.dart but not here.
+              // I should add import 'dart:convert'; to the top of file or use another way.
+              // Safe bet: add the import in a separate tool call if it's missing, 
+              // or assume standard jsonDecode is available if I add the import.
+              // Wait, I can't add import easily with replace_file_content unless I replace top.
+              // I'll assume current context allows it or the replacement includes it?
+              // No, I must be careful. I'll read the file imports first? 
+              // I've seen them: dart:async, dart:io, etc. No dart:convert.
+              // I will use a separate specific replace for imports later or now.
+              // For now, let's implement the logic assuming I'll fix imports.
+               jsonDecode(cachedProfileJson)
+          );
+          final userProfile = UserProfile.fromJson(profileMap);
+
+          // Check License/Trial Status
+          if (!_isLicenseValid(userProfile)) {
+             // If invalid, we don't auto-login. User sees login screen.
+             // Maybe show a dialog saying "Session Expired"?
+             // For now, just don't auto-login.
+             return;
+          }
+          
+          // Proceed to home if valid
+          // Logic: If offline, go to home. If online, we might want to refresh auth.
+          // But strict "Remember Me" usually skips login.
+          if (mounted) {
+             context.go('/');
+          }
+        } catch (e) {
+          // invalid cache, ignore
+        }
+      }
+    }
+  }
+
+  bool _isLicenseValid(UserProfile profile) {
+    if (profile.isPremium) return true;
+
+    final trialStart = profile.trialStartDate ?? profile.createdAt;
+    final trialEnd = trialStart.add(const Duration(days: 30));
+    final now = DateTime.now();
+
+    if (now.isAfter(trialEnd)) {
+      _showDeploymentDialog(); // Or Activation Dialog
+      return false;
+    }
+    return true;
+  }
+
+  void _showDeploymentDialog() {
+    // This will be implemented fully later or reusing contact dialog
+    // For now, we rely on the logic in _authenticate to show the proper activation dialog
   }
 
   Future<void> _authenticate() async {
@@ -72,6 +151,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     setState(() => _isLoading = true);
 
     try {
+      UserProfile? userProfile;
+
       if (_authMode == AuthMode.register) {
         final User? user = await _firebaseService.signUpWithEmailAndPassword(
           _emailController.text,
@@ -80,50 +161,81 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
         if (user != null) {
           final licenseKey = const Uuid().v4();
-          final userProfile = UserProfile(
+          userProfile = UserProfile(
             uid: user.uid,
             email: user.email!,
             clinicName: _clinicNameController.text,
             dentistName: _dentistNameController.text,
             phoneNumber: _phoneNumberController.text,
             medicalLicenseNumber: _medicalLicenseNumberController.text,
-            plan: SubscriptionPlan.free,
+            plan: SubscriptionPlan.trial, // Start with Trial
             licenseKey: licenseKey,
             status: SubscriptionStatus.active,
             licenseExpiry: DateTime.now().add(
               const Duration(days: 36500),
-            ), // 100 years
+            ),
             createdAt: DateTime.now(),
             lastLogin: DateTime.now(),
             lastSync: DateTime.now(),
+            trialStartDate: DateTime.now(), // Set Trial Start
+            isPremium: false,
           );
 
           await _firebaseService.createUserProfile(userProfile, licenseKey);
           ref.invalidate(userProfileProvider);
         }
       } else if (_authMode == AuthMode.staffLogin) {
-        // PIN-based authentication for managed users
-        await _authenticateStaff();
+        userProfile = await _authenticateStaff();
       } else {
-        // Email/password authentication for dentists
+        // Login
         await _firebaseService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
+        // Fetch Profile to check status
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+           userProfile = await _firebaseService.getUserProfile(user.uid);
+        }
+      }
+      
+      // If we have a profile, Validation Check (Skipped for staff)
+      if (userProfile != null && _authMode != AuthMode.staffLogin) {
+          if (!_isLicenseValid(userProfile)) {
+             await FirebaseAuth.instance.signOut(); // Logout
+             if (mounted) {
+                 _showActivationDialog(userProfile.uid); // Show Activation Input
+             }
+             return; // Stop execution
+          }
+
+          // Save for offline/remember me
+          final prefs = await SharedPreferences.getInstance();
+          
+          // Save dentist ID for staff login lookup
+          await prefs.setString('lastLoggedInDentistId', userProfile.uid);
+
+          if (_rememberMe) {
+             await prefs.setBool('remember_me', true);
+             await prefs.setString('cached_user_profile', jsonEncode(userProfile.toJson()));
+          } else {
+             await prefs.remove('remember_me');
+             await prefs.remove('cached_user_profile');
+          }
       }
 
       final prefs = await SharedPreferences.getInstance();
-      final userRole = _authMode == AuthMode.staffLogin
-          ? UserRole.assistant
-          : UserRole.dentist;
+      UserRole userRole = userProfile?.role ?? UserRole.dentist;
+      
       await prefs.setString('userRole', userRole.toString());
+      await ref.refresh(userProfileProvider.future);
 
       ref
           .read(auditServiceProvider)
           .logEvent(
             _authMode == AuthMode.login
                 ? AuditAction.login
-                : AuditAction.createPatient, // Placeholder
+                : AuditAction.createPatient,
             details:
                 '${_authMode == AuthMode.login ? 'User logged in' : 'User registered'}: ${_emailController.text}',
           );
@@ -141,7 +253,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         message = 'No user found for that email.';
       } else if (e.code == 'wrong-password') {
         message = 'Wrong password provided for that user.';
+      } else if (e.code == 'network-request-failed') { 
+         // Handle Offline Login fallback manually here if needed, 
+         // but _checkAutoLogin handles app start. 
+         // If user explicitly clicks "Login" while offline, we could try local auth if "remember me" was set?
+         // For now let's keep it simple.
+         message = 'Network error. check your connection.';
       }
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.red),
@@ -163,34 +282,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
   }
 
-  Future<void> _authenticateStaff() async {
-    // For staff login, we need to find a dentist first
-    // In a real implementation, this would scan for available dentists on the LAN
-    // For now, we'll show a dentist selection dialog
+  void _showActivationDialog(String uid) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ActivationDialog(uid: uid),
+      );
+  }
 
-    // This is a simplified version - in production, this would discover dentists via LAN
-    final dentistProfiles = await _showDentistSelectionDialog();
 
-    if (dentistProfiles.isEmpty) {
+  Future<UserProfile?> _authenticateStaff() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Use the dentist UID from the last logged in dentist on this machine
+    final dentistUid = prefs.getString('lastLoggedInDentistId');
+
+    if (dentistUid == null) {
       throw Exception(
-        'No dentists found. Please ensure you are connected to the clinic network.',
+        'No clinic data found on this device. A Dentist must login first to initialize the clinic.',
       );
     }
 
-    // Try to authenticate with each available dentist
-    UserProfile? authenticatedUser;
-    for (final dentist in dentistProfiles) {
-      try {
-        authenticatedUser = await _firebaseService.authenticateManagedUser(
-          dentist.uid,
-          _usernameController.text.trim(),
-          _pinController.text.trim(),
-        );
-        if (authenticatedUser != null) break;
-      } catch (e) {
-        continue; // Try next dentist
-      }
-    }
+    final staffService = ref.read(staffServiceProvider);
+    final authenticatedUser = await staffService.authenticateStaff(
+      dentistUid,
+      _usernameController.text.trim(),
+      _pinController.text.trim(),
+    );
 
     if (authenticatedUser == null) {
       throw Exception(
@@ -199,12 +316,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
 
     // Store the authenticated managed user profile
-    // In a real app, this would be stored securely and used throughout the session
-    final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       'managedUserProfile',
-      authenticatedUser.toJson().toString(),
+      jsonEncode(authenticatedUser.toJson()),
     );
+    
+    // Set the role for routing/access control
+    await prefs.setString('userRole', authenticatedUser.role.toString());
+    
+    return authenticatedUser;
   }
 
   Future<List<UserProfile>> _showDentistSelectionDialog() async {
@@ -903,20 +1023,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               const SizedBox(height: 16),
 
                               // Terms and Conditions
-                              CheckboxListTile(
-                                title: Text(
-                                  'I accept the Terms and Conditions',
-                                  style: GoogleFonts.poppins(fontSize: 12),
+                              if (_authMode == AuthMode.register)
+                                CheckboxListTile(
+                                  title: Text(
+                                    'I accept the Terms and Conditions',
+                                    style: GoogleFonts.poppins(fontSize: 12),
+                                  ),
+                                  value: _acceptTerms,
+                                  onChanged: (value) {
+                                    setState(() => _acceptTerms = value ?? false);
+                                  },
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                  contentPadding: EdgeInsets.zero,
                                 ),
-                                value: _acceptTerms,
-                                onChanged: (value) {
-                                  setState(() => _acceptTerms = value ?? false);
-                                },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                            ],
+                              
+                            ], // Close register block
 
                             const SizedBox(height: 24),
 
@@ -956,6 +1078,41 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       ),
                                     ),
                             ),
+
+                            const SizedBox(height: 16),
+                            
+                            // Remember Me (Moved Here)
+                            if (_authMode == AuthMode.login)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.check_circle_outline, 
+                                        size: 20, color: Colors.grey),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Remember Me',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: isDark ? Colors.white70 : Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Transform.scale(
+                                        scale: 0.8,
+                                        child: Switch(
+                                          value: _rememberMe,
+                                          activeColor: colorScheme.primary,
+                                          onChanged: (value) {
+                                              setState(() => _rememberMe = value);
+                                          },
+                                        ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
                             const SizedBox(height: 16),
 

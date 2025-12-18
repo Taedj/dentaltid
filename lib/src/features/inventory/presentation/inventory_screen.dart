@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,17 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   Future<void> _showAddEditDialog({InventoryItem? item}) async {
     final l10n = AppLocalizations.of(context)!;
+
+    if (item == null) {
+      final userProfile = ref.read(userProfileProvider).value;
+      if (userProfile != null && !userProfile.isPremium) {
+          if (userProfile.cumulativeInventory >= 100) {
+              _showLimitDialog(context);
+              return;
+          }
+      }
+    }
+
     await showDialog(
       context: context,
       builder: (context) => AddInventoryItemDialog(
@@ -40,10 +52,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               await ref
                   .read(inventoryServiceProvider)
                   .addInventoryItem(newItem);
+              
+              if (!mounted) return;
+
+              // Increment
+              final userProfile = ref.read(userProfileProvider).value;
+              if (userProfile != null) {
+                  ref.read(firebaseServiceProvider).incrementInventoryCount(userProfile.uid).then((_) {
+                       if (mounted) ref.invalidate(userProfileProvider);
+                  });
+              }
             } else {
               await ref
                   .read(inventoryServiceProvider)
                   .updateInventoryItem(newItem);
+              if (!mounted) return;
             }
             ref.invalidate(inventoryItemsProvider);
           } catch (e) {
@@ -75,6 +98,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             await ref
                 .read(inventoryServiceProvider)
                 .updateInventoryItem(updatedItem);
+            if (!mounted) return;
             ref.invalidate(inventoryItemsProvider);
           } catch (e) {
             if (context.mounted) {
@@ -96,15 +120,57 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     super.dispose();
   }
 
+  void _showLimitDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Limit Reached'),
+          content: const Text('You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            )
+          ],
+        ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final inventoryService = ref.watch(inventoryServiceProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    final userProfile = ref.watch(userProfileProvider).value;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.inventory),
+        title: Row(
+          children: [
+            Text(l10n.inventory),
+            if (userProfile != null && !userProfile.isPremium)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange),
+                    ),
+                    child: Text(
+                      '${userProfile.cumulativeInventory}/100',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.orange,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                ),
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(_showExpiredOnly ? Icons.warning : Icons.inventory),

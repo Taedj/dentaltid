@@ -8,7 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
 class AddTransactionScreen extends ConsumerStatefulWidget {
-  const AddTransactionScreen({super.key});
+  final Transaction? transaction;
+  const AddTransactionScreen({super.key, this.transaction});
 
   @override
   ConsumerState<AddTransactionScreen> createState() =>
@@ -17,12 +18,12 @@ class AddTransactionScreen extends ConsumerStatefulWidget {
 
 class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _categoryController = TextEditingController();
-  TransactionType _type = TransactionType.expense;
-  DateTime _date = DateTime.now();
-  String _selectedCategory = 'Other';
+  late final TextEditingController _amountController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _categoryController;
+  late TransactionType _type;
+  late DateTime _date;
+  late String _selectedCategory;
 
   final List<String> _expenseCategories = [
     'Rent',
@@ -42,6 +43,27 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     'Product Sales',
     'Other',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController(
+      text: widget.transaction?.totalAmount.toString() ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.transaction?.description ?? '',
+    );
+    _categoryController = TextEditingController();
+    _type = widget.transaction?.type ?? TransactionType.expense;
+    _date = widget.transaction?.date ?? DateTime.now();
+    _selectedCategory = widget.transaction?.category ?? 'Other';
+    
+    // Ensure selected category is valid for the current type
+    final categories = _type == TransactionType.expense ? _expenseCategories : _incomeCategories;
+    if (!categories.contains(_selectedCategory)) {
+        _selectedCategory = categories.first;
+    }
+  }
 
   @override
   void dispose() {
@@ -72,25 +94,45 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
       try {
         final amount = double.parse(_amountController.text);
-        final transaction = Transaction(
-          description: _descriptionController.text.isEmpty
-              ? _selectedCategory
-              : _descriptionController.text,
-          totalAmount: amount,
-          paidAmount: amount, // Assume fully paid for manual entry
-          type: _type,
-          date: _date,
-          sourceType: TransactionSourceType.other, // Manual entry
-          category: _selectedCategory,
-          status: TransactionStatus.paid,
-        );
+        final transaction = widget.transaction?.copyWith(
+              description: _descriptionController.text.isEmpty
+                  ? _selectedCategory
+                  : _descriptionController.text,
+              totalAmount: amount,
+              paidAmount: amount,
+              type: _type,
+              date: _date,
+              category: _selectedCategory,
+            ) ??
+            Transaction(
+              description: _descriptionController.text.isEmpty
+                  ? _selectedCategory
+                  : _descriptionController.text,
+              totalAmount: amount,
+              paidAmount: amount, // Assume fully paid for manual entry
+              type: _type,
+              date: _date,
+              sourceType: TransactionSourceType.other, // Manual entry
+              category: _selectedCategory,
+              status: TransactionStatus.paid,
+            );
 
-        await financeService.addTransaction(transaction);
+        if (widget.transaction != null) {
+          await financeService.updateTransaction(transaction);
+        } else {
+          await financeService.addTransaction(transaction);
+        }
 
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(l10n.transactionAddedSuccess)));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                widget.transaction != null
+                    ? 'Transaction updated successfully'
+                    : l10n.transactionAddedSuccess,
+              ),
+            ),
+          );
           context.pop();
         }
       } catch (e) {
@@ -111,7 +153,11 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
         : _incomeCategories;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.addTransaction)),
+      appBar: AppBar(
+        title: Text(
+          widget.transaction != null ? 'Edit Transaction' : l10n.addTransaction,
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(

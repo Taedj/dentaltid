@@ -136,6 +136,15 @@ class FirebaseService {
     return snapshot.docs.map((doc) => Patient.fromJson(doc.data())).toList();
   }
 
+  Future<void> deleteSyncedPatient(String uid, int patientId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('patients')
+        .doc(patientId.toString())
+        .delete();
+  }
+
   // Appointments Management
   Future<void> syncAppointment(String uid, Appointment appointment) async {
     await _firestore
@@ -160,6 +169,15 @@ class FirebaseService {
     return snapshot.docs
         .map((doc) => Appointment.fromJson(doc.data()))
         .toList();
+  }
+
+  Future<void> deleteSyncedAppointment(String uid, int appointmentId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('appointments')
+        .doc(appointmentId.toString())
+        .delete();
   }
 
   // Finance/Transactions Management
@@ -191,6 +209,15 @@ class FirebaseService {
         .toList();
   }
 
+  Future<void> deleteSyncedTransaction(String uid, int transactionId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('finance')
+        .doc(transactionId.toString())
+        .delete();
+  }
+
   // Inventory Management
   Future<void> syncInventoryItem(String uid, InventoryItem item) async {
     await _firestore
@@ -212,6 +239,15 @@ class FirebaseService {
     return snapshot.docs
         .map((doc) => InventoryItem.fromJson(doc.data()))
         .toList();
+  }
+
+  Future<void> deleteSyncedInventoryItem(String uid, int itemId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('inventory')
+        .doc(itemId.toString())
+        .delete();
   }
 
   // Backup Management (Legacy - keeping for compatibility)
@@ -434,5 +470,141 @@ class FirebaseService {
       return UserProfile.fromJson(snapshot.docs.first.data());
     }
     return null;
+  }
+  Future<bool> redeemActivationCode(String uid, String code) async {
+    try {
+      _logger.info('Attempting to redeem code: $code for user: $uid');
+      final upperCode = code.toUpperCase();
+
+      // 1. Find the code document
+      final query = await _firestore
+          .collection('activation_codes')
+          .where('code', isEqualTo: upperCode)
+          .where('isRedeemed', isEqualTo: false)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        _logger.warning('Code not found or already redeemed');
+        return false;
+      }
+
+      final codeDoc = query.docs.first;
+      final durationMonths = codeDoc.data()['durationMonths'] as int? ?? 0;
+
+      if (durationMonths <= 0) {
+        _logger.severe('Invalid durationMonths: $durationMonths');
+        return false;
+      }
+
+      // 2. Mark code as redeemed
+      await codeDoc.reference.update({
+        'isRedeemed': true,
+        'redeemedBy': uid,
+        'redeemedAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3. Get User Profile
+      final userParamsRef = _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('profile')
+          .doc('info');
+      
+      final userDoc = await userParamsRef.get();
+      if (!userDoc.exists) {
+        _logger.warning('User profile not found');
+        return false;
+      }
+      // 3. Calculate new expiry
+    // If multiple codes are redeemed, stack the duration? No, usually extends from current premium expiry or now.
+    
+    DateTime currentExpiry = DateTime.now();
+    final userProfile = await getUserProfile(uid);
+    if (userProfile != null && userProfile.isPremium && userProfile.premiumExpiryDate != null) {
+       // If already premium and not expired, extend from existing expiry
+       if (userProfile.premiumExpiryDate!.isAfter(DateTime.now())) {
+         currentExpiry = userProfile.premiumExpiryDate!;
+       }
+    } else {
+        // Try getting current expiry from somewhere else? No, default to Now.
+        // There was a logic reading 'premiumExpiryDate' from userParamsRef before, but we have userProfile now.
+    }
+
+    // Capture User Info for the Code Document
+    final userEmail = userProfile?.email;
+    final userPhone = userProfile?.phoneNumber;
+
+    // 2. Mark code as redeemed (Optimistic update or Transaction?)
+    // Using transaction would be safer but let's stick to simple updates for now as per codebase style
+    await codeDoc.reference.update({
+      'isRedeemed': true,
+      'redeemedBy': uid,
+      'redeemedAt': FieldValue.serverTimestamp(),
+      'redeemedByEmail': userEmail,
+      'redeemedByPhone': userPhone,
+    });
+      
+      final newExpiry = currentExpiry.add(Duration(days: 30 * durationMonths));
+
+      // 4. Update User Profile
+      await userParamsRef.update({
+        'isPremium': true,
+        'plan': SubscriptionPlan.professional.toString(),
+        'premiumExpiryDate': newExpiry.toIso8601String(),
+        'status': SubscriptionStatus.active.toString(),
+      });
+
+      _logger.info('Account activated successfully');
+      return true;
+    } catch (e, s) {
+      _logger.severe('Error redeeming code: $e', e, s);
+      return false;
+    }
+  }
+
+  // --- Usage Tracking Helpers ---
+  
+  Future<void> incrementPatientCount(String uid) async {
+     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
+       'cumulativePatients': FieldValue.increment(1),
+     });
+  }
+
+  Future<void> incrementAppointmentCount(String uid) async {
+     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
+       'cumulativeAppointments': FieldValue.increment(1),
+     });
+  }
+
+  Future<void> incrementInventoryCount(String uid) async {
+     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
+       'cumulativeInventory': FieldValue.increment(1),
+     });
+  }
+
+  // --- Developer Tools ---
+
+  Future<void> createActivationCode({
+    required String code,
+    required int durationMonths,
+    required String type, // 'trial_extension', 'full_premium'
+    String? assignedToEmail,
+  }) async {
+    try {
+      await _firestore.collection('activation_codes').add({
+        'code': code.toUpperCase(),
+        'durationMonths': durationMonths,
+        'type': type,
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRedeemed': false,
+        'redeemedBy': null,
+        'redeemedAt': null,
+        'assignedToEmail': assignedToEmail,
+      });
+    } catch (e) {
+      _logger.severe('Error creating activation code', e);
+      throw Exception('Failed to create activation code: $e');
+    }
   }
 }

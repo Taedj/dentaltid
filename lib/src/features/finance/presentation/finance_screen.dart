@@ -113,6 +113,38 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     }
   }
 
+  Future<void> _deleteTransaction(Transaction transaction) async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.deleteTransaction),
+        content: Text('Are you sure you want to delete this transaction?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && transaction.id != null) {
+      final financeService = ref.read(financeServiceProvider);
+      await financeService.deleteTransaction(transaction.id!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transaction deleted successfully')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final filters = FinanceFilters(
@@ -124,6 +156,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
     );
     final transactionsAsyncValue = ref.watch(
       filteredTransactionsProvider(filters),
+    );
+    final actualTransactionsAsyncValue = ref.watch(
+      actualTransactionsProvider(filters),
     );
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -158,9 +193,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
           double totalExpense = 0;
           for (var t in transactions) {
             if (t.type == TransactionType.income) {
-              totalIncome += t.totalAmount;
+              totalIncome += t.paidAmount; // Actual money received
             } else {
-              totalExpense += t.totalAmount;
+              totalExpense += t.totalAmount; // Expenses are usually fully billed
             }
           }
           double netProfit = totalIncome - totalExpense;
@@ -284,60 +319,113 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
               // 4. Detailed Transaction List
               Text(l10n.transactions, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 8),
-              if (transactions.isEmpty)
-                Padding(
-                  padding: EdgeInsets.all(32.0),
-                  child: Center(child: Text(l10n.noTransactionsFound)),
-                )
-              else
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: transactions.length,
-                  itemBuilder: (context, index) {
-                    final transaction = transactions[index];
-                    final isIncome = transaction.type == TransactionType.income;
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 4.0),
-                      elevation: 0,
-                      color: theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.3),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: isIncome
-                              ? Colors.green.withValues(alpha: 0.1)
-                              : Colors.red.withValues(alpha: 0.1),
-                          child: Icon(
-                            isIncome
-                                ? Icons.arrow_downward
-                                : Icons.arrow_upward,
-                            color: isIncome ? Colors.green : Colors.red,
-                            size: 20,
-                          ),
-                        ),
-                        title: Text(
-                          transaction.description,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        subtitle: Text(
-                          '${DateFormat.yMMMd().format(transaction.date.toLocal())} • ${transaction.category}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        trailing: Text(
-                          '${isIncome ? '+' : '-'}${_formatCurrency(transaction.totalAmount, currency, currentLocale, useCompact: false)}',
-                          style: TextStyle(
-                            color: isIncome ? Colors.green : Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+              actualTransactionsAsyncValue.when(
+                data: (actualTransactions) {
+                  if (actualTransactions.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(child: Text(l10n.noTransactionsFound)),
                     );
-                  },
-                ),
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: actualTransactions.length,
+                    itemBuilder: (context, index) {
+                      final transaction = actualTransactions[index];
+                      final isIncome =
+                          transaction.type == TransactionType.income;
+                      return Card(
+                        margin: const EdgeInsets.symmetric(vertical: 4.0),
+                        elevation: 0,
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: isIncome
+                                ? Colors.green.withValues(alpha: 0.1)
+                                : Colors.red.withValues(alpha: 0.1),
+                            child: Icon(
+                              isIncome
+                                  ? Icons.arrow_downward
+                                  : Icons.arrow_upward,
+                              color: isIncome ? Colors.green : Colors.red,
+                              size: 20,
+                            ),
+                          ),
+                          title: Text(
+                            transaction.description,
+                            style: const TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${DateFormat.yMMMd().format(transaction.date.toLocal())} • ${transaction.category}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                '${isIncome ? '+' : '-'}${_formatCurrency(transaction.totalAmount, currency, currentLocale, useCompact: false)}',
+                                style: TextStyle(
+                                  color: isIncome ? Colors.green : Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                          trailing: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                context.go(
+                                  '/finance/edit-transaction',
+                                  extra: transaction,
+                                );
+                              } else if (value == 'delete') {
+                                _deleteTransaction(transaction);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.edit, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(l10n.edit),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.delete,
+                                      size: 20,
+                                      color: Colors.red,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      l10n.delete,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stack) => Center(child: Text('Error: $error')),
+              ),
             ],
           );
         },

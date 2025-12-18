@@ -11,10 +11,10 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  archive: ^4.0.7
+  archive: ^3.3.2
   cloud_firestore: ^6.1.0
   csv: ^6.0.0
-  file_picker: ^10.3.3
+  file_picker: ^8.1.2
   firebase_core: ^4.2.1
   firebase_storage: ^13.0.4
   fl_chart: ^1.1.1
@@ -43,7 +43,31 @@ dev_dependencies:
   flutter_gen: ^5.0.0
   build_runner: ^2.1.11
   mockito: ^5.6.1
+  flutter_distributor: ^0.0.2
 
 flutter:
   uses-material-design: true
   generate: true
+
+flutter_distributor:
+  releases:
+    - name: windows-x64
+      jobs:
+        - name: release
+          package:
+            platform: windows
+            target: exe
+          artifacts:
+            - path: build/windows/x64/runner/Release/dentaltid.exe
+          args:
+            installer: inno
+    - name: windows-x86
+      jobs:
+        - name: release
+          package:
+            platform: windows
+            target: exe
+          artifacts:
+            - path: build/windows/x86/runner/Release/dentaltid.exe
+          args:
+            installer: inno

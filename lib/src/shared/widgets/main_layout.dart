@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key, required this.child});
@@ -28,13 +30,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final prefs = await SharedPreferences.getInstance();
     final roleString = prefs.getString('userRole');
     if (roleString != null) {
-      setState(() {
-        _currentUserRole = UserRole.values.firstWhere(
-          (e) => e.toString() == roleString,
-          orElse: () => UserRole.receptionist,
-        );
-      });
+      if (mounted) {
+        setState(() {
+          _currentUserRole = UserRole.values.firstWhere(
+            (e) => e.toString() == roleString,
+            orElse: () => UserRole.receptionist,
+          );
+        });
+      }
     }
+  }
+
+  Future<void> _handleTrialExpiration() async {
+      // 1. Clear Remember Me
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('remember_me', false);
+      
+      // 2. Sign Out Firebase (if online, best effort)
+      await FirebaseAuth.instance.signOut();
+
+      // 3. Redirect to Login and Show Dialog implies next login
+      if (mounted) {
+          GoRouter.of(context).go('/login');
+      }
   }
 
   int _calculateSelectedIndex(
@@ -42,6 +60,16 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     List<NavigationRailDestination> destinations,
     AppLocalizations l10n,
   ) {
+      // DEVELOPER Logic
+      if (_currentUserRole == UserRole.developer) {
+          if (location.endsWith('/users')) return 1;
+          if (location.endsWith('/codes')) return 2;
+          if (location.endsWith('/broadcasts')) return 3;
+          if (location.startsWith('/settings')) return 4;
+          return 0; // /developer overview
+      }
+      
+      // DENTIST Logic
     if (location.startsWith('/patients')) {
       return destinations.indexWhere(
         (destination) => (destination.label as Text).data == l10n.patients,
@@ -71,64 +99,73 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen for Trial Expiration
+    ref.listen(userProfileProvider, (previous, next) {
+        next.whenData((profile) {
+            if (profile != null && profile.isTrialExpired) {
+                _handleTrialExpiration();
+            }
+        });
+    });
+
     final l10n = AppLocalizations.of(context)!;
     final location = GoRouterState.of(context).uri.toString();
 
-    final List<NavigationRailDestination> destinations = [
-      NavigationRailDestination(
-        icon: const Icon(Icons.dashboard_outlined),
-        selectedIcon: const Icon(Icons.dashboard),
-        label: Text(l10n.dashboard),
-      ),
-      NavigationRailDestination(
-        icon: const Icon(Icons.people_outline),
-        selectedIcon: const Icon(Icons.people),
-        label: Text(l10n.patients),
-      ),
-    ];
-
-    if (_currentUserRole == UserRole.dentist ||
-        _currentUserRole == UserRole.receptionist) {
-      destinations.add(
-        NavigationRailDestination(
-          icon: const Icon(Icons.calendar_today_outlined),
-          selectedIcon: const Icon(Icons.calendar_today),
-          label: Text(l10n.appointments),
-        ),
-      );
+    final List<NavigationRailDestination> destinations = [];
+    
+    // --- DESTINATION BUILDER ---
+    if (_currentUserRole == UserRole.developer) {
+        // Developer Sidebar
+        destinations.add(const NavigationRailDestination(icon: Icon(Icons.analytics_outlined), selectedIcon: Icon(Icons.analytics), label: Text('Overview')));
+        destinations.add(const NavigationRailDestination(icon: Icon(Icons.group_outlined), selectedIcon: Icon(Icons.group), label: Text('Users')));
+        destinations.add(const NavigationRailDestination(icon: Icon(Icons.vpn_key_outlined), selectedIcon: Icon(Icons.vpn_key), label: Text('Codes')));
+        destinations.add(const NavigationRailDestination(icon: Icon(Icons.campaign_outlined), selectedIcon: Icon(Icons.campaign), label: Text('Broadcasts')));
+    } else {
+        // Dentist Sidebar
+        destinations.add(NavigationRailDestination(
+            icon: const Icon(Icons.dashboard_outlined),
+            selectedIcon: const Icon(Icons.dashboard),
+            label: Text(l10n.dashboard),
+        ));
+         destinations.add(NavigationRailDestination(
+            icon: const Icon(Icons.people_outline),
+            selectedIcon: const Icon(Icons.people),
+            label: Text(l10n.patients),
+        ));
+         if (_currentUserRole == UserRole.dentist || _currentUserRole == UserRole.receptionist) {
+           destinations.add(NavigationRailDestination(
+                icon: const Icon(Icons.calendar_today_outlined),
+                selectedIcon: const Icon(Icons.calendar_today),
+                label: Text(l10n.appointments),
+            ));
+        }
+        if (_currentUserRole == UserRole.dentist || _currentUserRole == UserRole.assistant) {
+             destinations.add(NavigationRailDestination(
+                  icon: const Icon(Icons.inventory_outlined),
+                  selectedIcon: const Icon(Icons.inventory),
+                  label: Text(l10n.inventory),
+            ));
+        }
+        if (_currentUserRole == UserRole.dentist || _currentUserRole == UserRole.receptionist) {
+             destinations.add(NavigationRailDestination(
+                  icon: const Icon(Icons.assessment_outlined),
+                  selectedIcon: const Icon(Icons.assessment),
+                  label: Text(l10n.finance),
+             ));
+        }
     }
 
-    if (_currentUserRole == UserRole.dentist ||
-        _currentUserRole == UserRole.assistant) {
-      destinations.add(
-        NavigationRailDestination(
-          icon: const Icon(Icons.inventory_outlined),
-          selectedIcon: const Icon(Icons.inventory),
-          label: Text(l10n.inventory),
-        ),
-      );
-    }
-
-    if (_currentUserRole == UserRole.dentist ||
-        _currentUserRole == UserRole.receptionist) {
-      destinations.add(
-        NavigationRailDestination(
-          icon: const Icon(Icons.assessment_outlined),
-          selectedIcon: const Icon(Icons.assessment),
-          label: Text(l10n.finance),
-        ),
-      );
-    }
-
-    destinations.add(
-      NavigationRailDestination(
+    // Settings is Common
+    destinations.add(NavigationRailDestination(
         icon: const Icon(Icons.settings_outlined),
         selectedIcon: const Icon(Icons.settings),
         label: Text(l10n.settings),
-      ),
-    );
+    ));
 
     int selectedIndex = _calculateSelectedIndex(location, destinations, l10n);
+    // Safety check for index out of bounds
+    if (selectedIndex < 0 || selectedIndex >= destinations.length) selectedIndex = 0;
+
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -156,22 +193,27 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             child: NavigationRail(
               selectedIndex: selectedIndex,
               onDestinationSelected: (int index) {
-                String route = '/'; // Default route
-                if (index < destinations.length) {
-                  final destinationLabel =
-                      (destinations[index].label as Text).data;
-                  if (destinationLabel == l10n.patients) {
-                    route = '/patients';
-                  } else if (destinationLabel == l10n.appointments) {
-                    route = '/appointments';
-                  } else if (destinationLabel == l10n.inventory) {
-                    route = '/inventory';
-                  } else if (destinationLabel == l10n.finance) {
-                    route = '/finance';
-                  } else if (destinationLabel == l10n.settings) {
-                    route = '/settings';
-                  }
+                String route = '/'; // Default
+                
+                if (_currentUserRole == UserRole.developer) {
+                    switch(index) {
+                        case 0: route = '/developer'; break;
+                        case 1: route = '/developer/users'; break;
+                        case 2: route = '/developer/codes'; break;
+                        case 3: route = '/developer/broadcasts'; break;
+                        case 4: route = '/settings'; break; // Settings is always last
+                    }
+                } else {
+                     // Dentist Logic
+                    final destinationLabel = (destinations[index].label as Text).data;
+                     if (destinationLabel == l10n.patients) route = '/patients';
+                     else if (destinationLabel == l10n.appointments) route = '/appointments';
+                     else if (destinationLabel == l10n.inventory) route = '/inventory';
+                     else if (destinationLabel == l10n.finance) route = '/finance';
+                     else if (destinationLabel == l10n.settings) route = '/settings';
+                     else route = '/';
                 }
+                
                 GoRouter.of(context).go(route);
               },
               labelType: NavigationRailLabelType.all,

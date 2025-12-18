@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Broadcasts - Public read, Developer write
+    match /broadcasts/{broadcastId} {
+      allow read: if isAuthenticated();
+      allow write: if isDeveloper();
+    }
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Helper function to check if user is a developer
+    function isDeveloper() {
+       return isAuthenticated() && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)/profile/info).data.role == 'UserRole.developer';
+    }
+
+    // Collection Group rule for Developer Overview/User Management
+    match /{path=**}/profile/{document} {
+      allow read: if isDeveloper();
+      allow write: if isDeveloper();
+    }
+
+    // Users collection and all subcollections
+    match /users/{userId}/{document=**} {
+      allow read, write: if isDeveloper();
+      allow create: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow update: if isOwner(userId) && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+    }
+    
+    // Allow users to query managed users group if they are the owner (covered above by recursive wildcard?)
+    // No, collection group queries are different, but for direct subcollection access, the above covers it.
+    
+    // Activation Codes
+    match /activation_codes/{codeId} {
+      // Allow any authenticated user to create codes (for dev tools)
+      // In production, you might want to restrict this to specific admin UIDs
+      allow create: if isAuthenticated();
+      
+      // Allow reading codes (to check validity/redeem)
+      allow read: if isAuthenticated();
+      
+      // Allow updating (to mark as redeemed)
+      allow update: if isAuthenticated();
+    }
+    
+    // Backups (Legacy collection)
+    match /backups/{backupId} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

@@ -1,10 +1,12 @@
 import 'package:dentaltid/src/core/exceptions.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:dentaltid/src/features/appointments/application/appointment_service.dart'; // Add this import
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {
   const AddEditPatientScreen({super.key, this.patient});
@@ -249,12 +251,21 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                   ),
                 ),
 
-                Padding(
+                  Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         try {
+                          // License Limit Check
+                          final userProfile = ref.read(userProfileProvider).value;
+                          if (widget.patient == null && userProfile != null && !userProfile.isPremium) {
+                              if (userProfile.cumulativePatients >= 100) {
+                                  _showLimitDialog(context);
+                                  return;
+                              }
+                          }
+
                           final newPatient = Patient(
                             id: widget.patient?.id,
                             name: _nameController.text,
@@ -279,6 +290,16 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
 
                           if (widget.patient == null) {
                             await patientService.addPatient(newPatient);
+                            
+                            if (!mounted) return;
+
+                            // Increment Counter
+                            if (userProfile != null) {
+                               ref.read(firebaseServiceProvider).incrementPatientCount(userProfile.uid).then((_) {
+                                  if (mounted) ref.invalidate(userProfileProvider);
+                               });
+                            }
+
                             ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
                               patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
@@ -289,6 +310,9 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                             ref.invalidate(todaysEmergencyAppointmentsProvider);
                           } else {
                             await patientService.updatePatient(newPatient);
+                            
+                            if (!mounted) return;
+
                             ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
                               patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
@@ -327,5 +351,21 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
         ),
       ),
     );
+  }
+
+  void _showLimitDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Limit Reached'),
+          content: const Text('You have reached the limit of 100 created patients for the Trial version.\nPlease upgrade to Premium to continue adding patients.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            )
+          ],
+        ),
+      );
   }
 }

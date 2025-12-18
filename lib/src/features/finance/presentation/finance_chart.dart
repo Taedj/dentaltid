@@ -96,7 +96,7 @@ class _ProfitTrendChart extends ConsumerWidget {
       );
       if (transaction.type == TransactionType.income) {
         dailyIncome[dateKey] =
-            (dailyIncome[dateKey] ?? 0) + transaction.totalAmount;
+            (dailyIncome[dateKey] ?? 0) + transaction.paidAmount;
       } else {
         dailyExpense[dateKey] =
             (dailyExpense[dateKey] ?? 0) + transaction.totalAmount;

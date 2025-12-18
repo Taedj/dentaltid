@@ -56,6 +56,7 @@
   "confirmDeleteAppointment": "هل أنت متأكد أنك تريد حذف هذا الموعد؟",
   "confirm": "تأكيد",
   "welcomeDr": "مرحباً د.",
+  "welcome": "مرحباً",
   "totalNumberOfPatients": "إجمالي عدد المرضى",
   "emergencyPatients": "مرضى الطوارئ",
   "upcomingAppointments": "المواعيد القادمة",
@@ -339,5 +340,92 @@
   "cancelled": "ملغى",
   "unknownPatient": "مريض غير معروف",
   "loading": "جار التحميل...",
-  "errorLabel": "خطأ"
+  "errorLabel": "خطأ",
+  "delete": "حذف",
+  "deleteTransaction": "حذف المعاملة",
+  "premiumAccount": "حساب بريميوم",
+  "premiumDaysLeft": "بريميوم: متبقي {days} يوم",
+  "@premiumDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "premiumExpired": "انتهى البريميوم",
+  "trialVersionDaysLeft": "النسخة التجريبية: متبقي {days} يوم",
+  "@trialVersionDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "trialExpired": "انتهت الفترة التجريبية",
+  "activatePremium": "تفعيل البريميوم",
+  "financeSettings": "إعدادات المالية",
+  "includeInventoryCosts": "تضمين تكاليف المخزون",
+  "includeAppointments": "تضمين المواعيد",
+  "includeRecurringCharges": "تضمين الرسوم المتكررة",
+  "compactNumbers": "أرقام مدمجة (مثال: 1K)",
+  "compactNumbersSubtitle": "استخدم تنسيقاً قصيراً للأرقام الكبيرة",
+  "monthlyBudgetCap": "الحد الأقصى للميزانية الشهرية",
+  "taxRatePercentage": "معدل الضريبة (%)",
+  "staffManagement": "إدارة الموظفين",
+  "addAssistant": "إضافة مساعد",
+  "addReceptionist": "إضافة موظف استقبال",
+  "currentStaff": "الموظفون الحاليون",
+  "noStaffAdded": "لم يتم إضافة موظفين بعد",
+  "changePin": "تغيير رمز PIN",
+  "removeStaff": "إزالة الموظف",
+  "updatePin": "تحديث رمز PIN",
+  "newPin": "رمز PIN جديد (4 أرقام)",
+  "username": "اسم المستخدم",
+  "enterUsername": "أدخل اسم المستخدم للموظف",
+  "addStaff": "إضافة موظف",
+  "staffAddedSuccess": "تم إضافة الموظف بنجاح",
+  "staffRemovedSuccess": "تم إزالة الموظف",
+  "pinUpdatedSuccess": "تم تحديث رمز PIN بنجاح",
+  "deleteStaffTitle": "حذف موظف",
+  "deleteStaffConfirm": "هل أنت متأكد أنك تريد إزالة {username}؟",
+  "@deleteStaffConfirm": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "roleAssistant": "مساعد",
+  "roleReceptionist": "موظف استقبال",
+  "roleDentist": "طبيب أسنان",
+  "roleDeveloper": "مطور",
+  "overpaid": "مدفوع بالزيادة: {amount}",
+  "@overpaid": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "due": "مستحق: {amount}",
+  "@due": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "fullyPaid": "مدفوع بالكامل",
+  "appointmentPaymentDescription": "دفع موعد لـ {type}",
+  "@appointmentPaymentDescription": {
+    "placeholders": {
+      "type": {
+        "type": "String"
+      }
+    }
+  },
+  "proratedLabel": "تناسبي",
+  "days": "أيام",
+  "status": "الحالة",
+  "deleteVisit": "حذف الزيارة"
 }

@@ -40,8 +40,14 @@ class BackupService {
         _logger.warning('Database file does not exist at $dbPath');
         return null;
       }
+
+      // CRITICAL: Close the database connection to ensure all data is flushed to disk (WAL checkpoint)
+      // and to avoid file locking issues during copy.
+      await DatabaseService.instance.close();
+      _logger.info('Database closed for backup.');
+
       _logger.info(
-        'Database file found, size: ${databaseFile.lengthSync()} bytes',
+         'Database file found, size: ${databaseFile.lengthSync()} bytes',
       );
 
       final encoder = ZipEncoder();
@@ -53,15 +59,15 @@ class BackupService {
           databaseFile.readAsBytesSync(),
         ),
       );
-
+      
       final backupFileName =
-          'dentaltid_backup_$DateTime.now().millisecondsSinceEpoch.zip';
+          'dentaltid_backup_${DateTime.now().millisecondsSinceEpoch}.zip';
 
       final tempDir = await Directory.systemTemp.createTemp();
       final tempFilePath = join(tempDir.path, backupFileName);
       final zipFile = File(tempFilePath);
       final output = zipFile.openWrite();
-      output.writeAll(encoder.encode(archive));
+      output.add(encoder.encode(archive)!);
       await output.close();
 
       // Encrypt the zip file
@@ -159,7 +165,7 @@ class BackupService {
       for (final file in archive.files) {
         if (file.name == 'dentaltid.db') {
           final output = databaseFile.openWrite();
-          output.writeAll(file.content as List<int>);
+          output.add(file.content!);
           await output.close();
           break;
         }

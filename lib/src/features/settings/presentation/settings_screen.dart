@@ -1,16 +1,17 @@
 import 'package:dentaltid/src/core/theme_provider.dart';
 import 'package:flutter/material.dart';
-import 'package:dentaltid/src/core/backup_service.dart';
+import 'package:dentaltid/src/core/firebase_service.dart';
+import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/features/settings/application/finance_settings_provider.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
-
-import 'package:dentaltid/src/core/firebase_service.dart';
+import 'package:dentaltid/src/core/backup_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -164,32 +165,40 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     : Text(l10n.createLocalBackup),
               ),
               const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        setState(() {
-                          _isLoading = true;
-                        });
-                        final success = await backupService.restoreBackup();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                success
-                                    ? l10n.backupRestoredSuccessfully
-                                    : l10n.restoreFailedOrCancelled,
-                              ),
-                            ),
-                          );
-                        }
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      },
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(l10n.restoreFromLocalBackup),
+              // Restore Backup - Restricted
+              userProfileAsync.when(
+                  data: (userProfile) {
+                      final isPremium = userProfile?.isPremium ?? false;
+                      return ElevatedButton(
+                        onPressed: (_isLoading || !isPremium)
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                final success = await backupService.restoreBackup();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? l10n.backupRestoredSuccessfully
+                                            : l10n.restoreFailedOrCancelled,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              },
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : Text(isPremium ? l10n.restoreFromLocalBackup : "${l10n.restoreFromLocalBackup} (Premium Only)"),
+                      );
+                  },
+                  loading: () => const CircularProgressIndicator(),
+                  error: (_, __) => const SizedBox(),
               ),
               const Divider(height: 40),
 
@@ -210,57 +219,75 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () async {
-                                  setState(() {
-                                    _isLoading = true;
-                                  });
-                                  final user = _firebaseService
-                                      .getCurrentUser();
-
-                                  if (user == null) {
-                                    if (context.mounted) {
-                                      context.go('/login');
-                                    }
-                                    setState(() {
-                                      _isLoading = false;
-                                    });
-                                    return;
-                                  }
-
-                                  final backupId = await backupService
-                                      .createBackup(
-                                        uploadToFirebase: true,
-                                        uid: user.uid,
-                                      );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          backupId != null
-                                              ? '${l10n.backupUploadedToCloud} $backupId'
-                                              : l10n.cloudBackupFailed,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  setState(() {
-                                    _isLoading = false;
-                                  });
-                                },
-                          child: _isLoading
-                              ? const CircularProgressIndicator()
-                              : Text(l10n.syncToCloud),
-                        ),
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () {
-                            context.go('/settings/cloud-backups');
-                          },
-                          child: Text(l10n.manageCloudBackups),
-                        ),
+                        if (userProfile.isPremium) ...[
+                            ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () async {
+                                      setState(() {
+                                        _isLoading = true;
+                                      });
+                                      final user = _firebaseService
+                                          .getCurrentUser();
+    
+                                      if (user == null) {
+                                        if (context.mounted) {
+                                          context.go('/login');
+                                        }
+                                        setState(() {
+                                          _isLoading = false;
+                                        });
+                                        return;
+                                      }
+    
+                                      final backupId = await backupService
+                                          .createBackup(
+                                            uploadToFirebase: true,
+                                            uid: user.uid,
+                                          );
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              backupId != null
+                                                  ? '${l10n.backupUploadedToCloud} $backupId'
+                                                  : l10n.cloudBackupFailed,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                    },
+                              child: _isLoading
+                                  ? const CircularProgressIndicator()
+                                  : Text(l10n.syncToCloud),
+                            ),
+                            const SizedBox(height: 10),
+                            ElevatedButton(
+                              onPressed: () {
+                                context.go('/settings/cloud-backups');
+                              },
+                              child: Text(l10n.manageCloudBackups),
+                            ),
+                        ] else ...[
+                            Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.grey),
+                                ),
+                                child: Row(
+                                    children: [
+                                        const Icon(Icons.cloud_off, color: Colors.grey),
+                                        const SizedBox(width: 12),
+                                        const Expanded(child: Text('Cloud Sync is a detailed Premium feature. Activate to enable.')),
+                                    ],
+                                ),
+                            ),
+                        ],
                         const Divider(height: 40),
                       ],
 
@@ -361,11 +388,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (isDentist) ...[
                         const Divider(height: 40),
                         Text(
-                          'Finance Settings',
+                          l10n.financeSettings,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         SwitchListTile(
-                          title: const Text('Include Inventory Costs'),
+                          title: Text(l10n.includeInventoryCosts),
                           value: ref
                               .watch(financeSettingsProvider)
                               .includeInventory,
@@ -376,7 +403,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           },
                         ),
                         SwitchListTile(
-                          title: const Text('Include Appointments'),
+                          title: Text(l10n.includeAppointments),
                           value: ref
                               .watch(financeSettingsProvider)
                               .includeAppointments,
@@ -387,7 +414,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           },
                         ),
                         SwitchListTile(
-                          title: const Text('Include Recurring Charges'),
+                          title: Text(l10n.includeRecurringCharges),
                           value: ref
                               .watch(financeSettingsProvider)
                               .includeRecurring,
@@ -398,10 +425,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           },
                         ),
                         SwitchListTile(
-                          title: const Text('Compact Numbers (e.g. 1K)'),
-                          subtitle: const Text(
-                            'Use short format for large numbers',
-                          ),
+                          title: Text(l10n.compactNumbers),
+                          subtitle: Text(l10n.compactNumbersSubtitle),
                           value: ref
                               .watch(financeSettingsProvider)
                               .useCompactNumbers,
@@ -420,8 +445,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     .monthlyBudgetCap
                                     ?.toString() ??
                                 '',
-                            decoration: const InputDecoration(
-                              labelText: 'Monthly Budget Cap',
+                            decoration: InputDecoration(
+                              labelText: l10n.monthlyBudgetCap,
                               helperText: 'Leave empty for no limit',
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
@@ -442,8 +467,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 .read(financeSettingsProvider)
                                 .taxRatePercentage
                                 .toString(),
-                            decoration: const InputDecoration(
-                              labelText: 'Tax Rate (%)',
+                            decoration: InputDecoration(
+                              labelText: l10n.taxRatePercentage,
                               suffixText: '%',
                             ),
                             keyboardType: const TextInputType.numberWithOptions(
@@ -470,6 +495,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Text(l10n.editProfile),
                       ),
                       const SizedBox(height: 10),
+                      if (userProfile != null && !userProfile.isPremium)
+                          ElevatedButton.icon(
+                              onPressed: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => ActivationDialog(uid: userProfile.uid),
+                                  );
+                              },
+                              icon: const Icon(Icons.star, color: Colors.orange),
+                              label: Text(l10n.activatePremium),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.orange.withOpacity(0.1),
+                                  foregroundColor: Colors.orange,
+                              ),
+                          ),
+                      if (userProfile != null && !userProfile.isPremium)
+                          const SizedBox(height: 10),
+                      const SizedBox(height: 10),
 
                       // Change Password - only for dentists
                       if (isDentist)
@@ -485,14 +528,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ElevatedButton(
                           onPressed: () =>
                               context.go('/settings/staff-management'),
-                          child: const Text('Staff Management'),
+                          child: Text(l10n.staffManagement),
                         ),
                       ],
 
                       const Divider(height: 40),
                       ElevatedButton(
                         onPressed: () async {
+                          // Clear Local Persistence First
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.remove('remember_me');
+                          await prefs.remove('cached_user_profile');
+                          await prefs.remove('managedUserProfile');
+                          await prefs.remove('userRole');
+
                           await _firebaseService.signOut();
+                          ref.invalidate(userProfileProvider);
                           if (context.mounted) {
                             context.go('/login');
                           }
