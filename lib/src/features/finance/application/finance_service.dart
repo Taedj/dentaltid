@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/data_sync_service.dart';
 import 'package:dentaltid/src/core/sync_manager.dart';
@@ -54,7 +55,13 @@ Set<TransactionSourceType> _getIncludedSourceTypesFromFilters(
 
 final filteredTransactionsProvider =
     FutureProvider.family<List<Transaction>, FinanceFilters>((ref, filters) {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+      
       // Use adjusted transactions to handle pro-rata recurring charges
       return service.getAdjustedTransactionsFiltered(
         startDate: filters.dateRange.start,
@@ -66,7 +73,13 @@ final filteredTransactionsProvider =
 
 final actualTransactionsProvider =
     FutureProvider.family<List<Transaction>, FinanceFilters>((ref, filters) {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       return service.getAdjustedTransactionsFiltered(
         startDate: filters.dateRange.start,
         endDate: filters.dateRange.end,
@@ -80,7 +93,13 @@ final dailySummaryProvider =
       ref,
       filters,
     ) async {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       return service.getDailySummary(
         filters.dateRange.end, // Use end date to get summary for that day
         includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
@@ -92,7 +111,13 @@ final weeklySummaryProvider =
       ref,
       filters,
     ) async {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       return service.getWeeklySummary(
         filters.dateRange.end, // Use end date to get summary for that week
         includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
@@ -104,7 +129,13 @@ final monthlySummaryProvider =
       ref,
       filters,
     ) async {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       return service.getMonthlySummary(
         filters.dateRange.end, // Use end date to get summary for that month
         includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
@@ -116,7 +147,13 @@ final yearlySummaryProvider =
       ref,
       filters,
     ) async {
-      final service = ref.watch(financeServiceProvider);
+      final service = ref.read(financeServiceProvider);
+      
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       return service.getYearlySummary(
         filters.dateRange.end, // Use end date to get summary for that year
         includedSourceTypes: _getIncludedSourceTypesFromFilters(filters),
@@ -130,6 +167,10 @@ class FinanceService {
   final FinanceSettings _settings;
   final Ref _ref;
 
+  // Reactive Stream
+  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  Stream<void> get onDataChanged => _dataChangeController.stream;
+
   FinanceService(
     this._repository,
     this._recurringChargeRepository,
@@ -137,6 +178,10 @@ class FinanceService {
     this._settings,
     this._ref,
   );
+
+  void _notifyDataChanged() {
+    _dataChangeController.add(null);
+  }
 
   /// Returns transactions with recurring charges pro-rated for the selected period.
   Future<List<Transaction>> getAdjustedTransactionsFiltered({
@@ -272,15 +317,8 @@ class FinanceService {
       _syncLocalChange(SyncDataType.transactions, 'create', transaction.toJson());
     }
 
-    if (invalidate) {
-      // Invalidate all data providers
-      _ref.invalidate(filteredTransactionsProvider);
-      _ref.invalidate(actualTransactionsProvider);
-      _ref.invalidate(dailySummaryProvider);
-      _ref.invalidate(weeklySummaryProvider);
-      _ref.invalidate(monthlySummaryProvider);
-      _ref.invalidate(yearlySummaryProvider);
-    }
+    // Trigger reactive listener
+    _notifyDataChanged();
   }
 
   Future<List<Transaction>> getTransactions() async {
@@ -302,14 +340,8 @@ class FinanceService {
       _syncLocalChange(SyncDataType.transactions, 'update', transaction.toJson());
     }
 
-    if (invalidate) {
-      _ref.invalidate(filteredTransactionsProvider);
-      _ref.invalidate(actualTransactionsProvider);
-      _ref.invalidate(dailySummaryProvider);
-      _ref.invalidate(weeklySummaryProvider);
-      _ref.invalidate(monthlySummaryProvider);
-      _ref.invalidate(yearlySummaryProvider);
-    }
+    // Trigger reactive listener
+    _notifyDataChanged();
   }
 
   Future<void> deleteTransaction(int id, {bool broadcast = true}) async {
@@ -323,12 +355,8 @@ class FinanceService {
       _syncLocalChange(SyncDataType.transactions, 'delete', {'id': id});
     }
 
-    _ref.invalidate(filteredTransactionsProvider);
-    _ref.invalidate(actualTransactionsProvider);
-    _ref.invalidate(dailySummaryProvider);
-    _ref.invalidate(weeklySummaryProvider);
-    _ref.invalidate(monthlySummaryProvider);
-    _ref.invalidate(yearlySummaryProvider);
+    // Trigger reactive listener
+    _notifyDataChanged();
   }
 
   void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {

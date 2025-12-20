@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
 import 'package:dentaltid/src/core/data_sync_service.dart';
@@ -26,21 +27,40 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
 });
 
 final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider); // Read to avoid rebuild on service recreation
+  
+  // Reactive subscription
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+  
   return service.getAppointments();
 });
 
 final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getUpcomingAppointments();
 });
 
 final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getAppointmentsByStatusForDate(
     DateTime.now(),
     AppointmentStatus.waiting,
@@ -50,7 +70,13 @@ final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((
 final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getAppointmentsByStatusForDate(
     DateTime.now(),
     AppointmentStatus.inProgress,
@@ -60,7 +86,13 @@ final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((
 final completedAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getAppointmentsByStatusForDate(
     DateTime.now(),
     AppointmentStatus.completed,
@@ -70,15 +102,34 @@ final completedAppointmentsProvider = FutureProvider<List<Appointment>>((
 final todaysAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final service = ref.watch(appointmentServiceProvider);
+  final service = ref.read(appointmentServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getTodaysAppointments();
 });
 
 final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
-  final appointmentService = ref.watch(appointmentServiceProvider);
-  final patientService = ref.watch(patientServiceProvider);
+  final appointmentService = ref.read(appointmentServiceProvider);
+  final patientService = ref.read(patientServiceProvider);
+  
+  // Listen to both appointment and patient changes
+  final appSubscription = appointmentService.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  final patSubscription = patientService.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  
+  ref.onDispose(() {
+     appSubscription.cancel();
+     patSubscription.cancel();
+  });
 
   // 1. Get all patients and create a set of emergency patient IDs for efficient lookup
   final allPatients = await patientService.getPatients(PatientFilter.all);
@@ -108,7 +159,15 @@ class AppointmentService {
   final AuditService _auditService;
   final Ref _ref;
 
+  // Reactive Stream
+  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  Stream<void> get onDataChanged => _dataChangeController.stream;
+
   AppointmentService(this._repository, this._auditService, this._ref);
+
+  void _notifyDataChanged() {
+    _dataChangeController.add(null);
+  }
 
   Future<Appointment> addAppointment(Appointment appointment, {bool broadcast = true}) async {
     try {
@@ -134,6 +193,8 @@ class AppointmentService {
         details:
             'Appointment for patient ${createdAppointment.patientId} on ${createdAppointment.dateTime} created.',
       );
+
+      _notifyDataChanged();
 
       if (broadcast) {
         _syncLocalChange(SyncDataType.appointments, 'create', createdAppointment.toJson());
@@ -164,6 +225,8 @@ class AppointmentService {
           'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} updated.',
     );
     
+    _notifyDataChanged();
+
     if (broadcast) {
       _syncLocalChange(SyncDataType.appointments, 'update', appointment.toJson());
     }
@@ -177,6 +240,8 @@ class AppointmentService {
       details: 'Appointment with ID $id deleted.',
     );
     
+    _notifyDataChanged();
+
     if (broadcast) {
       _syncLocalChange(SyncDataType.appointments, 'delete', {'id': id});
     }
@@ -190,6 +255,8 @@ class AppointmentService {
       details: 'Appointment with ID $id status updated to ${status.name}.',
     );
     
+    _notifyDataChanged();
+
     if (broadcast) {
       _syncLocalChange(SyncDataType.appointments, 'update_status', {'id': id, 'status': status.toString()});
     }

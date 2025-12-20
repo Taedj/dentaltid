@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/sync_manager.dart';
 import 'package:dentaltid/src/core/data_sync_service.dart';
@@ -26,7 +27,13 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
 });
 
 final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
-  final service = ref.watch(inventoryServiceProvider);
+  final service = ref.read(inventoryServiceProvider);
+  
+  final subscription = service.onDataChanged.listen((_) {
+    ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+  
   return service.getInventoryItems();
 });
 
@@ -36,7 +43,15 @@ class InventoryService {
   final FinanceService _financeService;
   final Ref _ref;
 
+  // Reactive Stream
+  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  Stream<void> get onDataChanged => _dataChangeController.stream;
+
   InventoryService(this._repository, this._auditService, this._financeService, this._ref);
+
+  void _notifyDataChanged() {
+    _dataChangeController.add(null);
+  }
 
   Future<InventoryItem> addInventoryItem(InventoryItem item, {bool broadcast = true}) async {
     final newItem = await _repository.createInventoryItem(item);
@@ -44,6 +59,8 @@ class InventoryService {
       AuditAction.createInventoryItem,
       details: 'Inventory item ${item.name} added.',
     );
+
+    _notifyDataChanged();
 
     if (broadcast) {
       _syncLocalChange(SyncDataType.inventory, 'create', newItem.toJson());
@@ -82,6 +99,8 @@ class InventoryService {
       details: 'Inventory item ${item.name} updated.',
     );
 
+    _notifyDataChanged();
+
     if (broadcast) {
       _syncLocalChange(SyncDataType.inventory, 'update', item.toJson());
     }
@@ -112,6 +131,8 @@ class InventoryService {
       AuditAction.deleteInventoryItem,
       details: 'Inventory item with ID $id deleted.',
     );
+
+    _notifyDataChanged();
 
     if (broadcast) {
       _syncLocalChange(SyncDataType.inventory, 'delete', {'id': id});

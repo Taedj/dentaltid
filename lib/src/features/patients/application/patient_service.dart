@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
 import 'package:dentaltid/src/core/data_sync_service.dart';
@@ -44,6 +45,25 @@ final patientsProvider =
       config,
     ) async {
       final service = ref.watch(patientServiceProvider);
+      
+      // Listen to data changes from the service
+      ref.listen(patientServiceProvider.select((s) => s.onDataChanged), (_, next) {
+        next.listen((_) {
+            ref.invalidateSelf();
+        });
+      });
+
+      // Also directly subscribe? The standard pattern is simpler:
+      // The select above returns a stream. We need to subscribe to the stream.
+      // But `ref.listen` on a Provider that returns a Service just listens to the Service instance change (rare).
+      // We need to act when the *stream* emits.
+      
+      // Better Pattern for Stream Subscription in Provider:
+      final subscription = service.onDataChanged.listen((_) {
+          ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
+
       if (config.query.isNotEmpty) {
         return service.searchPatients(config.query);
       }
@@ -52,6 +72,13 @@ final patientsProvider =
 
 final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
   final service = ref.watch(patientServiceProvider);
+  
+  // Listen to data changes
+  final subscription = service.onDataChanged.listen((_) {
+      ref.invalidateSelf();
+  });
+  ref.onDispose(() => subscription.cancel());
+
   return service.getPatientById(id);
 });
 
@@ -59,8 +86,16 @@ class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
   final Ref _ref;
+  
+  // Reactive Stream Controller
+  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  Stream<void> get onDataChanged => _dataChangeController.stream;
 
   PatientService(this._repository, this._auditService, this._ref);
+
+  void _notifyDataChanged() {
+    _dataChangeController.add(null);
+  }
 
   Future<void> addPatient(Patient patient, {bool broadcast = true}) async {
     try {
@@ -101,6 +136,9 @@ class PatientService {
         AuditAction.createPatient,
         details: 'Patient ${patient.name} ${patient.familyName} added.',
       );
+
+      // Notify local listeners
+      _notifyDataChanged();
 
       // Broadcast change to other devices on the LAN
       if (broadcast) {
@@ -189,6 +227,9 @@ class PatientService {
         details: 'Patient ${patient.name} ${patient.familyName} updated.',
       );
 
+      // Notify local listeners
+      _notifyDataChanged();
+
       if (broadcast) {
         _syncLocalChange(SyncDataType.patients, 'update', patient.toJson());
       }
@@ -217,6 +258,9 @@ class PatientService {
         AuditAction.deletePatient,
         details: 'Patient ${patient.name} ${patient.familyName} deleted.',
       );
+
+      // Notify local listeners
+      _notifyDataChanged();
 
       if (broadcast) {
         _syncLocalChange(SyncDataType.patients, 'delete', {'id': id});
