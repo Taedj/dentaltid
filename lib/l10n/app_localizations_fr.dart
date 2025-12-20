@@ -1227,4 +1227,71 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get deleteVisit => 'Supprimer la visite';
+
+  @override
+  String get connectionSettings => 'Paramètres de connexion';
+
+  @override
+  String get networkConnection => 'Connexion réseau';
+
+  @override
+  String get serverDeviceNotice =>
+      'Cet appareil est le SERVEUR. Partagez l\'IP ci-dessous avec les appareils du personnel.';
+
+  @override
+  String get clientDeviceNotice =>
+      'Cet appareil est un CLIENT. Entrez l\'IP du serveur pour vous connecter.';
+
+  @override
+  String get connectionStatus => 'Statut de la connexion';
+
+  @override
+  String get possibleIpAddresses => 'Adresses IP possibles :';
+
+  @override
+  String get manualConnection => 'Connexion manuelle';
+
+  @override
+  String get serverIpAddress => 'Adresse IP du serveur';
+
+  @override
+  String get connectToServer => 'Se connecter au serveur';
+
+  @override
+  String get connecting => 'Connexion...';
+
+  @override
+  String get connectedSync =>
+      'Connecté ! Initialisation de la synchronisation...';
+
+  @override
+  String get invalidIpOrPort => 'IP ou port invalide';
+
+  @override
+  String get firewallWarning =>
+      'Si la connexion échoue, vérifiez votre pare-feu Windows pour autoriser \'DentalTid\' sur les réseaux privés/publics.';
+
+  @override
+  String get readyToConnect => 'Prêt à se connecter.';
+
+  @override
+  String get serverRunning => 'Serveur en cours d\'exécution';
+
+  @override
+  String get serverStopped => 'Serveur arrêté';
+
+  @override
+  String get startServer => 'Démarrer le serveur';
+
+  @override
+  String get stopServer => 'Arrêter le serveur';
+
+  @override
+  String get serverLogs => 'Journaux du serveur';
+
+  @override
+  String get copyLogsSuccess => 'Journaux copiés dans le presse-papiers';
+
+  @override
+  String get port => 'Port';
 }

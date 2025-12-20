@@ -1215,4 +1215,70 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteVisit => 'Delete Visit';
+
+  @override
+  String get connectionSettings => 'Connection Settings';
+
+  @override
+  String get networkConnection => 'Network Connection';
+
+  @override
+  String get serverDeviceNotice =>
+      'This device is the SERVER. Share the IP below with staff devices.';
+
+  @override
+  String get clientDeviceNotice =>
+      'This device is a CLIENT. Enter the Server IP to connect.';
+
+  @override
+  String get connectionStatus => 'Connection Status';
+
+  @override
+  String get possibleIpAddresses => 'Possible IP Addresses:';
+
+  @override
+  String get manualConnection => 'Manual Connection';
+
+  @override
+  String get serverIpAddress => 'Server IP Address';
+
+  @override
+  String get connectToServer => 'Connect to Server';
+
+  @override
+  String get connecting => 'Connecting...';
+
+  @override
+  String get connectedSync => 'Connected! Initializing sync...';
+
+  @override
+  String get invalidIpOrPort => 'Invalid IP or Port';
+
+  @override
+  String get firewallWarning =>
+      'If connection fails, check your Windows Firewall to allow \'DentalTid\' on Private/Public networks.';
+
+  @override
+  String get readyToConnect => 'Ready to connect.';
+
+  @override
+  String get serverRunning => 'Server Running';
+
+  @override
+  String get serverStopped => 'Server Stopped';
+
+  @override
+  String get startServer => 'Start Server';
+
+  @override
+  String get stopServer => 'Stop Server';
+
+  @override
+  String get serverLogs => 'Server Logs';
+
+  @override
+  String get copyLogsSuccess => 'Logs copied to clipboard';
+
+  @override
+  String get port => 'Port';
 }

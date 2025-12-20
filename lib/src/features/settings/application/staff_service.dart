@@ -4,6 +4,8 @@ import 'package:dentaltid/src/features/settings/data/staff_repository.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 final staffRepositoryProvider = Provider<StaffRepository>((ref) {
   return StaffRepository(DatabaseService.instance);
@@ -59,14 +61,44 @@ class StaffService {
 
   Future<UserProfile?> authenticateStaff(String dentistUid, String username, String pin) async {
     // Check local first
-    final localUser = await _repository.getStaffByUsernameAndPin(dentistUid, username, pin);
-    if (localUser != null) return localUser;
+    var localUser = await _repository.getStaffByUsernameAndPin(dentistUid, username, pin);
     
     // Fallback to Firebase if online
-    try {
-      return await _firebaseService.authenticateManagedUser(dentistUid, username, pin);
-    } catch (_) {
-      return null;
+    if (localUser == null) {
+      try {
+        localUser = await _firebaseService.authenticateManagedUser(dentistUid, username, pin);
+      } catch (_) {
+        return null;
+      }
     }
+
+    if (localUser != null) {
+       // Sync subscription status from cached Dentist profile (if available)
+       try {
+         final prefs = await SharedPreferences.getInstance();
+         final cachedDentistJson = prefs.getString('cached_user_profile');
+         if (cachedDentistJson != null) {
+            final dentistProfile = UserProfile.fromJson(jsonDecode(cachedDentistJson));
+            
+            // Only sync if this dentist manages this user
+            if (dentistProfile.uid == localUser?.managedByDentistId) {
+               localUser = localUser!.copyWith(
+                  plan: dentistProfile.plan,
+                  status: dentistProfile.status,
+                  isPremium: dentistProfile.isPremium,
+                  trialStartDate: dentistProfile.trialStartDate,
+                  premiumExpiryDate: dentistProfile.premiumExpiryDate,
+                  licenseExpiry: dentistProfile.licenseExpiry,
+               );
+               // Update local DB with synced data
+               await _repository.updateStaff(localUser!);
+            }
+         }
+       } catch (e) {
+         // Ignore sync errors during auth
+       }
+    }
+    
+    return localUser;
   }
 }

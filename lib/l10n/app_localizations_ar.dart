@@ -1210,4 +1210,70 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deleteVisit => 'حذف الزيارة';
+
+  @override
+  String get connectionSettings => 'إعدادات الاتصال';
+
+  @override
+  String get networkConnection => 'اتصال الشبكة';
+
+  @override
+  String get serverDeviceNotice =>
+      'هذا الجهاز هو الخادم. شارك عنوان IP أدناه مع أجهزة الموظفين.';
+
+  @override
+  String get clientDeviceNotice =>
+      'هذا الجهاز هو عميل. أدخل عنوان IP للخادم للاتصال.';
+
+  @override
+  String get connectionStatus => 'حالة الاتصال';
+
+  @override
+  String get possibleIpAddresses => 'عناوين IP الممكنة:';
+
+  @override
+  String get manualConnection => 'اتصال يدوي';
+
+  @override
+  String get serverIpAddress => 'عنوان IP للخادم';
+
+  @override
+  String get connectToServer => 'الاتصال بالخادم';
+
+  @override
+  String get connecting => 'جاري الاتصال...';
+
+  @override
+  String get connectedSync => 'تم الاتصال! جاري بدء المزامنة...';
+
+  @override
+  String get invalidIpOrPort => 'عنوان IP أو منفذ غير صالح';
+
+  @override
+  String get firewallWarning =>
+      'إذا فشل الاتصال، فافحص جدار حماية Windows للسماح بـ \'DentalTid\' على الشبكات الخاصة/العامة.';
+
+  @override
+  String get readyToConnect => 'جاهز للاتصال.';
+
+  @override
+  String get serverRunning => 'الخادم قيد التشغيل';
+
+  @override
+  String get serverStopped => 'تم إيقاف الخادم';
+
+  @override
+  String get startServer => 'بدء تشغيل الخادم';
+
+  @override
+  String get stopServer => 'إيقاف الخادم';
+
+  @override
+  String get serverLogs => 'سجلات الخادم';
+
+  @override
+  String get copyLogsSuccess => 'تم نسخ السجلات إلى الحافظة';
+
+  @override
+  String get port => 'المنفذ';
 }

@@ -6,7 +6,7 @@ import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/network_discovery_service.dart';
 
 /// Types of data that can be synchronized
-enum SyncDataType { patients, appointments, transactions, inventory, settings }
+enum SyncDataType { patients, appointments, transactions, inventory, settings, initialSync }
 
 /// Represents a data synchronization message
 class SyncMessage {
@@ -84,6 +84,9 @@ class DataSyncService {
 
   /// Check if connected to a server (for client devices)
   bool get isConnected => _clientConnection != null;
+
+  /// Check if server is running (for dentist devices)
+  bool get isServerRunning => _server != null;
 
   /// Start synchronization server (for dentist devices)
   Future<void> startServer({
@@ -274,6 +277,19 @@ class DataSyncService {
           _sendToClient(_connectedClients[clientId]!, {'type': 'pong'});
           break;
 
+        case 'request_initial_sync':
+          _logger.info('Client $clientId requested initial sync');
+          _incomingMessagesController.add(SyncMessage(
+            id: 'request_initial_sync',
+            type: SyncDataType.initialSync,
+            operation: 'request_initial_sync',
+            data: {'clientId': clientId},
+            timestamp: DateTime.now(),
+            deviceId: clientId,
+            userId: 'unknown',
+          ));
+          break;
+
         default:
           _logger.warning(
             'Unknown message type from client $clientId: $messageType',
@@ -307,11 +323,43 @@ class DataSyncService {
           // Handle ping response
           break;
 
+        case 'initial_sync_data':
+          _logger.info('Received initial sync data from server');
+          _incomingMessagesController.add(SyncMessage(
+            id: 'initial_sync',
+            type: SyncDataType.initialSync,
+            operation: 'initial_sync',
+            data: data['data'],
+            timestamp: DateTime.now(),
+            deviceId: 'server',
+            userId: 'server',
+          ));
+          break;
+
         default:
           _logger.warning('Unknown message type from server: $messageType');
       }
     } catch (e) {
       _logger.warning('Error handling message from server: $e');
+    }
+  }
+
+  /// Request initial synchronization from server
+  void requestInitialSync() {
+    if (_clientConnection != null) {
+      _sendToClient(_clientConnection!, {'type': 'request_initial_sync'});
+      _logger.info('Requested initial sync from server');
+    }
+  }
+
+  /// Send initial sync data to a specific client
+  void sendInitialSyncData(String clientId, Map<String, dynamic> data) {
+    if (_connectedClients.containsKey(clientId)) {
+      _sendToClient(_connectedClients[clientId]!, {
+        'type': 'initial_sync_data',
+        'data': data,
+      });
+      _logger.info('Sent initial sync data to client $clientId');
     }
   }
 

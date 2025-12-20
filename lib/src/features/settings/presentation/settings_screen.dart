@@ -12,6 +12,7 @@ import 'package:dentaltid/src/features/settings/application/finance_settings_pro
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/backup_service.dart';
+import 'package:dentaltid/src/features/settings/presentation/connection_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -531,6 +532,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           child: Text(l10n.staffManagement),
                         ),
                       ],
+
+                      const Divider(height: 40),
+                      Text(
+                        l10n.connectionSettings,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 10),
+                      if (userProfile != null && userProfile.isManagedUser) ...[
+                        Text(
+                          '${l10n.roleAssistant}: ${userProfile.role == UserRole.assistant ? l10n.roleAssistant : l10n.roleReceptionist}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                        ),
+                        Text(
+                          'Clinic: ${userProfile.clinicName ?? '---'}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const ConnectionSettingsScreen(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.settings_ethernet),
+                        label: Text(l10n.connectionSettings),
+                      ),
 
                       const Divider(height: 40),
                       ElevatedButton(

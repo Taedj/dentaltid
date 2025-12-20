@@ -2415,6 +2415,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete Visit'**
   String get deleteVisit;
+
+  /// No description provided for @connectionSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Settings'**
+  String get connectionSettings;
+
+  /// No description provided for @networkConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Network Connection'**
+  String get networkConnection;
+
+  /// No description provided for @serverDeviceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is the SERVER. Share the IP below with staff devices.'**
+  String get serverDeviceNotice;
+
+  /// No description provided for @clientDeviceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This device is a CLIENT. Enter the Server IP to connect.'**
+  String get clientDeviceNotice;
+
+  /// No description provided for @connectionStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Status'**
+  String get connectionStatus;
+
+  /// No description provided for @possibleIpAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible IP Addresses:'**
+  String get possibleIpAddresses;
+
+  /// No description provided for @manualConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Connection'**
+  String get manualConnection;
+
+  /// No description provided for @serverIpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Server IP Address'**
+  String get serverIpAddress;
+
+  /// No description provided for @connectToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to Server'**
+  String get connectToServer;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get connecting;
+
+  /// No description provided for @connectedSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected! Initializing sync...'**
+  String get connectedSync;
+
+  /// No description provided for @invalidIpOrPort.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid IP or Port'**
+  String get invalidIpOrPort;
+
+  /// No description provided for @firewallWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'If connection fails, check your Windows Firewall to allow \'DentalTid\' on Private/Public networks.'**
+  String get firewallWarning;
+
+  /// No description provided for @readyToConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to connect.'**
+  String get readyToConnect;
+
+  /// No description provided for @serverRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Running'**
+  String get serverRunning;
+
+  /// No description provided for @serverStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Stopped'**
+  String get serverStopped;
+
+  /// No description provided for @startServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Server'**
+  String get startServer;
+
+  /// No description provided for @stopServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Server'**
+  String get stopServer;
+
+  /// No description provided for @serverLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Logs'**
+  String get serverLogs;
+
+  /// No description provided for @copyLogsSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs copied to clipboard'**
+  String get copyLogsSuccess;
+
+  /// No description provided for @port.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get port;
 }
 
 class _AppLocalizationsDelegate

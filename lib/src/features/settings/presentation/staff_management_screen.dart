@@ -5,6 +5,7 @@ import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:uuid/uuid.dart';
+import 'package:dentaltid/src/features/settings/presentation/connection_settings_screen.dart';
 
 class StaffManagementScreen extends ConsumerStatefulWidget {
   const StaffManagementScreen({super.key});
@@ -119,6 +120,11 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
             dentistName: currentUser.dentistName,
             phoneNumber: currentUser.phoneNumber,
             medicalLicenseNumber: currentUser.medicalLicenseNumber,
+            // Inherit Subscription Status
+            isPremium: currentUser.isPremium,
+            trialStartDate: currentUser.trialStartDate,
+            premiumExpiryDate: currentUser.premiumExpiryDate,
+            
             isManagedUser: true,
             managedByDentistId: currentUser.uid,
             role: role,
@@ -277,7 +283,22 @@ class _StaffManagementScreenState extends ConsumerState<StaffManagementScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.staffManagement)),
+      appBar: AppBar(
+        title: Text(l10n.staffManagement),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_ethernet),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ConnectionSettingsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Connection Settings',
+          ),
+        ],
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
