@@ -13,10 +13,41 @@ import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  List<String> _dismissedBroadcastIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDismissedBroadcasts();
+  }
+
+  Future<void> _loadDismissedBroadcasts() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _dismissedBroadcastIds = prefs.getStringList('dismissed_broadcasts') ?? [];
+    });
+  }
+
+  Future<void> _dismissBroadcast(String id) async {
+    if (_dismissedBroadcastIds.contains(id)) return;
+
+    setState(() {
+      _dismissedBroadcastIds.add(id);
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('dismissed_broadcasts', _dismissedBroadcastIds);
+  }
 
   String _replaceArabicNumber(String input) {
     const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -29,7 +60,7 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final todayPatientsAsyncValue = ref.watch(
       patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
     );
@@ -45,16 +76,21 @@ class HomeScreen extends ConsumerWidget {
             stream: BroadcastService().getActiveBroadcasts(),
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
-              
+
+              // Filter dismissed
+              final visibleBroadcasts = snapshot.data!.where((b) => !_dismissedBroadcastIds.contains(b.id)).toList();
+
+              if (visibleBroadcasts.isEmpty) return const SizedBox.shrink();
+
               // Only show the latest one for now to avoid clutter
-              final latest = snapshot.data!.first;
-              
+              final latest = visibleBroadcasts.first;
+
               return Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _getBroadcastColor(latest.type).withOpacity(0.1),
+                  color: _getBroadcastColor(latest.type).withValues(alpha: 0.1),
                   border: Border.all(color: _getBroadcastColor(latest.type)),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -73,9 +109,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     IconButton(
                         icon: const Icon(Icons.close, size: 16),
-                        onPressed: () { 
-                            // TODO: Implement local dismiss (hide ID in shared_prefs)
-                        },
+                        onPressed: () => _dismissBroadcast(latest.id),
                     ),
                   ],
                 ),
@@ -188,7 +222,7 @@ class HomeScreen extends ConsumerWidget {
                                     margin: const EdgeInsets.only(top: 8),
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                     decoration: BoxDecoration(
-                                        color: statusColor.withOpacity(0.1),
+                                        color: statusColor.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(color: statusColor),
                                     ),

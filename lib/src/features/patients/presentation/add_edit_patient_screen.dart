@@ -5,7 +5,6 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class AddEditPatientScreen extends ConsumerStatefulWidget {

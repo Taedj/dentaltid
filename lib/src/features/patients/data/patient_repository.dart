@@ -8,9 +8,9 @@ class PatientRepository {
 
   static const String _tableName = 'patients';
 
-  Future<void> createPatient(Patient patient) async {
+  Future<int> createPatient(Patient patient) async {
     final db = await _databaseService.database;
-    await db.insert(_tableName, patient.toJson());
+    return await db.insert(_tableName, patient.toJson());
   }
 
   List<String> _getColumnsWithDue() {

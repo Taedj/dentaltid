@@ -206,12 +206,19 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 } else {
                      // Dentist Logic
                     final destinationLabel = (destinations[index].label as Text).data;
-                     if (destinationLabel == l10n.patients) route = '/patients';
-                     else if (destinationLabel == l10n.appointments) route = '/appointments';
-                     else if (destinationLabel == l10n.inventory) route = '/inventory';
-                     else if (destinationLabel == l10n.finance) route = '/finance';
-                     else if (destinationLabel == l10n.settings) route = '/settings';
-                     else route = '/';
+                     if (destinationLabel == l10n.patients) {
+                       route = '/patients';
+                     } else if (destinationLabel == l10n.appointments) {
+                       route = '/appointments';
+                     } else if (destinationLabel == l10n.inventory) {
+                       route = '/inventory';
+                     } else if (destinationLabel == l10n.finance) {
+                       route = '/finance';
+                     } else if (destinationLabel == l10n.settings) {
+                       route = '/settings';
+                     } else {
+                       route = '/';
+                     }
                 }
                 
                 GoRouter.of(context).go(route);

@@ -155,7 +155,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
+                      color: Colors.orange.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.orange),
                     ),

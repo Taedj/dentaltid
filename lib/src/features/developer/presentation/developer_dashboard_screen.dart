@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
@@ -92,7 +91,7 @@ class UserManagementTab extends StatelessWidget {
              // ANALYTICS HEADER
              Container(
                  padding: const EdgeInsets.all(16),
-                 color: Colors.blue.withOpacity(0.05),
+                 color: Colors.blue.withValues(alpha: 0.05),
                  child: Row(
                      mainAxisAlignment: MainAxisAlignment.spaceAround,
                      children: [
@@ -371,7 +370,7 @@ class _ActivationCodeTabState extends ConsumerState<ActivationCodeTab> {
                             child: Column(
                               children: [
                                 DropdownButtonFormField<int>(
-                                  value: _selectedDurationMonths,
+                                  initialValue: _selectedDurationMonths,
                                   decoration: const InputDecoration(
                                     labelText: 'Duration',
                                     border: OutlineInputBorder(),
@@ -418,7 +417,7 @@ class _ActivationCodeTabState extends ConsumerState<ActivationCodeTab> {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
+                            color: Colors.green.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(color: Colors.green),
                           ),
@@ -462,7 +461,7 @@ class _ActivationCodeTabState extends ConsumerState<ActivationCodeTab> {
                          
                          return ListView.separated(
                              itemCount: codes.length,
-                             separatorBuilder: (_,__) => const Divider(height: 1),
+                             separatorBuilder: (_, _) => const Divider(height: 1),
                              itemBuilder: (context, index) {
                                  final code = codes[index];
                                  final isRedeemed = code.isRedeemed;
@@ -603,7 +602,7 @@ class _BroadcastTabState extends ConsumerState<BroadcastTab> {
                                 const Text('Compose New Broadcast', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 16),
                                 DropdownButtonFormField<String>(
-                                    value: _selectedType,
+                                    initialValue: _selectedType,
                                     decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
                                     items: const [
                                         DropdownMenuItem(value: 'info', child: Text('ℹ️ Info / Update')),

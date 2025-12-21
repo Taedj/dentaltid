@@ -1,16 +1,13 @@
 import 'package:dentaltid/src/features/settings/presentation/profile_settings_screen.dart';
-import 'package:dentaltid/src/features/developer/presentation/developer_dashboard_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_overview_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_users_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_codes_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_broadcasts_screen.dart';
-import 'dart:convert';
-import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
-import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/cloud_backups_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/settings_screen.dart';
-import 'package:dentaltid/src/features/settings/presentation/staff_management_screen.dart';
+import 'package:dentaltid/src/features/patients/domain/patient.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.dart';
 import 'package:dentaltid/src/features/finance/presentation/finance_screen.dart';
 import 'package:dentaltid/src/features/finance/presentation/recurring_charges_screen.dart';
@@ -187,10 +184,6 @@ final router = GoRouter(
             GoRoute(
               path: 'profile',
               builder: (context, state) => const ProfileSettingsScreen(),
-            ),
-            GoRoute(
-              path: 'staff-management',
-              builder: (context, state) => const StaffManagementScreen(),
             ),
           ],
         ),

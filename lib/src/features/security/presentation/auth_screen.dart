@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
 
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
-import 'package:dentaltid/src/core/network_discovery_service.dart';
-import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,7 +16,7 @@ import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-enum AuthMode { login, register, staffLogin }
+enum AuthMode { login, register }
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -35,8 +32,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _dentistNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _medicalLicenseNumberController = TextEditingController();
-  final _usernameController = TextEditingController();
-  final _pinController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   final FirebaseService _firebaseService = FirebaseService();
@@ -61,8 +56,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _dentistNameController.dispose();
     _phoneNumberController.dispose();
     _medicalLicenseNumberController.dispose();
-    _usernameController.dispose();
-    _pinController.dispose();
     super.dispose();
   }
 
@@ -184,8 +177,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await _firebaseService.createUserProfile(userProfile, licenseKey);
           ref.invalidate(userProfileProvider);
         }
-      } else if (_authMode == AuthMode.staffLogin) {
-        userProfile = await _authenticateStaff();
       } else {
         // Login
         await _firebaseService.signInWithEmailAndPassword(
@@ -199,8 +190,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         }
       }
       
-      // If we have a profile, Validation Check (Skipped for staff)
-      if (userProfile != null && _authMode != AuthMode.staffLogin) {
+      // If we have a profile, Validation Check
+      if (userProfile != null) {
           if (!_isLicenseValid(userProfile)) {
              await FirebaseAuth.instance.signOut(); // Logout
              if (mounted) {
@@ -212,9 +203,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           // Save for offline/remember me
           final prefs = await SharedPreferences.getInstance();
           
-          // Save dentist ID for staff login lookup
-          await prefs.setString('lastLoggedInDentistId', userProfile.uid);
-
           if (_rememberMe) {
              await prefs.setBool('remember_me', true);
              await prefs.setString('cached_user_profile', jsonEncode(userProfile.toJson()));
@@ -228,7 +216,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       UserRole userRole = userProfile?.role ?? UserRole.dentist;
       
       await prefs.setString('userRole', userRole.toString());
-      await ref.refresh(userProfileProvider.future);
+      final _ = await ref.refresh(userProfileProvider.future);
 
       ref
           .read(auditServiceProvider)
@@ -288,170 +276,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         barrierDismissible: false,
         builder: (context) => ActivationDialog(uid: uid),
       );
-  }
-
-
-  Future<UserProfile?> _authenticateStaff() async {
-    final prefs = await SharedPreferences.getInstance();
-    // Use the dentist UID from the last logged in dentist on this machine
-    final dentistUid = prefs.getString('lastLoggedInDentistId');
-
-    if (dentistUid == null) {
-      throw Exception(
-        'No clinic data found on this device. A Dentist must login first to initialize the clinic.',
-      );
-    }
-
-    final staffService = ref.read(staffServiceProvider);
-    final authenticatedUser = await staffService.authenticateStaff(
-      dentistUid,
-      _usernameController.text.trim(),
-      _pinController.text.trim(),
-    );
-
-    if (authenticatedUser == null) {
-      throw Exception(
-        'Invalid username or PIN. Please check your credentials.',
-      );
-    }
-
-    // Store the authenticated managed user profile
-    await prefs.setString(
-      'managedUserProfile',
-      jsonEncode(authenticatedUser.toJson()),
-    );
-    
-    // Set the role for routing/access control
-    await prefs.setString('userRole', authenticatedUser.role.toString());
-    
-    return authenticatedUser;
-  }
-
-  Future<List<UserProfile>> _showDentistSelectionDialog() async {
-    final discoveryService = NetworkDiscoveryService();
-    List<DiscoveredServer> discoveredServers = [];
-
-    // Show loading dialog while discovering
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Discovering Dentists'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            const Text('Scanning for dental clinic servers on your network...'),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      // Start discovery
-      await discoveryService.startDiscovery();
-
-      // Wait for discovery results (listen for 10 seconds)
-      final completer = Completer<List<DiscoveredServer>>();
-      StreamSubscription? subscription;
-
-      subscription = discoveryService.discoveredServers.listen((servers) {
-        discoveredServers = servers;
-        if (servers.isNotEmpty && !completer.isCompleted) {
-          // Found at least one server, complete after a short delay to allow for more discoveries
-          Future.delayed(const Duration(seconds: 3), () {
-            if (!completer.isCompleted) {
-              completer.complete(servers);
-            }
-          });
-        }
-      });
-
-      // Timeout after 10 seconds
-      Future.delayed(const Duration(seconds: 10), () {
-        if (!completer.isCompleted) {
-          completer.complete(discoveredServers);
-        }
-      });
-
-      final finalServers = await completer.future;
-      subscription.cancel();
-      discoveryService.stopDiscovery();
-
-      // Close loading dialog
-      if (!mounted) return [];
-      Navigator.of(context).pop();
-
-      if (finalServers.isEmpty) {
-        return [];
-      }
-
-      // Show selection dialog
-      final selectedDentist = await showDialog<UserProfile>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Select Dental Clinic'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: finalServers.length,
-              itemBuilder: (context, index) {
-                final server = finalServers[index];
-                return ListTile(
-                  leading: const Icon(Icons.business, color: Colors.blue),
-                  title: Text(server.clinicName),
-                  subtitle: Text(
-                    '${server.dentistName} - ${server.ipAddress}:${server.port}',
-                  ),
-                  onTap: () async {
-                    // Create a UserProfile for the selected dentist
-                    final dentistProfile = UserProfile(
-                      uid: server.id,
-                      email: '', // We don't have email for discovered dentists
-                      licenseKey: '', // Will be set from Firebase
-                      plan: SubscriptionPlan.free,
-                      status: SubscriptionStatus.active,
-                      licenseExpiry: DateTime.now().add(
-                        const Duration(days: 365),
-                      ),
-                      createdAt: DateTime.now(),
-                      lastLogin: DateTime.now(),
-                      lastSync: DateTime.now(),
-                      clinicName: server.clinicName,
-                      dentistName: server.dentistName,
-                      role: UserRole.dentist,
-                    );
-
-                    if (mounted) {
-                      Navigator.of(context).pop(dentistProfile);
-                    }
-                  },
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-
-      return selectedDentist != null ? [selectedDentist] : [];
-    } catch (e) {
-      discoveryService.stopDiscovery();
-
-      // Close loading dialog if still open
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
-
-      return [];
-    }
   }
 
   void _switchAuthMode() {
@@ -547,11 +371,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
+    return Focus(
+      autofocus: true,
+      child: Scaffold(
+          body: Stack(
+            children: [
+              // Background Gradient
+              Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -650,62 +476,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Login Mode Toggle - Hidden on Android (Dentist only)
-                    if (!Platform.isAndroid)
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            ElevatedButton(
-                              onPressed:
-                                  _authMode == AuthMode.login ||
-                                      _authMode == AuthMode.register
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        _authMode = AuthMode.login;
-                                        _formKey.currentState?.reset();
-                                      });
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    (_authMode == AuthMode.login ||
-                                        _authMode == AuthMode.register)
-                                    ? colorScheme.primary
-                                    : colorScheme.surface,
-                                foregroundColor:
-                                    (_authMode == AuthMode.login ||
-                                        _authMode == AuthMode.register)
-                                    ? Colors.white
-                                    : colorScheme.onSurface,
-                              ),
-                              child: const Text('Dentist'),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: _authMode == AuthMode.staffLogin
-                                  ? null
-                                  : () {
-                                      setState(() {
-                                        _authMode = AuthMode.staffLogin;
-                                        _formKey.currentState!.reset();
-                                      });
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _authMode == AuthMode.staffLogin
-                                    ? colorScheme.primary
-                                    : colorScheme.surface,
-                                foregroundColor: _authMode == AuthMode.staffLogin
-                                    ? Colors.white
-                                    : colorScheme.onSurface,
-                              ),
-                              child: const Text('Client'),
-                            ),
-                          ],
-                        ),
-                      ),
-
                     // --- Auth Form Section ---
                     Container(
                       constraints: const BoxConstraints(maxWidth: 450),
@@ -730,9 +500,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              _authMode == AuthMode.staffLogin
-                                  ? 'Client Login'
-                                  : _authMode == AuthMode.login
+                              _authMode == AuthMode.login
                                   ? 'Welcome Back'
                                   : 'Join DentalTid',
                               style: GoogleFonts.poppins(
@@ -744,89 +512,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                             const SizedBox(height: 24),
 
-                            if (_authMode == AuthMode.staffLogin) ...[
-                              // Username Field for Staff
-                              TextFormField(
-                                controller: _usernameController,
-                                style: GoogleFonts.poppins(),
-                                decoration: InputDecoration(
-                                  labelText: 'Username',
-                                  prefixIcon: const Icon(Icons.person_outline),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: colorScheme.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  filled: true,
-                                  fillColor: isDark
-                                      ? Colors.grey.shade800
-                                      : Colors.grey.shade50,
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your username';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 12),
-
-                              // PIN Field for Staff
-                              TextFormField(
-                                controller: _pinController,
-                                style: GoogleFonts.poppins(),
-                                decoration: InputDecoration(
-                                  labelText: 'PIN (4 digits)',
-                                  prefixIcon: const Icon(Icons.pin_outlined),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Colors.grey.shade300,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: colorScheme.primary,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  filled: true,
-                                  fillColor: isDark
-                                      ? Colors.grey.shade800
-                                      : Colors.grey.shade50,
-                                ),
-                                keyboardType: TextInputType.number,
-                                maxLength: 4,
-                                obscureText: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter your PIN';
-                                  }
-                                  if (value.length != 4) {
-                                    return 'PIN must be 4 digits';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ] else ...[
                               // Email Field for Dentists
                               TextFormField(
                                 controller: _emailController,
@@ -913,7 +598,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   return null;
                                 },
                               ),
-                            ],
 
                             if (_authMode == AuthMode.register) ...[
                               const SizedBox(height: 12),
@@ -1065,9 +749,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       ),
                                     )
                                   : Text(
-                                      _authMode == AuthMode.staffLogin
-                                          ? 'STAFF LOGIN'
-                                          : _authMode == AuthMode.login
+                                      _authMode == AuthMode.login
                                           ? 'SIGN IN'
                                           : 'CREATE ACCOUNT',
                                       style: GoogleFonts.poppins(
@@ -1104,7 +786,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         scale: 0.8,
                                         child: Switch(
                                           value: _rememberMe,
-                                          activeColor: colorScheme.primary,
+                                          // activeColor: colorScheme.primary, // Deprecated
                                           onChanged: (value) {
                                               setState(() => _rememberMe = value);
                                           },
@@ -1188,6 +870,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

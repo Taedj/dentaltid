@@ -1,4 +1,3 @@
-import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +82,7 @@ class _DeveloperBroadcastsScreenState extends ConsumerState<DeveloperBroadcastsS
                                 const Text('Compose New Broadcast', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 16),
                                 DropdownButtonFormField<String>(
-                                    value: _selectedType,
+                                    initialValue: _selectedType,
                                     decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
                                     items: const [
                                         DropdownMenuItem(value: 'info', child: Text('ℹ️ Info / Update')),

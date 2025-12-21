@@ -1,13 +1,8 @@
 import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
-import 'package:dentaltid/src/core/data_sync_service.dart';
-import 'package:dentaltid/src/core/sync_manager.dart';
-import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/patients/data/patient_repository.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
@@ -22,7 +17,6 @@ final patientServiceProvider = Provider<PatientService>((ref) {
   return PatientService(
     ref.watch(patientRepositoryProvider),
     ref.watch(auditServiceProvider),
-    ref,
   );
 });
 
@@ -45,18 +39,6 @@ final patientsProvider =
       config,
     ) async {
       final service = ref.watch(patientServiceProvider);
-      
-      // Listen to data changes from the service
-      ref.listen(patientServiceProvider.select((s) => s.onDataChanged), (_, next) {
-        next.listen((_) {
-            ref.invalidateSelf();
-        });
-      });
-
-      // Also directly subscribe? The standard pattern is simpler:
-      // The select above returns a stream. We need to subscribe to the stream.
-      // But `ref.listen` on a Provider that returns a Service just listens to the Service instance change (rare).
-      // We need to act when the *stream* emits.
       
       // Better Pattern for Stream Subscription in Provider:
       final subscription = service.onDataChanged.listen((_) {
@@ -85,19 +67,18 @@ final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
 class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
-  final Ref _ref;
   
   // Reactive Stream Controller
   final StreamController<void> _dataChangeController = StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  PatientService(this._repository, this._auditService, this._ref);
+  PatientService(this._repository, this._auditService);
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
-  Future<void> addPatient(Patient patient, {bool broadcast = true}) async {
+  Future<void> addPatient(Patient patient) async {
     try {
       // Validate input
       if (patient.name.trim().isEmpty) {
@@ -131,19 +112,16 @@ class PatientService {
         );
       }
 
-      await _repository.createPatient(patient);
+      final newId = await _repository.createPatient(patient);
+      final newPatient = patient.copyWith(id: newId);
+
       _auditService.logEvent(
         AuditAction.createPatient,
-        details: 'Patient ${patient.name} ${patient.familyName} added.',
+        details: 'Patient ${newPatient.name} ${newPatient.familyName} added.',
       );
 
       // Notify local listeners
       _notifyDataChanged();
-
-      // Broadcast change to other devices on the LAN
-      if (broadcast) {
-        _syncLocalChange(SyncDataType.patients, 'create', patient.toJson());
-      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException || e is DuplicateEntryException) {
@@ -192,7 +170,7 @@ class PatientService {
     }
   }
 
-  Future<void> updatePatient(Patient patient, {bool broadcast = true}) async {
+  Future<void> updatePatient(Patient patient) async {
     try {
       if (patient.id == null) {
         throw ValidationException(
@@ -229,10 +207,6 @@ class PatientService {
 
       // Notify local listeners
       _notifyDataChanged();
-
-      if (broadcast) {
-        _syncLocalChange(SyncDataType.patients, 'update', patient.toJson());
-      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) {
@@ -246,7 +220,7 @@ class PatientService {
     }
   }
 
-  Future<void> deletePatient(int id, {bool broadcast = true}) async {
+  Future<void> deletePatient(int id) async {
     try {
       final patient = await _repository.getPatientById(id);
       if (patient == null) {
@@ -261,10 +235,6 @@ class PatientService {
 
       // Notify local listeners
       _notifyDataChanged();
-
-      if (broadcast) {
-        _syncLocalChange(SyncDataType.patients, 'delete', {'id': id});
-      }
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is NotFoundException) {
@@ -276,28 +246,6 @@ class PatientService {
         originalError: e,
       );
     }
-  }
-
-  void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {
-    try {
-      final userProfile = _ref.read(userProfileProvider).value;
-      if (userProfile == null) return;
-
-      final syncManager = _ref.read(syncManagerProvider);
-      if (userProfile.role == UserRole.dentist) {
-        syncManager.broadcastLocalChange(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      } else {
-        syncManager.sendToServer(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      }
-    } catch (_) {}
   }
 
   Future<List<Patient>> getBlacklistedPatients() async {

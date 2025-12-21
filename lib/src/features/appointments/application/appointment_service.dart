@@ -1,14 +1,10 @@
 import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
-import 'package:dentaltid/src/core/data_sync_service.dart';
-import 'package:dentaltid/src/core/sync_manager.dart';
 import 'package:dentaltid/src/features/appointments/data/appointment_repository.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
-import 'package:dentaltid/src/core/user_model.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
@@ -22,7 +18,6 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
   return AppointmentService(
     ref.watch(appointmentRepositoryProvider),
     ref.watch(auditServiceProvider),
-    ref,
   );
 });
 
@@ -157,19 +152,18 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
 class AppointmentService {
   final AppointmentRepository _repository;
   final AuditService _auditService;
-  final Ref _ref;
 
   // Reactive Stream
   final StreamController<void> _dataChangeController = StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  AppointmentService(this._repository, this._auditService, this._ref);
+  AppointmentService(this._repository, this._auditService);
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
-  Future<Appointment> addAppointment(Appointment appointment, {bool broadcast = true}) async {
+  Future<Appointment> addAppointment(Appointment appointment) async {
     try {
       // Check for existing appointment with same patient and dateTime
       final existingAppointment = await _repository
@@ -196,10 +190,6 @@ class AppointmentService {
 
       _notifyDataChanged();
 
-      if (broadcast) {
-        _syncLocalChange(SyncDataType.appointments, 'create', createdAppointment.toJson());
-      }
-
       // Provider invalidation is handled by the UI to avoid circular dependencies
       return createdAppointment;
     } catch (e) {
@@ -217,7 +207,7 @@ class AppointmentService {
     return await _repository.getUpcomingAppointments();
   }
 
-  Future<void> updateAppointment(Appointment appointment, {bool broadcast = true}) async {
+  Future<void> updateAppointment(Appointment appointment) async {
     await _repository.updateAppointment(appointment);
     _auditService.logEvent(
       AuditAction.updateAppointment,
@@ -227,13 +217,10 @@ class AppointmentService {
     
     _notifyDataChanged();
 
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.appointments, 'update', appointment.toJson());
-    }
     // Provider invalidation is handled by the UI to avoid circular dependencies
   }
 
-  Future<void> deleteAppointment(int id, {bool broadcast = true}) async {
+  Future<void> deleteAppointment(int id) async {
     await _repository.deleteAppointment(id);
     _auditService.logEvent(
       AuditAction.deleteAppointment,
@@ -242,13 +229,10 @@ class AppointmentService {
     
     _notifyDataChanged();
 
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.appointments, 'delete', {'id': id});
-    }
     // Provider invalidation is handled by the UI to avoid circular dependencies
   }
 
-  Future<void> updateAppointmentStatus(int id, AppointmentStatus status, {bool broadcast = true}) async {
+  Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
     await _repository.updateAppointmentStatus(id, status);
     _auditService.logEvent(
       AuditAction.updateAppointment,
@@ -257,32 +241,7 @@ class AppointmentService {
     
     _notifyDataChanged();
 
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.appointments, 'update_status', {'id': id, 'status': status.toString()});
-    }
     // Provider invalidation is handled by the UI to avoid circular dependencies
-  }
-
-  void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {
-    try {
-      final userProfile = _ref.read(userProfileProvider).value;
-      if (userProfile == null) return;
-
-      final syncManager = _ref.read(syncManagerProvider);
-      if (userProfile.role == UserRole.dentist) {
-        syncManager.broadcastLocalChange(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      } else {
-        syncManager.sendToServer(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      }
-    } catch (_) {}
   }
 
   Future<List<Appointment>> getAppointmentsByStatusForDate(

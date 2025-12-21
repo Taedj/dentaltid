@@ -12,7 +12,6 @@ import 'package:dentaltid/src/features/settings/application/finance_settings_pro
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/backup_service.dart';
-import 'package:dentaltid/src/features/settings/presentation/connection_settings_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -199,7 +198,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       );
                   },
                   loading: () => const CircularProgressIndicator(),
-                  error: (_, __) => const SizedBox(),
+                  error: (_, _) => const SizedBox(),
               ),
               const Divider(height: 40),
 
@@ -276,7 +275,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                    color: Colors.grey.withOpacity(0.1),
+                                    color: Colors.grey.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: Colors.grey),
                                 ),
@@ -507,7 +506,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               icon: const Icon(Icons.star, color: Colors.orange),
                               label: Text(l10n.activatePremium),
                               style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange.withOpacity(0.1),
+                                  backgroundColor: Colors.orange.withValues(alpha: 0.1),
                                   foregroundColor: Colors.orange,
                               ),
                           ),
@@ -522,44 +521,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               _showChangePasswordDialog(context, l10n),
                           child: Text(l10n.changePassword),
                         ),
-
-                      // Staff Management - only for dentists
-                      if (isDentist) ...[
-                        const SizedBox(height: 10),
-                        ElevatedButton(
-                          onPressed: () =>
-                              context.go('/settings/staff-management'),
-                          child: Text(l10n.staffManagement),
-                        ),
-                      ],
-
-                      const Divider(height: 40),
-                      Text(
-                        l10n.connectionSettings,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 10),
-                      if (userProfile != null && userProfile.isManagedUser) ...[
-                        Text(
-                          '${l10n.roleAssistant}: ${userProfile.role == UserRole.assistant ? l10n.roleAssistant : l10n.roleReceptionist}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                        ),
-                        Text(
-                          'Clinic: ${userProfile.clinicName ?? '---'}',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      ElevatedButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const ConnectionSettingsScreen(),
-                          ),
-                        ),
-                        icon: const Icon(Icons.settings_ethernet),
-                        label: Text(l10n.connectionSettings),
-                      ),
 
                       const Divider(height: 40),
                       ElevatedButton(

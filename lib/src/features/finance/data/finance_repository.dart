@@ -8,9 +8,9 @@ class FinanceRepository {
 
   static const String _tableName = 'transactions';
 
-  Future<void> createTransaction(Transaction transaction) async {
+  Future<int> createTransaction(Transaction transaction) async {
     final db = await _databaseService.database;
-    await db.insert(_tableName, transaction.toJson());
+    return await db.insert(_tableName, transaction.toJson());
   }
 
   Future<void> updateTransaction(Transaction transaction) async {

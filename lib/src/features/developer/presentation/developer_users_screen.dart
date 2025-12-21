@@ -151,7 +151,7 @@ class _UserAdvancedCard extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
-          backgroundColor: levelColor.withOpacity(0.1),
+          backgroundColor: levelColor.withValues(alpha: 0.1),
           child: Icon(user.isPremium ? Icons.verified : Icons.person, color: levelColor),
         ),
         title: Row(
@@ -197,7 +197,7 @@ class _UserAdvancedCard extends StatelessWidget {
   Widget _buildBadge(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
       child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
     );
   }
@@ -233,7 +233,7 @@ class _UserAdvancedCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: color.withOpacity(0.1),
+              backgroundColor: color.withValues(alpha: 0.1),
               valueColor: AlwaysStoppedAnimation<Color>(progress >= 0.9 ? Colors.red : color),
               minHeight: 6,
             ),

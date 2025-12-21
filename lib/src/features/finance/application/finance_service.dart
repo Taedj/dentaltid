@@ -1,9 +1,5 @@
 import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
-import 'package:dentaltid/src/core/data_sync_service.dart';
-import 'package:dentaltid/src/core/sync_manager.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
-import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/finance/data/finance_repository.dart';
 
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
@@ -27,7 +23,6 @@ final financeServiceProvider = Provider<FinanceService>((ref) {
     ref.watch(recurringChargeRepositoryProvider),
     ref.watch(auditServiceProvider),
     ref.watch(financeSettingsProvider),
-    ref,
   );
 });
 
@@ -165,7 +160,6 @@ class FinanceService {
   final RecurringChargeRepository _recurringChargeRepository;
   final AuditService _auditService;
   final FinanceSettings _settings;
-  final Ref _ref;
 
   // Reactive Stream
   final StreamController<void> _dataChangeController = StreamController.broadcast();
@@ -176,7 +170,6 @@ class FinanceService {
     this._recurringChargeRepository,
     this._auditService,
     this._settings,
-    this._ref,
   );
 
   void _notifyDataChanged() {
@@ -238,7 +231,7 @@ class FinanceService {
     final recurringCharges = await _recurringChargeRepository.getAllRecurringCharges();
     final proRatedTransactions = <Transaction>[];
 
-    final daysInWindow = endDate.difference(startDate).inDays + 1;
+    
     
     for (final charge in recurringCharges) {
       if (!charge.isActive) continue;
@@ -304,19 +297,16 @@ class FinanceService {
   Future<void> addTransaction(
     Transaction transaction, {
     bool invalidate = true,
-    bool broadcast = true,
   }) async {
-    await _repository.createTransaction(transaction);
+    final newId = await _repository.createTransaction(transaction);
+    final newTransaction = transaction.copyWith(id: newId);
+
     _auditService.logEvent(
       AuditAction.createTransaction,
       details:
-          'Transaction of type ${transaction.type} for amount ${transaction.totalAmount} added.',
+          'Transaction of type ${newTransaction.type} for amount ${newTransaction.totalAmount} added.',
     );
     
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.transactions, 'create', transaction.toJson());
-    }
-
     // Trigger reactive listener
     _notifyDataChanged();
   }
@@ -328,7 +318,6 @@ class FinanceService {
   Future<void> updateTransaction(
     Transaction transaction, {
     bool invalidate = true,
-    bool broadcast = true,
   }) async {
     await _repository.updateTransaction(transaction);
     _auditService.logEvent(
@@ -336,49 +325,19 @@ class FinanceService {
       details: 'Transaction updated.',
     );
     
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.transactions, 'update', transaction.toJson());
-    }
-
     // Trigger reactive listener
     _notifyDataChanged();
   }
 
-  Future<void> deleteTransaction(int id, {bool broadcast = true}) async {
+  Future<void> deleteTransaction(int id) async {
     await _repository.deleteTransaction(id);
     _auditService.logEvent(
       AuditAction.deleteTransaction,
       details: 'Transaction with ID $id deleted.',
     );
     
-    if (broadcast) {
-      _syncLocalChange(SyncDataType.transactions, 'delete', {'id': id});
-    }
-
     // Trigger reactive listener
     _notifyDataChanged();
-  }
-
-  void _syncLocalChange(SyncDataType type, String operation, Map<String, dynamic> data) {
-    try {
-      final userProfile = _ref.read(userProfileProvider).value;
-      if (userProfile == null) return;
-
-      final syncManager = _ref.read(syncManagerProvider);
-      if (userProfile.role == UserRole.dentist) {
-        syncManager.broadcastLocalChange(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      } else {
-        syncManager.sendToServer(
-          type: type,
-          operation: operation,
-          data: data,
-        );
-      }
-    } catch (_) {}
   }
 
   Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {

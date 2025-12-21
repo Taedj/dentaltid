@@ -1,7 +1,6 @@
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
-import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_appointments_provider.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
