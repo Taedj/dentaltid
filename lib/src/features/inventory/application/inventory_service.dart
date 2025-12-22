@@ -1,5 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/core/network/sync_client.dart';
+import 'package:dentaltid/src/core/network/sync_event.dart';
+import 'package:dentaltid/src/core/network/sync_server.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/data/inventory_repository.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +20,7 @@ final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
 
 final inventoryServiceProvider = Provider<InventoryService>((ref) {
   return InventoryService(
+    ref,
     ref.watch(inventoryRepositoryProvider),
     ref.watch(auditServiceProvider),
     ref.watch(financeServiceProvider),
@@ -35,15 +42,31 @@ class InventoryService {
   final InventoryRepository _repository;
   final AuditService _auditService;
   final FinanceService _financeService;
+  final Ref _ref;
 
   // Reactive Stream
   final StreamController<void> _dataChangeController = StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  InventoryService(this._repository, this._auditService, this._financeService);
+  InventoryService(this._ref, this._repository, this._auditService, this._financeService);
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
+  }
+
+  void _broadcastChange(SyncAction action, InventoryItem data) {
+    final event = SyncEvent(
+      table: 'inventory',
+      action: action,
+      data: data.toJson(),
+    );
+    
+    final userProfile = _ref.read(userProfileProvider).value;
+    if (userProfile?.role == UserRole.dentist) {
+        _ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
+    } else {
+        _ref.read(syncClientProvider).send(event);
+    }
   }
 
   Future<InventoryItem> addInventoryItem(InventoryItem item) async {
@@ -54,6 +77,7 @@ class InventoryService {
     );
 
     _notifyDataChanged();
+    _broadcastChange(SyncAction.create, newItem);
 
     final transaction = Transaction(
       description: 'Purchase of ${item.name}',
@@ -89,12 +113,12 @@ class InventoryService {
     );
 
     _notifyDataChanged();
+    _broadcastChange(SyncAction.update, item);
 
     final quantityDiff = item.quantity - oldItem.quantity;
     if (quantityDiff != 0) {
       if (quantityDiff > 0) {
         // Only create a transaction if we are adding stock (Purchase)
-        // Reducing stock (Usage) is not an expense, as the cost was already incurred upon purchase.
         final transaction = Transaction(
           description: 'Purchase of ${item.name}',
           totalAmount: item.cost * quantityDiff,
@@ -106,11 +130,14 @@ class InventoryService {
         );
         await _financeService.addTransaction(transaction);
       }
-      // If quantityDiff < 0, it's usage, no financial transaction needed.
     }
   }
 
   Future<void> deleteInventoryItem(int id) async {
+    final item = await _repository.getInventoryItemById(id);
+    if (item == null) {
+      throw Exception('Item not found');
+    }
     await _repository.deleteInventoryItem(id);
     _auditService.logEvent(
       AuditAction.deleteInventoryItem,
@@ -118,5 +145,6 @@ class InventoryService {
     );
 
     _notifyDataChanged();
+    _broadcastChange(SyncAction.delete, item);
   }
 }

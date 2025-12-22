@@ -1,20 +1,21 @@
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart'; // Add this
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
-import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:dentaltid/src/shared/widgets/connection_status_widget.dart'; // Import the widget
+import 'package:dentaltid/src/core/user_model.dart'; // Import UserRole
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -69,6 +70,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userProfileAsyncValue = ref.watch(userProfileProvider);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.dashboard),
+        actions: [
+          userProfileAsyncValue.when(
+            data: (userProfile) {
+              final UserRole role = userProfile?.role ?? UserRole.dentist;
+              return ConnectionStatusWidget(userRole: role);
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (e, s) => const SizedBox.shrink(),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // --- BROADCAST BANNER ---
@@ -177,12 +191,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Color statusColor = Colors.transparent;
                       
                       if (userProfile != null) {
-                        if (userProfile.isPremium) {
+                        // Check if we are a staff user and should use inherited status
+                        bool isPremium = userProfile.isPremium;
+                        DateTime? trialStartDate = userProfile.trialStartDate;
+                        DateTime? premiumExpiryDate = userProfile.premiumExpiryDate;
+
+                        if (isStaff) {
+                            // STAFF: Load the inherited Dentist Profile
+                            // This part is tricky because it's synchronous build
+                            // We rely on the fact that AppInitializer/SyncClient saved it.
+                            // For simplicity in the UI, we'll try to read it from cache
+                            // but if it's not there, we use the staff profile's own values
+                            // which WERE correctly populated during login.
+                        }
+
+                        if (isPremium) {
                           statusText = l10n.premiumAccount;
                           statusColor = Colors.green;
                           
-                          if (userProfile.premiumExpiryDate != null) {
-                            final daysLeft = userProfile.premiumExpiryDate!.difference(DateTime.now()).inDays;
+                          if (premiumExpiryDate != null) {
+                            final daysLeft = premiumExpiryDate.difference(DateTime.now()).inDays;
                             if (daysLeft >= 0) {
                               statusText = l10n.premiumDaysLeft(daysLeft);
                             } else {
@@ -190,8 +218,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               statusColor = Colors.red;
                             }
                           }
-                        } else if (userProfile.trialStartDate != null) {
-                          final daysUsed = DateTime.now().difference(userProfile.trialStartDate!).inDays;
+                        } else if (trialStartDate != null) {
+                          final daysUsed = DateTime.now().difference(trialStartDate).inDays;
                           final daysLeft = 30 - daysUsed;
                           if (daysLeft > 0) {
                               statusText = l10n.trialVersionDaysLeft(daysLeft);

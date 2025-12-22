@@ -6,7 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 17; // Incremented version
+  static const int _databaseVersion = 18; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -368,6 +368,19 @@ class DatabaseService {
         developer.log('Error upgrading managed_users table to v17: $e', error: e, stackTrace: s);
       }
     }
+    if (oldVersion < 18) {
+      // Add staff_users table
+      await db.execute('''
+        CREATE TABLE staff_users(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          fullName TEXT,
+          username TEXT UNIQUE,
+          pin TEXT,
+          role TEXT,
+          createdAt TEXT
+        )
+      ''');
+    }
   }
 
   Future<void> close() async {
@@ -514,6 +527,16 @@ class DatabaseService {
           cumulativeAppointments INTEGER DEFAULT 0,
           cumulativeInventory INTEGER DEFAULT 0,
           isManagedUser INTEGER DEFAULT 1
+        )
+      ''');
+    await db.execute('''
+        CREATE TABLE staff_users(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          fullName TEXT,
+          username TEXT UNIQUE,
+          pin TEXT,
+          role TEXT,
+          createdAt TEXT
         )
       ''');
   }

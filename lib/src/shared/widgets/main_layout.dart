@@ -7,6 +7,7 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:convert';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key, required this.child});
@@ -99,10 +100,30 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen for Trial Expiration
+    // Listen for Trial Expiration - this now serves as the primary license check
     ref.listen(userProfileProvider, (previous, next) {
-        next.whenData((profile) {
-            if (profile != null && profile.isTrialExpired) {
+        next.whenData((profile) async {
+            if (profile == null) return;
+
+            bool isExpired = false;
+            // If the user is staff, check the dentist's inherited profile status
+            if (profile.isManagedUser) {
+                final prefs = await SharedPreferences.getInstance();
+                final dentistProfileJson = prefs.getString('dentist_profile');
+                if (dentistProfileJson != null) {
+                    final dentistProfile = UserProfile.fromJson(jsonDecode(dentistProfileJson));
+                    if (dentistProfile.isTrialExpired) {
+                        isExpired = true;
+                    }
+                }
+            } else {
+                // It's a dentist, check their own profile
+                if (profile.isTrialExpired) {
+                    isExpired = true;
+                }
+            }
+            
+            if (isExpired) {
                 _handleTrialExpiration();
             }
         });
@@ -146,7 +167,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   label: Text(l10n.inventory),
             ));
         }
-        if (_currentUserRole == UserRole.dentist || _currentUserRole == UserRole.receptionist) {
+        if (_currentUserRole == UserRole.dentist) {
              destinations.add(NavigationRailDestination(
                   icon: const Icon(Icons.assessment_outlined),
                   selectedIcon: const Icon(Icons.assessment),
@@ -215,7 +236,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                      } else if (destinationLabel == l10n.finance) {
                        route = '/finance';
                      } else if (destinationLabel == l10n.settings) {
-                       route = '/settings';
+                       if (_currentUserRole != UserRole.dentist) {
+                           route = '/staff-settings';
+                       } else {
+                           route = '/settings';
+                       }
                      } else {
                        route = '/';
                      }

@@ -185,10 +185,10 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                       patientProvider(appointment.patientId),
                     );
 
-                    Color cardColor;
-                    IconData leadingIcon;
-                    Color iconColor;
-                    Color statusColor;
+                    Color cardColor = Theme.of(context).colorScheme.surface;
+                    IconData leadingIcon = Icons.hourglass_empty;
+                    Color iconColor = Theme.of(context).colorScheme.primary;
+                    Color statusColor = Colors.blue;
 
                     switch (appointment.status) {
                       case AppointmentStatus.waiting:

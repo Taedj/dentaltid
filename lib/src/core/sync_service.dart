@@ -1,0 +1,110 @@
+import 'dart:convert';
+import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
+import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/settings/application/staff_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+/// Service responsible for exporting and importing the entire app database
+/// for the purpose of synchronizing between a Dentist (Server) and Staff (Client) device.
+class SyncService {
+  final Ref _ref;
+  final _log = Logger('SyncService');
+
+  SyncService(this._ref);
+
+  /// Exports all relevant tables into a single JSON string.
+  Future<String> exportDatabaseForSync() async {
+    _log.info('Starting full database export for sync...');
+    try {
+      final db = await _ref.read(databaseServiceProvider).database;
+
+      final tablesToExport = [
+        'patients', 'appointments', 'transactions', 'inventory', 'visits',
+        'sessions', 'recurring_charges', 'audit_events', 'staff_users'
+      ];
+
+      final Map<String, List<Map<String, dynamic>>> allData = {};
+
+      for (final table in tablesToExport) {
+        final List<Map<String, dynamic>> tableData = await db.query(table);
+        allData[table] = tableData;
+        _log.info('Exported ${tableData.length} rows from "$table".');
+      }
+
+      final jsonData = jsonEncode(allData);
+      _log.info('Database export complete. Total size: ${jsonData.length} bytes.');
+      return jsonData;
+
+    } catch (e, s) {
+      _log.severe('Failed to export database', e, s);
+      rethrow;
+    }
+  }
+
+  /// Clears local data and imports a full dataset from a JSON string.
+  /// This is a destructive operation.
+  Future<void> importDatabaseFromSync(String jsonData) async {
+    _log.info('Starting full database import from sync...');
+    try {
+      final db = await _ref.read(databaseServiceProvider).database;
+      final Map<String, dynamic> allData = jsonDecode(jsonData);
+
+      final tablesToImport = [
+        'patients', 'appointments', 'transactions', 'inventory', 'visits',
+        'sessions', 'recurring_charges', 'audit_events', 'staff_users'
+      ];
+      
+      await db.transaction((txn) async {
+        // Clear existing data in reverse order of dependencies if any
+        for (final table in tablesToImport.reversed) {
+           await txn.delete(table);
+           _log.info('Cleared table "$table".');
+        }
+
+        // Insert new data
+        for (final table in tablesToImport) {
+          if (allData.containsKey(table) && allData[table] is List) {
+            final List<dynamic> tableData = allData[table];
+            int count = 0;
+            for (final row in tableData) {
+              if (row is Map<String, dynamic>) {
+                 await txn.insert(
+                   table,
+                   row,
+                   conflictAlgorithm: ConflictAlgorithm.replace,
+                 );
+                 count++;
+              }
+            }
+             _log.info('Imported $count rows into "$table".');
+          }
+        }
+      });
+
+      _log.info('Database import complete.');
+      _invalidateAllProviders();
+
+    } catch (e, s) {
+      _log.severe('Failed to import database', e, s);
+      rethrow;
+    }
+  }
+
+  /// Invalidates all data-related providers to force a UI refresh.
+  void _invalidateAllProviders() {
+    _ref.invalidate(patientsProvider);
+    _ref.invalidate(inventoryItemsProvider);
+    _ref.invalidate(staffListProvider);
+    _ref.invalidate(appointmentsProvider);
+    // Add other providers for finance, visits, etc.
+    _log.info('Invalidated data providers to refresh UI.');
+  }
+}
+
+final databaseServiceProvider = Provider((ref) => DatabaseService.instance);
+
+final syncServiceProvider = Provider((ref) => SyncService(ref));

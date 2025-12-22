@@ -75,6 +75,19 @@ class AppointmentRepository {
     return null;
   }
 
+  Future<Appointment?> getAppointmentById(int id) async {
+    final db = await _databaseService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return Appointment.fromJson(maps.first);
+    }
+    return null;
+  }
+
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
     final db = await _databaseService.database;
     await db.update(

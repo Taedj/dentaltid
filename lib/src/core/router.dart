@@ -6,6 +6,7 @@ import 'package:dentaltid/src/features/developer/presentation/developer_broadcas
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/cloud_backups_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/settings_screen.dart';
+import 'package:dentaltid/src/features/settings/presentation/staff_settings_screen.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/inventory/presentation/inventory_screen.dart';
@@ -186,6 +187,10 @@ final router = GoRouter(
               builder: (context, state) => const ProfileSettingsScreen(),
             ),
           ],
+        ),
+        GoRoute(
+          path: '/staff-settings',
+          builder: (context, state) => const StaffSettingsScreen(),
         ),
         GoRoute(
           path: '/developer',

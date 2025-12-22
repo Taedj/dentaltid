@@ -12,6 +12,7 @@ import 'package:dentaltid/src/features/settings/application/finance_settings_pro
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/backup_service.dart';
+import 'package:dentaltid/src/features/settings/presentation/staff_list_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -289,6 +290,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                         ],
                         const Divider(height: 40),
+                      ],
+                      
+                      if (isDentist) ...[
+                        Text(
+                          'Staff Management',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 10),
+                        ListTile(
+                          title: const Text('Manage Staff Members'),
+                          subtitle: const Text('Add Assistants or Receptionists'),
+                          leading: const Icon(Icons.people),
+                          trailing: const Icon(Icons.arrow_forward_ios),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const StaffListScreen()),
+                            );
+                          },
+                        ),
+                         const Divider(height: 40),
                       ],
 
                       // Language settings - view-only for non-dentists

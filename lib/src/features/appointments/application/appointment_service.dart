@@ -1,14 +1,20 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
+import 'package:dentaltid/src/core/network/sync_client.dart';
+import 'package:dentaltid/src/core/network/sync_event.dart';
+import 'package:dentaltid/src/core/network/sync_server.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/data/appointment_repository.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
-import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
   return AppointmentRepository(DatabaseService.instance);
@@ -16,15 +22,15 @@ final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
 
 final appointmentServiceProvider = Provider<AppointmentService>((ref) {
   return AppointmentService(
+    ref,
     ref.watch(appointmentRepositoryProvider),
     ref.watch(auditServiceProvider),
   );
 });
 
 final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
-  final service = ref.read(appointmentServiceProvider); // Read to avoid rebuild on service recreation
+  final service = ref.read(appointmentServiceProvider);
   
-  // Reactive subscription
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -113,7 +119,6 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
   final appointmentService = ref.read(appointmentServiceProvider);
   final patientService = ref.read(patientServiceProvider);
   
-  // Listen to both appointment and patient changes
   final appSubscription = appointmentService.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -126,7 +131,6 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
      patSubscription.cancel();
   });
 
-  // 1. Get all patients and create a set of emergency patient IDs for efficient lookup
   final allPatients = await patientService.getPatients(PatientFilter.all);
   final emergencyPatientIds = allPatients
       .where((p) => p.isEmergency)
@@ -134,10 +138,8 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
       .whereType<int>()
       .toSet();
 
-  // 2. Get all of today's appointments
   final todaysAppointments = await appointmentService.getTodaysAppointments();
 
-  // 3. Filter appointments based on the combined emergency conditions
   return todaysAppointments.where((a) {
     final isEmergencyPatient = emergencyPatientIds.contains(a.patientId);
     final isEmergencyType = a.appointmentType.toLowerCase() == 'emergency';
@@ -152,20 +154,34 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
 class AppointmentService {
   final AppointmentRepository _repository;
   final AuditService _auditService;
+  final Ref _ref;
 
-  // Reactive Stream
   final StreamController<void> _dataChangeController = StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  AppointmentService(this._repository, this._auditService);
+  AppointmentService(this._ref, this._repository, this._auditService);
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
+  void _broadcastChange(SyncAction action, Appointment data) {
+    final event = SyncEvent(
+      table: 'appointments',
+      action: action,
+      data: data.toJson(),
+    );
+    
+    final userProfile = _ref.read(userProfileProvider).value;
+    if (userProfile?.role == UserRole.dentist) {
+        _ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
+    } else {
+        _ref.read(syncClientProvider).send(event);
+    }
+  }
+
   Future<Appointment> addAppointment(Appointment appointment) async {
     try {
-      // Check for existing appointment with same patient and dateTime
       final existingAppointment = await _repository
           .getAppointmentByPatientAndDateTime(
             appointment.patientId,
@@ -189,11 +205,10 @@ class AppointmentService {
       );
 
       _notifyDataChanged();
+      _broadcastChange(SyncAction.create, createdAppointment);
 
-      // Provider invalidation is handled by the UI to avoid circular dependencies
       return createdAppointment;
     } catch (e) {
-      // Log the error for debugging
       ErrorHandler.logError(e);
       rethrow;
     }
@@ -216,11 +231,14 @@ class AppointmentService {
     );
     
     _notifyDataChanged();
-
-    // Provider invalidation is handled by the UI to avoid circular dependencies
+    _broadcastChange(SyncAction.update, appointment);
   }
 
   Future<void> deleteAppointment(int id) async {
+    final appointment = await _repository.getAppointmentById(id);
+    if (appointment == null) {
+      throw NotFoundException('Appointment not found', entity: 'Appointment', id: id);
+    }
     await _repository.deleteAppointment(id);
     _auditService.logEvent(
       AuditAction.deleteAppointment,
@@ -228,11 +246,14 @@ class AppointmentService {
     );
     
     _notifyDataChanged();
-
-    // Provider invalidation is handled by the UI to avoid circular dependencies
+    _broadcastChange(SyncAction.delete, appointment);
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
+    final appointment = await _repository.getAppointmentById(id);
+    if (appointment == null) {
+      throw NotFoundException('Appointment not found', entity: 'Appointment', id: id);
+    }
     await _repository.updateAppointmentStatus(id, status);
     _auditService.logEvent(
       AuditAction.updateAppointment,
@@ -240,8 +261,7 @@ class AppointmentService {
     );
     
     _notifyDataChanged();
-
-    // Provider invalidation is handled by the UI to avoid circular dependencies
+    _broadcastChange(SyncAction.update, appointment.copyWith(status: status));
   }
 
   Future<List<Appointment>> getAppointmentsByStatusForDate(
