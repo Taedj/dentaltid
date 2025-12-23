@@ -10,6 +10,7 @@ class Appointment {
   final String diagnosis; // New field for diagnosis
   final String treatment; // New field for treatment
   final String notes; // New field for notes
+  final String? createdBy; // Name of the user who created this appointment
 
   Appointment({
     this.id,
@@ -21,6 +22,7 @@ class Appointment {
     this.diagnosis = '',
     this.treatment = '',
     this.notes = '',
+    this.createdBy,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,6 +36,7 @@ class Appointment {
     'diagnosis': diagnosis,
     'treatment': treatment,
     'notes': notes,
+    'createdBy': createdBy,
   };
 
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
@@ -49,6 +52,7 @@ class Appointment {
     diagnosis: json['diagnosis'] ?? '',
     treatment: json['treatment'] ?? '',
     notes: json['notes'] ?? '',
+    createdBy: json['createdBy'],
   );
 
   Appointment copyWith({
@@ -61,6 +65,7 @@ class Appointment {
     String? diagnosis,
     String? treatment,
     String? notes,
+    String? createdBy,
   }) {
     return Appointment(
       id: id ?? this.id,
@@ -72,6 +77,7 @@ class Appointment {
       diagnosis: diagnosis ?? this.diagnosis,
       treatment: treatment ?? this.treatment,
       notes: notes ?? this.notes,
+      createdBy: createdBy ?? this.createdBy,
     );
   }
 }

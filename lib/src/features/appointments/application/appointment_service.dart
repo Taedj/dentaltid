@@ -168,7 +168,7 @@ class AppointmentService {
     this._financeService,
   );
 
-  void _notifyDataChanged() {
+  void notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
@@ -202,7 +202,7 @@ class AppointmentService {
             'Appointment for patient ${createdAppointment.patientId} on ${createdAppointment.dateTime} created.',
       );
 
-      _notifyDataChanged();
+      notifyDataChanged();
       _broadcastChange(SyncAction.create, createdAppointment);
 
       return createdAppointment;
@@ -228,7 +228,7 @@ class AppointmentService {
           'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} updated.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.update, appointment);
   }
 
@@ -247,13 +247,13 @@ class AppointmentService {
       details: 'Appointment with ID $id deleted.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.delete, appointment);
   }
 
   Future<void> deleteAppointmentsByPatientId(int patientId) async {
     await _repository.deleteAppointmentsByPatientId(patientId);
-    _notifyDataChanged();
+    notifyDataChanged();
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
@@ -271,7 +271,7 @@ class AppointmentService {
       details: 'Appointment with ID $id status updated to ${status.name}.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.update, appointment.copyWith(status: status));
   }
 

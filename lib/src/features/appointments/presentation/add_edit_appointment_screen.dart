@@ -122,7 +122,10 @@ class _AddEditAppointmentScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
-    // Fetch only today's added patients by default for the selection menu
+    
+    // Limit to 'today' patients by default to keep the list concise.
+    // Patients synced from other devices today will still appear instantly
+    // thanks to the real-time invalidation logic.
     final patientsAsyncValue = ref.watch(
       patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
     );
@@ -571,9 +574,9 @@ class _AddEditAppointmentScreenState
 
     try {
       // License Limit Check
+      final userProfile = ref.read(userProfileProvider).value;
       if (widget.appointment == null) {
         // Only check for new appointments
-        final userProfile = ref.read(userProfileProvider).value;
         if (userProfile != null && !userProfile.isPremium) {
           if (userProfile.cumulativeAppointments >= 100) {
             _showLimitDialog(context);
@@ -582,11 +585,16 @@ class _AddEditAppointmentScreenState
         }
       }
 
+      final creatorName = userProfile?.isManagedUser == true
+          ? (userProfile?.fullName ?? userProfile?.username ?? "Staff")
+          : "Dr. ${userProfile?.dentistName ?? "Dentist"}";
+
       final appointment = Appointment(
         id: widget.appointment?.id,
         patientId: _selectedPatient!.id!,
         dateTime: _appointmentDateTime,
         appointmentType: _selectedAppointmentType,
+        createdBy: widget.appointment?.createdBy ?? creatorName,
       );
 
       final appointmentWithPayment = AppointmentWithPayment(

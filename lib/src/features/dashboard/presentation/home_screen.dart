@@ -1,7 +1,9 @@
+import 'dart:ui';
+import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
-import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart'; // Add this
+import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +12,13 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
-import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
-import 'package:logging/logging.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'dart:convert';
+import 'package:dentaltid/src/core/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -59,16 +63,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String _replaceArabicNumber(String input) {
-    const english = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-
-    for (int i = 0; i < english.length; i++) {
-      input = input.replaceAll(arabic[i], english[i]);
-    }
-    return input;
-  }
-
   @override
   Widget build(BuildContext context) {
     final todayPatientsAsyncValue = ref.watch(
@@ -76,197 +70,435 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final l10n = AppLocalizations.of(context)!;
-    final userProfileAsyncValue = ref.watch(userProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.dashboard), actions: const []),
-      body: Column(
-        children: [
-          // --- BROADCAST BANNER ---
-          StreamBuilder<List<BroadcastModel>>(
-            stream: BroadcastService().getActiveBroadcasts(),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const SizedBox.shrink();
-              }
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: Text(l10n.dashboard),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Theme.of(context).colorScheme.surface,
+              Theme.of(context).colorScheme.surfaceContainer,
+            ],
+          ),
+        ),
+        child: Column(
+          children: [
+            SizedBox(height: MediaQuery.of(context).padding.top + 56),
+            // --- BROADCAST BANNER ---
+            _buildBroadcastBanner(),
+            
+            // --- HEADER ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: const _DashboardHeader(),
+            ),
 
-              // Filter dismissed
-              final visibleBroadcasts = snapshot.data!
-                  .where((b) => !_dismissedBroadcastIds.contains(b.id))
-                  .toList();
-
-              if (visibleBroadcasts.isEmpty) return const SizedBox.shrink();
-
-              // Only show the latest one for now to avoid clutter
-              final latest = visibleBroadcasts.first;
-
-              return Container(
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: _getBroadcastColor(latest.type).withValues(alpha: 0.1),
-                  border: Border.all(color: _getBroadcastColor(latest.type)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _getBroadcastIcon(latest.type),
-                      color: _getBroadcastColor(latest.type),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            latest.title,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: _getBroadcastColor(latest.type),
-                            ),
+            Expanded(
+              child: Center(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    double cardWidth;
+                    if (constraints.maxWidth > 1400) {
+                      cardWidth = constraints.maxWidth * 0.26;
+                    } else if (constraints.maxWidth > 1000) {
+                      cardWidth = constraints.maxWidth * 0.29;
+                    } else if (constraints.maxWidth > 800) {
+                      cardWidth = constraints.maxWidth * 0.32;
+                    } else {
+                      cardWidth = constraints.maxWidth * 0.85; // Mobile full width
+                    }
+                    // Adjust for mobile wrap
+                    if (constraints.maxWidth < 800) {
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Column(
+                             children: [
+                               _buildPatientCard(cardWidth, todayPatientsAsyncValue, l10n),
+                               const SizedBox(height: 16),
+                               _buildInventoryCard(cardWidth, inventoryItemsAsyncValue, l10n),
+                               const SizedBox(height: 16),
+                               _buildAppointmentsCard(cardWidth, l10n),
+                             ],
                           ),
-                          Text(latest.message),
-                        ],
+                        );
+                    }
+
+                    double cardHeight = cardWidth * 1.2; // Slightly shorter for modern look
+                    double spacing = cardWidth * 0.05;
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start, // Align top
+                      children: [
+                        _buildPatientCard(cardWidth, todayPatientsAsyncValue, l10n, height: cardHeight),
+                        SizedBox(width: spacing),
+                        _buildInventoryCard(cardWidth, inventoryItemsAsyncValue, l10n, height: cardHeight),
+                        SizedBox(width: spacing),
+                        _buildAppointmentsCard(cardWidth, l10n, height: cardHeight),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBroadcastBanner() {
+    return StreamBuilder<List<BroadcastModel>>(
+      stream: BroadcastService().getActiveBroadcasts(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final visibleBroadcasts = snapshot.data!
+            .where((b) => !_dismissedBroadcastIds.contains(b.id))
+            .toList();
+
+        if (visibleBroadcasts.isEmpty) return const SizedBox.shrink();
+        final latest = visibleBroadcasts.first;
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _getBroadcastColor(latest.type).withValues(alpha: 0.1),
+            border: Border.all(color: _getBroadcastColor(latest.type)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _getBroadcastIcon(latest.type),
+                color: _getBroadcastColor(latest.type),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      latest.title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _getBroadcastColor(latest.type),
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, size: 16),
-                      onPressed: () => _dismissBroadcast(latest.id),
-                    ),
+                    Text(latest.message),
                   ],
                 ),
-              );
-            },
+              ),
+              IconButton(
+                icon: const Icon(LucideIcons.x, size: 16),
+                onPressed: () => _dismissBroadcast(latest.id),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: StreamBuilder<DateTime>(
-                    stream: Stream.periodic(
-                      const Duration(seconds: 1),
-                      (_) => DateTime.now(),
-                    ),
-                    builder: (context, snapshot) {
-                      final currentTime = snapshot.data ?? DateTime.now();
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _replaceArabicNumber(
-                              DateFormat.yMMMMEEEEd(
-                                l10n.localeName,
-                              ).format(currentTime),
-                            ),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Text(
-                            _replaceArabicNumber(
-                              DateFormat.Hms(
-                                l10n.localeName,
-                              ).format(currentTime),
-                            ),
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      );
-                    },
+        ).animate().fadeIn().slideY(begin: -0.2, end: 0);
+      },
+    );
+  }
+
+  Widget _buildPatientCard(double width, AsyncValue<List<Patient>> data, AppLocalizations l10n, {double? height}) {
+    return _FlipCard3D(
+      width: width,
+      height: height ?? width * 1.2,
+      frontTitle: l10n.patients,
+      frontIcon: LucideIcons.users,
+      frontGradient: [
+        AppColors.primary,
+        AppColors.primary.withValues(alpha: 0.7),
+      ],
+      backTitle: l10n.viewDetails,
+      backIcon: LucideIcons.eye,
+      onTap: () => context.go('/patients'),
+      cardType: 'patients',
+      kpiBuilder: () => data.when(
+          data: (p) => Text('${p.length} Today', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          loading: () => const SizedBox(),
+          error: (_, _) => const SizedBox(),
+      ),
+      content: data.when(
+        data: (patients) => Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.todayCount(patients.length),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24, // Bold Number
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+             Text(
+                "Scheduled Visits",
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 14),
+             ),
+          ],
+        ),
+        loading: () => const CircularProgressIndicator(color: Colors.white),
+        error: (e, s) => const Icon(LucideIcons.alertCircle, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildInventoryCard(double width, AsyncValue<List<InventoryItem>> data, AppLocalizations l10n, {double? height}) {
+    return _FlipCard3D(
+      width: width,
+      height: height ?? width * 1.2,
+      frontTitle: l10n.criticalAlerts,
+      frontIcon: LucideIcons.alertTriangle, // ShieldAlert equivalent
+      frontGradient: data.maybeWhen(
+        data: (items) {
+          final now = DateTime.now();
+          final expiringSoonCount = items.where((item) {
+            final daysLeft = item.expirationDate.difference(now).inDays;
+            return daysLeft >= 0 && daysLeft < item.thresholdDays;
+          }).length;
+          final lowStockCount = items.where((item) => item.quantity <= item.lowStockThreshold).length;
+          
+          if (expiringSoonCount > 0 || lowStockCount > 0) {
+             return [AppColors.warning, AppColors.error]; // Warning/Error Gradient
+          }
+          return [AppColors.success, Color(0xFF27AE60)]; // Healthy Gradient
+        },
+        orElse: () => [AppColors.success, Color(0xFF27AE60)],
+      ),
+      backTitle: l10n.viewCritical,
+      backIcon: LucideIcons.alertOctagon,
+      onTap: () => context.go('/inventory'),
+      cardType: 'emergency',
+      kpiBuilder: () => data.when(
+          data: (items) {
+             final now = DateTime.now();
+             final low = items.where((i) => i.quantity <= i.lowStockThreshold).length;
+             final expiring = items.where((item) {
+               final daysLeft = item.expirationDate.difference(now).inDays;
+               return daysLeft >= 0 && daysLeft < item.thresholdDays;
+             }).length;
+             
+             return Row(
+               mainAxisAlignment: MainAxisAlignment.spaceAround,
+               children: [
+                 Text('$expiring Expiring', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                 Container(width: 1, height: 12, color: Colors.white54),
+                 Text('$low Low Stock', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+               ],
+             );
+          },
+          loading: () => const SizedBox(),
+          error: (_, _) => const SizedBox(),
+      ),
+      content: data.when(
+        data: (items) {
+          final now = DateTime.now();
+          final expiringSoonCount = items.where((item) {
+            final daysLeft = item.expirationDate.difference(now).inDays;
+            return daysLeft >= 0 && daysLeft < item.thresholdDays;
+          }).length;
+          final lowStockCount = items.where((item) => item.quantity <= item.lowStockThreshold).length;
+          
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+               if (expiringSoonCount > 0 || lowStockCount > 0) ...[
+                  Text(
+                    "${expiringSoonCount + lowStockCount}",
+                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: userProfileAsyncValue.when(
-                    data: (userProfile) {
-                      final log = Logger('HomeScreen');
-                      log.info(
-                        'Building with user profile: ${userProfile?.toJson()}',
-                      );
-                      final dentistName = userProfile?.dentistName ?? '';
-                      final staffUsername = userProfile?.username ?? '';
-                      final isStaff = userProfile?.isManagedUser ?? false;
+                   Text(
+                    "Action Needed",
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+                   ),
+               ] else ...[
+                   const Icon(LucideIcons.checkCircle, color: Colors.white, size: 32),
+                   const SizedBox(height: 8),
+                   const Text("All Good", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+               ]
+            ],
+          );
+        },
+        loading: () => const CircularProgressIndicator(color: Colors.white),
+        error: (e, s) => const Icon(LucideIcons.alertCircle, color: Colors.white),
+      ),
+    );
+  }
 
-                      // Status Logic
-                      String? statusText;
-                      Color statusColor = Colors.transparent;
+  Widget _buildAppointmentsCard(double width, AppLocalizations l10n, {double? height}) {
+    return _FlipCard3D(
+      width: width,
+      height: height ?? width * 1.2,
+      frontTitle: l10n.todaysAppointmentsFlow,
+      frontIcon: LucideIcons.clock,
+      frontGradient: [
+        AppColors.secondary,
+        AppColors.secondary.withValues(alpha: 0.7),
+      ],
+      backTitle: l10n.viewAppointments,
+      backIcon: LucideIcons.calendar,
+      onTap: () => context.go('/appointments'),
+      cardType: 'appointments',
+      kpiBuilder: () => Consumer(builder: (ctx, ref, _) {
+          final apps = ref.watch(todaysAppointmentsProvider).asData?.value ?? [];
+          final emergencies = ref.watch(todaysEmergencyAppointmentsProvider).asData?.value ?? [];
+          final waiting = apps.where((a) => a.status == AppointmentStatus.waiting).length;
+          
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text('$waiting Waiting', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+              if (emergencies.isNotEmpty) ...[
+                Container(width: 1, height: 12, color: Colors.white54),
+                Text('${emergencies.length} Emergency', style: const TextStyle(color: AppColors.highlight, fontWeight: FontWeight.bold, fontSize: 12))
+                    .animate(onPlay: (c) => c.repeat())
+                    .shimmer(duration: 1200.ms, color: Colors.white24)
+                    .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1), duration: 600.ms),
+              ],
+            ],
+          );
+      }),
+      content: Consumer(
+        builder: (context, ref, child) {
+          final todaysAppointmentsAsync = ref.watch(todaysAppointmentsProvider);
+          return todaysAppointmentsAsync.when(
+            data: (appointments) {
+               final inProgress = appointments.where((a) => a.status == AppointmentStatus.inProgress).length;
+               final completed = appointments.where((a) => a.status == AppointmentStatus.completed).length;
+               
+               return Column(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   Text(
+                     "${appointments.length}",
+                     style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                   ),
+                   Text(
+                      "Total Today",
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 14),
+                   ),
+                   const SizedBox(height: 8),
+                   Row(
+                     children: [
+                       _buildMiniStatusDot(Colors.white, "Active: $inProgress"),
+                       const SizedBox(width: 8),
+                       _buildMiniStatusDot(Colors.white70, "Done: $completed"),
+                     ],
+                   )
+                 ],
+               );
+            },
+            loading: () => const CircularProgressIndicator(color: Colors.white),
+            error: (_, _) => const Icon(LucideIcons.alertCircle, color: Colors.white),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildMiniStatusDot(Color color, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8, height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(text, style: TextStyle(color: color, fontSize: 12)),
+      ],
+    );
+  }
+}
 
-                      if (userProfile != null) {
-                        // Check if we are a staff user and should use inherited status
-                        bool isPremium = userProfile.isPremium;
-                        DateTime? trialStartDate = userProfile.trialStartDate;
-                        DateTime? premiumExpiryDate =
-                            userProfile.premiumExpiryDate;
+class _DashboardHeader extends ConsumerWidget {
+  const _DashboardHeader();
 
-                        if (isStaff) {
-                          // STAFF: Load the inherited Dentist Profile
-                          // This part is tricky because it's synchronous build
-                          // We rely on the fact that AppInitializer/SyncClient saved it.
-                          // For simplicity in the UI, we'll try to read it from cache
-                          // but if it's not there, we use the staff profile's own values
-                          // which WERE correctly populated during login.
-                        }
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userProfileAsyncValue = ref.watch(userProfileProvider);
+    final usage = ref.watch(clinicUsageProvider);
+    final theme = Theme.of(context);
 
-                        if (isPremium) {
-                          statusText = l10n.premiumAccount;
-                          statusColor = Colors.green;
+    // Dynamic Greeting
+    final hour = DateTime.now().hour;
+    String greeting = "Good Morning";
+    if (hour >= 12 && hour < 17) {
+      greeting = "Good Afternoon";
+    } else if (hour >= 17) {
+      greeting = "Good Evening";
+    }
 
-                          if (premiumExpiryDate != null) {
-                            final daysLeft = premiumExpiryDate
-                                .difference(DateTime.now())
-                                .inDays;
-                            if (daysLeft >= 0) {
-                              statusText = l10n.premiumDaysLeft(daysLeft);
-                            } else {
-                              statusText = l10n.premiumExpired;
-                              statusColor = Colors.red;
-                            }
-                          }
-                        } else if (trialStartDate != null) {
-                          final daysUsed = DateTime.now()
-                              .difference(trialStartDate)
-                              .inDays;
-                          final daysLeft = 30 - daysUsed;
-                          if (daysLeft > 0) {
-                            statusText = l10n.trialVersionDaysLeft(daysLeft);
-                            statusColor = Colors.orange;
-                          } else {
-                            statusText = l10n.trialExpired;
-                            statusColor = Colors.red;
-                          }
-                        }
-                      }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: theme.cardTheme.color?.withValues(alpha: 0.7),
+            border: Border.all(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3)),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.surface.withValues(alpha: 0.8),
+                theme.colorScheme.surface.withValues(alpha: 0.5),
+              ],
+            ),
+          ),
+          child: userProfileAsyncValue.when(
+            data: (user) {
+              final isStaff = user?.isManagedUser ?? false;
+              final displayName = isStaff ? (user?.username ?? "Staff") : (user?.dentistName ?? "Doctor");
+              final initials = displayName.isNotEmpty ? displayName.trim()[0].toUpperCase() : "D";
+              final greetingPrefix = isStaff ? "" : "Dr. ";
+              
+              // Status logic
+              bool isPremium = usage.isPremium;
+              Color statusColor = isPremium ? AppColors.success : AppColors.warning;
+              String statusText = isPremium ? "Premium: ${usage.daysLeft} Days" : "Trial: ${usage.daysLeft} Days";
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            isStaff
-                                ? '${l10n.welcome} $staffUsername'
-                                : '${l10n.welcomeDr} $dentistName',
-                            style: const TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
+              if (usage.isExpired || usage.daysLeft <= 0) {
+                statusColor = AppColors.error;
+                statusText = isPremium ? "Premium Expired" : "Trial Expired";
+              }
+
+              return Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.primary,
+                    child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "$greeting 👋 $greetingPrefix$displayName",
+                              style: theme.textTheme.titleLarge?.copyWith(fontSize: 22),
                             ),
-                            textAlign: TextAlign.end,
-                          ),
-                          if (statusText != null)
+                            const SizedBox(width: 12),
                             Container(
-                              margin: const EdgeInsets.only(top: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: statusColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
@@ -274,452 +506,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                               child: Text(
                                 statusText,
-                                style: TextStyle(
-                                  color: statusColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
+                                style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
-                            ),
-                        ],
-                      );
-                    },
-                    loading: () => Text(
-                      l10n.welcomeDr,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.end,
-                    ),
-                    error: (e, s) => Text(
-                      l10n.welcomeDr,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.end,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Center(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  double cardWidth;
-                  if (constraints.maxWidth > 1400) {
-                    cardWidth = constraints.maxWidth * 0.26;
-                  } else if (constraints.maxWidth > 1000) {
-                    cardWidth = constraints.maxWidth * 0.29;
-                  } else if (constraints.maxWidth > 800) {
-                    cardWidth = constraints.maxWidth * 0.32;
-                  } else {
-                    cardWidth = constraints.maxWidth * 0.36;
-                  }
-                  double cardHeight = cardWidth * 1.4;
-                  double spacing = cardWidth * 0.08;
-                  double titleFontSize = cardWidth * 0.08;
-                  double numberFontSize = cardWidth * 0.14;
-                  double subtitleFontSize = cardWidth * 0.06;
-
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _FlipCard3D(
-                        width: cardWidth,
-                        height: cardHeight,
-                        frontTitle: l10n.patients,
-                        frontIcon: Icons.people,
-                        frontGradient: [
-                          Colors.blue.shade400,
-                          Colors.blue.shade800,
-                        ],
-                        backTitle: l10n.viewDetails,
-                        backIcon: Icons.visibility,
-                        onTap: () => context.go('/patients'),
-                        cardType: 'patients',
-                        titleFontSize: titleFontSize,
-                        numberFontSize: numberFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        content: todayPatientsAsyncValue.when(
-                          data: (patients) => Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.todayCount(patients.length),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.left,
-                              ),
-                            ],
-                          ),
-                          loading: () => const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                          error: (e, s) =>
-                              const Icon(Icons.error, color: Colors.white),
-                        ),
-                      ),
-
-                      SizedBox(width: spacing),
-
-                      _FlipCard3D(
-                        width: cardWidth,
-                        height: cardHeight,
-                        frontTitle: l10n.criticalAlerts,
-                        frontIcon: Icons.warning_amber,
-                        frontGradient: inventoryItemsAsyncValue.maybeWhen(
-                          data: (items) {
-                            final now = DateTime.now();
-                            final expiringSoonCount = items.where((item) {
-                              final daysLeft = item.expirationDate
-                                  .difference(now)
-                                  .inDays;
-                              return daysLeft >= 0 &&
-                                  daysLeft < item.thresholdDays;
-                            }).length;
-                            final lowStockCount = items
-                                .where(
-                                  (item) =>
-                                      item.quantity <= item.lowStockThreshold,
-                                )
-                                .length;
-                            return (expiringSoonCount > 0 || lowStockCount > 0)
-                                ? [Colors.red.shade400, Colors.red.shade800]
-                                : [
-                                    const Color(0xFF1E4D2B),
-                                    const Color(0xFF2E5A3C),
-                                  ];
-                          },
-                          orElse: () => [
-                            const Color(0xFF1E4D2B),
-                            const Color(0xFF2E5A3C),
+                            ).animate(onPlay: (c) => c.repeat(reverse: true))
+                             .shimmer(delay: 2000.ms, duration: 1000.ms),
                           ],
                         ),
-                        backTitle: l10n.viewCritical,
-                        backIcon: Icons.warning,
-                        onTap: () => context.go('/inventory'),
-                        cardType: 'emergency',
-                        titleFontSize: titleFontSize,
-                        numberFontSize: numberFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        content: inventoryItemsAsyncValue.when(
-                          data: (items) {
-                            final now = DateTime.now();
-                            final expiringSoonCount = items.where((item) {
-                              final daysLeft = item.expirationDate
-                                  .difference(now)
-                                  .inDays;
-                              return daysLeft >= 0 &&
-                                  daysLeft < item.thresholdDays;
-                            }).length;
-                            final lowStockCount = items
-                                .where(
-                                  (item) =>
-                                      item.quantity <= item.lowStockThreshold,
-                                )
-                                .length;
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.expiringSoonCount(expiringSoonCount),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  l10n.lowStockCount(lowStockCount),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  textAlign: TextAlign.left,
-                                ),
-                              ],
-                            );
-                          },
-                          loading: () => const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                          error: (e, s) =>
-                              const Icon(Icons.error, color: Colors.white),
+                        const SizedBox(height: 4),
+                        Text(
+                          "Clinic running smoothly today 🦷", // App Personality
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
                         ),
-                      ),
-
-                      SizedBox(width: spacing),
-
-                      _FlipCard3D(
-                        width: cardWidth,
-                        height: cardHeight,
-                        frontTitle: l10n.todaysAppointmentsFlow,
-                        frontIcon: Icons.access_time,
-                        frontGradient: [
-                          Colors.teal.shade400,
-                          Colors.teal.shade800,
-                        ],
-                        backTitle: l10n.viewAppointments,
-                        backIcon: Icons.calendar_today,
-                        onTap: () => context.go('/appointments'),
-                        cardType: 'appointments',
-                        titleFontSize: titleFontSize,
-                        numberFontSize: numberFontSize,
-                        subtitleFontSize: subtitleFontSize,
-                        content: Consumer(
-                          builder: (context, ref, child) {
-                            final todaysAppointmentsAsync = ref.watch(
-                              todaysAppointmentsProvider,
-                            );
-                            final emergencyAppointmentsAsync = ref.watch(
-                              todaysEmergencyAppointmentsProvider,
-                            );
-
-                            return todaysAppointmentsAsync.when(
-                              data: (appointments) {
-                                return emergencyAppointmentsAsync.when(
-                                  data: (emergencyAppointments) {
-                                    final emergencyAppointmentIds =
-                                        emergencyAppointments
-                                            .map((a) => a.id)
-                                            .toSet();
-
-                                    final waiting = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                                  AppointmentStatus.waiting &&
-                                              !emergencyAppointmentIds.contains(
-                                                a.id,
-                                              ),
-                                        )
-                                        .toList();
-                                    final inProgress = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                              AppointmentStatus.inProgress,
-                                        )
-                                        .toList();
-                                    final completed = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                              AppointmentStatus.completed,
-                                        )
-                                        .toList();
-
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          l10n.waitingCount(waiting.length),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        Text(
-                                          l10n.inProgressCount(
-                                            inProgress.length,
-                                          ),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        Text(
-                                          l10n.completedCount(completed.length),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        EmergencyCounter(
-                                          emergencyCount:
-                                              emergencyAppointments.length,
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                  loading: () {
-                                    // Show a loading state while emergency appointments are being fetched
-                                    final waiting = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                              AppointmentStatus.waiting,
-                                        )
-                                        .toList();
-                                    final inProgress = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                              AppointmentStatus.inProgress,
-                                        )
-                                        .toList();
-                                    final completed = appointments
-                                        .where(
-                                          (a) =>
-                                              a.status ==
-                                              AppointmentStatus.completed,
-                                        )
-                                        .toList();
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Waiting: ${waiting.length}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        Text(
-                                          'In Progress: ${inProgress.length}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        Text(
-                                          'Completed: ${completed.length}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.left,
-                                        ),
-                                        const EmergencyCounter(
-                                          emergencyCount: 0,
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                  error: (e, s) {
-                                    // Handle error state for emergency appointments
-                                    return Text(
-                                      l10n.errorLoadingEmergencyAppointments,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 14,
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                              loading: () => const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Waiting: ...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'In Progress: ...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'Completed: ...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'Emergency: ...',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              error: (e, s) => const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Waiting: 0',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'In Progress: 0',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'Completed: 0',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.left,
-                                  ),
-                                  Text(
-                                    'Emergency: 0',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+            loading: () => const SizedBox(height: 80, child: Center(child: CircularProgressIndicator())),
+            error: (_, _) => const Text("Welcome Back"),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -727,23 +534,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 Color _getBroadcastColor(String type) {
   switch (type) {
-    case 'warning':
-      return Colors.orange;
-    case 'maintenance':
-      return Colors.red;
-    default:
-      return Colors.blue;
+    case 'warning': return AppColors.warning;
+    case 'maintenance': return AppColors.error;
+    default: return AppColors.primary;
   }
 }
 
 IconData _getBroadcastIcon(String type) {
   switch (type) {
-    case 'warning':
-      return Icons.warning;
-    case 'maintenance':
-      return Icons.build;
-    default:
-      return Icons.info;
+    case 'warning': return LucideIcons.alertTriangle;
+    case 'maintenance': return LucideIcons.wrench;
+    default: return LucideIcons.info;
   }
 }
 
@@ -758,9 +559,7 @@ class _FlipCard3D extends ConsumerStatefulWidget {
   final VoidCallback onTap;
   final Widget content;
   final String cardType;
-  final double titleFontSize;
-  final double numberFontSize;
-  final double subtitleFontSize;
+  final Widget Function() kpiBuilder;
 
   const _FlipCard3D({
     required this.width,
@@ -773,51 +572,29 @@ class _FlipCard3D extends ConsumerStatefulWidget {
     required this.onTap,
     required this.content,
     required this.cardType,
-    required this.titleFontSize,
-    required this.numberFontSize,
-    required this.subtitleFontSize,
+    required this.kpiBuilder,
   });
 
   @override
   ConsumerState<_FlipCard3D> createState() => _FlipCard3DState();
 }
 
-class _FlipCard3DState extends ConsumerState<_FlipCard3D>
-    with TickerProviderStateMixin {
+class _FlipCard3DState extends ConsumerState<_FlipCard3D> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
-  late AnimationController _borderController;
-  late Animation<double> _borderAnimation;
   bool _isFront = true;
-  int _appointmentTabIndex = 0;
-  int _criticalAlertTabIndex = 0;
+  bool _isHovering = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-    _animation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-
-    _borderController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _borderAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _borderController, curve: Curves.easeInOut),
-    );
+    _controller = AnimationController(duration: const Duration(milliseconds: 600), vsync: this);
+    _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _borderController.dispose();
     super.dispose();
   }
 
@@ -825,60 +602,31 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
   Widget build(BuildContext context) {
     return MouseRegion(
       onEnter: (_) {
-        if (_isFront) {
-          _controller.forward();
-          setState(() {
-            _isFront = false;
-          });
-        }
+         setState(() => _isHovering = true);
+         _controller.forward();
+         setState(() => _isFront = false);
       },
       onExit: (_) {
-        if (!_isFront) {
-          _controller.reverse();
-          setState(() {
-            _isFront = true;
-          });
-        }
+         setState(() => _isHovering = false);
+         _controller.reverse();
+         setState(() => _isFront = true);
       },
       child: AnimatedBuilder(
-        animation: Listenable.merge([_animation, _borderAnimation]),
+        animation: _animation,
         builder: (context, child) {
           final angle = _animation.value * 3.14159;
           final transform = Matrix4.identity()
             ..setEntry(3, 2, 0.001)
-            ..rotateY(angle);
+            ..rotateY(angle)
+            ..setTranslationRaw(0.0, _isHovering ? -10.0 : 0.0, 0.0); // Floating effect
 
-          final borderColor = Color.lerp(
-            Colors.white.withAlpha(50),
-            Colors.white.withAlpha(150),
-            _borderAnimation.value,
-          );
-
-          return Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(
-                color: borderColor!,
-                width: 2 + (_borderAnimation.value * 2),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(50),
-                  blurRadius: 20 + (_borderAnimation.value * 10),
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Transform(
-              transform: transform,
+          return Transform(
+            transform: transform,
+            alignment: Alignment.center,
+            child: _isFront ? _buildFrontCard() : Transform(
+              transform: Matrix4.rotationY(3.14159),
               alignment: Alignment.center,
-              child: _isFront
-                  ? _buildFrontCard()
-                  : Transform(
-                      transform: Matrix4.rotationY(3.14159),
-                      alignment: Alignment.center,
-                      child: _buildBackCard(),
-                    ),
+              child: _buildBackCard(),
             ),
           );
         },
@@ -892,76 +640,52 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
       height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: widget.frontGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: LinearGradient(colors: widget.frontGradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(100),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+          BoxShadow(color: widget.frontGradient.first.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
       child: Stack(
         children: [
-          Positioned(
-            top: 20,
-            left: 20,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(30),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 20,
-            right: 20,
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(20),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 20,
-            left: 30,
-            child: Container(
-              width: 25,
-              height: 25,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withAlpha(25),
-              ),
-            ),
-          ),
+          // Decorative circles
+          Positioned(top: -20, left: -20, child: CircleAvatar(radius: 50, backgroundColor: Colors.white.withValues(alpha: 0.1))),
+          Positioned(bottom: -30, right: -10, child: CircleAvatar(radius: 60, backgroundColor: Colors.white.withValues(alpha: 0.05))),
+          
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.all(24),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Icon(widget.frontIcon, size: 50, color: Colors.white),
-                const SizedBox(height: 8),
-                Text(
-                  widget.frontTitle,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: widget.titleFontSize,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.left,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(widget.frontIcon, color: Colors.white, size: 28),
+                    ),
+                    const Icon(LucideIcons.arrowRight, color: Colors.white70, size: 20),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                widget.content,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    widget.content,
+                    const SizedBox(height: 8),
+                    Text(widget.frontTitle, style: const TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+                // KPI Strip
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: widget.kpiBuilder(),
+                ),
               ],
             ),
           ),
@@ -976,612 +700,217 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
       height: widget.height,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: widget.frontGradient,
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Theme.of(context).cardTheme.color,
+        border: Border.all(color: widget.frontGradient.first.withValues(alpha: 0.5)),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(100),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 20, offset: const Offset(0, 10)),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(child: _buildCardDetails()),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8), // Tighter padding
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(widget.backIcon, color: widget.frontGradient.first, size: 20),
+              const SizedBox(width: 8),
+              Expanded(child: Text(widget.backTitle, style: TextStyle(color: widget.frontGradient.first, fontWeight: FontWeight.bold, fontSize: 14), overflow: TextOverflow.ellipsis)),
+            ],
+          ),
+          const Divider(height: 16),
+          Expanded(child: _buildBackContent()),
+        ],
       ),
     );
   }
 
-  Widget _buildCardDetails() {
+  // State for tab indices
+  int _appointmentTabIndex = 0;
+  int _criticalAlertTabIndex = 0;
+
+  Widget _buildBackContent() {
     final l10n = AppLocalizations.of(context)!;
-    final locale = Localizations.localeOf(context);
-    final isRTL = ['ar', 'he', 'fa', 'ur'].contains(locale.languageCode);
 
-    switch (widget.cardType) {
-      case 'patients':
-        return Consumer(
-          builder: (context, ref, child) {
-            final todayPatientsAsync = ref.watch(
-              patientsProvider(
-                const PatientListConfig(filter: PatientFilter.today),
-              ),
-            );
-            return todayPatientsAsync.when(
-              data: (patients) {
-                if (patients.isEmpty) {
-                  return Text(
-                    l10n.noPatientsToday,
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  );
-                }
-                return DataTable(
-                  border: TableBorder.all(
-                    color: Colors.white.withAlpha(100),
-                    width: 1,
-                  ),
-                  columns: [
-                    DataColumn(
-                      label: Text(
-                        l10n.patientName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                  rows: patients.map((patient) {
-                    return DataRow(
-                      cells: [
-                        DataCell(
-                          GestureDetector(
-                            onTap: () {
-                              if (mounted) {
-                                Future.delayed(
-                                  const Duration(milliseconds: 100),
-                                  () {
-                                    if (mounted) {
-                                      // ignore: use_build_context_synchronously
-                                      context.go(
-                                        '/patients/profile',
-                                        extra: patient,
-                                      );
-                                    }
-                                  },
-                                );
-                              }
-                            },
-                            child: Text(
-                              '${patient.name} ${patient.familyName}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                decoration: TextDecoration.underline,
-                              ),
-                              textAlign: isRTL
-                                  ? TextAlign.right
-                                  : TextAlign.left,
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-                  dataTextStyle: const TextStyle(color: Colors.white),
-                  headingTextStyle: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+    if (widget.cardType == 'patients') {
+      return Consumer(builder: (ctx, ref, _) {
+        final patientsAsync = ref.watch(patientsProvider(const PatientListConfig(filter: PatientFilter.today)));
+        return patientsAsync.when(
+          data: (patients) {
+            if (patients.isEmpty) return Center(child: Text(l10n.noPatientsToday, style: const TextStyle(color: Colors.grey, fontSize: 12)));
+            // Sort by creation time to ensure consistent order
+            final sorted = List<Patient>.from(patients)..sort((a,b) => a.createdAt.compareTo(b.createdAt));
+            
+            return ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: sorted.length,
+              itemBuilder: (context, index) {
+                final p = sorted[index];
+                return ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: Text("${index + 1}.", style: TextStyle(color: widget.frontGradient.first, fontWeight: FontWeight.bold)),
+                  title: Text("${p.name} ${p.familyName}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  trailing: const Icon(LucideIcons.chevronRight, size: 14),
+                  onTap: () => context.go('/patients/profile', extra: p),
                 );
               },
-              loading: () => const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              error: (e, s) => Text(
-                l10n.errorLoadingPatientData,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
             );
           },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, _) => const SizedBox(),
         );
-
-      case 'emergency':
-        return Consumer(
-          builder: (context, ref, child) {
-            final inventoryItemsAsync = ref.watch(inventoryItemsProvider);
-            return inventoryItemsAsync.when(
-              data: (items) {
-                final now = DateTime.now();
-                final expiringSoon = items.where((item) {
-                  final daysLeft = item.expirationDate.difference(now).inDays;
-                  return daysLeft >= 0 && daysLeft < item.thresholdDays;
-                }).toList();
-                final lowStock = items
-                    .where((item) => item.quantity <= item.lowStockThreshold)
-                    .toList();
-
-                List<InventoryItem> currentItems = [];
-                List<String> columns = [];
-                List<DataRow> rows = [];
-
-                switch (_criticalAlertTabIndex) {
-                  case 0:
-                    currentItems = expiringSoon;
-                    columns = [l10n.itemName, l10n.countdown];
-                    rows = currentItems.map((item) {
-                      final daysLeft = item.expirationDate
-                          .difference(now)
-                          .inDays;
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              item.name,
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: isRTL
-                                  ? TextAlign.right
-                                  : TextAlign.left,
-                            ),
-                          ),
-                          DataCell(
-                            Text(
-                              l10n.daysLeft(daysLeft),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList();
-                    break;
-                  case 1:
-                    currentItems = lowStock;
-                    columns = [l10n.itemName, l10n.currentQuantity];
-                    rows = currentItems.map((item) {
-                      return DataRow(
-                        cells: [
-                          DataCell(
-                            Text(
-                              item.name,
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: isRTL
-                                  ? TextAlign.right
-                                  : TextAlign.left,
-                            ),
-                          ),
-                          DataCell(
-                            Text(
-                              '${item.quantity}',
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ],
-                      );
-                    }).toList();
-                    break;
-                }
-
-                return Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      });
+    } 
+    else if (widget.cardType == 'emergency') {
+      return Consumer(builder: (ctx, ref, _) {
+        final items = ref.watch(inventoryItemsProvider).asData?.value ?? [];
+        final now = DateTime.now();
+        
+        final expiringSoon = items.where((item) {
+          final daysLeft = item.expirationDate.difference(now).inDays;
+          return daysLeft >= 0 && daysLeft < item.thresholdDays;
+        }).toList();
+        
+        final lowStock = items.where((i) => i.quantity <= i.lowStockThreshold).toList();
+        
+        return Column(
+          children: [
+            Row(
+              children: [
+                _buildSmallTab(l10n.expiringSoon, _criticalAlertTabIndex == 0, AppColors.error, () => setState(() => _criticalAlertTabIndex = 0)),
+                _buildSmallTab(l10n.lowStock, _criticalAlertTabIndex == 1, AppColors.warning, () => setState(() => _criticalAlertTabIndex = 1)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: _criticalAlertTabIndex == 0 
+              ? (expiringSoon.isEmpty ? Center(child: Text(l10n.noExpiringSoonItems, style: const TextStyle(color: Colors.grey, fontSize: 11))) 
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: expiringSoon.length,
+                    itemBuilder: (context, index) {
+                       final i = expiringSoon[index];
+                       final days = i.expirationDate.difference(now).inDays;
+                       return ListTile(
+                         dense: true,
+                         contentPadding: EdgeInsets.zero,
+                         leading: Text("${index + 1}.", style: TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 11)),
+                         title: Text(i.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                         trailing: Text("$days d", style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.bold, fontSize: 11)),
+                       );
+                    },
+                  ))
+              : (lowStock.isEmpty ? Center(child: Text(l10n.noLowStockItems, style: const TextStyle(color: Colors.grey, fontSize: 11))) 
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: lowStock.length,
+                    itemBuilder: (context, index) {
+                       final i = lowStock[index];
+                       return ListTile(
+                         dense: true,
+                         contentPadding: EdgeInsets.zero,
+                         leading: Text("${index + 1}.", style: TextStyle(color: AppColors.warning, fontWeight: FontWeight.bold, fontSize: 11)),
+                         title: Text(i.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                         trailing: Text("Qty: ${i.quantity}", style: const TextStyle(color: AppColors.warning, fontWeight: FontWeight.bold, fontSize: 11)),
+                       );
+                    },
+                  )),
+            ),
+          ],
+        );
+      });
+    }
+    else if (widget.cardType == 'appointments') {
+      return Consumer(builder: (ctx, ref, _) {
+          final appsAsync = ref.watch(todaysAppointmentsProvider);
+          final emergenciesAsync = ref.watch(todaysEmergencyAppointmentsProvider);
+          
+          return appsAsync.when(
+            data: (apps) {
+              final emergencies = emergenciesAsync.asData?.value ?? [];
+              final emergencyIds = emergencies.map((e) => e.id).toSet();
+              
+              final waiting = apps.where((a) => a.status == AppointmentStatus.waiting && !emergencyIds.contains(a.id)).toList();
+              final inProgress = apps.where((a) => a.status == AppointmentStatus.inProgress).toList();
+              final completed = apps.where((a) => a.status == AppointmentStatus.completed).toList();
+              
+              return Column(
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
                       children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () =>
-                                setState(() => _criticalAlertTabIndex = 0),
-                            style: TextButton.styleFrom(
-                              backgroundColor: _criticalAlertTabIndex == 0
-                                  ? Colors.white.withAlpha(50)
-                                  : Colors.transparent,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                l10n.expiringSoon,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: _criticalAlertTabIndex == 0
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () =>
-                                setState(() => _criticalAlertTabIndex = 1),
-                            style: TextButton.styleFrom(
-                              backgroundColor: _criticalAlertTabIndex == 1
-                                  ? Colors.white.withAlpha(50)
-                                  : Colors.transparent,
-                            ),
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: Text(
-                                l10n.lowStock,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: _criticalAlertTabIndex == 1
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                        _buildSmallTab(l10n.waiting, _appointmentTabIndex == 0, AppColors.primary, () => setState(() => _appointmentTabIndex = 0)),
+                        _buildSmallTab(l10n.emergency, _appointmentTabIndex == 1, AppColors.error, () => setState(() => _appointmentTabIndex = 1)),
+                        _buildSmallTab(l10n.inProgress, _appointmentTabIndex == 2, AppColors.warning, () => setState(() => _appointmentTabIndex = 2)),
+                        _buildSmallTab(l10n.completed, _appointmentTabIndex == 3, AppColors.success, () => setState(() => _appointmentTabIndex = 3)),
                       ],
                     ),
-                    const SizedBox(height: 10),
-                    if (currentItems.isEmpty)
-                      Text(
-                        _criticalAlertTabIndex == 0
-                            ? l10n.noExpiringSoonItems
-                            : l10n.noLowStockItems,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      )
-                    else
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          border: TableBorder.all(
-                            color: Colors.white.withAlpha(100),
-                            width: 1,
-                          ),
-                          columns: columns
-                              .map(
-                                (col) => DataColumn(
-                                  label: Text(
-                                    col,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          rows: rows,
-                          dataTextStyle: const TextStyle(color: Colors.white),
-                          headingTextStyle: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
-              loading: () => const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              error: (e, s) => Text(
-                l10n.errorLoadingInventory,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            );
-          },
-        );
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: Consumer(builder: (context, ref, _) {
+                      List<Appointment> currentList = [];
+                      if (_appointmentTabIndex == 0) {
+                        currentList = waiting;
+                      } else if (_appointmentTabIndex == 1) {
+                        currentList = emergencies;
+                      } else if (_appointmentTabIndex == 2) {
+                        currentList = inProgress;
+                      } else {
+                        currentList = completed;
+                      }
 
-      case 'appointments':
-        return Consumer(
-          builder: (context, ref, child) {
-            final todaysAppointmentsAsync = ref.watch(
-              todaysAppointmentsProvider,
-            );
-            final allPatientsAsync = ref.watch(
-              patientsProvider(
-                const PatientListConfig(filter: PatientFilter.all),
-              ),
-            );
-            final emergencyAppointmentsAsync = ref.watch(
-              todaysEmergencyAppointmentsProvider,
-            );
+                      if (currentList.isEmpty) return Center(child: Text(l10n.noAppointmentsFound, style: const TextStyle(color: Colors.grey, fontSize: 11)));
+                      
+                      // Sort by time
+                      final sorted = List<Appointment>.from(currentList)..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-            return allPatientsAsync.when(
-              data: (allPatients) {
-                final patientMap = {for (var p in allPatients) p.id: p};
-
-                return todaysAppointmentsAsync.when(
-                  data: (appointments) {
-                    final waiting = appointments
-                        .where((a) => a.status == AppointmentStatus.waiting)
-                        .toList();
-                    final completed = appointments
-                        .where((a) => a.status == AppointmentStatus.completed)
-                        .toList();
-
-                    return emergencyAppointmentsAsync.when(
-                      data: (emergencyAppointments) {
-                        List<Patient> currentPatients = [];
-
-                        switch (_appointmentTabIndex) {
-                          case 0:
-                            currentPatients = waiting
-                                .map((a) => patientMap[a.patientId])
-                                .whereType<Patient>()
-                                .toList();
-                            break;
-                          case 1:
-                            currentPatients = emergencyAppointments
-                                .map((a) => patientMap[a.patientId])
-                                .whereType<Patient>()
-                                .toList();
-                            break;
-                          case 2:
-                            currentPatients = completed
-                                .map((a) => patientMap[a.patientId])
-                                .whereType<Patient>()
-                                .toList();
-                            break;
-                        }
-
-                        return Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => setState(
-                                      () => _appointmentTabIndex = 0,
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: _appointmentTabIndex == 0
-                                          ? Colors.white.withAlpha(50)
-                                          : Colors.transparent,
-                                    ),
-                                    child: Text(
-                                      l10n.waiting,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: _appointmentTabIndex == 0
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => setState(
-                                      () => _appointmentTabIndex = 1,
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: _appointmentTabIndex == 1
-                                          ? Colors.white.withAlpha(50)
-                                          : Colors.transparent,
-                                    ),
-                                    child: Text(
-                                      l10n.emergency,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: _appointmentTabIndex == 1
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: TextButton(
-                                    onPressed: () => setState(
-                                      () => _appointmentTabIndex = 2,
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      backgroundColor: _appointmentTabIndex == 2
-                                          ? Colors.white.withAlpha(50)
-                                          : Colors.transparent,
-                                    ),
-                                    child: Text(
-                                      l10n.completed,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: _appointmentTabIndex == 2
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      return ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: sorted.length,
+                        itemBuilder: (context, index) {
+                          final a = sorted[index];
+                          final patientAsync = ref.watch(patientProvider(a.patientId));
+                          
+                          return ListTile(
+                            dense: true,
+                            contentPadding: EdgeInsets.zero,
+                            leading: Text("${index + 1}.", style: TextStyle(color: widget.frontGradient.first, fontWeight: FontWeight.bold, fontSize: 12)),
+                            title: patientAsync.when(
+                              data: (p) => Text("${p?.name} ${p?.familyName}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12), overflow: TextOverflow.ellipsis),
+                              loading: () => const Text("..."),
+                              error: (_, _) => const Text("Error"),
                             ),
-                            const SizedBox(height: 10),
-                            if (currentPatients.isEmpty)
-                              Text(
-                                _appointmentTabIndex == 0
-                                    ? l10n.noWaitingAppointments
-                                    : _appointmentTabIndex == 1
-                                    ? l10n.noEmergencyAppointments
-                                    : l10n.noCompletedAppointments,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                                textAlign: TextAlign.center,
-                              )
-                            else
-                              DataTable(
-                                border: TableBorder.all(
-                                  color: Colors.white.withAlpha(100),
-                                  width: 1,
-                                ),
-                                columns: [
-                                  DataColumn(
-                                    label: Text(
-                                      l10n.patientName,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                                rows: currentPatients.map((patient) {
-                                  return DataRow(
-                                    cells: [
-                                      DataCell(
-                                        GestureDetector(
-                                          onTap: () {
-                                            Future.delayed(
-                                              const Duration(milliseconds: 100),
-                                              () {
-                                                if (!mounted) return;
-                                                // ignore: use_build_context_synchronously
-                                                context.go(
-                                                  '/patients/profile',
-                                                  extra: patient,
-                                                );
-                                              },
-                                            );
-                                          },
-                                          child: Text(
-                                            '${patient.name} ${patient.familyName}',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                            ),
-                                            textAlign: isRTL
-                                                ? TextAlign.right
-                                                : TextAlign.left,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                                dataTextStyle: const TextStyle(
-                                  color: Colors.white,
-                                ),
-                                headingTextStyle: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                      loading: () => const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                      error: (e, s) => Text(
-                        l10n.errorLoadingEmergencyAppointments,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    );
-                  },
-                  loading: () => const CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            subtitle: Text(DateFormat('HH:mm').format(a.dateTime), style: const TextStyle(fontSize: 10)),
+                            trailing: const Icon(LucideIcons.chevronRight, size: 14),
+                            onTap: () => context.go('/appointments/edit', extra: a),
+                          );
+                        },
+                      );
+                    }),
                   ),
-                  error: (e, s) => Text(
-                    l10n.errorLoadingAppointments,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                    textAlign: TextAlign.center,
-                  ),
-                );
-              },
-              loading: () => const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              error: (e, s) => Text(
-                l10n.errorLoadingPatientData,
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            );
-          },
-        );
-
-      default:
-        return const SizedBox.shrink();
+                ],
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (_, _) => const SizedBox(),
+          );
+      });
     }
-  }
-}
-
-class _EmergencyCounter extends StatefulWidget {
-  const _EmergencyCounter({required this.emergencyCount});
-
-  final int emergencyCount;
-
-  @override
-  State<_EmergencyCounter> createState() => _EmergencyCounterState();
-}
-
-class _EmergencyCounterState extends State<_EmergencyCounter>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<Color?> _colorAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
-
-    if (widget.emergencyCount > 0) {
-      _animationController.repeat(reverse: true);
-    }
-
-    _colorAnimation = ColorTween(begin: Colors.white, end: Colors.red).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    
+    return const SizedBox.shrink();
   }
 
-  @override
-  void didUpdateWidget(covariant _EmergencyCounter oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.emergencyCount > 0 && !_animationController.isAnimating) {
-      _animationController.repeat(reverse: true);
-    } else if (widget.emergencyCount == 0 && _animationController.isAnimating) {
-      _animationController.stop();
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _colorAnimation,
-      builder: (context, child) {
-        return Text(
-          'Emergency: ${widget.emergencyCount}',
-          style: TextStyle(
-            color: widget.emergencyCount > 0
-                ? _colorAnimation.value
-                : Colors.white,
-            fontSize: 14,
-            fontWeight: widget.emergencyCount > 0
-                ? FontWeight.bold
-                : FontWeight.normal,
-          ),
-          textAlign: TextAlign.left,
-        );
-      },
+  Widget _buildSmallTab(String label, bool isSelected, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: isSelected ? color : Colors.transparent, width: 2)),
+        ),
+        child: Text(label, style: TextStyle(color: isSelected ? color : Colors.grey, fontWeight: FontWeight.bold, fontSize: 10)),
+      ),
     );
   }
 }

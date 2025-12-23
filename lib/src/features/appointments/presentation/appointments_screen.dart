@@ -1,4 +1,3 @@
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
@@ -6,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:dentaltid/src/core/app_colors.dart';
+import 'package:intl/intl.dart';
 
 enum SortOption { dateTimeAsc, dateTimeDesc, patientId }
 
@@ -13,26 +16,12 @@ class AppointmentsScreen extends ConsumerStatefulWidget {
   final AppointmentStatus? status;
   const AppointmentsScreen({super.key, this.status});
 
-  String _getLocalizedStatus(BuildContext context, AppointmentStatus status) {
-    final l10n = AppLocalizations.of(context)!;
-    switch (status) {
-      case AppointmentStatus.waiting:
-        return l10n.waiting;
-      case AppointmentStatus.inProgress:
-        return l10n.inProgress;
-      case AppointmentStatus.completed:
-        return l10n.completed;
-      case AppointmentStatus.cancelled:
-        return l10n.cancelled;
-    }
-  }
-
   @override
   ConsumerState<AppointmentsScreen> createState() => _AppointmentsScreenState();
 }
 
 class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
-  SortOption _sortOption = SortOption.dateTimeDesc;
+  SortOption _sortOption = SortOption.dateTimeAsc;
   String _searchQuery = '';
   bool _showUpcomingOnly = false;
   AppointmentStatus? _statusFilter;
@@ -48,85 +37,28 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
     final appointmentsAsyncValue = ref.watch(appointmentsProvider);
     final appointmentService = ref.watch(appointmentServiceProvider);
     final l10n = AppLocalizations.of(context)!;
-
-    final userProfile = ref.watch(userProfileProvider).value;
+    final usage = ref.watch(clinicUsageProvider);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Row(
-          children: [
-            Text(l10n.appointments),
-            if (userProfile != null && !userProfile.isPremium)
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withAlpha(51),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.orange),
-                  ),
-                  child: Text(
-                    '${userProfile.cumulativeAppointments}/100',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
+        title: Text(l10n.appointments),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        elevation: 0,
         actions: [
-          if (_statusFilter != null)
-            IconButton(
-              icon: const Icon(Icons.clear),
-              onPressed: () {
-                setState(() {
-                  _statusFilter = null;
-                });
-              },
-              tooltip: 'Clear filter',
-            ),
           IconButton(
             icon: Icon(
-              _showUpcomingOnly
-                  ? Icons.calendar_today
-                  : Icons.calendar_view_week,
+              _showUpcomingOnly ? LucideIcons.calendar : LucideIcons.calendarDays,
+              color: AppColors.primary,
             ),
-            onPressed: () {
-              setState(() {
-                _showUpcomingOnly = !_showUpcomingOnly;
-              });
-            },
-            tooltip: _showUpcomingOnly
-                ? l10n.showAllAppointments
-                : l10n.showUpcomingOnly,
+            onPressed: () => setState(() => _showUpcomingOnly = !_showUpcomingOnly),
           ),
           PopupMenuButton<SortOption>(
-            onSelected: (option) {
-              setState(() {
-                _sortOption = option;
-              });
-            },
-            icon: const Icon(Icons.sort),
+            icon: const Icon(LucideIcons.arrowUpDown, color: AppColors.primary),
+            onSelected: (option) => setState(() => _sortOption = option),
             itemBuilder: (context) => [
-              PopupMenuItem(
-                value: SortOption.dateTimeAsc,
-                child: Text(l10n.timeEarliestFirst),
-              ),
-              PopupMenuItem(
-                value: SortOption.dateTimeDesc,
-                child: Text(l10n.timeLatestFirst),
-              ),
-              PopupMenuItem(
-                value: SortOption.patientId,
-                child: Text(l10n.patientId),
-              ),
+              PopupMenuItem(value: SortOption.dateTimeAsc, child: Text(l10n.timeEarliestFirst)),
+              PopupMenuItem(value: SortOption.dateTimeDesc, child: Text(l10n.timeLatestFirst)),
             ],
           ),
         ],
@@ -134,299 +66,221 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
             child: TextField(
               decoration: InputDecoration(
                 hintText: l10n.searchAppointments,
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: const Icon(LucideIcons.search, size: 20),
+                filled: true,
+                fillColor: Theme.of(context).cardTheme.color,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
+              onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
             ),
           ),
           Expanded(
             child: appointmentsAsyncValue.when(
               data: (appointments) {
-                var filteredAppointments = appointments.where((appointment) {
-                  final matchesSearch = appointment.patientId
-                      .toString()
-                      .contains(_searchQuery);
-                  final isUpcoming =
-                      !_showUpcomingOnly ||
-                      appointment.dateTime.isAfter(DateTime.now());
-                  final statusMatch =
-                      _statusFilter == null ||
-                      appointment.status == _statusFilter;
-
+                var filtered = appointments.where((a) {
+                  final matchesSearch = a.patientId.toString().contains(_searchQuery);
+                  final isUpcoming = !_showUpcomingOnly || a.dateTime.isAfter(DateTime.now());
+                  final statusMatch = _statusFilter == null || a.status == _statusFilter;
                   return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
 
-                // Sort
-                switch (_sortOption) {
-                  case SortOption.dateTimeAsc:
-                    filteredAppointments.sort(
-                      (a, b) => a.dateTime.compareTo(b.dateTime),
-                    );
-                    break;
-                  case SortOption.dateTimeDesc:
-                    filteredAppointments.sort(
-                      (a, b) => b.dateTime.compareTo(a.dateTime),
-                    );
-                    break;
-                  case SortOption.patientId:
-                    filteredAppointments.sort(
-                      (a, b) => a.patientId.compareTo(b.patientId),
-                    );
-                    break;
+                if (_sortOption == SortOption.dateTimeAsc) {
+                  filtered.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+                } else if (_sortOption == SortOption.dateTimeDesc) {
+                  filtered.sort((a, b) => b.dateTime.compareTo(a.dateTime));
                 }
 
-                if (filteredAppointments.isEmpty) {
-                  return Center(child: Text(l10n.noAppointmentsFound));
+                if (filtered.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(LucideIcons.calendarX, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        Text(l10n.noAppointmentsFound, style: const TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                  );
                 }
 
                 return ListView.builder(
-                  itemCount: filteredAppointments.length,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length,
                   itemBuilder: (context, index) {
-                    final appointment = filteredAppointments[index];
-                    final patientFuture = ref.watch(
-                      patientProvider(appointment.patientId),
-                    );
+                    final appointment = filtered[index];
+                    final patientFuture = ref.watch(patientProvider(appointment.patientId));
 
-                    Color cardColor = Theme.of(context).colorScheme.surface;
-                    IconData leadingIcon = Icons.hourglass_empty;
-                    Color iconColor = Theme.of(context).colorScheme.primary;
-                    Color statusColor = Colors.blue;
-
-                    switch (appointment.status) {
-                      case AppointmentStatus.waiting:
-                        cardColor = Theme.of(context).colorScheme.surface;
-                        leadingIcon = Icons.hourglass_empty;
-                        iconColor = Theme.of(context).colorScheme.primary;
-                        statusColor = Colors.blue;
-                        break;
-                      case AppointmentStatus.inProgress:
-                        cardColor = Theme.of(context).colorScheme.surface;
-                        leadingIcon = Icons.play_circle_fill;
-                        iconColor = Theme.of(context).colorScheme.secondary;
-                        statusColor = Colors.orange;
-                        break;
-                      case AppointmentStatus.completed:
-                        cardColor = Theme.of(
-                          context,
-                        ).colorScheme.surface.withAlpha(128);
-                        leadingIcon = Icons.check_circle;
-                        iconColor = Colors.green;
-                        statusColor = Colors.green;
-                        break;
-                      case AppointmentStatus.cancelled:
-                        cardColor = Theme.of(
-                          context,
-                        ).colorScheme.surface.withAlpha(128);
-                        leadingIcon = Icons.cancel;
-                        iconColor = Theme.of(context).colorScheme.error;
-                        statusColor = Colors.red;
-                        break;
-                    }
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: BorderSide(
-                          color: statusColor.withAlpha(128),
-                          width: 1,
-                        ),
-                      ),
-                      color: cardColor,
-                      child: ListTile(
-                        leading: Icon(leadingIcon, color: iconColor, size: 32),
-                        title: patientFuture.when(
-                          data: (patient) => Text(
-                            patient?.name ?? l10n.unknownPatient,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          loading: () => Text(l10n.loading),
-                          error: (err, stack) => Text(
-                            l10n.unknownPatient,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+                    return IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          SizedBox(
+                            width: 60,
+                            child: Column(
+                              children: [
+                                Text(
+                                  DateFormat('HH:mm').format(appointment.dateTime),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                Text(
+                                  DateFormat('a').format(appointment.dateTime),
+                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 4),
-                            Text(
-                              '${l10n.dateLabel}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[0]}',
-                            ),
-                            Text(
-                              '${l10n.timeHHMM}: ${appointment.dateTime.toLocal().toIso8601String().split('T')[1].substring(0, 5)}',
-                            ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Chip(
-                              label: Text(
-                                widget._getLocalizedStatus(
-                                  context,
-                                  appointment.status,
+                          Column(
+                            children: [
+                              Container(
+                                width: 12, height: 12,
+                                decoration: BoxDecoration(
+                                  color: _getStatusColor(appointment.status),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2),
                                 ),
                               ),
-                              backgroundColor: statusColor.withAlpha(51),
-                              labelStyle: TextStyle(color: statusColor),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            if (appointment.status == AppointmentStatus.waiting)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.play_arrow,
-                                  color: Colors.green,
+                              Expanded(
+                                child: Container(
+                                  width: 2,
+                                  color: Theme.of(context).dividerColor,
                                 ),
-                                onPressed: () async {
-                                  if (appointment.id != null) {
-                                    await appointmentService
-                                        .updateAppointmentStatus(
-                                          appointment.id!,
-                                          AppointmentStatus.inProgress,
-                                        );
-                                    ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(todaysAppointmentsProvider);
-                                    ref.invalidate(
-                                      todaysEmergencyAppointmentsProvider,
-                                    );
-                                  }
-                                },
-                                tooltip: l10n.startAppointment,
                               ),
-                            if (appointment.status ==
-                                AppointmentStatus.inProgress)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.check,
-                                  color: Colors.blue,
-                                ),
-                                onPressed: () async {
-                                  if (appointment.id != null) {
-                                    await appointmentService
-                                        .updateAppointmentStatus(
-                                          appointment.id!,
-                                          AppointmentStatus.completed,
-                                        );
-                                    ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(todaysAppointmentsProvider);
-                                    ref.invalidate(
-                                      todaysEmergencyAppointmentsProvider,
-                                    );
-                                  }
-                                },
-                                tooltip: l10n.completeAppointment,
-                              ),
-                            if (appointment.status !=
-                                    AppointmentStatus.completed &&
-                                appointment.status !=
-                                    AppointmentStatus.cancelled)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.cancel,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(l10n.cancelAppointment),
-                                      content: Text(
-                                        l10n.confirmCancelAppointment,
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text(l10n.cancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: Text(l10n.confirm),
-                                        ),
-                                      ],
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(bottom: 16.0),
+                              child: InkWell(
+                                onTap: () => context.go('/appointments/edit', extra: appointment),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardTheme.color,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                                    ],
+                                    border: Border(
+                                      left: BorderSide(color: _getStatusColor(appointment.status), width: 4),
                                     ),
-                                  );
-                                  if (confirmed == true &&
-                                      appointment.id != null) {
-                                    await appointmentService
-                                        .updateAppointmentStatus(
-                                          appointment.id!,
-                                          AppointmentStatus.cancelled,
-                                        );
-                                    ref.invalidate(appointmentsProvider);
-                                    ref.invalidate(todaysAppointmentsProvider);
-                                    ref.invalidate(
-                                      todaysEmergencyAppointmentsProvider,
-                                    );
-                                  }
-                                },
-                                tooltip: l10n.cancelAppointment,
-                              ),
-                            if (appointment.status ==
-                                AppointmentStatus.cancelled)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete_forever,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () async {
-                                  final confirmed = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(l10n.deleteAppointment),
-                                      content: Text(
-                                        l10n.confirmDeleteAppointment,
+                                  ),
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                patientFuture.when(
+                                                  data: (p) => Text(
+                                                    "${p?.name} ${p?.familyName}",
+                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  loading: () => const Text('...'),
+                                                  error: (_, _) => const Text('Error'),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  appointment.createdBy ?? '...',
+                                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              _buildStatusBadge(context, appointment.status),
+                                              const SizedBox(width: 4),
+                                              if (appointment.status == AppointmentStatus.waiting) ...[
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  icon: const Icon(LucideIcons.playCircle, color: AppColors.primary, size: 20),
+                                                  onPressed: () async {
+                                                    if (appointment.id != null) {
+                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.inProgress);
+                                                      ref.invalidate(appointmentsProvider);
+                                                    }
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                  onPressed: () async {
+                                                    if (appointment.id != null) {
+                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.cancelled);
+                                                      ref.invalidate(appointmentsProvider);
+                                                    }
+                                                  },
+                                                ),
+                                              ] else if (appointment.status == AppointmentStatus.inProgress) ...[
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  icon: const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
+                                                  onPressed: () async {
+                                                    if (appointment.id != null) {
+                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.completed);
+                                                      ref.invalidate(appointmentsProvider);
+                                                    }
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                  onPressed: () async {
+                                                    if (appointment.id != null) {
+                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.cancelled);
+                                                      ref.invalidate(appointmentsProvider);
+                                                    }
+                                                  },
+                                                ),
+                                              ] else if (appointment.status == AppointmentStatus.completed || appointment.status == AppointmentStatus.cancelled) ...[
+                                                IconButton(
+                                                  visualDensity: VisualDensity.compact,
+                                                  icon: const Icon(LucideIcons.trash2, color: Colors.grey, size: 20),
+                                                  onPressed: () async {
+                                                    final confirmed = await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (context) => AlertDialog(
+                                                        title: Text(l10n.deleteAppointment),
+                                                        content: Text(l10n.confirmDeleteAppointment),
+                                                        actions: [
+                                                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+                                                          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.delete)),
+                                                        ],
+                                                      ),
+                                                    );
+                                                    if (confirmed == true && appointment.id != null) {
+                                                      await appointmentService.deleteAppointment(appointment.id!);
+                                                      ref.invalidate(appointmentsProvider);
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
                                       ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text(l10n.cancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: Text(l10n.delete),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirmed == true &&
-                                      appointment.id != null) {
-                                    await appointmentService.deleteAppointment(
-                                      appointment.id!,
-                                    );
-                                  }
-                                },
-                                tooltip: l10n.deleteAppointment,
+                                    ],
+                                  ),
+                                ),
                               ),
-                          ],
-                        ),
-                        onTap: () {
-                          context.go('/appointments/edit', extra: appointment);
-                        },
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
@@ -438,11 +292,46 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.go('/appointments/add');
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: usage.hasReachedAppointmentLimit
+          ? null
+          : FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              onPressed: () => context.go('/appointments/add'),
+              child: const Icon(LucideIcons.plus, color: Colors.white),
+            ),
+    );
+  }
+
+  Color _getStatusColor(AppointmentStatus status) {
+    switch (status) {
+      case AppointmentStatus.waiting: return AppColors.primary;
+      case AppointmentStatus.inProgress: return AppColors.warning;
+      case AppointmentStatus.completed: return AppColors.success;
+      case AppointmentStatus.cancelled: return AppColors.error;
+    }
+  }
+
+  Widget _buildStatusBadge(BuildContext context, AppointmentStatus status) {
+    Color color = _getStatusColor(status);
+    String label = '';
+    final l10n = AppLocalizations.of(context)!;
+    switch (status) {
+      case AppointmentStatus.waiting: label = l10n.waiting; break;
+      case AppointmentStatus.inProgress: label = l10n.inProgress; break;
+      case AppointmentStatus.completed: label = l10n.completed; break;
+      case AppointmentStatus.cancelled: label = l10n.cancelled; break;
+    }
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }

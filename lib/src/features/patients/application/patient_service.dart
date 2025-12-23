@@ -92,7 +92,7 @@ class PatientService {
 
   PatientService(this._ref, this._repository, this._auditService);
 
-  void _notifyDataChanged() {
+  void notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
@@ -143,7 +143,7 @@ class PatientService {
         details: 'Patient ${newPatient.name} ${newPatient.familyName} added.',
       );
 
-      _notifyDataChanged();
+      notifyDataChanged();
       _broadcastChange(SyncAction.create, newPatient);
     } catch (e) {
       ErrorHandler.logError(e);
@@ -222,7 +222,7 @@ class PatientService {
         details: 'Patient ${patient.name} ${patient.familyName} updated.',
       );
 
-      _notifyDataChanged();
+      notifyDataChanged();
       _broadcastChange(SyncAction.update, patient);
     } catch (e) {
       ErrorHandler.logError(e);
@@ -273,7 +273,7 @@ class PatientService {
         details: 'Patient ${patient.name} ${patient.familyName} deleted.',
       );
 
-      _notifyDataChanged();
+      notifyDataChanged();
       _broadcastChange(SyncAction.delete, patient);
     } catch (e) {
       ErrorHandler.logError(e);

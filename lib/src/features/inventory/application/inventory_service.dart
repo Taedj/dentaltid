@@ -52,7 +52,7 @@ class InventoryService {
     this._financeService,
   );
 
-  void _notifyDataChanged() {
+  void notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
@@ -69,7 +69,7 @@ class InventoryService {
       details: 'Inventory item ${item.name} added.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.create, newItem);
 
     final transaction = Transaction(
@@ -105,7 +105,7 @@ class InventoryService {
       details: 'Inventory item ${item.name} updated.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.update, item);
 
     final quantityDiff = item.quantity - oldItem.quantity;
@@ -137,7 +137,7 @@ class InventoryService {
       details: 'Inventory item with ID $id deleted.',
     );
 
-    _notifyDataChanged();
+    notifyDataChanged();
     _broadcastChange(SyncAction.delete, item);
   }
 }

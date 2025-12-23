@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logging/logging.dart';
@@ -294,9 +295,13 @@ class FirebaseService {
         return null;
       }
       final bytes = await file.readAsBytes();
-      _logger.info('File read successfully, size: ${bytes.length} bytes');
+      
+      // Calculate MD5 for integrity check later
+      final md5Hash = md5.convert(bytes).toString();
+      _logger.info('File read successfully. Size: ${bytes.length} bytes, MD5: $md5Hash');
+
       final base64String = base64Encode(bytes);
-      _logger.info('Base64 encoded, length: ${base64String.length} characters');
+      _logger.info('Base64 encoding complete. Length: ${base64String.length}');
 
       // Split into chunks of 500KB
       const chunkSize = 500 * 1024;
@@ -312,7 +317,7 @@ class FirebaseService {
         );
       }
 
-      _logger.info('Creating backup document with ${chunks.length} chunks');
+      _logger.info('Creating backup manifest with ${chunks.length} chunks');
       final backupDoc = await _firestore
           .collection('users')
           .doc(uid)
@@ -320,8 +325,10 @@ class FirebaseService {
           .add({
             'timestamp': FieldValue.serverTimestamp(),
             'chunkCount': chunks.length,
+            'md5Hash': md5Hash,
+            'fileSize': bytes.length,
+            'status': 'uploading',
           });
-      _logger.info('Backup document created with ID: ${backupDoc.id}');
 
       _logger.info('Uploading ${chunks.length} chunks...');
       for (var i = 0; i < chunks.length; i++) {
@@ -329,10 +336,13 @@ class FirebaseService {
           'data': chunks[i],
         });
         if (i % 10 == 0 || i == chunks.length - 1) {
-          _logger.info('Uploaded chunk $i/${chunks.length}');
+          _logger.info('Upload progress: chunk $i/${chunks.length}');
         }
       }
-      _logger.info('All chunks uploaded successfully');
+
+      // Mark as complete
+      await backupDoc.update({'status': 'completed'});
+      _logger.info('All chunks uploaded and verified. Backup ID: ${backupDoc.id}');
 
       return backupDoc.id;
     } catch (e, s) {
@@ -347,14 +357,24 @@ class FirebaseService {
     String destinationPath,
   ) async {
     try {
+      _logger.info('Downloading backup $backupId for user $uid');
       final backupDoc = await _firestore
           .collection('users')
           .doc(uid)
           .collection('backups')
           .doc(backupId)
           .get();
-      final chunkCount = backupDoc.data()!['chunkCount'] as int;
+          
+      if (!backupDoc.exists) {
+        _logger.severe('Backup document $backupId not found.');
+        return null;
+      }
 
+      final data = backupDoc.data()!;
+      final chunkCount = data['chunkCount'] as int;
+      final expectedMd5 = data['md5Hash'] as String?;
+
+      _logger.info('Reassembling $chunkCount chunks...');
       final chunks = <String>[];
       for (var i = 0; i < chunkCount; i++) {
         final chunkDoc = await _firestore
@@ -365,17 +385,37 @@ class FirebaseService {
             .collection('chunks')
             .doc(i.toString())
             .get();
+            
+        if (!chunkDoc.exists) {
+          throw Exception('Missing chunk $i for backup $backupId');
+        }
         chunks.add(chunkDoc.data()!['data'] as String);
+        
+        if (i % 10 == 0 || i == chunkCount - 1) {
+          _logger.info('Download progress: chunk $i/$chunkCount');
+        }
       }
 
       final base64String = chunks.join();
       final bytes = base64Decode(base64String);
 
+      // Verify Integrity if MD5 exists
+      if (expectedMd5 != null) {
+        final actualMd5 = md5.convert(bytes).toString();
+        if (actualMd5 != expectedMd5) {
+          _logger.severe('INTEGRITY FAILURE: Expected MD5 $expectedMd5, got $actualMd5');
+          return null;
+        }
+        _logger.info('Integrity verified (MD5 match).');
+      }
+
       final file = File(destinationPath);
       await file.writeAsBytes(bytes);
+      _logger.info('Backup downloaded and reassembled at $destinationPath');
 
       return file;
-    } catch (e) {
+    } catch (e, s) {
+      _logger.severe('Error in downloadUserBackupFromFirestore: $e', e, s);
       return null;
     }
   }
@@ -617,6 +657,30 @@ class FirebaseService {
     } catch (e) {
       _logger.severe('Error creating activation code', e);
       throw Exception('Failed to create activation code: $e');
+    }
+  }
+
+  Future<void> deleteUserBackupFromFirestore(String uid, String backupId) async {
+    try {
+      _logger.info('Deleting backup $backupId for user $uid');
+      final backupRef = _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('backups')
+          .doc(backupId);
+
+      // 1. Delete chunks sub-collection
+      final chunks = await backupRef.collection('chunks').get();
+      for (final doc in chunks.docs) {
+        await doc.reference.delete();
+      }
+
+      // 2. Delete the main document
+      await backupRef.delete();
+      _logger.info('Backup $backupId deleted successfully.');
+    } catch (e, s) {
+      _logger.severe('Error in deleteUserBackupFromFirestore: $e', e, s);
+      rethrow;
     }
   }
 }

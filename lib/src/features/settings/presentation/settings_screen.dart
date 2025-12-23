@@ -12,6 +12,8 @@ import 'package:dentaltid/src/features/settings/application/finance_settings_pro
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/backup_service.dart';
+import 'package:dentaltid/src/features/settings/presentation/network_config_dialog.dart';
+import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/staff_list_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isLoading = false;
+  final _serverPortController = TextEditingController();
+  bool _autoStartServer = false;
   final FirebaseService _firebaseService = FirebaseService();
 
   Future<void> _showChangePasswordDialog(
@@ -120,6 +124,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    final settings = SettingsService.instance;
+    _autoStartServer = settings.getBool('autoStartServer') ?? false;
+    _serverPortController.text = settings.getString('serverPort') ?? '8080';
+  }
+
+  @override
+  void dispose() {
+    _serverPortController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final backupService = BackupService();
     final l10n = AppLocalizations.of(context)!;
@@ -142,6 +160,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onPressed: _isLoading
                     ? null
                     : () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text(l10n.localBackup),
+                            content: const Text(
+                              'This backup will include your clinic database, app settings, and staff accounts. Do you want to proceed?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text(l10n.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: Text(l10n.confirm),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed != true) return;
+
                         setState(() {
                           _isLoading = true;
                         });
@@ -177,7 +217,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             setState(() {
                               _isLoading = true;
                             });
-                            final success = await backupService.restoreBackup();
+                            final success = await backupService.restoreBackup(
+                              ref: ref,
+                            );
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -229,6 +271,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             onPressed: _isLoading
                                 ? null
                                 : () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text(l10n.syncToCloud),
+                                        content: const Text(
+                                          'This will upload your clinic database, settings, and staff accounts to the cloud for safe keeping. Do you want to proceed?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: Text(l10n.cancel),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: Text(l10n.confirm),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirmed != true) return;
+
                                     setState(() {
                                       _isLoading = true;
                                     });
@@ -320,6 +386,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               MaterialPageRoute(
                                 builder: (_) => const StaffListScreen(),
                               ),
+                            );
+                          },
+                        ),
+                        const Divider(height: 40),
+
+                        // LAN Sync Settings - for Dentist
+                        Text(
+                          'LAN Sync Settings',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 10),
+                        SwitchListTile(
+                          title: const Text('Auto-start Server'),
+                          subtitle: const Text('Start sync server on app launch'),
+                          value: _autoStartServer,
+                          onChanged: (value) async {
+                            setState(() => _autoStartServer = value);
+                            await SettingsService.instance.setBool(
+                              'autoStartServer',
+                              value,
+                            );
+                          },
+                          secondary: const Icon(Icons.sync_outlined),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: TextFormField(
+                            controller: _serverPortController,
+                            decoration: const InputDecoration(
+                              labelText: 'Server Port',
+                              helperText: 'Default: 8080',
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) async {
+                              await SettingsService.instance.setString(
+                                'serverPort',
+                                value,
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        ListTile(
+                          title: const Text('Advanced Network Configuration'),
+                          subtitle: const Text('Logs, Firewall, and IP settings'),
+                          leading: const Icon(Icons.lan_outlined),
+                          trailing: const Icon(Icons.settings),
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (context) => const NetworkConfigDialog(
+                                    userType: UserType.dentist,
+                                  ),
                             );
                           },
                         ),

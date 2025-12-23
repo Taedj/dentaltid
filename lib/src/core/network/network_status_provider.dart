@@ -25,3 +25,4 @@ final networkStatusProvider =
     });
 
 final connectedClientsCountProvider = StateProvider<int>((ref) => 0);
+final connectedStaffNamesProvider = StateProvider<List<String>>((ref) => []);

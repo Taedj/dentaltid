@@ -11,6 +11,8 @@ import 'package:dentaltid/src/features/finance/application/recurring_charge_serv
 import 'package:dentaltid/src/features/finance/domain/finance_filters.dart';
 import 'package:dentaltid/src/features/settings/application/finance_settings_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:dentaltid/src/core/app_colors.dart';
 
 class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
@@ -20,19 +22,16 @@ class FinanceScreen extends ConsumerStatefulWidget {
 }
 
 class _FinanceScreenState extends ConsumerState<FinanceScreen> {
-  // State for filters
   final bool _includeRecurringCharges = true;
   final bool _includeInventoryExpenses = true;
   final bool _includeStaffSalaries = true;
   final bool _includeRent = true;
   late DateTimeRange _selectedDateRange;
-  String _selectedFilterKey =
-      'month'; // 'today', 'week', 'month', 'year', 'global', 'custom'
+  String _selectedFilterKey = 'month';
 
   @override
   void initState() {
     super.initState();
-    // Initialize with 'This Month' logic directly
     final now = DateTime.now();
     _selectedDateRange = DateTimeRange(
       start: DateTime(now.year, now.month, 1),
@@ -47,20 +46,13 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
   Future<void> _generateRecurringTransactions() async {
     final recurringChargeService = ref.read(recurringChargeServiceProvider);
     final now = DateTime.now();
-    // Generate for a reasonable window around "now" to ensure data exists
     final periodStart = DateTime(now.year, now.month - 12, now.day);
     final periodEnd = DateTime(now.year, now.month + 12, 0);
-    await recurringChargeService.generateTransactionsForRecurringCharges(
-      periodStart,
-      periodEnd,
-    );
-    // Optional: Refresh if needed, but usually the stream updates automatically
-    // ref.invalidate(financeServiceProvider);
+    await recurringChargeService.generateTransactionsForRecurringCharges(periodStart, periodEnd);
   }
 
   void _setDuration(String key) {
     if (!mounted) return;
-
     final now = DateTime.now();
     DateTime start;
     DateTime end = now;
@@ -71,7 +63,6 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         end = DateTime(now.year, now.month, now.day, 23, 59, 59);
         break;
       case 'week':
-        // Find the last Monday (or Sunday depending on locale, using Monday here)
         start = now.subtract(Duration(days: now.weekday - 1));
         start = DateTime(start.year, start.month, start.day);
         end = start.add(const Duration(days: 6, hours: 23, minutes: 59));
@@ -85,8 +76,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         end = DateTime(now.year, 12, 31, 23, 59, 59);
         break;
       case 'global':
-        start = DateTime(2000); // Far past
-        end = DateTime(2100); // Far future
+        start = DateTime(2000);
+        end = DateTime(2100);
         break;
       default:
         return;
@@ -119,15 +110,12 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.deleteTransaction),
-        content: Text('Are you sure you want to delete this transaction?'),
+        content: const Text('Are you sure you want to delete this transaction?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
-          ),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: Text(l10n.delete),
           ),
         ],
@@ -138,9 +126,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       final financeService = ref.read(financeServiceProvider);
       await financeService.deleteTransaction(transaction.id!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Transaction deleted successfully')),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction deleted successfully')));
       }
     }
   }
@@ -154,271 +140,139 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       includeStaffSalaries: _includeStaffSalaries,
       includeRent: _includeRent,
     );
-    final transactionsAsyncValue = ref.watch(
-      filteredTransactionsProvider(filters),
-    );
-    final actualTransactionsAsyncValue = ref.watch(
-      actualTransactionsProvider(filters),
-    );
+    final transactionsAsyncValue = ref.watch(filteredTransactionsProvider(filters));
+    final actualTransactionsAsyncValue = ref.watch(actualTransactionsProvider(filters));
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final currency = ref.watch(currencyProvider);
     final financeSettings = ref.watch(financeSettingsProvider);
     final monthlyBudget = financeSettings.monthlyBudgetCap;
     final currentLocale = ref.watch(languageProvider);
-    // Removed currentLocale from here
-
-    // Budget Alert Logic
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.finance),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.credit_card),
-            onPressed: () => context.go('/finance/recurring-charges'),
-            tooltip: l10n.recurringChargesTooltip,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => context.go('/settings'),
-            tooltip: l10n.financeSettingsTooltip,
-          ),
+          IconButton(icon: const Icon(LucideIcons.repeat), onPressed: () => context.go('/finance/recurring-charges')),
+          IconButton(icon: const Icon(LucideIcons.settings), onPressed: () => context.go('/settings')),
         ],
       ),
       body: transactionsAsyncValue.when(
         data: (transactions) {
-          // Calculate Summaries
           double totalIncome = 0;
           double totalExpense = 0;
           for (var t in transactions) {
             if (t.type == TransactionType.income) {
-              totalIncome += t.paidAmount; // Actual money received
+              totalIncome += t.paidAmount;
             } else {
-              totalExpense +=
-                  t.totalAmount; // Expenses are usually fully billed
+              totalExpense += t.totalAmount;
             }
           }
           double netProfit = totalIncome - totalExpense;
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            padding: const EdgeInsets.all(16),
             children: [
-              // 1. Duration Selectors (Chips)
+              // Period Selector
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    for (var entry in {
-                      'today': l10n.periodToday,
-                      'week': l10n.periodThisWeek,
-                      'month': l10n.periodThisMonth,
-                      'year': l10n.periodThisYear,
-                      'global': l10n.periodGlobal,
-                    }.entries)
+                    for (var entry in {'today': l10n.periodToday, 'week': l10n.periodThisWeek, 'month': l10n.periodThisMonth, 'year': l10n.periodThisYear, 'global': l10n.periodGlobal}.entries)
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
-                        child: ChoiceChip(
+                        child: FilterChip(
                           label: Text(entry.value),
                           selected: _selectedFilterKey == entry.key,
-                          onSelected: (selected) {
-                            if (selected) _setDuration(entry.key);
-                          },
+                          onSelected: (selected) { if (selected) _setDuration(entry.key); },
+                          checkmarkColor: Colors.white,
+                          selectedColor: AppColors.primary,
+                          labelStyle: TextStyle(color: _selectedFilterKey == entry.key ? Colors.white : theme.textTheme.bodyMedium?.color),
                         ),
                       ),
-                    ActionChip(
-                      label: Text(
-                        _selectedFilterKey == 'custom'
-                            ? '${DateFormat.MMMd().format(_selectedDateRange.start)} - ${DateFormat.MMMd().format(_selectedDateRange.end)}'
-                            : l10n.periodCustomDate,
-                      ),
-                      avatar: const Icon(Icons.calendar_today, size: 16),
+                     ActionChip(
+                      label: Text(_selectedFilterKey == 'custom' ? '${DateFormat.MMMd().format(_selectedDateRange.start)} - ${DateFormat.MMMd().format(_selectedDateRange.end)}' : l10n.periodCustomDate),
+                      avatar: const Icon(LucideIcons.calendar, size: 16),
                       onPressed: _showDateRangePicker,
-                      backgroundColor: _selectedFilterKey == 'custom'
-                          ? theme.colorScheme.secondaryContainer
-                          : null,
+                      backgroundColor: _selectedFilterKey == 'custom' ? AppColors.primary.withValues(alpha: 0.2) : null,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // 2. KPI Cards (Overview)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildKpiCard(
-                      context,
-                      l10n.incomeTitle,
-                      totalIncome,
-                      Colors.green,
-                      currency,
-                      currentLocale,
-                      useCompactNumbers: financeSettings.useCompactNumbers,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildKpiCard(
-                      context,
-                      l10n.expensesTitle,
-                      totalExpense,
-                      Colors.red,
-                      currency,
-                      currentLocale,
-                      useCompactNumbers: financeSettings.useCompactNumbers,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildKpiCard(
-                      context,
-                      l10n.netProfitTitle,
-                      netProfit,
-                      netProfit >= 0
-                          ? theme.colorScheme.primary
-                          : Colors.orange,
-                      currency,
-                      currentLocale,
-                      isBold: true,
-                      useCompactNumbers: financeSettings.useCompactNumbers,
-                      subtitle: financeSettings.taxRatePercentage > 0
-                          ? '${l10n.taxLabel}: ${financeSettings.taxRatePercentage}% (${_formatCurrency(netProfit * (financeSettings.taxRatePercentage / 100), currency, currentLocale, useCompact: financeSettings.useCompactNumbers)})'
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 24),
 
-              // 2.5 Budget Progress (If Enabled)
+              // KPI Cards
+              Row(
+                children: [
+                  Expanded(child: _buildGlassKpiCard(l10n.incomeTitle, totalIncome, AppColors.success, currency, currentLocale, LucideIcons.trendingUp, financeSettings.useCompactNumbers)),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildGlassKpiCard(l10n.expensesTitle, totalExpense, AppColors.error, currency, currentLocale, LucideIcons.trendingDown, financeSettings.useCompactNumbers)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _buildGlassKpiCard(
+                  l10n.netProfitTitle, netProfit, netProfit >= 0 ? AppColors.primary : AppColors.warning, currency, currentLocale, LucideIcons.wallet, financeSettings.useCompactNumbers,
+                  subtitle: financeSettings.taxRatePercentage > 0 ? '${l10n.taxLabel}: ${financeSettings.taxRatePercentage}%' : null
+              ),
+              
+              const SizedBox(height: 24),
+
               if (monthlyBudget != null && monthlyBudget > 0) ...[
-                _buildBudgetCard(
-                  context,
-                  totalExpense,
-                  monthlyBudget,
-                  currency,
-                  currentLocale,
-                  useCompactNumbers: financeSettings.useCompactNumbers,
-                ),
+                _buildModernBudgetCard(totalExpense, monthlyBudget, currency, currentLocale, financeSettings.useCompactNumbers, l10n),
                 const SizedBox(height: 24),
               ],
 
-              // 3. New Advanced Charts
               Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: FinanceChart(transactions: transactions),
-                ),
+                elevation: 0,
+                color: theme.cardTheme.color,
+                child: Padding(padding: const EdgeInsets.all(16.0), child: FinanceChart(transactions: transactions)),
               ),
               const SizedBox(height: 24),
 
-              // 4. Detailed Transaction List
-              Text(l10n.transactions, style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 8),
+              Text(l10n.transactions, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              
               actualTransactionsAsyncValue.when(
                 data: (actualTransactions) {
-                  if (actualTransactions.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(child: Text(l10n.noTransactionsFound)),
-                    );
-                  }
-                  return ListView.builder(
+                  if (actualTransactions.isEmpty) return Center(child: Text(l10n.noTransactionsFound, style: const TextStyle(color: Colors.grey)));
+                  return ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: actualTransactions.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final transaction = actualTransactions[index];
-                      final isIncome =
-                          transaction.type == TransactionType.income;
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4.0),
-                        elevation: 0,
-                        color: theme.colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.3),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isIncome
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.1),
-                            child: Icon(
-                              isIncome
-                                  ? Icons.arrow_downward
-                                  : Icons.arrow_upward,
-                              color: isIncome ? Colors.green : Colors.red,
-                              size: 20,
+                      final isIncome = transaction.type == TransactionType.income;
+                      return ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: (isIncome ? AppColors.success : AppColors.error).withValues(alpha: 0.1),
+                          child: Icon(isIncome ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight, color: isIncome ? AppColors.success : AppColors.error, size: 20),
+                        ),
+                        title: Text(transaction.description, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${DateFormat.yMMMd().format(transaction.date)} • ${transaction.category}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${isIncome ? '+' : '-'}${_formatCurrency(transaction.totalAmount, currency, currentLocale, useCompact: false)}',
+                              style: TextStyle(color: isIncome ? AppColors.success : AppColors.error, fontWeight: FontWeight.bold, fontSize: 15),
                             ),
-                          ),
-                          title: Text(
-                            transaction.description,
-                            style: const TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${DateFormat.yMMMd().format(transaction.date.toLocal())} • ${transaction.category}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                              Text(
-                                '${isIncome ? '+' : '-'}${_formatCurrency(transaction.totalAmount, currency, currentLocale, useCompact: false)}',
-                                style: TextStyle(
-                                  color: isIncome ? Colors.green : Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: PopupMenuButton<String>(
-                            onSelected: (value) {
-                              if (value == 'edit') {
-                                context.go(
-                                  '/finance/edit-transaction',
-                                  extra: transaction,
-                                );
-                              } else if (value == 'delete') {
-                                _deleteTransaction(transaction);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              PopupMenuItem(
-                                value: 'edit',
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.edit, size: 20),
-                                    const SizedBox(width: 8),
-                                    Text(l10n.edit),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.delete,
-                                      size: 20,
-                                      color: Colors.red,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      l10n.delete,
-                                      style: const TextStyle(color: Colors.red),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
+                            const SizedBox(width: 8),
+                            PopupMenuButton<String>(
+                              icon: const Icon(LucideIcons.moreVertical, size: 18),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  context.go('/finance/edit-transaction', extra: transaction);
+                                } else if (value == 'delete') {
+                                  _deleteTransaction(transaction);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(value: 'edit', child: Row(children: [const Icon(LucideIcons.edit, size: 18), const SizedBox(width: 8), Text(l10n.edit)])),
+                                PopupMenuItem(value: 'delete', child: Row(children: [const Icon(LucideIcons.trash2, size: 18, color: Colors.red), const SizedBox(width: 8), Text(l10n.delete, style: const TextStyle(color: Colors.red))])),
+                              ],
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -434,189 +288,83 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
         error: (error, stack) => Center(child: Text('Error: $error')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.primary,
         onPressed: () => context.go('/finance/add-transaction'),
-        label: Text(l10n.addTransaction),
-        icon: const Icon(Icons.add),
+        label: Text(l10n.addTransaction, style: const TextStyle(color: Colors.white)),
+        icon: const Icon(LucideIcons.plus, color: Colors.white),
       ),
     );
   }
 
-  Widget _buildKpiCard(
-    BuildContext context,
-    String title,
-    double amount,
-    Color color,
-    String currency,
-    Locale locale, {
-    bool isBold = false,
-    String? subtitle,
-    bool useCompactNumbers = true,
-  }) {
-    final theme = Theme.of(context);
-    final formattedAmount = _formatCurrency(
-      amount,
-      currency,
-      locale,
-      useCompact: useCompactNumbers,
-    );
-
+  Widget _buildGlassKpiCard(String title, double amount, Color color, String currency, Locale locale, IconData icon, bool useCompact, {String? subtitle}) {
+    final formattedAmount = _formatCurrency(amount, currency, locale, useCompact: useCompact);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 15, offset: const Offset(0, 5))],
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+          Row(
+            children: [
+              Icon(icon, size: 16, color: Theme.of(context).textTheme.bodySmall?.color),
+              const SizedBox(width: 8),
+              Text(title, style: Theme.of(context).textTheme.labelMedium),
+            ],
           ),
-          const SizedBox(height: 8),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              formattedAmount,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: color,
-                fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-              ),
-            ),
-          ),
-          if (subtitle != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 10,
-              ),
-            ),
-          ],
+          const SizedBox(height: 12),
+          Text(formattedAmount, style: TextStyle(color: color, fontSize: 24, fontWeight: FontWeight.bold)),
+          if (subtitle != null) ...[const SizedBox(height: 4), Text(subtitle, style: Theme.of(context).textTheme.bodySmall)],
         ],
       ),
     );
   }
 
-  Widget _buildBudgetCard(
-    BuildContext context,
-    double currentExpense,
-    double budgetCap,
-    String currency,
-    Locale locale, {
-    bool useCompactNumbers = true,
-  }) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final percent = (currentExpense / budgetCap).clamp(0.0, 1.0);
-    final isOverBudget = currentExpense > budgetCap;
-
-    final formattedExpense = _formatCurrency(
-      currentExpense,
-      currency,
-      locale,
-      useCompact: useCompactNumbers,
-    );
-    final formattedBudget = _formatCurrency(
-      budgetCap,
-      currency,
-      locale,
-      useCompact: useCompactNumbers,
-    );
-
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceContainerHighest.withAlpha(50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.monthlyBudgetTitle,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '$formattedExpense / $formattedBudget',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isOverBudget
-                        ? Colors.red
-                        : theme.colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: percent,
-              borderRadius: BorderRadius.circular(8),
-              minHeight: 12,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              color: isOverBudget
-                  ? Colors.red
-                  : (percent > 0.8 ? Colors.orange : Colors.green),
-            ),
-            if (isOverBudget)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.warning_amber,
-                      size: 16,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      l10n.budgetExceededAlert,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
+  Widget _buildModernBudgetCard(double current, double max, String currency, Locale locale, bool useCompact, AppLocalizations l10n) {
+     final percent = (current / max).clamp(0.0, 1.0);
+     final isOver = current > max;
+     
+     return Container(
+       padding: const EdgeInsets.all(20),
+       decoration: BoxDecoration(
+         gradient: LinearGradient(colors: [AppColors.darkCard.withValues(alpha: 0.05), AppColors.darkCard.withValues(alpha: 0.1)]),
+         borderRadius: BorderRadius.circular(16),
+       ),
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.start,
+         children: [
+           Row(
+             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+             children: [
+               Text(l10n.monthlyBudgetTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+               Text('${(percent * 100).toInt()}%', style: TextStyle(fontWeight: FontWeight.bold, color: isOver ? AppColors.error : AppColors.primary)),
+             ],
+           ),
+           const SizedBox(height: 12),
+           LinearProgressIndicator(
+             value: percent, 
+             backgroundColor: Colors.grey.withValues(alpha: 0.2), 
+             color: isOver ? AppColors.error : AppColors.success,
+             minHeight: 8,
+             borderRadius: BorderRadius.circular(4),
+           ),
+           const SizedBox(height: 8),
+           Text(
+             '${_formatCurrency(current, currency, locale, useCompact: useCompact)} / ${_formatCurrency(max, currency, locale, useCompact: useCompact)}',
+             style: const TextStyle(fontSize: 12, color: Colors.grey),
+           ),
+         ],
+       ),
+     );
   }
 
-  String _formatCurrency(
-    double amount,
-    String currency,
-    Locale locale, {
-    bool useCompact = true,
-  }) {
-    final formatter = useCompact
-        ? NumberFormat.compact(locale: locale.languageCode)
-        : NumberFormat.decimalPattern(locale.languageCode);
-
-    final formattedNumber = formatter.format(amount);
-
-    if (locale.languageCode == 'ar') {
-      return '$currency $formattedNumber'; // Left for AR
-    } else {
-      return '$formattedNumber $currency'; // Right for EN/FR
-    }
+  String _formatCurrency(double amount, String currency, Locale locale, {bool useCompact = true}) {
+    final formatter = useCompact ? NumberFormat.compact(locale: locale.languageCode) : NumberFormat.decimalPattern(locale.languageCode);
+    final formatted = formatter.format(amount);
+    return locale.languageCode == 'ar' ? '$currency $formatted' : '$formatted $currency';
   }
 }

@@ -1,4 +1,3 @@
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:dentaltid/src/features/inventory/presentation/add_inventory_dial
 import 'package:dentaltid/src/features/inventory/presentation/use_inventory_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 
 enum InventorySortOption {
   nameAsc,
@@ -33,12 +33,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     if (item == null) {
-      final userProfile = ref.read(userProfileProvider).value;
-      if (userProfile != null && !userProfile.isPremium) {
-        if (userProfile.cumulativeInventory >= 100) {
-          _showLimitDialog(context);
-          return;
-        }
+      final usage = ref.read(clinicUsageProvider);
+      if (usage.hasReachedInventoryLimit) {
+        _showLimitDialog(context);
+        return;
       }
     }
 
@@ -54,17 +52,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   .addInventoryItem(newItem);
 
               if (!mounted) return;
-
-              // Increment
-              final userProfile = ref.read(userProfileProvider).value;
-              if (userProfile != null) {
-                ref
-                    .read(firebaseServiceProvider)
-                    .incrementInventoryCount(userProfile.uid)
-                    .then((_) {
-                      if (mounted) ref.invalidate(userProfileProvider);
-                    });
-              }
+              // Increments are now handled locally via list length in clinicUsageProvider
             } else {
               await ref
                   .read(inventoryServiceProvider)
@@ -150,15 +138,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final inventoryService = ref.watch(inventoryServiceProvider);
     final l10n = AppLocalizations.of(context)!;
-
-    final userProfile = ref.watch(userProfileProvider).value;
+    final usage = ref.watch(clinicUsageProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
             Text(l10n.inventory),
-            if (userProfile != null && !userProfile.isPremium)
+            if (!usage.isPremium)
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
@@ -172,7 +159,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     border: Border.all(color: Colors.orange),
                   ),
                   child: Text(
-                    '${userProfile.cumulativeInventory}/100',
+                    '${usage.inventoryCount}/100',
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.orange,
@@ -470,11 +457,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddEditDialog(),
-        icon: const Icon(Icons.add),
-        label: Text(l10n.addItem),
-      ),
+      floatingActionButton: usage.hasReachedInventoryLimit
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showAddEditDialog(),
+              icon: const Icon(Icons.add),
+              label: Text(l10n.addItem),
+            ),
     );
   }
 }

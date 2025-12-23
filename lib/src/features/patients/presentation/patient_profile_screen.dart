@@ -11,6 +11,8 @@ import 'package:dentaltid/src/features/finance/application/finance_service.dart'
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class PatientProfileScreen extends ConsumerWidget {
   const PatientProfileScreen({super.key, required this.patient});
@@ -355,244 +357,271 @@ class _VisitCardState extends ConsumerState<VisitCard> {
     final timeString =
         '${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')}';
 
+    final userProfile = ref.watch(userProfileProvider).value;
+    final isDentist = userProfile?.role == UserRole.dentist;
+
+    final Widget titleWidget = Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        // Date and Time Section
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dateString,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: colorScheme.primary,
+                ),
+              ),
+              Text(
+                timeString,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Appointment Type and Status
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: _getStatusColor(selectedStatus).withAlpha(100),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            selectedAppointmentType,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: _getStatusColor(selectedStatus),
+            ),
+          ),
+        ),
+        // Status Badge
+        Container(
+          margin: const EdgeInsets.only(left: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: _getAppointmentTypeColor(
+              selectedAppointmentType,
+            ).withAlpha(100),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            selectedStatus.toString().split('.').last.toUpperCase(),
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: _getAppointmentTypeColor(selectedAppointmentType),
+            ),
+          ),
+        ),
+      ],
+    );
+
+    final Widget? subtitleWidget = (totalCostController.text.isNotEmpty ||
+            amountPaidController.text.isNotEmpty)
+        ? Text(
+            balanceDue < 0
+                ? l10n.overpaid(
+                    NumberFormat.currency(
+                      symbol: currency,
+                    ).format(-balanceDue),
+                  )
+                : balanceDue > 0
+                ? l10n.due(
+                    NumberFormat.currency(
+                      symbol: currency,
+                    ).format(balanceDue),
+                  )
+                : l10n.fullyPaid,
+            style: TextStyle(
+              color: balanceDue < 0
+                  ? Colors.green
+                  : balanceDue > 0
+                  ? colorScheme.error
+                  : Colors.green,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          )
+        : null;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(
-        initiallyExpanded: false,
-        backgroundColor: colorScheme.surfaceContainerHighest.withAlpha(50),
-        collapsedBackgroundColor: colorScheme.surface,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Date and Time Section
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    dateString,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                  Text(
-                    timeString,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+      child: isDentist
+          ? ExpansionTile(
+            initiallyExpanded: false,
+            backgroundColor: colorScheme.surfaceContainerHighest.withAlpha(50),
+            collapsedBackgroundColor: colorScheme.surface,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
-            // Appointment Type and Status
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: _getStatusColor(selectedStatus).withAlpha(100),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                selectedAppointmentType,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _getStatusColor(selectedStatus),
-                ),
-              ),
+            collapsedShape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
-            // Status Badge
-            Container(
-              margin: const EdgeInsets.only(left: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _getAppointmentTypeColor(
-                  selectedAppointmentType,
-                ).withAlpha(100),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                selectedStatus.toString().split('.').last.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: _getAppointmentTypeColor(selectedAppointmentType),
-                ),
-              ),
-            ),
-          ],
-        ),
-        subtitle:
-            (totalCostController.text.isNotEmpty ||
-                amountPaidController.text.isNotEmpty)
-            ? Text(
-                balanceDue < 0
-                    ? l10n.overpaid(
-                        NumberFormat.currency(
-                          symbol: currency,
-                        ).format(-balanceDue),
-                      )
-                    : balanceDue > 0
-                    ? l10n.due(
-                        NumberFormat.currency(
-                          symbol: currency,
-                        ).format(balanceDue),
-                      )
-                    : l10n.fullyPaid,
-                style: TextStyle(
-                  color: balanceDue < 0
-                      ? Colors.green
-                      : balanceDue > 0
-                      ? colorScheme.error
-                      : Colors.green,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              )
-            : null,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Appointment Type Dropdown
-                DropdownButtonFormField<String>(
-                  initialValue: selectedAppointmentType,
-                  decoration: InputDecoration(
-                    labelText: l10n.appointmentTypeTitle,
-                  ),
-                  items: [
-                    DropdownMenuItem(
-                      value: 'consultation',
-                      child: Text(l10n.consultationType),
-                    ),
-                    DropdownMenuItem(
-                      value: 'followup',
-                      child: Text(l10n.followupType),
-                    ),
-                    DropdownMenuItem(
-                      value: 'emergency',
-                      child: Text(l10n.emergencyType),
-                    ),
-                    DropdownMenuItem(
-                      value: 'procedure',
-                      child: Text(l10n.procedureType),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedAppointmentType = value;
-                      });
-                    }
-                  },
-                ),
-                const SizedBox(height: 12),
-                // Status Dropdown
-                DropdownButtonFormField<AppointmentStatus>(
-                  initialValue: selectedStatus,
-                  decoration: InputDecoration(labelText: l10n.status),
-                  items: AppointmentStatus.values.map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status.toString().split('.').last),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() {
-                        selectedStatus = value;
-                      });
-                    }
-                  },
-                ),
-                const Divider(height: 24),
-                // Payment Fields
-                Row(
+            title: titleWidget,
+            subtitle: subtitleWidget,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: totalCostController,
-                        decoration: InputDecoration(labelText: l10n.totalCost),
-                        keyboardType: TextInputType.number,
+                    // Appointment Type Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: selectedAppointmentType,
+                      decoration: InputDecoration(
+                        labelText: l10n.appointmentTypeTitle,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: amountPaidController,
-                        decoration: InputDecoration(labelText: l10n.paidAmount),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${l10n.balanceDueLabel}: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: balanceDue > 0
-                        ? colorScheme.error
-                        : balanceDue < 0
-                        ? Colors.green
-                        : Colors.green,
-                  ),
-                ),
-                const Divider(height: 24),
-                // Health Fields
-                TextFormField(
-                  controller: healthStateController,
-                  decoration: InputDecoration(labelText: l10n.healthState),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: diagnosisController,
-                  decoration: InputDecoration(labelText: l10n.diagnosis),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: treatmentController,
-                  decoration: InputDecoration(labelText: l10n.treatment),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: notesController,
-                  decoration: InputDecoration(labelText: l10n.notes),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _saveChanges,
-                        child: Text(l10n.saveButton),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _deleteVisit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'consultation',
+                          child: Text(l10n.consultationType),
                         ),
-                        child: Text(l10n.deleteVisit),
+                        DropdownMenuItem(
+                          value: 'followup',
+                          child: Text(l10n.followupType),
+                        ),
+                        DropdownMenuItem(
+                          value: 'emergency',
+                          child: Text(l10n.emergencyType),
+                        ),
+                        DropdownMenuItem(
+                          value: 'procedure',
+                          child: Text(l10n.procedureType),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedAppointmentType = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    // Status Dropdown
+                    DropdownButtonFormField<AppointmentStatus>(
+                      initialValue: selectedStatus,
+                      decoration: InputDecoration(labelText: l10n.status),
+                      items: AppointmentStatus.values.map((status) {
+                        return DropdownMenuItem(
+                          value: status,
+                          child: Text(status.toString().split('.').last),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            selectedStatus = value;
+                          });
+                        }
+                      },
+                    ),
+                    const Divider(height: 24),
+                    // Payment Fields
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: totalCostController,
+                            decoration:
+                                InputDecoration(labelText: l10n.totalCost),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: amountPaidController,
+                            decoration:
+                                InputDecoration(labelText: l10n.paidAmount),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${l10n.balanceDueLabel}: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: balanceDue > 0
+                            ? colorScheme.error
+                            : balanceDue < 0
+                            ? Colors.green
+                            : Colors.green,
                       ),
+                    ),
+                    const Divider(height: 24),
+                    // Health Fields
+                    TextFormField(
+                      controller: healthStateController,
+                      decoration: InputDecoration(labelText: l10n.healthState),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: diagnosisController,
+                      decoration: InputDecoration(labelText: l10n.diagnosis),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: treatmentController,
+                      decoration: InputDecoration(labelText: l10n.treatment),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: notesController,
+                      decoration: InputDecoration(labelText: l10n.notes),
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _saveChanges,
+                            child: Text(l10n.saveButton),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _deleteVisit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: Text(l10n.deleteVisit),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+            ],
+          )
+          : ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
             ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: titleWidget,
+            subtitle: subtitleWidget,
+            trailing: const Icon(Icons.lock_outline, size: 20),
           ),
-        ],
-      ),
     );
   }
 

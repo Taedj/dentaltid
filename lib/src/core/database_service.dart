@@ -6,7 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 18; // Incremented version
+  static const int _databaseVersion = 19; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -397,6 +397,17 @@ class DatabaseService {
         )
       ''');
     }
+    if (oldVersion < 19) {
+      try {
+        await db.execute('ALTER TABLE appointments ADD COLUMN createdBy TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (createdBy column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+    }
   }
 
   Future<void> close() async {
@@ -417,7 +428,8 @@ class DatabaseService {
         healthState TEXT,
         diagnosis TEXT,
         treatment TEXT,
-        notes TEXT
+        notes TEXT,
+        createdBy TEXT
       )
       ''');
     await db.execute('''

@@ -15,8 +15,8 @@ class SettingsService {
 
   SettingsService._internal();
 
-  Future<void> init() async {
-    if (_initialized) return;
+  Future<void> init({bool force = false}) async {
+    if (_initialized && !force) return;
 
     try {
       final docsDir = await getApplicationDocumentsDirectory();

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:isolate';
 import 'package:dentaltid/src/core/network/network_status_provider.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
@@ -26,6 +25,7 @@ class SyncServer {
   final ProviderContainer _container;
   HttpServer? _server;
   final List<WebSocketChannel> _clients = [];
+  final Map<WebSocketChannel, String> _clientIdentities = {};
 
   SyncServer(this._container);
 
@@ -45,7 +45,11 @@ class SyncServer {
     // Middleware to log all requests
     final pipeline = const Pipeline().addMiddleware(logRequests(
       logger: (msg, isError) {
-        if (isError) _log.severe(msg); else _log.info('HTTP: $msg');
+        if (isError) {
+          _log.severe(msg);
+        } else {
+          _log.info('HTTP: $msg');
+        }
       },
     ));
 
@@ -66,8 +70,11 @@ class SyncServer {
         onDone: () {
           _log.info('WEBSOCKET: Client disconnected.');
           _clients.remove(webSocket);
+          _clientIdentities.remove(webSocket);
           _container.read(connectedClientsCountProvider.notifier).state =
               _clients.length;
+          _container.read(connectedStaffNamesProvider.notifier).state =
+              _clientIdentities.values.toList();
         },
         onError: (err) => _log.severe('WEBSOCKET ERROR: $err'),
       );
@@ -115,9 +122,12 @@ class SyncServer {
         profileMap = dentistProfile?.toJson();
       } catch (e) {
         _log.warning('SYNC: Provider timeout/error, using local settings cache: $e');
-        final cachedJson = SettingsService.instance.getString('cached_user_profile');
+        final cachedJson = SettingsService.instance.getString('cached_user_profile') ?? 
+                           SettingsService.instance.getString('dentist_profile');
         if (cachedJson != null) {
-          profileMap = jsonDecode(cachedJson);
+          try {
+            profileMap = jsonDecode(cachedJson);
+          } catch (_) {}
         }
       }
 
@@ -134,17 +144,17 @@ class SyncServer {
           lastLogin: DateTime.now(),
           lastSync: DateTime.now(),
           dentistName: 'Offline Dentist',
-          isPremium: true, // Allow full feature access in offline sync
+          isPremium: false, // Default to non-premium if profile is missing
         );
         profileMap = fallbackProfile.toJson();
       }
 
-      if (profileMap != null) {
-        _log.info('SYNC: Constructing full payload Map...');
-        final fullPayload = {
+      _log.info('SYNC: Constructing full payload Map...');
+      final fullPayload = {
           'type': 'initial_sync',
           'profile': profileMap,
           'database': dbDataMap,
+          'currency': SettingsService.instance.getString('currency') ?? r'$',
         };
         
         _log.info('SYNC: Encoding and sending payload (this may take a few seconds)...');
@@ -161,7 +171,6 @@ class SyncServer {
             'message': 'Server ran out of memory or encountered encoding error during sync.'
           }));
         }
-      }
     } catch (e, stack) {
       _log.severe('SYNC ERROR: Error sending initial sync: $e', e, stack);
       webSocket.sink.add(jsonEncode({
@@ -179,7 +188,9 @@ class SyncServer {
         client.sink.close();
       }
       _clients.clear();
+      _clientIdentities.clear();
       _container.read(connectedClientsCountProvider.notifier).state = 0;
+      _container.read(connectedStaffNamesProvider.notifier).state = [];
       _container
           .read(networkStatusProvider.notifier)
           .setStatus(ConnectionStatus.serverStopped);
@@ -194,6 +205,17 @@ class SyncServer {
     _log.info('Received from client: $message');
     try {
       final json = jsonDecode(message);
+      final String type = json['type'] ?? 'sync_event';
+
+      if (type == 'staff_identity') {
+        final name = json['fullName'] as String? ?? 'Unknown Staff';
+        _clientIdentities[origin] = name;
+        _container.read(connectedStaffNamesProvider.notifier).state =
+            _clientIdentities.values.toList();
+        _log.info('WEBSOCKET: Identified client as $name');
+        return;
+      }
+
       final event = SyncEvent.fromJson(json);
 
       _log.info('Applying event to server database for table: ${event.table}');
@@ -229,20 +251,31 @@ class SyncServer {
   }
 
   void _invalidateProviderForTable(String table) {
-    final providerMap = {
-      'staff_users': staffListProvider,
-      'patients': patientsProvider,
-      'inventory': inventoryItemsProvider,
-      'appointments': appointmentsProvider,
-    };
-
-    final provider = providerMap[table];
-    if (provider != null) {
-      _container.invalidate(provider);
-      _log.info('Invalidated provider for table: $table');
+    if (table == 'patients') {
+      _container.read(patientServiceProvider).notifyDataChanged();
+      _container.read(financeServiceProvider).notifyDataChanged();
+      _container.invalidate(patientsProvider);
+      _log.info('Triggered refresh for table: $table (including Finance)');
+    } else if (table == 'appointments') {
+      _container.read(appointmentServiceProvider).notifyDataChanged();
+      _container.read(financeServiceProvider).notifyDataChanged();
+      _container.invalidate(appointmentsProvider);
+      _container.invalidate(todaysAppointmentsProvider);
+      _container.invalidate(todaysEmergencyAppointmentsProvider);
+      _log.info('Triggered refresh for table: $table (including Finance)');
+    } else if (table == 'inventory') {
+      _container.read(inventoryServiceProvider).notifyDataChanged();
+      _container.invalidate(inventoryItemsProvider);
+      _log.info('Triggered refresh for table: $table');
     } else if (table == 'transactions') {
       _container.read(financeServiceProvider).notifyDataChanged();
-      _log.info('Notified FinanceService of data change.');
+      _log.info('Triggered refresh for table: $table');
+    } else if (table == 'staff_users') {
+      _container.invalidate(staffListProvider);
+      _log.info('Invalidated staffListProvider');
+    } else if (table == 'dentist_profile') {
+      _container.invalidate(userProfileProvider);
+      _log.info('Invalidated userProfileProvider due to dentist_profile update');
     }
   }
 

@@ -16,18 +16,42 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
   final log = Logger('userProfileProvider');
   final firebaseService = ref.watch(firebaseServiceProvider);
   final authState = ref.watch(authStateProvider).value;
-  final currentUser = authState; // Use the value from authStateProvider
+  final currentUser = authState;
 
   await SettingsService.instance.init();
   final settings = SettingsService.instance;
+
+  // Load Inherited Dentist Profile (from Sync)
+  UserProfile? syncedDentistProfile;
+  final dentistJson = settings.getString('dentist_profile');
+  if (dentistJson != null) {
+    try {
+      syncedDentistProfile = UserProfile.fromJson(jsonDecode(dentistJson));
+    } catch (_) {}
+  }
 
   // 1. Check for Managed User (Staff) first
   final managedJson = settings.getString('managedUserProfile');
   if (managedJson != null) {
     try {
-      final profile = UserProfile.fromJson(jsonDecode(managedJson));
-      log.info('Detected logged in staff: ${profile.username}');
-      return profile;
+      final staffProfile = UserProfile.fromJson(jsonDecode(managedJson));
+      log.info('Detected logged in staff: ${staffProfile.username}');
+
+      // IF STAFF: Strictly merge licensing info from synced Dentist profile if available
+      if (syncedDentistProfile != null) {
+        log.info('Merging license from synced dentist: ${syncedDentistProfile.plan}');
+        return staffProfile.copyWith(
+          plan: syncedDentistProfile.plan,
+          isPremium: syncedDentistProfile.isPremium,
+          trialStartDate: syncedDentistProfile.trialStartDate,
+          premiumExpiryDate: syncedDentistProfile.premiumExpiryDate,
+          licenseExpiry: syncedDentistProfile.licenseExpiry,
+          dentistName: syncedDentistProfile.dentistName ?? staffProfile.dentistName,
+          status: syncedDentistProfile.status,
+          licenseKey: syncedDentistProfile.licenseKey,
+        );
+      }
+      return staffProfile;
     } catch (e) {
       log.severe('Error parsing managed profile: $e');
     }
@@ -49,6 +73,8 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
             jsonEncode(profile.toJson()),
           );
         }
+        // Also update the 'dentist_profile' so staff get it if they sync
+        await settings.setString('dentist_profile', jsonEncode(profile.toJson()));
         return profile;
       }
     } catch (e) {
@@ -56,7 +82,7 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
     }
   }
 
-  // 2. Fallback to cache if Remember Me is active
+  // 3. Fallback to cache if Remember Me is active (Dentist)
   if (rememberMe) {
     log.info('Attempting to load cached profile');
     final cachedJson = settings.getString('cached_user_profile');

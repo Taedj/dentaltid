@@ -16,6 +16,7 @@ class UserProfile {
   final DateTime lastSync;
   final String? clinicName;
   final String? dentistName;
+  final String? fullName; // Full name of the user (e.g. for staff)
   final String? phoneNumber;
   final String? medicalLicenseNumber;
 
@@ -53,6 +54,7 @@ class UserProfile {
     required this.lastSync,
     this.clinicName,
     this.dentistName,
+    this.fullName,
     this.phoneNumber,
     this.medicalLicenseNumber,
     this.trialStartDate,
@@ -80,6 +82,7 @@ class UserProfile {
     'lastSync': lastSync.toIso8601String(),
     'clinicName': clinicName,
     'dentistName': dentistName,
+    'fullName': fullName,
     'phoneNumber': phoneNumber,
     'medicalLicenseNumber': medicalLicenseNumber,
     'trialStartDate': trialStartDate?.toIso8601String(),
@@ -113,6 +116,7 @@ class UserProfile {
     lastSync: DateTime.parse(json['lastSync']),
     clinicName: json['clinicName'],
     dentistName: json['dentistName'],
+    fullName: json['fullName'],
     phoneNumber: json['phoneNumber'],
     medicalLicenseNumber: json['medicalLicenseNumber'],
     trialStartDate: json['trialStartDate'] != null
@@ -147,6 +151,7 @@ class UserProfile {
     DateTime? lastSync,
     String? clinicName,
     String? dentistName,
+    String? fullName,
     String? phoneNumber,
     String? medicalLicenseNumber,
     DateTime? trialStartDate,
@@ -173,6 +178,7 @@ class UserProfile {
       lastSync: lastSync ?? this.lastSync,
       clinicName: clinicName ?? this.clinicName,
       dentistName: dentistName ?? this.dentistName,
+      fullName: fullName ?? this.fullName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       medicalLicenseNumber: medicalLicenseNumber ?? this.medicalLicenseNumber,
       trialStartDate: trialStartDate ?? this.trialStartDate,

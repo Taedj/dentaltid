@@ -24,9 +24,17 @@ class AppInitializer {
 
     try {
       await SettingsService.instance.init();
+      
+      // Update last seen date for Clock Guard security
+      final settings = SettingsService.instance;
+      final lastSeenStr = settings.getString('last_seen_date');
+      final now = DateTime.now();
+      if (lastSeenStr == null || (DateTime.tryParse(lastSeenStr)?.isBefore(now) ?? true)) {
+        await settings.setString('last_seen_date', now.toIso8601String());
+      }
+
       final userProfile = await _ref.read(userProfileProvider.future);
 
-      final settings = SettingsService.instance;
       final roleString = settings.getString('userRole');
       UserRole? currentUserRole;
       if (roleString != null) {

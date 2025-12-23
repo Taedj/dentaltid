@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/network/network_status_provider.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/core/sync_service.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
@@ -114,6 +116,7 @@ class SyncClient {
       if (type == 'connection_accepted') {
         _log.info('Server accepted connection. Starting data transfer wait...');
         _setStatus(ConnectionStatus.handshakeAccepted);
+        sendIdentity();
       } else if (type == 'initial_sync' && !_isInitialSyncComplete) {
         _log.info('Initial sync payload received. Importing...');
         _setStatus(ConnectionStatus.syncing);
@@ -121,13 +124,16 @@ class SyncClient {
 
         final dbDataMap = json['database'] as Map<String, dynamic>;
         final profileData = json['profile'] as Map<String, dynamic>;
+        final currency = json['currency'] as String?;
 
         Future.wait<void>([
           syncService.importDatabaseMapFromSync(dbDataMap),
           _saveDentistProfile(profileData),
+          if (currency != null) _saveCurrency(currency),
         ]).then((_) {
           _log.info('Initial DB and Profile sync complete!');
           _isInitialSyncComplete = true;
+          _container.invalidate(userProfileProvider);
           _setStatus(ConnectionStatus.synced);
         }).catchError((e, s) {
           _log.severe('Full sync failed!', e, s);
@@ -149,6 +155,12 @@ class SyncClient {
     }
   }
 
+  Future<void> _saveCurrency(String currency) async {
+    await SettingsService.instance.setString('currency', currency);
+    _container.invalidate(currencyProvider);
+    _log.info('Synced currency from server: $currency');
+  }
+
   Future<void> _saveDentistProfile(Map<String, dynamic> profileJson) async {
     await SettingsService.instance.setString(
       'dentist_profile',
@@ -158,6 +170,20 @@ class SyncClient {
   }
 
   Future<void> _applySyncEvent(SyncEvent event) async {
+    if (event.table == 'app_settings') {
+      final currency = event.data['currency'];
+      if (currency != null) {
+        await _saveCurrency(currency);
+      }
+      return;
+    }
+
+    if (event.table == 'dentist_profile') {
+      await _saveDentistProfile(event.data);
+      _container.invalidate(userProfileProvider);
+      return;
+    }
+
     final db = await _container.read(databaseServiceProvider).database;
     switch (event.action) {
       case SyncAction.create:
@@ -186,20 +212,31 @@ class SyncClient {
   }
 
   void _invalidateProviderForTable(String table) {
-    final providerMap = {
-      'staff_users': staffListProvider,
-      'patients': patientsProvider,
-      'inventory': inventoryItemsProvider,
-      'appointments': appointmentsProvider,
-    };
-
-    final provider = providerMap[table];
-    if (provider != null) {
-      _container.invalidate(provider);
-      _log.info('Invalidated provider for table: $table');
+    if (table == 'patients') {
+      _container.read(patientServiceProvider).notifyDataChanged();
+      _container.read(financeServiceProvider).notifyDataChanged();
+      _container.invalidate(patientsProvider);
+      _log.info('Triggered refresh for table: $table (including Finance)');
+    } else if (table == 'appointments') {
+      _container.read(appointmentServiceProvider).notifyDataChanged();
+      _container.read(financeServiceProvider).notifyDataChanged();
+      _container.invalidate(appointmentsProvider);
+      _container.invalidate(todaysAppointmentsProvider);
+      _container.invalidate(todaysEmergencyAppointmentsProvider);
+      _log.info('Triggered refresh for table: $table (including Finance)');
+    } else if (table == 'inventory') {
+      _container.read(inventoryServiceProvider).notifyDataChanged();
+      _container.invalidate(inventoryItemsProvider);
+      _log.info('Triggered refresh for table: $table');
     } else if (table == 'transactions') {
       _container.read(financeServiceProvider).notifyDataChanged();
-      _log.info('Notified FinanceService of data change.');
+      _log.info('Triggered refresh for table: $table');
+    } else if (table == 'staff_users') {
+      _container.invalidate(staffListProvider);
+      _log.info('Invalidated staffListProvider');
+    } else if (table == 'dentist_profile') {
+      _container.invalidate(userProfileProvider);
+      _log.info('Invalidated userProfileProvider due to dentist_profile update');
     }
   }
 
@@ -208,6 +245,25 @@ class SyncClient {
       await _channel!.sink.close();
       _channel = null;
       _setStatus(ConnectionStatus.disconnected);
+    }
+  }
+
+  void sendIdentity() {
+    if (_channel == null) return;
+    
+    final cachedProfileJson = SettingsService.instance.getString('managedUserProfile');
+    if (cachedProfileJson != null) {
+      try {
+        final profileMap = jsonDecode(cachedProfileJson);
+        final fullName = profileMap['fullName'] ?? profileMap['username'] ?? 'Unknown Staff';
+        _log.info('Sending identity: $fullName');
+        _channel!.sink.add(jsonEncode({
+          'type': 'staff_identity',
+          'fullName': fullName,
+        }));
+      } catch (e) {
+        _log.warning('Could not decode managedUserProfile for identity: $e');
+      }
     }
   }
 

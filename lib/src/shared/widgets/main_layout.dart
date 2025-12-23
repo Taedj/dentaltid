@@ -7,8 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:convert';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key, required this.child});
@@ -40,19 +39,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           );
         });
       }
-    }
-  }
-
-  Future<void> _handleTrialExpiration() async {
-    // 1. Clear Remember Me
-    await SettingsService.instance.setBool('remember_me', false);
-
-    // 2. Sign Out Firebase (if online, best effort)
-    await FirebaseAuth.instance.signOut();
-
-    // 3. Redirect to Login and Show Dialog implies next login
-    if (mounted) {
-      GoRouter.of(context).go('/login');
     }
   }
 
@@ -100,39 +86,39 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen for Trial Expiration - this now serves as the primary license check
-    ref.listen(userProfileProvider, (previous, next) {
-      next.whenData((profile) async {
-        if (profile == null) return;
-
-        bool isExpired = false;
-        // If the user is staff, check the dentist's inherited profile status
-        if (profile.isManagedUser) {
-          final dentistProfileJson = SettingsService.instance.getString(
-            'dentist_profile',
-          );
-          if (dentistProfileJson != null) {
-            final dentistProfile = UserProfile.fromJson(
-              jsonDecode(dentistProfileJson),
-            );
-            if (dentistProfile.isTrialExpired) {
-              isExpired = true;
-            }
-          }
-        } else {
-          // It's a dentist, check their own profile
-          if (profile.isTrialExpired) {
-            isExpired = true;
-          }
-        }
-
-        if (isExpired) {
-          _handleTrialExpiration();
-        }
-      });
-    });
-
+    final usage = ref.watch(clinicUsageProvider);
     final l10n = AppLocalizations.of(context)!;
+
+    // Handle Trial Expiration Blocking
+    if (usage.isExpired) {
+      if (_currentUserRole != UserRole.dentist) {
+        // Staff: Show blocking dialog if not already on login or locked
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                title: Text(l10n.trialExpired),
+                content: const Text(
+                  'The main dentist user must activate premium to continue using the application.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      SettingsService.instance.remove('managedUserProfile');
+                      ref.invalidate(userProfileProvider);
+                      context.go('/login');
+                    },
+                    child: Text(l10n.logout),
+                  ),
+                ],
+              ),
+            );
+          }
+        });
+      }
+    }
     final location = GoRouterState.of(context).uri.toString();
 
     final List<NavigationRailDestination> destinations = [];
@@ -216,6 +202,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       }
     }
 
+    // IF EXPIRED: Remove all destinations except Settings for Dentist
+    if (usage.isExpired && _currentUserRole == UserRole.dentist) {
+      destinations.clear();
+      // Keep only Settings
+    }
+
     // Settings is Common
     destinations.add(
       NavigationRailDestination(
@@ -248,11 +240,22 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   networkStatus == ConnectionStatus.serverStopped
               ? Colors.grey
               : Colors.red);
-    String statusTooltip = isOnline
-        ? (_currentUserRole == UserRole.dentist
-              ? 'Server Online'
-              : 'Connected to Server')
-        : 'Offline';
+    final connectedStaff = ref.watch(connectedStaffNamesProvider);
+
+    String statusTooltip = 'Offline';
+    if (isOnline) {
+      if (_currentUserRole == UserRole.dentist) {
+        if (connectedStaff.isEmpty) {
+          statusTooltip = 'Server Online (No staff connected)';
+        } else {
+          statusTooltip =
+              'Server Online (${connectedStaff.length} staff connected)\n'
+              'Connected: ${connectedStaff.join(', ')}';
+        }
+      } else {
+        statusTooltip = 'Connected to Server';
+      }
+    }
 
     return Scaffold(
       body: Stack(
@@ -280,6 +283,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   ],
                 ),
                 child: NavigationRail(
+                  leading: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        'assets/images/DT!d.png',
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  ),
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (int index) {
                     String route = '/'; // Default
@@ -321,6 +347,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                           route = '/settings';
                         }
                       } else {
+                        // Prevent navigation if expired
+                        if (usage.isExpired && _currentUserRole == UserRole.dentist) {
+                          return;
+                        }
                         route = '/';
                       }
                     }
@@ -392,28 +422,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               Expanded(child: widget.child),
             ],
           ),
-          Positioned(
-            top: 8,
-            right: 16,
-            child: Tooltip(
-              message: statusTooltip,
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: statusColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: statusColor.withValues(alpha: 127),
-                      blurRadius: 4,
-                      spreadRadius: 1,
-                    ),
-                  ],
+          if (location == '/')
+            Positioned(
+              top: 8,
+              right: 16,
+              child: Tooltip(
+                message: statusTooltip,
+                child: Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: statusColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: statusColor.withValues(alpha: 127),
+                        blurRadius: 4,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
