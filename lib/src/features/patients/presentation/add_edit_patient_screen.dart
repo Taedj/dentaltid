@@ -250,19 +250,23 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
                   ),
                 ),
 
-                  Padding(
+                Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   child: ElevatedButton(
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
                         try {
                           // License Limit Check
-                          final userProfile = ref.read(userProfileProvider).value;
-                          if (widget.patient == null && userProfile != null && !userProfile.isPremium) {
-                              if (userProfile.cumulativePatients >= 100) {
-                                  _showLimitDialog(context);
-                                  return;
-                              }
+                          final userProfile = ref
+                              .read(userProfileProvider)
+                              .value;
+                          if (widget.patient == null &&
+                              userProfile != null &&
+                              !userProfile.isPremium) {
+                            if (userProfile.cumulativePatients >= 100) {
+                              _showLimitDialog(context);
+                              return;
+                            }
                           }
 
                           final newPatient = Patient(
@@ -289,35 +293,70 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
 
                           if (widget.patient == null) {
                             await patientService.addPatient(newPatient);
-                            
-                            if (!mounted) return;
+
+                            if (!mounted) {
+                              return;
+                            }
 
                             // Increment Counter
                             if (userProfile != null) {
-                               ref.read(firebaseServiceProvider).incrementPatientCount(userProfile.uid).then((_) {
-                                  if (mounted) ref.invalidate(userProfileProvider);
-                               });
+                              ref
+                                  .read(firebaseServiceProvider)
+                                  .incrementPatientCount(userProfile.uid)
+                                  .then((_) {
+                                    if (mounted) {
+                                      ref.invalidate(userProfileProvider);
+                                    }
+                                  });
                             }
 
-                            ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
-                              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.all,
+                                ),
+                              ),
                             );
                             ref.invalidate(
-                              patientsProvider(const PatientListConfig(filter: PatientFilter.emergency)),
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.today,
+                                ),
+                              ),
+                            );
+                            ref.invalidate(
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.emergency,
+                                ),
+                              ),
                             );
                             ref.invalidate(todaysEmergencyAppointmentsProvider);
                           } else {
                             await patientService.updatePatient(newPatient);
-                            
+
                             if (!mounted) return;
 
-                            ref.invalidate(patientsProvider(const PatientListConfig(filter: PatientFilter.all)));
                             ref.invalidate(
-                              patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.all,
+                                ),
+                              ),
                             );
                             ref.invalidate(
-                              patientsProvider(const PatientListConfig(filter: PatientFilter.emergency)),
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.today,
+                                ),
+                              ),
+                            );
+                            ref.invalidate(
+                              patientsProvider(
+                                const PatientListConfig(
+                                  filter: PatientFilter.emergency,
+                                ),
+                              ),
                             );
                             ref.invalidate(todaysEmergencyAppointmentsProvider);
                           }
@@ -353,18 +392,20 @@ class _AddEditPatientScreenState extends ConsumerState<AddEditPatientScreen> {
   }
 
   void _showLimitDialog(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Limit Reached'),
-          content: const Text('You have reached the limit of 100 created patients for the Trial version.\nPlease upgrade to Premium to continue adding patients.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            )
-          ],
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limit Reached'),
+        content: const Text(
+          'You have reached the limit of 100 created patients for the Trial version.\nPlease upgrade to Premium to continue adding patients.',
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }

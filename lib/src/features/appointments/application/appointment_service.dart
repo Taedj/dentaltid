@@ -1,15 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
-import 'package:dentaltid/src/core/network/sync_client.dart';
+import 'package:dentaltid/src/core/network/sync_broadcaster.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
-import 'package:dentaltid/src/core/network/sync_server.dart';
-import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/data/appointment_repository.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment_with_payment.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
+import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
@@ -25,17 +24,18 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
     ref,
     ref.watch(appointmentRepositoryProvider),
     ref.watch(auditServiceProvider),
+    ref.watch(financeServiceProvider),
   );
 });
 
 final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
   ref.onDispose(() => subscription.cancel());
-  
+
   return service.getAppointments();
 });
 
@@ -43,7 +43,7 @@ final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -56,7 +56,7 @@ final waitingAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -72,7 +72,7 @@ final inProgressAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -88,7 +88,7 @@ final completedAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -104,7 +104,7 @@ final todaysAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,
 ) async {
   final service = ref.read(appointmentServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -118,17 +118,17 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
 ) async {
   final appointmentService = ref.read(appointmentServiceProvider);
   final patientService = ref.read(patientServiceProvider);
-  
+
   final appSubscription = appointmentService.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
   final patSubscription = patientService.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
-  
+
   ref.onDispose(() {
-     appSubscription.cancel();
-     patSubscription.cancel();
+    appSubscription.cancel();
+    patSubscription.cancel();
   });
 
   final allPatients = await patientService.getPatients(PatientFilter.all);
@@ -154,30 +154,28 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
 class AppointmentService {
   final AppointmentRepository _repository;
   final AuditService _auditService;
+  final FinanceService _financeService;
   final Ref _ref;
 
-  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  final StreamController<void> _dataChangeController =
+      StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  AppointmentService(this._ref, this._repository, this._auditService);
+  AppointmentService(
+    this._ref,
+    this._repository,
+    this._auditService,
+    this._financeService,
+  );
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
   void _broadcastChange(SyncAction action, Appointment data) {
-    final event = SyncEvent(
-      table: 'appointments',
-      action: action,
-      data: data.toJson(),
-    );
-    
-    final userProfile = _ref.read(userProfileProvider).value;
-    if (userProfile?.role == UserRole.dentist) {
-        _ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
-    } else {
-        _ref.read(syncClientProvider).send(event);
-    }
+    _ref
+        .read(syncBroadcasterProvider)
+        .broadcast(table: 'appointments', action: action, data: data.toJson());
   }
 
   Future<Appointment> addAppointment(Appointment appointment) async {
@@ -229,7 +227,7 @@ class AppointmentService {
       details:
           'Appointment for patient ${appointment.patientId} on ${appointment.dateTime} updated.',
     );
-    
+
     _notifyDataChanged();
     _broadcastChange(SyncAction.update, appointment);
   }
@@ -237,29 +235,42 @@ class AppointmentService {
   Future<void> deleteAppointment(int id) async {
     final appointment = await _repository.getAppointmentById(id);
     if (appointment == null) {
-      throw NotFoundException('Appointment not found', entity: 'Appointment', id: id);
+      throw NotFoundException(
+        'Appointment not found',
+        entity: 'Appointment',
+        id: id,
+      );
     }
     await _repository.deleteAppointment(id);
     _auditService.logEvent(
       AuditAction.deleteAppointment,
       details: 'Appointment with ID $id deleted.',
     );
-    
+
     _notifyDataChanged();
     _broadcastChange(SyncAction.delete, appointment);
+  }
+
+  Future<void> deleteAppointmentsByPatientId(int patientId) async {
+    await _repository.deleteAppointmentsByPatientId(patientId);
+    _notifyDataChanged();
   }
 
   Future<void> updateAppointmentStatus(int id, AppointmentStatus status) async {
     final appointment = await _repository.getAppointmentById(id);
     if (appointment == null) {
-      throw NotFoundException('Appointment not found', entity: 'Appointment', id: id);
+      throw NotFoundException(
+        'Appointment not found',
+        entity: 'Appointment',
+        id: id,
+      );
     }
     await _repository.updateAppointmentStatus(id, status);
     _auditService.logEvent(
       AuditAction.updateAppointment,
       details: 'Appointment with ID $id status updated to ${status.name}.',
     );
-    
+
     _notifyDataChanged();
     _broadcastChange(SyncAction.update, appointment.copyWith(status: status));
   }
@@ -285,5 +296,70 @@ class AppointmentService {
 
   Future<List<Appointment>> getAppointmentsForPatient(int patientId) async {
     return await _repository.getAppointmentsForPatient(patientId);
+  }
+
+  Future<void> saveAppointmentWithPayment(AppointmentWithPayment data) async {
+    Appointment appointment = data.appointment;
+
+    // First, save the appointment itself (create or update)
+
+    if (appointment.id == null) {
+      final savedAppointment = await addAppointment(appointment);
+
+      appointment = savedAppointment; // Get the ID for the transaction
+    } else {
+      await updateAppointment(appointment);
+    }
+
+    // Next, handle the financial transaction
+
+    if (data.totalCost > 0 || data.paidAmount > 0) {
+      final existingTransactions = await _financeService
+          .getTransactionsBySessionId(appointment.id!);
+
+      if (existingTransactions.isNotEmpty) {
+        // Update the existing transaction
+
+        final latestTransaction = existingTransactions.reduce(
+          (a, b) => a.date.isAfter(b.date) ? a : b,
+        );
+
+        final updatedTransaction = latestTransaction.copyWith(
+          description: 'Appointment payment for ${appointment.appointmentType}',
+
+          totalAmount: data.totalCost,
+
+          paidAmount: data.paidAmount,
+
+          category: appointment.appointmentType,
+        );
+
+        await _financeService.updateTransaction(updatedTransaction);
+      } else {
+        // Create a new transaction
+
+        final transaction = Transaction(
+          sessionId: appointment.id!,
+
+          description: 'Appointment payment for ${appointment.appointmentType}',
+
+          totalAmount: data.totalCost,
+
+          paidAmount: data.paidAmount,
+
+          type: TransactionType.income,
+
+          date: DateTime.now(),
+
+          sourceType: TransactionSourceType.appointment,
+
+          sourceId: appointment.id,
+
+          category: appointment.appointmentType,
+        );
+
+        await _financeService.addTransaction(transaction);
+      }
+    }
   }
 }

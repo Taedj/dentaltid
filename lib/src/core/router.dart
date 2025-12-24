@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/features/settings/presentation/profile_settings_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_overview_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_users_screen.dart';
@@ -25,26 +26,27 @@ import 'package:dentaltid/src/features/appointments/presentation/add_edit_appoin
 import 'package:dentaltid/src/shared/widgets/main_layout.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final router = GoRouter(
   redirect: (BuildContext context, GoRouterState state) async {
     final isLoggingIn = state.matchedLocation == '/login';
-    
+
     // Check both Firebase Auth and Persistent Storage
     final isLoggedIn = FirebaseAuth.instance.currentUser != null;
-    
+
     // If not logged in via Firebase, check if we have a valid "Remember Me" session or a Staff login
     bool hasRememberMe = false;
     bool isStaffLoggedIn = false;
     if (!isLoggedIn) {
-         try {
-            final prefs = await SharedPreferences.getInstance();
-            hasRememberMe = (prefs.getBool('remember_me') ?? false) && 
-                            (prefs.getString('cached_user_profile') != null);
-            
-            isStaffLoggedIn = prefs.getString('managedUserProfile') != null;
-         } catch (_) {}
+      try {
+        await SettingsService.instance.init();
+        final settings = SettingsService.instance;
+        hasRememberMe =
+            (settings.getBool('remember_me') ?? false) &&
+            (settings.getString('cached_user_profile') != null);
+
+        isStaffLoggedIn = settings.getString('managedUserProfile') != null;
+      } catch (_) {}
     }
 
     final effectiveLoggedIn = isLoggedIn || hasRememberMe || isStaffLoggedIn;
@@ -52,27 +54,26 @@ final router = GoRouter(
     if (!effectiveLoggedIn && !isLoggingIn) {
       return '/login';
     }
-    
+
     // --- DEVELOPER REDIRECT ---
     if (effectiveLoggedIn) {
-         try {
-             // We need to know the role. Ideally from Provider, but here we only have Sync/Async access to Prefs/Auth
-             // Check Cache
-             final prefs = await SharedPreferences.getInstance();
-             final roleString = prefs.getString('userRole');
-             
-             if (roleString == 'UserRole.developer') {
-                 // If developer is active and trying to go to root (dashboard), send to /developer
-                 if (state.matchedLocation == '/') {
-                     return '/developer';
-                 }
-                 // Allow access to /developer/* and /settings/* but maybe block others?
-                 // For now, soft redirect is enough.
-             }
-         } catch (_) {}
+      try {
+        await SettingsService.instance.init();
+        final settings = SettingsService.instance;
+        final roleString = settings.getString('userRole');
+
+        if (roleString == 'UserRole.developer') {
+          // If developer is active and trying to go to root (dashboard), send to /developer
+          if (state.matchedLocation == '/') {
+            return '/developer';
+          }
+          // Allow access to /developer/* and /settings/* but maybe block others?
+          // For now, soft redirect is enough.
+        }
+      } catch (_) {}
     }
     // --------------------------
-    
+
     if (effectiveLoggedIn && isLoggingIn) {
       return '/';
     }
@@ -147,9 +148,8 @@ final router = GoRouter(
             ),
             GoRoute(
               path: 'edit-transaction',
-              builder: (context, state) => AddTransactionScreen(
-                transaction: state.extra as dynamic,
-              ),
+              builder: (context, state) =>
+                  AddTransactionScreen(transaction: state.extra as dynamic),
             ),
             GoRoute(
               path: 'recurring-charges',
@@ -196,10 +196,19 @@ final router = GoRouter(
           path: '/developer',
           builder: (context, state) => const DeveloperOverviewScreen(),
           routes: [
-             GoRoute(path: 'users', builder: (context, state) => const DeveloperUsersScreen()),
-             GoRoute(path: 'codes', builder: (context, state) => const DeveloperCodesScreen()),
-             GoRoute(path: 'broadcasts', builder: (context, state) => const DeveloperBroadcastsScreen()),
-          ]
+            GoRoute(
+              path: 'users',
+              builder: (context, state) => const DeveloperUsersScreen(),
+            ),
+            GoRoute(
+              path: 'codes',
+              builder: (context, state) => const DeveloperCodesScreen(),
+            ),
+            GoRoute(
+              path: 'broadcasts',
+              builder: (context, state) => const DeveloperBroadcastsScreen(),
+            ),
+          ],
         ),
       ],
     ),

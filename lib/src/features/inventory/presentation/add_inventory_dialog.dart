@@ -86,8 +86,7 @@ class _AddInventoryItemDialogState
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(labelText: l10n.itemName),
-                validator: (value) =>
-                    value!.isEmpty ? l10n.enterName : null,
+                validator: (value) => value!.isEmpty ? l10n.enterName : null,
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -102,19 +101,19 @@ class _AddInventoryItemDialogState
               Row(
                 children: [
                   Expanded(
-                      child: TextFormField(
-                        controller: _costController,
-                        decoration: InputDecoration(
-                          labelText: _isTotalCost
-                              ? l10n.totalCost
-                              : l10n.costPerUnit,
-                          prefixText: currency,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        validator: (value) =>
-                            value!.isEmpty ? l10n.enterCost : null,
+                    child: TextFormField(
+                      controller: _costController,
+                      decoration: InputDecoration(
+                        labelText: _isTotalCost
+                            ? l10n.totalCost
+                            : l10n.costPerUnit,
+                        prefixText: currency,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      validator: (value) =>
+                          value!.isEmpty ? l10n.enterCost : null,
                       onChanged: (_) => setState(() {}),
                     ),
                   ),
@@ -141,10 +140,13 @@ class _AddInventoryItemDialogState
               if (_isTotalCost &&
                   _costController.text.isNotEmpty &&
                   _quantityController.text.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      l10n.calculatedUnitCost(currency, _calculateUnitCost().toStringAsFixed(2)),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    l10n.calculatedUnitCost(
+                      currency,
+                      _calculateUnitCost().toStringAsFixed(2),
+                    ),
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ),
@@ -161,9 +163,7 @@ class _AddInventoryItemDialogState
                   Expanded(
                     child: TextFormField(
                       controller: _thresholdController,
-                      decoration: InputDecoration(
-                        labelText: l10n.expiresDays,
-                      ),
+                      decoration: InputDecoration(labelText: l10n.expiresDays),
                       keyboardType: TextInputType.number,
                     ),
                   ),

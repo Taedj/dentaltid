@@ -20,22 +20,34 @@ class _DeveloperUsersScreenState extends State<DeveloperUsersScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text('User Intelligence Hub', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text(
+          'User Intelligence Hub',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+        ),
         elevation: 0,
       ),
       body: StreamBuilder<List<UserProfile>>(
         stream: _developerService.getAllUsers(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           final allUsers = snapshot.data ?? [];
-          
+
           // Filtering logic
           final filteredUsers = allUsers.where((u) {
-            final matchesSearch = u.email.toLowerCase().contains(_searchQuery.toLowerCase()) || 
-                                (u.dentistName?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false);
-            final matchesPlan = _filterPlan == 'all' || u.plan.toString().contains(_filterPlan);
+            final matchesSearch =
+                u.email.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                (u.dentistName?.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    ) ??
+                    false);
+            final matchesPlan =
+                _filterPlan == 'all' || u.plan.toString().contains(_filterPlan);
             return matchesSearch && matchesPlan;
           }).toList();
 
@@ -63,7 +75,9 @@ class _DeveloperUsersScreenState extends State<DeveloperUsersScreen> {
   Widget _buildSummaryHeader(List<UserProfile> users) {
     final total = users.length;
     final premium = users.where((u) => u.isPremium).length;
-    final powerUsers = users.where((u) => (u.cumulativePatients + u.cumulativeAppointments) > 100).length;
+    final powerUsers = users
+        .where((u) => (u.cumulativePatients + u.cumulativeAppointments) > 100)
+        .length;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -71,22 +85,53 @@ class _DeveloperUsersScreenState extends State<DeveloperUsersScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('Total Users', total.toString(), Icons.group, Colors.blue),
-          _buildStatItem('Premium', premium.toString(), Icons.star, Colors.amber),
-          _buildStatItem('Power Users', powerUsers.toString(), Icons.bolt, Colors.purple),
-          _buildStatItem('Conv. Rate', '${((premium/total)*100).toStringAsFixed(1)}%', Icons.trending_up, Colors.green),
+          _buildStatItem(
+            'Total Users',
+            total.toString(),
+            Icons.group,
+            Colors.blue,
+          ),
+          _buildStatItem(
+            'Premium',
+            premium.toString(),
+            Icons.star,
+            Colors.amber,
+          ),
+          _buildStatItem(
+            'Power Users',
+            powerUsers.toString(),
+            Icons.bolt,
+            Colors.purple,
+          ),
+          _buildStatItem(
+            'Conv. Rate',
+            '${((premium / total) * 100).toStringAsFixed(1)}%',
+            Icons.trending_up,
+            Colors.green,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey)),
+        Text(
+          value,
+          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          label,
+          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey),
+        ),
       ],
     );
   }
@@ -103,7 +148,10 @@ class _DeveloperUsersScreenState extends State<DeveloperUsersScreen> {
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 fillColor: Colors.white,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
               onChanged: (v) => setState(() => _searchQuery = v),
             ),
@@ -111,7 +159,10 @@ class _DeveloperUsersScreenState extends State<DeveloperUsersScreen> {
           const SizedBox(width: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: DropdownButton<String>(
               value: _filterPlan,
               underline: const SizedBox(),
@@ -137,13 +188,23 @@ class _UserAdvancedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalEngagement = user.cumulativePatients + user.cumulativeAppointments + user.cumulativeInventory;
+    final totalEngagement =
+        user.cumulativePatients +
+        user.cumulativeAppointments +
+        user.cumulativeInventory;
     String level = 'Ghost';
     Color levelColor = Colors.grey;
-    
-    if (totalEngagement > 200) { level = 'Power User'; levelColor = Colors.purple; }
-    else if (totalEngagement > 20) { level = 'Active'; levelColor = Colors.green; }
-    else if (totalEngagement > 0) { level = 'Beginner'; levelColor = Colors.blue; }
+
+    if (totalEngagement > 200) {
+      level = 'Power User';
+      levelColor = Colors.purple;
+    } else if (totalEngagement > 20) {
+      level = 'Active';
+      levelColor = Colors.green;
+    } else if (totalEngagement > 0) {
+      level = 'Beginner';
+      levelColor = Colors.blue;
+    }
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -152,11 +213,19 @@ class _UserAdvancedCard extends StatelessWidget {
         tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: CircleAvatar(
           backgroundColor: levelColor.withValues(alpha: 0.1),
-          child: Icon(user.isPremium ? Icons.verified : Icons.person, color: levelColor),
+          child: Icon(
+            user.isPremium ? Icons.verified : Icons.person,
+            color: levelColor,
+          ),
         ),
         title: Row(
           children: [
-            Expanded(child: Text(user.dentistName ?? 'Unknown User', style: GoogleFonts.poppins(fontWeight: FontWeight.w600))),
+            Expanded(
+              child: Text(
+                user.dentistName ?? 'Unknown User',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+              ),
+            ),
             _buildBadge(level, levelColor),
           ],
         ),
@@ -174,10 +243,17 @@ class _UserAdvancedCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Plan: ${user.plan.toString().split('.').last.toUpperCase()}', 
-                             style: const TextStyle(fontWeight: FontWeight.bold)),
-                        Text('Joined: ${user.createdAt.toString().split(' ')[0]}', 
-                             style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                        Text(
+                          'Plan: ${user.plan.toString().split('.').last.toUpperCase()}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Joined: ${user.createdAt.toString().split(' ')[0]}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
                       ],
                     ),
                     ElevatedButton(
@@ -188,7 +264,7 @@ class _UserAdvancedCard extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -197,8 +273,18 @@ class _UserAdvancedCard extends StatelessWidget {
   Widget _buildBadge(String label, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-      child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 
@@ -206,10 +292,22 @@ class _UserAdvancedCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Resource Usage (Trial Limits)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
+        const Text(
+          'Resource Usage (Trial Limits)',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+          ),
+        ),
         const SizedBox(height: 12),
         _buildMeter('Patients', user.cumulativePatients, 100, Colors.blue),
-        _buildMeter('Appointments', user.cumulativeAppointments, 100, Colors.green),
+        _buildMeter(
+          'Appointments',
+          user.cumulativeAppointments,
+          100,
+          Colors.green,
+        ),
         _buildMeter('Inventory', user.cumulativeInventory, 100, Colors.orange),
       ],
     );
@@ -225,7 +323,13 @@ class _UserAdvancedCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label, style: const TextStyle(fontSize: 11)),
-              Text('$current/$limit', style: TextStyle(fontSize: 11, color: progress >= 0.9 ? Colors.red : Colors.black)),
+              Text(
+                '$current/$limit',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: progress >= 0.9 ? Colors.red : Colors.black,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
@@ -234,7 +338,9 @@ class _UserAdvancedCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               backgroundColor: color.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(progress >= 0.9 ? Colors.red : color),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                progress >= 0.9 ? Colors.red : color,
+              ),
               minHeight: 6,
             ),
           ),
@@ -244,34 +350,79 @@ class _UserAdvancedCard extends StatelessWidget {
   }
 
   void _showPlanDialog(BuildContext context) {
-      showDialog(context: context, builder: (ctx) => AlertDialog(
-          title: const Text('Advanced Subscription Control'),
-          content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                  _planOption(ctx, '1 Year Professional', Icons.workspace_premium, Colors.amber, () {
-                      service.updateUserPlan(user.uid, plan: SubscriptionPlan.professional, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 365)));
-                  }),
-                  _planOption(ctx, 'Lifetime Access', Icons.all_inclusive, Colors.purple, () {
-                      service.updateUserPlan(user.uid, plan: SubscriptionPlan.professional, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 36500)));
-                  }),
-                  _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
-                      service.updateUserPlan(user.uid, plan: SubscriptionPlan.trial, status: SubscriptionStatus.active, isPremium: false);
-                  }),
-                  _planOption(ctx, 'Revoke All (Free)', Icons.block, Colors.red, () {
-                      service.updateUserPlan(user.uid, plan: SubscriptionPlan.free, status: SubscriptionStatus.active, isPremium: false);
-                  }),
-              ],
-          ),
-      ));
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Advanced Subscription Control'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _planOption(
+              ctx,
+              '1 Year Professional',
+              Icons.workspace_premium,
+              Colors.amber,
+              () {
+                service.updateUserPlan(
+                  user.uid,
+                  plan: SubscriptionPlan.professional,
+                  status: SubscriptionStatus.active,
+                  isPremium: true,
+                  expiryDate: DateTime.now().add(const Duration(days: 365)),
+                );
+              },
+            ),
+            _planOption(
+              ctx,
+              'Lifetime Access',
+              Icons.all_inclusive,
+              Colors.purple,
+              () {
+                service.updateUserPlan(
+                  user.uid,
+                  plan: SubscriptionPlan.professional,
+                  status: SubscriptionStatus.active,
+                  isPremium: true,
+                  expiryDate: DateTime.now().add(const Duration(days: 36500)),
+                );
+              },
+            ),
+            _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
+              service.updateUserPlan(
+                user.uid,
+                plan: SubscriptionPlan.trial,
+                status: SubscriptionStatus.active,
+                isPremium: false,
+              );
+            }),
+            _planOption(ctx, 'Revoke All (Free)', Icons.block, Colors.red, () {
+              service.updateUserPlan(
+                user.uid,
+                plan: SubscriptionPlan.free,
+                status: SubscriptionStatus.active,
+                isPremium: false,
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _planOption(BuildContext ctx, String label, IconData icon, Color color, VoidCallback action) {
-      return ListTile(
-          leading: Icon(icon, color: color),
-          title: Text(label),
-          onTap: () { action(); Navigator.pop(ctx); },
-      );
+  Widget _planOption(
+    BuildContext ctx,
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback action,
+  ) {
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(label),
+      onTap: () {
+        action();
+        Navigator.pop(ctx);
+      },
+    );
   }
 }
-

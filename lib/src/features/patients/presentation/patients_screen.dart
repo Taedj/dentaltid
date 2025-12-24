@@ -14,16 +14,20 @@ import 'package:dentaltid/src/features/patients/presentation/widgets/delete_conf
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'dart:ui' as ui;
 
-
 // Helper for PatientFilter localization
 String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
   switch (filter) {
-    case PatientFilter.all: return l10n.filterAll;
+    case PatientFilter.all:
+      return l10n.filterAll;
 
-    case PatientFilter.today: return l10n.filterToday;
-    case PatientFilter.thisWeek: return l10n.filterThisWeek;
-    case PatientFilter.thisMonth: return l10n.filterThisMonth;
-    case PatientFilter.emergency: return l10n.filterEmergency;
+    case PatientFilter.today:
+      return l10n.filterToday;
+    case PatientFilter.thisWeek:
+      return l10n.filterThisWeek;
+    case PatientFilter.thisMonth:
+      return l10n.filterThisMonth;
+    case PatientFilter.emergency:
+      return l10n.filterEmergency;
   }
 }
 
@@ -102,7 +106,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   Widget build(BuildContext context) {
     final patientsAsyncValue = ref.watch(
       patientsProvider(
-        PatientListConfig(filter: _selectedFilter, query: _searchController.text),
+        PatientListConfig(
+          filter: _selectedFilter,
+          query: _searchController.text,
+        ),
       ),
     );
     final patientService = ref.watch(patientServiceProvider);
@@ -111,46 +118,48 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            _isSearching
-                ? TextField(
-                  controller: _searchController,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    hintText: '${l10n.name}, ${l10n.familyName} or Phone...',
-                    border: InputBorder.none,
-                    hintStyle: const TextStyle(color: Colors.white70),
-                  ),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: (value) {
-                    setState(() {});
-                  },
-                )
-                : Row(
-                  children: [
-                    Text(l10n.patients),
-                    if (userProfile != null && !userProfile.isPremium)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Container(
-                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                           decoration: BoxDecoration(
-                             color: Colors.orange.withValues(alpha: 0.2),
-                             borderRadius: BorderRadius.circular(12),
-                             border: Border.all(color: Colors.orange),
-                           ),
-                           child: Text(
-                             '${userProfile.cumulativePatients}/100',
-                             style: const TextStyle(
-                               fontSize: 14,
-                               color: Colors.orange,
-                               fontWeight: FontWeight.bold,
-                             ),
-                           ),
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: '${l10n.name}, ${l10n.familyName} or Phone...',
+                  border: InputBorder.none,
+                  hintStyle: const TextStyle(color: Colors.white70),
+                ),
+                style: const TextStyle(color: Colors.white),
+                onChanged: (value) {
+                  setState(() {});
+                },
+              )
+            : Row(
+                children: [
+                  Text(l10n.patients),
+                  if (userProfile != null && !userProfile.isPremium)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.orange),
+                        ),
+                        child: Text(
+                          '${userProfile.cumulativePatients}/100',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                  ],
-                ),
+                    ),
+                ],
+              ),
         actions: [
           if (!_isSearching)
             IconButton(
@@ -201,7 +210,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
         data: (patients) {
           if (patients.isEmpty) {
             if (_isSearching) {
-              return Center(child: Text('No patients found matching " ${_searchController.text}"'));
+              return Center(
+                child: Text(
+                  'No patients found matching " ${_searchController.text}"',
+                ),
+              );
             }
             return Center(child: Text(l10n.noPatientsYet));
           }
@@ -234,9 +247,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                   ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Due: ${NumberFormat.currency(
-                                    symbol: ref.watch(currencyProvider),
-                                  ).format(patient.totalDue)}',
+                                  'Due: ${NumberFormat.currency(symbol: ref.watch(currencyProvider)).format(patient.totalDue)}',
                                   style: TextStyle(
                                     color: patient.totalDue > 0
                                         ? Colors.red
@@ -283,7 +294,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                           );
                                           ref.invalidate(
                                             patientsProvider(
-                                               PatientListConfig(filter: _selectedFilter, query: _searchController.text),
+                                              PatientListConfig(
+                                                filter: _selectedFilter,
+                                                query: _searchController.text,
+                                              ),
                                             ),
                                           ); // Invalidate to refresh
                                         }
@@ -311,185 +325,191 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                     child: Align(
                       alignment: isRTL ? Alignment.topRight : Alignment.topLeft,
                       child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.only(bottom: 80),
-                        scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        border: TableBorder.all(color: Colors.white),
-                        columns: <DataColumn>[
-                          DataColumn(label: Text(l10n.patientIdHeader)),
-                          DataColumn(label: Text(l10n.name)),
-                          DataColumn(label: Text(l10n.familyName)),
-                          DataColumn(label: Text(l10n.age)),
-                          DataColumn(label: Text(l10n.healthState)),
-                          DataColumn(label: Text(l10n.phoneNumber)),
-                          DataColumn(label: Text(l10n.dueHeader)),
-                          DataColumn(label: Text(l10n.actions)),
-                        ],
-                        rows: patients.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final patient = entry.value;
-                          final config = PatientListConfig(filter: _selectedFilter, query: _searchController.text);
-                          return DataRow(
-                            cells: <DataCell>[
-                              DataCell(Text((index + 1).toString())),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'name',
-                                  currentValue: patient.name,
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(name: value),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  config: config,
-                                ),
-                              ),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'familyName',
-                                  currentValue: patient.familyName,
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(familyName: value),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  config: config,
-                                ),
-                              ),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'age',
-                                  currentValue: patient.age.toString(),
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(
-                                        age: int.tryParse(value) ?? p.age,
-                                      ),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  config: config,
-                                  isNumeric: true,
-                                ),
-                              ),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'healthState',
-                                  currentValue: patient.healthState,
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(healthState: value),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  config: config,
-                                ),
-                              ),
-                              DataCell(
-                                EditablePatientField(
-                                  patient: patient,
-                                  field: 'phoneNumber',
-                                  currentValue: patient.phoneNumber,
-                                  onUpdate: (p, value) async {
-                                    final patientService = ref.read(
-                                      patientServiceProvider,
-                                    );
-                                    await patientService.updatePatient(
-                                      p.copyWith(phoneNumber: value),
-                                    );
-                                  },
-                                  patientsProvider: patientsProvider,
-                                  config: config,
-                                ),
-                              ),
-                              DataCell(
-                                Text(
-                                  NumberFormat.currency(
-                                    symbol: ref.watch(currencyProvider),
-                                  ).format(patient.totalDue),
-                                  style: TextStyle(
-                                    color: patient.totalDue > 0
-                                        ? Colors.red
-                                        : Colors.green,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataCell(
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.person),
-                                      tooltip: 'View Profile',
-                                      onPressed: () {
-                                        context.go(
-                                          '/patients/profile',
-                                          extra: patient,
-                                        );
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () {
-                                        context.go(
-                                          '/patients/edit',
-                                          extra: patient,
-                                        );
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete),
-                                      onPressed: () async {
-                                        final confirmed =
-                                            await showDeleteConfirmationDialog(
-                                              context: context,
-                                              title: l10n.deletePatient,
-                                              content:
-                                                  l10n.confirmDeletePatient,
-                                            );
-                                        if (confirmed == true &&
-                                            patient.id != null) {
-                                          await patientService.deletePatient(
-                                            patient.id!,
-                                          );
-                                          ref.invalidate(
-                                            patientsProvider(
-                                               PatientListConfig(filter: _selectedFilter, query: _searchController.text),
-                                            ),
-                                          ); // Invalidate to refresh
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
+                        scrollDirection: Axis.vertical,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            border: TableBorder.all(color: Colors.white),
+                            columns: <DataColumn>[
+                              DataColumn(label: Text(l10n.patientIdHeader)),
+                              DataColumn(label: Text(l10n.name)),
+                              DataColumn(label: Text(l10n.familyName)),
+                              DataColumn(label: Text(l10n.age)),
+                              DataColumn(label: Text(l10n.healthState)),
+                              DataColumn(label: Text(l10n.phoneNumber)),
+                              DataColumn(label: Text(l10n.dueHeader)),
+                              DataColumn(label: Text(l10n.actions)),
                             ],
-                          );
-                        }).toList(),
+                            rows: patients.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final patient = entry.value;
+                              final config = PatientListConfig(
+                                filter: _selectedFilter,
+                                query: _searchController.text,
+                              );
+                              return DataRow(
+                                cells: <DataCell>[
+                                  DataCell(Text((index + 1).toString())),
+                                  DataCell(
+                                    EditablePatientField(
+                                      patient: patient,
+                                      field: 'name',
+                                      currentValue: patient.name,
+                                      onUpdate: (p, value) async {
+                                        final patientService = ref.read(
+                                          patientServiceProvider,
+                                        );
+                                        await patientService.updatePatient(
+                                          p.copyWith(name: value),
+                                        );
+                                      },
+                                      patientsProvider: patientsProvider,
+                                      config: config,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    EditablePatientField(
+                                      patient: patient,
+                                      field: 'familyName',
+                                      currentValue: patient.familyName,
+                                      onUpdate: (p, value) async {
+                                        final patientService = ref.read(
+                                          patientServiceProvider,
+                                        );
+                                        await patientService.updatePatient(
+                                          p.copyWith(familyName: value),
+                                        );
+                                      },
+                                      patientsProvider: patientsProvider,
+                                      config: config,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    EditablePatientField(
+                                      patient: patient,
+                                      field: 'age',
+                                      currentValue: patient.age.toString(),
+                                      onUpdate: (p, value) async {
+                                        final patientService = ref.read(
+                                          patientServiceProvider,
+                                        );
+                                        await patientService.updatePatient(
+                                          p.copyWith(
+                                            age: int.tryParse(value) ?? p.age,
+                                          ),
+                                        );
+                                      },
+                                      patientsProvider: patientsProvider,
+                                      config: config,
+                                      isNumeric: true,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    EditablePatientField(
+                                      patient: patient,
+                                      field: 'healthState',
+                                      currentValue: patient.healthState,
+                                      onUpdate: (p, value) async {
+                                        final patientService = ref.read(
+                                          patientServiceProvider,
+                                        );
+                                        await patientService.updatePatient(
+                                          p.copyWith(healthState: value),
+                                        );
+                                      },
+                                      patientsProvider: patientsProvider,
+                                      config: config,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    EditablePatientField(
+                                      patient: patient,
+                                      field: 'phoneNumber',
+                                      currentValue: patient.phoneNumber,
+                                      onUpdate: (p, value) async {
+                                        final patientService = ref.read(
+                                          patientServiceProvider,
+                                        );
+                                        await patientService.updatePatient(
+                                          p.copyWith(phoneNumber: value),
+                                        );
+                                      },
+                                      patientsProvider: patientsProvider,
+                                      config: config,
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Text(
+                                      NumberFormat.currency(
+                                        symbol: ref.watch(currencyProvider),
+                                      ).format(patient.totalDue),
+                                      style: TextStyle(
+                                        color: patient.totalDue > 0
+                                            ? Colors.red
+                                            : Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.person),
+                                          tooltip: 'View Profile',
+                                          onPressed: () {
+                                            context.go(
+                                              '/patients/profile',
+                                              extra: patient,
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.edit),
+                                          onPressed: () {
+                                            context.go(
+                                              '/patients/edit',
+                                              extra: patient,
+                                            );
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete),
+                                          onPressed: () async {
+                                            final confirmed =
+                                                await showDeleteConfirmationDialog(
+                                                  context: context,
+                                                  title: l10n.deletePatient,
+                                                  content:
+                                                      l10n.confirmDeletePatient,
+                                                );
+                                            if (confirmed == true &&
+                                                patient.id != null) {
+                                              await patientService
+                                                  .deletePatient(patient.id!);
+                                              ref.invalidate(
+                                                patientsProvider(
+                                                  PatientListConfig(
+                                                    filter: _selectedFilter,
+                                                    query:
+                                                        _searchController.text,
+                                                  ),
+                                                ),
+                                              ); // Invalidate to refresh
+                                            }
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  ),
                   ),
                 );
               }

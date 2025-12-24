@@ -1,19 +1,21 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:dentaltid/src/core/database_service.dart';
+
 import 'package:dentaltid/src/core/network/network_status_provider.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/core/sync_service.dart';
+import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-
 
 class SyncClient {
   final _log = Logger('SyncClient');
@@ -23,6 +25,20 @@ class SyncClient {
 
   SyncClient(this._container);
 
+  void _setStatus(ConnectionStatus status) {
+    // CRITICAL: Prevent status overwrites on Dentist machines
+    final roleString = SettingsService.instance.getString('userRole');
+    final isDentist = roleString == UserRole.dentist.toString();
+
+    if (isDentist) {
+      _log.info('SyncClient: Role is DENTIST. Ignoring status update to $status to preserve Server state.');
+      return;
+    }
+
+    _log.info('SyncClient: Updating global network status to $status');
+    _container.read(networkStatusProvider.notifier).setStatus(status);
+  }
+
   Future<void> connect(String ip, int port) async {
     if (_channel != null) {
       _log.warning('Already connected.');
@@ -31,27 +47,62 @@ class SyncClient {
     try {
       final uri = Uri.parse('ws://$ip:$port/ws');
       _log.info('Connecting to $uri...');
-      _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.connecting);
-      _channel = IOWebSocketChannel.connect(uri);
-      
-      _channel!.stream.listen((message) {
-        _handleMessage(message);
-      }, onDone: () {
-        _log.info('Disconnected from server.');
-        _channel = null;
-        _isInitialSyncComplete = false;
-        _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.disconnected);
-      }, onError: (error) {
-        _log.severe('WebSocket error: $error');
-        _channel = null;
-        _isInitialSyncComplete = false;
-        _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.error);
-      });
+      _setStatus(ConnectionStatus.connecting);
 
+      _channel = IOWebSocketChannel.connect(uri);
+
+      final completer = Completer<void>();
+      StreamSubscription? subscription;
+
+      subscription = _channel!.stream.listen(
+        (message) {
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
+          _handleMessage(message);
+        },
+        onDone: () {
+          _log.info('Disconnected from server.');
+          _channel = null;
+          _isInitialSyncComplete = false;
+          _setStatus(ConnectionStatus.disconnected);
+          if (!completer.isCompleted) {
+            completer.completeError(
+              Exception('Connection closed before handshake completed.'),
+            );
+          }
+          subscription?.cancel();
+        },
+        onError: (error) {
+          _log.severe('WebSocket stream error: $error');
+          _channel = null;
+          _isInitialSyncComplete = false;
+          _setStatus(ConnectionStatus.error);
+          if (!completer.isCompleted) {
+            completer.completeError(error);
+          }
+          subscription?.cancel();
+        },
+      );
+
+      // Wait for the first message (handshake) or timeout.
+      // Now that the server sends an immediate 'connection_accepted', 
+      // this timeout can be shorter for the initial handshake.
+      await completer.future.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          _channel?.sink.close();
+          throw TimeoutException(
+            'Handshake timed out. The server might be unreachable or firewalled.',
+          );
+        },
+      );
+
+      _log.info('WebSocket channel established. Waiting for sync data...');
     } catch (e) {
       _log.severe('Failed to connect to server: $e');
       _channel = null;
-      _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.error);
+      rethrow;
     }
   }
 
@@ -60,31 +111,38 @@ class SyncClient {
       final Map<String, dynamic> json = jsonDecode(message);
       final String type = json['type'] ?? 'unknown';
 
-      if (type == 'initial_sync' && !_isInitialSyncComplete) {
+      if (type == 'connection_accepted') {
+        _log.info('Server accepted connection. Starting data transfer wait...');
+        _setStatus(ConnectionStatus.handshakeAccepted);
+      } else if (type == 'initial_sync' && !_isInitialSyncComplete) {
         _log.info('Initial sync payload received. Importing...');
+        _setStatus(ConnectionStatus.syncing);
         final syncService = _container.read(syncServiceProvider);
-        
-        final dbData = jsonEncode(json['database']);
-        final profileData = json['profile'];
+
+        final dbDataMap = json['database'] as Map<String, dynamic>;
+        final profileData = json['profile'] as Map<String, dynamic>;
 
         Future.wait<void>([
-          syncService.importDatabaseFromSync(dbData),
+          syncService.importDatabaseMapFromSync(dbDataMap),
           _saveDentistProfile(profileData),
         ]).then((_) {
-            _log.info('Initial DB and Profile sync complete!');
-            _isInitialSyncComplete = true;
-            _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.connected);
+          _log.info('Initial DB and Profile sync complete!');
+          _isInitialSyncComplete = true;
+          _setStatus(ConnectionStatus.synced);
         }).catchError((e, s) {
-            _log.severe('Full sync failed!', e, s);
-            _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.error);
+          _log.severe('Full sync failed!', e, s);
+          _setStatus(ConnectionStatus.error);
         });
-
+      } else if (type == 'error') {
+        _log.severe('Received error from server: ${json['message']}');
+        _setStatus(ConnectionStatus.error);
+        _channel?.sink.close();
       } else if (type == 'sync_event' && _isInitialSyncComplete) {
         _log.info('Received real-time event.');
         final event = SyncEvent.fromJson(json);
         _applySyncEvent(event);
       } else {
-         _log.warning('Received unknown or out-of-order message type: $type');
+        _log.warning('Received unknown or out-of-order message type: $type');
       }
     } catch (e) {
       _log.warning('Could not parse message: $e');
@@ -92,8 +150,10 @@ class SyncClient {
   }
 
   Future<void> _saveDentistProfile(Map<String, dynamic> profileJson) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('dentist_profile', jsonEncode(profileJson));
+    await SettingsService.instance.setString(
+      'dentist_profile',
+      jsonEncode(profileJson),
+    );
     _log.info('Saved dentist profile to local storage for license checking.');
   }
 
@@ -107,7 +167,9 @@ class SyncClient {
           event.data,
           conflictAlgorithm: ConflictAlgorithm.replace,
         );
-        _log.info('Applied ${event.action} to ${event.table} for id: ${event.data['id']}');
+        _log.info(
+          'Applied ${event.action} to ${event.table} for id: ${event.data['id']}',
+        );
         break;
       case SyncAction.delete:
         await db.delete(
@@ -115,41 +177,43 @@ class SyncClient {
           where: 'id = ?',
           whereArgs: [event.data['id']],
         );
-         _log.info('Applied delete to ${event.table} for id: ${event.data['id']}');
+        _log.info(
+          'Applied delete to ${event.table} for id: ${event.data['id']}',
+        );
         break;
     }
     _invalidateProviderForTable(event.table);
   }
-  
-  void _invalidateProviderForTable(String table) {
-      final providerMap = {
-          'staff_users': staffListProvider,
-          'patients': patientsProvider,
-          'inventory': inventoryItemsProvider,
-          'appointments': appointmentsProvider,
-      };
 
-      final provider = providerMap[table];
-      if (provider != null) {
-          _container.invalidate(provider);
-          _log.info('Invalidated provider for table: $table');
-      }
+  void _invalidateProviderForTable(String table) {
+    final providerMap = {
+      'staff_users': staffListProvider,
+      'patients': patientsProvider,
+      'inventory': inventoryItemsProvider,
+      'appointments': appointmentsProvider,
+    };
+
+    final provider = providerMap[table];
+    if (provider != null) {
+      _container.invalidate(provider);
+      _log.info('Invalidated provider for table: $table');
+    } else if (table == 'transactions') {
+      _container.read(financeServiceProvider).notifyDataChanged();
+      _log.info('Notified FinanceService of data change.');
+    }
   }
 
   Future<void> disconnect() async {
     if (_channel != null) {
       await _channel!.sink.close();
       _channel = null;
-      _container.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.disconnected);
+      _setStatus(ConnectionStatus.disconnected);
     }
   }
 
   void send(SyncEvent event) {
     if (_channel != null) {
-      final payload = {
-        'type': 'sync_event',
-        ...event.toJson(),
-      };
+      final payload = {'type': 'sync_event', ...event.toJson()};
       final message = jsonEncode(payload);
       _channel!.sink.add(message);
     }
@@ -157,4 +221,3 @@ class SyncClient {
 }
 
 final syncClientProvider = Provider((ref) => SyncClient(ref.container));
-final databaseServiceProvider = Provider((ref) => DatabaseService.instance);

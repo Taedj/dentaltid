@@ -74,9 +74,7 @@ class RecurringChargesScreen extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: Text(l10n.deleteRecurringChargeTitle),
-                            content: Text(
-                              l10n.deleteRecurringChargeContent,
-                            ),
+                            content: Text(l10n.deleteRecurringChargeContent),
                             actions: [
                               TextButton(
                                 onPressed: () =>

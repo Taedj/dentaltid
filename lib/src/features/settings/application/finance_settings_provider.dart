@@ -1,7 +1,7 @@
 import 'dart:convert';
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/features/settings/domain/finance_settings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final financeSettingsProvider =
     StateNotifierProvider<FinanceSettingsNotifier, FinanceSettings>((ref) {
@@ -16,8 +16,8 @@ class FinanceSettingsNotifier extends StateNotifier<FinanceSettings> {
   static const _key = 'finance_settings';
 
   Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_key);
+    await SettingsService.instance.init();
+    final jsonString = SettingsService.instance.getString(_key);
     if (jsonString != null) {
       try {
         final jsonMap = jsonDecode(jsonString);
@@ -30,8 +30,10 @@ class FinanceSettingsNotifier extends StateNotifier<FinanceSettings> {
   }
 
   Future<void> _saveSettings(FinanceSettings settings) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key, jsonEncode(settings.toJson()));
+    await SettingsService.instance.setString(
+      _key,
+      jsonEncode(settings.toJson()),
+    );
   }
 
   void updateSettings(FinanceSettings settings) {

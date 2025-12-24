@@ -18,7 +18,9 @@ class SyncEvent {
   factory SyncEvent.fromJson(Map<String, dynamic> json) {
     return SyncEvent(
       table: json['table'],
-      action: SyncAction.values.firstWhere((e) => e.toString().split('.').last == json['action']),
+      action: SyncAction.values.firstWhere(
+        (e) => e.toString().split('.').last == json['action'],
+      ),
       data: json['data'],
     );
   }

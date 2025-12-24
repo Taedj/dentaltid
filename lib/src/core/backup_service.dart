@@ -47,7 +47,7 @@ class BackupService {
       _logger.info('Database closed for backup.');
 
       _logger.info(
-         'Database file found, size: ${databaseFile.lengthSync()} bytes',
+        'Database file found, size: ${databaseFile.lengthSync()} bytes',
       );
 
       final encoder = ZipEncoder();
@@ -59,7 +59,7 @@ class BackupService {
           databaseFile.readAsBytesSync(),
         ),
       );
-      
+
       final backupFileName =
           'dentaltid_backup_${DateTime.now().millisecondsSinceEpoch}.zip';
 

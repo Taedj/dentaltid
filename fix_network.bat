@@ -1,44 +1,33 @@
 @echo off
+set PORT=8080
+echo ==========================================
+echo DentalTid Network Fix Utility
+echo ==========================================
+echo This script will open port %PORT% in the Windows Firewall.
+echo.
+
 :: Check for administrative privileges
 net session >nul 2>&1
-if %errorLevel% neq 0 (
-    echo.
+if %errorLevel% == 0 (
+    echo [OK] Running with Administrator privileges.
+) else (
     echo [ERROR] This script must be run as Administrator.
-    echo.
-    echo Please right-click fix_network.bat and select "Run as administrator".
-    echo.
+    echo Right-click this file and select "Run as Administrator".
     pause
     exit /b 1
 )
 
-echo =======================================================
-echo DentalTid - Local Network Connection Fix
-echo =======================================================
-echo.
-echo Adding firewall rule to allow port 8080 (TCP)...
-echo.
-
-:: Check if rule already exists to avoid duplicates
-netsh advfirewall firewall show rule name="DentalTid Sync" >nul 2>&1
-if %errorLevel% == 0 (
-    echo Rule "DentalTid Sync" already exists. Updating...
-    netsh advfirewall firewall delete rule name="DentalTid Sync"
-)
-
-netsh advfirewall firewall add rule name="DentalTid Sync" dir=in action=allow protocol=TCP localport=8080 description="Allows DentalTid staff devices to connect to this server."
+echo Opening TCP Port %PORT% for LAN Synchronization...
+netsh advfirewall firewall delete rule name="DentalTid LAN Sync" >nul 2>&1
+netsh advfirewall firewall add rule name="DentalTid LAN Sync" dir=in action=allow protocol=TCP localport=%PORT% profile=private,public
 
 if %errorLevel% == 0 (
-    echo.
-    echo [SUCCESS] Port 8080 is now open.
-    echo.
-    echo IMPORTANT:
-    echo 1. Make sure both computers are on the same Wi-Fi/Network.
-    echo 2. Use the IP address displayed in the App's Connection Settings.
-    echo.
+    echo [SUCCESS] Port %PORT% is now open.
+    echo You can now connect your Staff devices.
 ) else (
-    echo.
-    echo [ERROR] Failed to add the firewall rule.
-    echo.
+    echo [FAILED] Failed to open the port automatically.
 )
 
-pause
+echo.
+echo Press any key to exit.
+pause >nul

@@ -37,14 +37,21 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
 
     try {
       final firebaseService = ref.read(firebaseServiceProvider);
-      final success = await firebaseService.redeemActivationCode(widget.uid, code);
-      
+      final success = await firebaseService.redeemActivationCode(
+        widget.uid,
+        code,
+      );
+
       if (success) {
         if (mounted) {
           ref.invalidate(userProfileProvider); // Refresh profile
           Navigator.of(context).pop(); // Close dialog
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account Activated Successfully! Premium features are now enabled.')),
+            const SnackBar(
+              content: Text(
+                'Account Activated Successfully! Premium features are now enabled.',
+              ),
+            ),
           );
         }
       } else {
@@ -68,13 +75,16 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Activation Required', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+      title: Text(
+        'Activation Required',
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Text(
+            Text(
               'Your trial period has expired. Please enter a valid activation code to continue using DentalTid Premium.',
               style: GoogleFonts.poppins(fontSize: 14),
             ),
@@ -89,15 +99,21 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
               maxLength: 27,
             ),
             const SizedBox(height: 16),
-            Text('Need a code?', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            Text(
+              'Need a code?',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 8),
-             InkWell(
+            InkWell(
               onTap: () => _launchUrl('mailto:zitounitidjani@gmail.com'),
               child: Row(
                 children: [
                   const Icon(Icons.email, color: Colors.blue, size: 20),
                   const SizedBox(width: 8),
-                  Text('zitounitidjani@gmail.com', style: GoogleFonts.poppins(color: Colors.blue)),
+                  Text(
+                    'zitounitidjani@gmail.com',
+                    style: GoogleFonts.poppins(color: Colors.blue),
+                  ),
                 ],
               ),
             ),
@@ -108,7 +124,10 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
                 children: [
                   const Icon(Icons.phone, color: Colors.green, size: 20),
                   const SizedBox(width: 8),
-                  Text('+213 657 293 332', style: GoogleFonts.poppins(color: Colors.green)),
+                  Text(
+                    '+213 657 293 332',
+                    style: GoogleFonts.poppins(color: Colors.green),
+                  ),
                 ],
               ),
             ),
@@ -120,17 +139,14 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
           const Center(child: CircularProgressIndicator())
         else ...[
           TextButton(
-            onPressed: () { 
-                // Allow closing, but Auth logic will logout/kick user back if they try to proceed without valid license
-               Navigator.of(context).pop(); 
+            onPressed: () {
+              // Allow closing, but Auth logic will logout/kick user back if they try to proceed without valid license
+              Navigator.of(context).pop();
             },
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            onPressed: _activate,
-            child: const Text('Activate'),
-          ),
-        ]
+          ElevatedButton(onPressed: _activate, child: const Text('Activate')),
+        ],
       ],
     );
   }

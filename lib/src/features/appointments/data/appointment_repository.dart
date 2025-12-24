@@ -176,4 +176,9 @@ class AppointmentRepository {
       return Appointment.fromJson(maps[i]);
     });
   }
+
+  Future<void> deleteAppointmentsByPatientId(int patientId) async {
+    final db = await _databaseService.database;
+    await db.delete(_tableName, where: 'sessionId = ?', whereArgs: [patientId]);
+  }
 }

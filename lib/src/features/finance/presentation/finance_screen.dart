@@ -195,7 +195,8 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
             if (t.type == TransactionType.income) {
               totalIncome += t.paidAmount; // Actual money received
             } else {
-              totalExpense += t.totalAmount; // Expenses are usually fully billed
+              totalExpense +=
+                  t.totalAmount; // Expenses are usually fully billed
             }
           }
           double netProfit = totalIncome - totalExpense;

@@ -35,10 +35,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     if (item == null) {
       final userProfile = ref.read(userProfileProvider).value;
       if (userProfile != null && !userProfile.isPremium) {
-          if (userProfile.cumulativeInventory >= 100) {
-              _showLimitDialog(context);
-              return;
-          }
+        if (userProfile.cumulativeInventory >= 100) {
+          _showLimitDialog(context);
+          return;
+        }
       }
     }
 
@@ -52,15 +52,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               await ref
                   .read(inventoryServiceProvider)
                   .addInventoryItem(newItem);
-              
+
               if (!mounted) return;
 
               // Increment
               final userProfile = ref.read(userProfileProvider).value;
               if (userProfile != null) {
-                  ref.read(firebaseServiceProvider).incrementInventoryCount(userProfile.uid).then((_) {
-                       if (mounted) ref.invalidate(userProfileProvider);
-                  });
+                ref
+                    .read(firebaseServiceProvider)
+                    .incrementInventoryCount(userProfile.uid)
+                    .then((_) {
+                      if (mounted) ref.invalidate(userProfileProvider);
+                    });
               }
             } else {
               await ref
@@ -73,7 +76,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${l10n.failedToSaveItemError}: ${e.toString()}'),
+                  content: Text(
+                    '${l10n.failedToSaveItemError}: ${e.toString()}',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -104,7 +109,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('${l10n.failedToUseItemError}: ${e.toString()}'),
+                  content: Text(
+                    '${l10n.failedToUseItemError}: ${e.toString()}',
+                  ),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -121,19 +128,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showLimitDialog(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Limit Reached'),
-          content: const Text('You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
-            )
-          ],
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Limit Reached'),
+        content: const Text(
+          'You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.',
         ),
-      );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -153,20 +162,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Text(
+                    '${userProfile.cumulativeInventory}/100',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      '${userProfile.cumulativeInventory}/100',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  ),
                 ),
               ),
           ],

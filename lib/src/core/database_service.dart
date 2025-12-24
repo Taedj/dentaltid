@@ -22,7 +22,7 @@ class DatabaseService {
   Future<Database> _initDB() async {
     final documentsDir = await getApplicationDocumentsDirectory();
     final dbFolderPath = join(documentsDir.path, 'DentalTid', 'databases');
-    
+
     // Ensure the database directory exists
     final dbFolder = Directory(dbFolderPath);
     if (!await dbFolder.exists()) {
@@ -358,14 +358,30 @@ class DatabaseService {
       // Add missing columns to managed_users table to match UserProfile model
       try {
         await db.execute('ALTER TABLE managed_users ADD COLUMN email TEXT');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN trialStartDate TEXT');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN isPremium INTEGER DEFAULT 0');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN premiumExpiryDate TEXT');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativePatients INTEGER DEFAULT 0');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativeAppointments INTEGER DEFAULT 0');
-        await db.execute('ALTER TABLE managed_users ADD COLUMN cumulativeInventory INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN trialStartDate TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN isPremium INTEGER DEFAULT 0',
+        );
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN premiumExpiryDate TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN cumulativePatients INTEGER DEFAULT 0',
+        );
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN cumulativeAppointments INTEGER DEFAULT 0',
+        );
+        await db.execute(
+          'ALTER TABLE managed_users ADD COLUMN cumulativeInventory INTEGER DEFAULT 0',
+        );
       } catch (e, s) {
-        developer.log('Error upgrading managed_users table to v17: $e', error: e, stackTrace: s);
+        developer.log(
+          'Error upgrading managed_users table to v17: $e',
+          error: e,
+          stackTrace: s,
+        );
       }
     }
     if (oldVersion < 18) {

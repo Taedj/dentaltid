@@ -15,7 +15,8 @@ class AdminService {
   }
 
   // Update a user's plan (e.g., grant premium)
-  Future<void> updateUserPlan(String userId, {
+  Future<void> updateUserPlan(
+    String userId, {
     required SubscriptionPlan plan,
     required SubscriptionStatus status,
     DateTime? expiryDate,
@@ -29,6 +30,6 @@ class AdminService {
       'isPremium': isPremium,
     });
   }
-  
+
   // Future: Ban user, Delete user, Impersonate
 }

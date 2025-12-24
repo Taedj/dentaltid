@@ -30,8 +30,12 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
   @override
   void initState() {
     super.initState();
-    _fullNameController = TextEditingController(text: widget.staffToEdit?.fullName ?? '');
-    _usernameController = TextEditingController(text: widget.staffToEdit?.username ?? '');
+    _fullNameController = TextEditingController(
+      text: widget.staffToEdit?.fullName ?? '',
+    );
+    _usernameController = TextEditingController(
+      text: widget.staffToEdit?.username ?? '',
+    );
     _pinController = TextEditingController(text: widget.staffToEdit?.pin ?? '');
     if (widget.staffToEdit != null) {
       _selectedRole = widget.staffToEdit!.role;
@@ -63,7 +67,7 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
     try {
       if (widget.staffToEdit == null) {
         final newId = await ref.read(staffServiceProvider).addStaff(staff);
-        staff = staff.copyWith(id: newId); 
+        staff = staff.copyWith(id: newId);
         _broadcastChange(SyncAction.create, staff);
       } else {
         await ref.read(staffServiceProvider).updateStaff(staff);
@@ -74,7 +78,10 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -88,12 +95,12 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
       action: action,
       data: data.toJson(),
     );
-    
+
     final userProfile = ref.read(userProfileProvider).value;
     if (userProfile?.role == UserRole.dentist) {
-        ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
+      ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
     } else {
-        ref.read(syncClientProvider).send(event);
+      ref.read(syncClientProvider).send(event);
     }
   }
 
@@ -156,7 +163,9 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _save,
-          child: _isLoading ? const CircularProgressIndicator() : Text(isEditing ? 'Update' : 'Add'),
+          child: _isLoading
+              ? const CircularProgressIndicator()
+              : Text(isEditing ? 'Update' : 'Add'),
         ),
       ],
     );

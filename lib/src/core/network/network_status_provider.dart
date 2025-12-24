@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum ConnectionStatus {
   disconnected,
   connecting,
-  connected,
+  handshakeAccepted, // New state: server reached, waiting for DB export
+  syncing, // Add new state for when initial data transfer is in progress
+  synced, // Formerly 'connected'
   serverRunning,
   serverStopped,
-  error
+  error,
 }
 
 class NetworkStatusNotifier extends StateNotifier<ConnectionStatus> {
@@ -17,8 +19,9 @@ class NetworkStatusNotifier extends StateNotifier<ConnectionStatus> {
   }
 }
 
-final networkStatusProvider = StateNotifierProvider<NetworkStatusNotifier, ConnectionStatus>((ref) {
-  return NetworkStatusNotifier();
-});
+final networkStatusProvider =
+    StateNotifierProvider<NetworkStatusNotifier, ConnectionStatus>((ref) {
+      return NetworkStatusNotifier();
+    });
 
 final connectedClientsCountProvider = StateProvider<int>((ref) => 0);

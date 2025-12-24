@@ -1,11 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
-import 'package:dentaltid/src/core/network/sync_client.dart';
+import 'package:dentaltid/src/core/network/sync_broadcaster.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
-import 'package:dentaltid/src/core/network/sync_server.dart';
-import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/data/inventory_repository.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,12 +25,12 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
 
 final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
   final service = ref.read(inventoryServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
   ref.onDispose(() => subscription.cancel());
-  
+
   return service.getInventoryItems();
 });
 
@@ -45,28 +41,25 @@ class InventoryService {
   final Ref _ref;
 
   // Reactive Stream
-  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  final StreamController<void> _dataChangeController =
+      StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
-  InventoryService(this._ref, this._repository, this._auditService, this._financeService);
+  InventoryService(
+    this._ref,
+    this._repository,
+    this._auditService,
+    this._financeService,
+  );
 
   void _notifyDataChanged() {
     _dataChangeController.add(null);
   }
 
   void _broadcastChange(SyncAction action, InventoryItem data) {
-    final event = SyncEvent(
-      table: 'inventory',
-      action: action,
-      data: data.toJson(),
-    );
-    
-    final userProfile = _ref.read(userProfileProvider).value;
-    if (userProfile?.role == UserRole.dentist) {
-        _ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
-    } else {
-        _ref.read(syncClientProvider).send(event);
-    }
+    _ref
+        .read(syncBroadcasterProvider)
+        .broadcast(table: 'inventory', action: action, data: data.toJson());
   }
 
   Future<InventoryItem> addInventoryItem(InventoryItem item) async {

@@ -14,13 +14,23 @@ class DeveloperOverviewScreen extends StatelessWidget {
       body: StreamBuilder<List<UserProfile>>(
         stream: developerService.getAllUsers(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           final users = snapshot.data!;
           final totalUsers = users.length;
           final premiumUsers = users.where((u) => u.isPremium).length;
-          final trialUsers = users.where((u) => !u.isPremium && (u.trialStartDate != null && !u.isTrialExpired)).length;
+          final trialUsers = users
+              .where(
+                (u) =>
+                    !u.isPremium &&
+                    (u.trialStartDate != null && !u.isTrialExpired),
+              )
+              .length;
           final revenueEstimate = premiumUsers * 9;
 
           return Padding(
@@ -28,16 +38,39 @@ class DeveloperOverviewScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('System Health', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                const Text(
+                  'System Health',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 16,
                   runSpacing: 16,
                   children: [
-                    _OverviewCard('Total Users', totalUsers.toString(), Icons.group, Colors.blue),
-                    _OverviewCard('Premium', premiumUsers.toString(), Icons.star, Colors.amber),
-                    _OverviewCard('Active Trials', trialUsers.toString(), Icons.timer, Colors.orange),
-                    _OverviewCard('Est. Revenue', '\$${revenueEstimate}0', Icons.attach_money, Colors.green),
+                    _OverviewCard(
+                      'Total Users',
+                      totalUsers.toString(),
+                      Icons.group,
+                      Colors.blue,
+                    ),
+                    _OverviewCard(
+                      'Premium',
+                      premiumUsers.toString(),
+                      Icons.star,
+                      Colors.amber,
+                    ),
+                    _OverviewCard(
+                      'Active Trials',
+                      trialUsers.toString(),
+                      Icons.timer,
+                      Colors.orange,
+                    ),
+                    _OverviewCard(
+                      'Est. Revenue',
+                      '\$${revenueEstimate}0',
+                      Icons.attach_money,
+                      Colors.green,
+                    ),
                   ],
                 ),
                 // Add more overview widgets here later (e.g., recent logs)
@@ -69,8 +102,14 @@ class _OverviewCard extends StatelessWidget {
           children: [
             Icon(icon, size: 48, color: color),
             const SizedBox(height: 16),
-            Text(value, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            Text(title, style: const TextStyle(fontSize: 16, color: Colors.grey)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
+            ),
           ],
         ),
       ),

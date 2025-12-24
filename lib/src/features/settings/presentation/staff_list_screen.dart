@@ -46,7 +46,9 @@ class StaffListScreen extends ConsumerWidget {
                   child: Text(staff.fullName[0].toUpperCase()),
                 ),
                 title: Text(staff.fullName),
-                subtitle: Text('${staff.role.toStringValue().toUpperCase()} • ${staff.username}'),
+                subtitle: Text(
+                  '${staff.role.toStringValue().toUpperCase()} • ${staff.username}',
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -55,7 +57,8 @@ class StaffListScreen extends ConsumerWidget {
                       onPressed: () {
                         showDialog(
                           context: context,
-                          builder: (context) => AddStaffDialog(staffToEdit: staff),
+                          builder: (context) =>
+                              AddStaffDialog(staffToEdit: staff),
                         );
                       },
                     ),
@@ -66,7 +69,9 @@ class StaffListScreen extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Delete Staff'),
-                            content: Text('Are you sure you want to delete ${staff.fullName}?'),
+                            content: Text(
+                              'Are you sure you want to delete ${staff.fullName}?',
+                            ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
@@ -74,27 +79,36 @@ class StaffListScreen extends ConsumerWidget {
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
                               ),
                             ],
                           ),
                         );
 
                         if (confirm == true && staff.id != null) {
-                          await ref.read(staffServiceProvider).deleteStaff(staff.id!);
-                          
+                          await ref
+                              .read(staffServiceProvider)
+                              .deleteStaff(staff.id!);
+
                           // Broadcast the delete event
                           final event = SyncEvent(
                             table: 'staff_users',
                             action: SyncAction.delete,
                             data: {'id': staff.id},
                           );
-                          
-                          final userProfile = ref.read(userProfileProvider).value;
+
+                          final userProfile = ref
+                              .read(userProfileProvider)
+                              .value;
                           if (userProfile?.role == UserRole.dentist) {
-                              ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
+                            ref
+                                .read(syncServerProvider)
+                                .broadcast(jsonEncode(event.toJson()));
                           } else {
-                              ref.read(syncClientProvider).send(event);
+                            ref.read(syncClientProvider).send(event);
                           }
 
                           ref.invalidate(staffListProvider);

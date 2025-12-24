@@ -4,7 +4,7 @@ import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
@@ -168,38 +168,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               const SizedBox(height: 10),
               // Restore Backup - Restricted
               userProfileAsync.when(
-                  data: (userProfile) {
-                      final isPremium = userProfile?.isPremium ?? false;
-                      return ElevatedButton(
-                        onPressed: (_isLoading || !isPremium)
-                            ? null
-                            : () async {
-                                setState(() {
-                                  _isLoading = true;
-                                });
-                                final success = await backupService.restoreBackup();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        success
-                                            ? l10n.backupRestoredSuccessfully
-                                            : l10n.restoreFailedOrCancelled,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                setState(() {
-                                  _isLoading = false;
-                                });
-                              },
-                        child: _isLoading
-                            ? const CircularProgressIndicator()
-                            : Text(isPremium ? l10n.restoreFromLocalBackup : "${l10n.restoreFromLocalBackup} (Premium Only)"),
-                      );
-                  },
-                  loading: () => const CircularProgressIndicator(),
-                  error: (_, _) => const SizedBox(),
+                data: (userProfile) {
+                  final isPremium = userProfile?.isPremium ?? false;
+                  return ElevatedButton(
+                    onPressed: (_isLoading || !isPremium)
+                        ? null
+                        : () async {
+                            setState(() {
+                              _isLoading = true;
+                            });
+                            final success = await backupService.restoreBackup();
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    success
+                                        ? l10n.backupRestoredSuccessfully
+                                        : l10n.restoreFailedOrCancelled,
+                                  ),
+                                ),
+                              );
+                            }
+                            setState(() {
+                              _isLoading = false;
+                            });
+                          },
+                    child: _isLoading
+                        ? const CircularProgressIndicator()
+                        : Text(
+                            isPremium
+                                ? l10n.restoreFromLocalBackup
+                                : "${l10n.restoreFromLocalBackup} (Premium Only)",
+                          ),
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (_, _) => const SizedBox(),
               ),
               const Divider(height: 40),
 
@@ -221,77 +225,83 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 10),
                         if (userProfile.isPremium) ...[
-                            ElevatedButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () async {
-                                      setState(() {
-                                        _isLoading = true;
-                                      });
-                                      final user = _firebaseService
-                                          .getCurrentUser();
-    
-                                      if (user == null) {
-                                        if (context.mounted) {
-                                          context.go('/login');
-                                        }
-                                        setState(() {
-                                          _isLoading = false;
-                                        });
-                                        return;
-                                      }
-    
-                                      final backupId = await backupService
-                                          .createBackup(
-                                            uploadToFirebase: true,
-                                            uid: user.uid,
-                                          );
+                          ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () async {
+                                    setState(() {
+                                      _isLoading = true;
+                                    });
+                                    final user = _firebaseService
+                                        .getCurrentUser();
+
+                                    if (user == null) {
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              backupId != null
-                                                  ? '${l10n.backupUploadedToCloud} $backupId'
-                                                  : l10n.cloudBackupFailed,
-                                            ),
-                                          ),
-                                        );
+                                        context.go('/login');
                                       }
                                       setState(() {
                                         _isLoading = false;
                                       });
-                                    },
-                              child: _isLoading
-                                  ? const CircularProgressIndicator()
-                                  : Text(l10n.syncToCloud),
-                            ),
-                            const SizedBox(height: 10),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.go('/settings/cloud-backups');
-                              },
-                              child: Text(l10n.manageCloudBackups),
-                            ),
+                                      return;
+                                    }
+
+                                    final backupId = await backupService
+                                        .createBackup(
+                                          uploadToFirebase: true,
+                                          uid: user.uid,
+                                        );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            backupId != null
+                                                ? '${l10n.backupUploadedToCloud} $backupId'
+                                                : l10n.cloudBackupFailed,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    setState(() {
+                                      _isLoading = false;
+                                    });
+                                  },
+                            child: _isLoading
+                                ? const CircularProgressIndicator()
+                                : Text(l10n.syncToCloud),
+                          ),
+                          const SizedBox(height: 10),
+                          ElevatedButton(
+                            onPressed: () {
+                              context.go('/settings/cloud-backups');
+                            },
+                            child: Text(l10n.manageCloudBackups),
+                          ),
                         ] else ...[
-                            Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                    color: Colors.grey.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.grey),
-                                ),
-                                child: Row(
-                                    children: [
-                                        const Icon(Icons.cloud_off, color: Colors.grey),
-                                        const SizedBox(width: 12),
-                                        const Expanded(child: Text('Cloud Sync is a detailed Premium feature. Activate to enable.')),
-                                    ],
-                                ),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey),
                             ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.cloud_off, color: Colors.grey),
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Text(
+                                    'Cloud Sync is a detailed Premium feature. Activate to enable.',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                         const Divider(height: 40),
                       ],
-                      
+
                       if (isDentist) ...[
                         Text(
                           'Staff Management',
@@ -300,16 +310,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 10),
                         ListTile(
                           title: const Text('Manage Staff Members'),
-                          subtitle: const Text('Add Assistants or Receptionists'),
+                          subtitle: const Text(
+                            'Add Assistants or Receptionists',
+                          ),
                           leading: const Icon(Icons.people),
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => const StaffListScreen()),
+                              MaterialPageRoute(
+                                builder: (_) => const StaffListScreen(),
+                              ),
                             );
                           },
                         ),
-                         const Divider(height: 40),
+                        const Divider(height: 40),
                       ],
 
                       // Language settings - view-only for non-dentists
@@ -517,22 +531,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       if (userProfile != null && !userProfile.isPremium)
-                          ElevatedButton.icon(
-                              onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (context) => ActivationDialog(uid: userProfile.uid),
-                                  );
-                              },
-                              icon: const Icon(Icons.star, color: Colors.orange),
-                              label: Text(l10n.activatePremium),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.orange.withValues(alpha: 0.1),
-                                  foregroundColor: Colors.orange,
-                              ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  ActivationDialog(uid: userProfile.uid),
+                            );
+                          },
+                          icon: const Icon(Icons.star, color: Colors.orange),
+                          label: Text(l10n.activatePremium),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange.withValues(
+                              alpha: 0.1,
+                            ),
+                            foregroundColor: Colors.orange,
                           ),
+                        ),
                       if (userProfile != null && !userProfile.isPremium)
-                          const SizedBox(height: 10),
+                        const SizedBox(height: 10),
                       const SizedBox(height: 10),
 
                       // Change Password - only for dentists
@@ -547,11 +564,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ElevatedButton(
                         onPressed: () async {
                           // Clear Local Persistence First
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.remove('remember_me');
-                          await prefs.remove('cached_user_profile');
-                          await prefs.remove('managedUserProfile');
-                          await prefs.remove('userRole');
+                          await SettingsService.instance.remove('remember_me');
+                          await SettingsService.instance.remove(
+                            'cached_user_profile',
+                          );
+                          await SettingsService.instance.remove(
+                            'managedUserProfile',
+                          );
+                          await SettingsService.instance.remove('userRole');
 
                           await _firebaseService.signOut();
                           ref.invalidate(userProfileProvider);

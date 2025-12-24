@@ -59,9 +59,7 @@ class EditablePatientField extends ConsumerWidget {
                   child: Text(l10n.save),
                   onPressed: () async {
                     await onUpdate(patient, controller.text);
-                    ref.invalidate(
-                      patientsProvider(config),
-                    ); // Corrected call
+                    ref.invalidate(patientsProvider(config)); // Corrected call
                     if (context.mounted) {
                       Navigator.of(context).pop();
                     }

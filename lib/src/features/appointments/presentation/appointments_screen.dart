@@ -60,20 +60,23 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
               Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withAlpha(51),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha(51),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Text(
+                    '${userProfile.cumulativeAppointments}/100',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      '${userProfile.cumulativeAppointments}/100',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  ),
                 ),
               ),
           ],
@@ -100,7 +103,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                 _showUpcomingOnly = !_showUpcomingOnly;
               });
             },
-            tooltip: _showUpcomingOnly ? l10n.showAllAppointments : l10n.showUpcomingOnly,
+            tooltip: _showUpcomingOnly
+                ? l10n.showAllAppointments
+                : l10n.showUpcomingOnly,
           ),
           PopupMenuButton<SortOption>(
             onSelected: (option) {
@@ -152,24 +157,32 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   final matchesSearch = appointment.patientId
                       .toString()
                       .contains(_searchQuery);
-                  final isUpcoming = !_showUpcomingOnly ||
+                  final isUpcoming =
+                      !_showUpcomingOnly ||
                       appointment.dateTime.isAfter(DateTime.now());
-                  final statusMatch = _statusFilter == null || 
-                                     appointment.status == _statusFilter;
-                  
+                  final statusMatch =
+                      _statusFilter == null ||
+                      appointment.status == _statusFilter;
+
                   return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
 
                 // Sort
                 switch (_sortOption) {
                   case SortOption.dateTimeAsc:
-                    filteredAppointments.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+                    filteredAppointments.sort(
+                      (a, b) => a.dateTime.compareTo(b.dateTime),
+                    );
                     break;
                   case SortOption.dateTimeDesc:
-                    filteredAppointments.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+                    filteredAppointments.sort(
+                      (a, b) => b.dateTime.compareTo(a.dateTime),
+                    );
                     break;
                   case SortOption.patientId:
-                    filteredAppointments.sort((a, b) => a.patientId.compareTo(b.patientId));
+                    filteredAppointments.sort(
+                      (a, b) => a.patientId.compareTo(b.patientId),
+                    );
                     break;
                 }
 
@@ -243,7 +256,12 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           loading: () => Text(l10n.loading),
-                          error: (err, stack) => Text(l10n.errorLabel),
+                          error: (err, stack) => Text(
+                            l10n.unknownPatient,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,30 +351,76 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: Text(l10n.cancelAppointment),
-                                      content: Text(l10n.confirmCancelAppointment),
+                                      content: Text(
+                                        l10n.confirmCancelAppointment,
+                                      ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
                                           child: Text(l10n.cancel),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
                                           child: Text(l10n.confirm),
                                         ),
                                       ],
                                     ),
                                   );
-                                  if (confirmed == true && appointment.id != null) {
-                                    await appointmentService.updateAppointmentStatus(
-                                      appointment.id!,
-                                      AppointmentStatus.cancelled,
-                                    );
+                                  if (confirmed == true &&
+                                      appointment.id != null) {
+                                    await appointmentService
+                                        .updateAppointmentStatus(
+                                          appointment.id!,
+                                          AppointmentStatus.cancelled,
+                                        );
                                     ref.invalidate(appointmentsProvider);
                                     ref.invalidate(todaysAppointmentsProvider);
-                                    ref.invalidate(todaysEmergencyAppointmentsProvider);
+                                    ref.invalidate(
+                                      todaysEmergencyAppointmentsProvider,
+                                    );
                                   }
                                 },
                                 tooltip: l10n.cancelAppointment,
+                              ),
+                            if (appointment.status ==
+                                AppointmentStatus.cancelled)
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.delete_forever,
+                                  color: Colors.grey,
+                                ),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(l10n.deleteAppointment),
+                                      content: Text(
+                                        l10n.confirmDeleteAppointment,
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: Text(l10n.cancel),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: Text(l10n.delete),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true &&
+                                      appointment.id != null) {
+                                    await appointmentService.deleteAppointment(
+                                      appointment.id!,
+                                    );
+                                  }
+                                },
+                                tooltip: l10n.deleteAppointment,
                               ),
                           ],
                         ),

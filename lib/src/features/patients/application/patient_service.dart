@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/exceptions.dart';
-import 'package:dentaltid/src/core/network/sync_client.dart';
+import 'package:dentaltid/src/core/network/sync_broadcaster.dart';
 import 'package:dentaltid/src/core/network/sync_event.dart';
-import 'package:dentaltid/src/core/network/sync_server.dart';
-import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/patients/data/patient_repository.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,10 +29,7 @@ class PatientListConfig extends Equatable {
   final PatientFilter filter;
   final String query;
 
-  const PatientListConfig({
-    this.filter = PatientFilter.all,
-    this.query = '',
-  });
+  const PatientListConfig({this.filter = PatientFilter.all, this.query = ''});
 
   @override
   List<Object> get props => [filter, query];
@@ -46,11 +41,28 @@ final patientsProvider =
       config,
     ) async {
       final service = ref.read(patientServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
-          ref.invalidateSelf();
+        ref.invalidateSelf();
       });
-      ref.onDispose(() => subscription.cancel());
+
+      // Listen to Finance changes (for totalDue)
+      final financeService = ref.read(financeServiceProvider);
+      final financeSub = financeService.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+
+      // Listen to Appointment changes (for lastVisitDate)
+      final appointmentService = ref.read(appointmentServiceProvider);
+      final appointmentSub = appointmentService.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+
+      ref.onDispose(() {
+        subscription.cancel();
+        financeSub.cancel();
+        appointmentSub.cancel();
+      });
 
       if (config.query.isNotEmpty) {
         return service.searchPatients(config.query);
@@ -60,7 +72,7 @@ final patientsProvider =
 
 final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
   final service = ref.watch(patientServiceProvider);
-  
+
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
@@ -73,8 +85,9 @@ class PatientService {
   final PatientRepository _repository;
   final AuditService _auditService;
   final Ref _ref;
-  
-  final StreamController<void> _dataChangeController = StreamController.broadcast();
+
+  final StreamController<void> _dataChangeController =
+      StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
   PatientService(this._ref, this._repository, this._auditService);
@@ -84,100 +97,192 @@ class PatientService {
   }
 
   void _broadcastChange(SyncAction action, Patient data) {
-    final event = SyncEvent(
-      table: 'patients',
-      action: action,
-      data: data.toJson(),
-    );
-    
-    final userProfile = _ref.read(userProfileProvider).value;
-    if (userProfile?.role == UserRole.dentist) {
-        _ref.read(syncServerProvider).broadcast(jsonEncode(event.toJson()));
-    } else {
-        _ref.read(syncClientProvider).send(event);
-    }
+    _ref
+        .read(syncBroadcasterProvider)
+        .broadcast(table: 'patients', action: action, data: data.toJson());
   }
 
   Future<void> addPatient(Patient patient) async {
     try {
-      if (patient.name.trim().isEmpty) throw ValidationException('Patient name cannot be empty', field: 'name');
-      if (patient.familyName.trim().isEmpty) throw ValidationException('Patient family name cannot be empty', field: 'familyName');
-      if (patient.age < 0 || patient.age > 150) throw ValidationException('Patient age must be between 0 and 150', field: 'age');
+      if (patient.name.trim().isEmpty) {
+        throw ValidationException(
+          'Patient name cannot be empty',
+          field: 'name',
+        );
+      }
+      if (patient.familyName.trim().isEmpty) {
+        throw ValidationException(
+          'Patient family name cannot be empty',
+          field: 'familyName',
+        );
+      }
+      if (patient.age < 0 || patient.age > 150) {
+        throw ValidationException(
+          'Patient age must be between 0 and 150',
+          field: 'age',
+        );
+      }
 
-      final existingPatient = await _repository.getPatientByNameAndFamilyName(patient.name.trim(), patient.familyName.trim());
-      if (existingPatient != null) throw DuplicateEntryException('A patient with this name and family name already exists', entity: 'Patient', duplicateValue: '${patient.name} ${patient.familyName}');
+      final existingPatient = await _repository.getPatientByNameAndFamilyName(
+        patient.name.trim(),
+        patient.familyName.trim(),
+      );
+      if (existingPatient != null) {
+        throw DuplicateEntryException(
+          'A patient with this name and family name already exists',
+          entity: 'Patient',
+          duplicateValue: '${patient.name} ${patient.familyName}',
+        );
+      }
 
       final newId = await _repository.createPatient(patient);
       final newPatient = patient.copyWith(id: newId);
 
-      _auditService.logEvent(AuditAction.createPatient, details: 'Patient ${newPatient.name} ${newPatient.familyName} added.');
+      _auditService.logEvent(
+        AuditAction.createPatient,
+        details: 'Patient ${newPatient.name} ${newPatient.familyName} added.',
+      );
 
       _notifyDataChanged();
       _broadcastChange(SyncAction.create, newPatient);
-
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException || e is DuplicateEntryException) rethrow;
-      throw ServiceException('Failed to add patient', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to add patient',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
-  Future<List<Patient>> getPatients([PatientFilter filter = PatientFilter.all]) async {
+  Future<List<Patient>> getPatients([
+    PatientFilter filter = PatientFilter.all,
+  ]) async {
     try {
       return await _repository.getPatients(filter);
     } catch (e) {
       ErrorHandler.logError(e);
-      throw ServiceException('Failed to retrieve patients', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to retrieve patients',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
   Future<Patient?> getPatientById(int id) async {
     try {
       final patient = await _repository.getPatientById(id);
-      if (patient == null) throw NotFoundException('Patient not found', entity: 'Patient', id: id);
+      if (patient == null) {
+        throw NotFoundException('Patient not found', entity: 'Patient', id: id);
+      }
       return patient;
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is NotFoundException) rethrow;
-      throw ServiceException('Failed to retrieve patient', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to retrieve patient',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
   Future<void> updatePatient(Patient patient) async {
     try {
-      if (patient.id == null) throw ValidationException('Patient ID is required for update', field: 'id');
-      if (patient.name.trim().isEmpty) throw ValidationException('Patient name cannot be empty', field: 'name');
-      if (patient.familyName.trim().isEmpty) throw ValidationException('Patient family name cannot be empty', field: 'familyName');
-      if (patient.age < 0 || patient.age > 150) throw ValidationException('Patient age must be between 0 and 150', field: 'age');
+      if (patient.id == null) {
+        throw ValidationException(
+          'Patient ID is required for update',
+          field: 'id',
+        );
+      }
+      if (patient.name.trim().isEmpty) {
+        throw ValidationException(
+          'Patient name cannot be empty',
+          field: 'name',
+        );
+      }
+      if (patient.familyName.trim().isEmpty) {
+        throw ValidationException(
+          'Patient family name cannot be empty',
+          field: 'familyName',
+        );
+      }
+      if (patient.age < 0 || patient.age > 150) {
+        throw ValidationException(
+          'Patient age must be between 0 and 150',
+          field: 'age',
+        );
+      }
 
       await _repository.updatePatient(patient);
-      _auditService.logEvent(AuditAction.updatePatient, details: 'Patient ${patient.name} ${patient.familyName} updated.');
+      _auditService.logEvent(
+        AuditAction.updatePatient,
+        details: 'Patient ${patient.name} ${patient.familyName} updated.',
+      );
 
       _notifyDataChanged();
       _broadcastChange(SyncAction.update, patient);
-
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) rethrow;
-      throw ServiceException('Failed to update patient', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to update patient',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
   Future<void> deletePatient(int id) async {
     try {
       final patient = await _repository.getPatientById(id);
-      if (patient == null) throw NotFoundException('Patient not found', entity: 'Patient', id: id);
+      if (patient == null) {
+        throw NotFoundException('Patient not found', entity: 'Patient', id: id);
+      }
 
+      // 1. Get all appointments to broadcast their deletion
+      final appointmentService = _ref.read(appointmentServiceProvider);
+      final financeService = _ref.read(financeServiceProvider);
+      final appointments = await appointmentService.getAppointmentsForPatient(
+        id,
+      );
+
+      for (final appointment in appointments) {
+        if (appointment.id != null) {
+          // 2. Get and broadcast transaction deletions
+          final transactions = await financeService.getTransactionsBySessionId(
+            appointment.id!,
+          );
+          for (final t in transactions) {
+            if (t.id != null) {
+              // We call the individual delete for sync, but we could optimize this later
+              await financeService.deleteTransaction(t.id!);
+            }
+          }
+          // 3. Delete appointment (this broadcasts)
+          await appointmentService.deleteAppointment(appointment.id!);
+        }
+      }
+
+      // 4. Finally delete the patient
       await _repository.deletePatient(id);
-      _auditService.logEvent(AuditAction.deletePatient, details: 'Patient ${patient.name} ${patient.familyName} deleted.');
+      _auditService.logEvent(
+        AuditAction.deletePatient,
+        details: 'Patient ${patient.name} ${patient.familyName} deleted.',
+      );
 
       _notifyDataChanged();
       _broadcastChange(SyncAction.delete, patient);
-
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is NotFoundException) rethrow;
-      throw ServiceException('Failed to delete patient', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to delete patient',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
@@ -186,7 +291,11 @@ class PatientService {
       return await _repository.getBlacklistedPatients();
     } catch (e) {
       ErrorHandler.logError(e);
-      throw ServiceException('Failed to retrieve blacklisted patients', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to retrieve blacklisted patients',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 
@@ -195,7 +304,11 @@ class PatientService {
       return await _repository.searchPatients(query);
     } catch (e) {
       ErrorHandler.logError(e);
-      throw ServiceException('Failed to search patients', service: 'PatientService', originalError: e);
+      throw ServiceException(
+        'Failed to search patients',
+        service: 'PatientService',
+        originalError: e,
+      );
     }
   }
 

@@ -13,9 +13,8 @@ import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/widgets/emergency_counter.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:dentaltid/src/shared/widgets/connection_status_widget.dart'; // Import the widget
-import 'package:dentaltid/src/core/user_model.dart'; // Import UserRole
+import 'package:dentaltid/src/core/settings_service.dart';
+import 'dart:convert';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -34,10 +33,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _loadDismissedBroadcasts() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _dismissedBroadcastIds = prefs.getStringList('dismissed_broadcasts') ?? [];
-    });
+    final jsonString = SettingsService.instance.getString(
+      'dismissed_broadcasts',
+    );
+    if (jsonString != null) {
+      try {
+        setState(() {
+          _dismissedBroadcastIds = List<String>.from(jsonDecode(jsonString));
+        });
+      } catch (e) {
+        // Ignore parse errors
+      }
+    }
   }
 
   Future<void> _dismissBroadcast(String id) async {
@@ -46,8 +53,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     setState(() {
       _dismissedBroadcastIds.add(id);
     });
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('dismissed_broadcasts', _dismissedBroadcastIds);
+    await SettingsService.instance.setString(
+      'dismissed_broadcasts',
+      jsonEncode(_dismissedBroadcastIds),
+    );
   }
 
   String _replaceArabicNumber(String input) {
@@ -70,29 +79,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final userProfileAsyncValue = ref.watch(userProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.dashboard),
-        actions: [
-          userProfileAsyncValue.when(
-            data: (userProfile) {
-              final UserRole role = userProfile?.role ?? UserRole.dentist;
-              return ConnectionStatusWidget(userRole: role);
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (e, s) => const SizedBox.shrink(),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l10n.dashboard), actions: const []),
       body: Column(
         children: [
           // --- BROADCAST BANNER ---
           StreamBuilder<List<BroadcastModel>>(
             stream: BroadcastService().getActiveBroadcasts(),
             builder: (context, snapshot) {
-              if (!snapshot.hasData || snapshot.data!.isEmpty) return const SizedBox.shrink();
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const SizedBox.shrink();
+              }
 
               // Filter dismissed
-              final visibleBroadcasts = snapshot.data!.where((b) => !_dismissedBroadcastIds.contains(b.id)).toList();
+              final visibleBroadcasts = snapshot.data!
+                  .where((b) => !_dismissedBroadcastIds.contains(b.id))
+                  .toList();
 
               if (visibleBroadcasts.isEmpty) return const SizedBox.shrink();
 
@@ -110,20 +111,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(_getBroadcastIcon(latest.type), color: _getBroadcastColor(latest.type)),
+                    Icon(
+                      _getBroadcastIcon(latest.type),
+                      color: _getBroadcastColor(latest.type),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(latest.title, style: TextStyle(fontWeight: FontWeight.bold, color: _getBroadcastColor(latest.type))),
+                          Text(
+                            latest.title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: _getBroadcastColor(latest.type),
+                            ),
+                          ),
                           Text(latest.message),
                         ],
                       ),
                     ),
                     IconButton(
-                        icon: const Icon(Icons.close, size: 16),
-                        onPressed: () => _dismissBroadcast(latest.id),
+                      icon: const Icon(Icons.close, size: 16),
+                      onPressed: () => _dismissBroadcast(latest.id),
                     ),
                   ],
                 ),
@@ -189,28 +199,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       // Status Logic
                       String? statusText;
                       Color statusColor = Colors.transparent;
-                      
+
                       if (userProfile != null) {
                         // Check if we are a staff user and should use inherited status
                         bool isPremium = userProfile.isPremium;
                         DateTime? trialStartDate = userProfile.trialStartDate;
-                        DateTime? premiumExpiryDate = userProfile.premiumExpiryDate;
+                        DateTime? premiumExpiryDate =
+                            userProfile.premiumExpiryDate;
 
                         if (isStaff) {
-                            // STAFF: Load the inherited Dentist Profile
-                            // This part is tricky because it's synchronous build
-                            // We rely on the fact that AppInitializer/SyncClient saved it.
-                            // For simplicity in the UI, we'll try to read it from cache
-                            // but if it's not there, we use the staff profile's own values
-                            // which WERE correctly populated during login.
+                          // STAFF: Load the inherited Dentist Profile
+                          // This part is tricky because it's synchronous build
+                          // We rely on the fact that AppInitializer/SyncClient saved it.
+                          // For simplicity in the UI, we'll try to read it from cache
+                          // but if it's not there, we use the staff profile's own values
+                          // which WERE correctly populated during login.
                         }
 
                         if (isPremium) {
                           statusText = l10n.premiumAccount;
                           statusColor = Colors.green;
-                          
+
                           if (premiumExpiryDate != null) {
-                            final daysLeft = premiumExpiryDate.difference(DateTime.now()).inDays;
+                            final daysLeft = premiumExpiryDate
+                                .difference(DateTime.now())
+                                .inDays;
                             if (daysLeft >= 0) {
                               statusText = l10n.premiumDaysLeft(daysLeft);
                             } else {
@@ -219,51 +232,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             }
                           }
                         } else if (trialStartDate != null) {
-                          final daysUsed = DateTime.now().difference(trialStartDate).inDays;
+                          final daysUsed = DateTime.now()
+                              .difference(trialStartDate)
+                              .inDays;
                           final daysLeft = 30 - daysUsed;
                           if (daysLeft > 0) {
-                              statusText = l10n.trialVersionDaysLeft(daysLeft);
-                              statusColor = Colors.orange;
+                            statusText = l10n.trialVersionDaysLeft(daysLeft);
+                            statusColor = Colors.orange;
                           } else {
-                              statusText = l10n.trialExpired;
-                              statusColor = Colors.red;
+                            statusText = l10n.trialExpired;
+                            statusColor = Colors.red;
                           }
                         }
                       }
 
                       return Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                                isStaff 
-                                  ? '${l10n.welcome} $staffUsername'
-                                  : '${l10n.welcomeDr} $dentistName',
-                                style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.end,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            isStaff
+                                ? '${l10n.welcome} $staffUsername'
+                                : '${l10n.welcomeDr} $dentistName',
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
                             ),
-                            if (statusText != null)
-                                Container(
-                                    margin: const EdgeInsets.only(top: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                    decoration: BoxDecoration(
-                                        color: statusColor.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(color: statusColor),
-                                    ),
-                                    child: Text(
-                                        statusText,
-                                        style: TextStyle(
-                                            color: statusColor,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                        ),
-                                    ),
+                            textAlign: TextAlign.end,
+                          ),
+                          if (statusText != null)
+                            Container(
+                              margin: const EdgeInsets.only(top: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: statusColor),
+                              ),
+                              child: Text(
+                                statusText,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
                                 ),
-                          ],
+                              ),
+                            ),
+                        ],
                       );
                     },
                     loading: () => Text(
@@ -707,22 +725,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 }
 
-  Color _getBroadcastColor(String type) {
-      switch(type) {
-          case 'warning': return Colors.orange;
-          case 'maintenance': return Colors.red;
-          default: return Colors.blue;
-      }
+Color _getBroadcastColor(String type) {
+  switch (type) {
+    case 'warning':
+      return Colors.orange;
+    case 'maintenance':
+      return Colors.red;
+    default:
+      return Colors.blue;
   }
+}
 
-  IconData _getBroadcastIcon(String type) {
-      switch(type) {
-          case 'warning': return Icons.warning;
-          case 'maintenance': return Icons.build;
-          default: return Icons.info;
-      }
+IconData _getBroadcastIcon(String type) {
+  switch (type) {
+    case 'warning':
+      return Icons.warning;
+    case 'maintenance':
+      return Icons.build;
+    default:
+      return Icons.info;
   }
-
+}
 
 class _FlipCard3D extends ConsumerStatefulWidget {
   final double width;

@@ -17,7 +17,11 @@ class RecurringChargeService {
   final FinanceService _financeService;
   final Ref _ref;
 
-  RecurringChargeService(this._recurringChargeRepository, this._financeService, this._ref);
+  RecurringChargeService(
+    this._recurringChargeRepository,
+    this._financeService,
+    this._ref,
+  );
 
   void _invalidateFinanceProviders() {
     _ref.invalidate(filteredTransactionsProvider);
@@ -90,8 +94,19 @@ class RecurringChargeService {
         // Include transactions up to periodEnd
         // Check if a transaction for this charge on this date already exists
         // Use a wider range for the date check to catch transactions regardless of time
-        final checkStart = DateTime(currentChargeDate.year, currentChargeDate.month, currentChargeDate.day);
-        final checkEnd = DateTime(currentChargeDate.year, currentChargeDate.month, currentChargeDate.day, 23, 59, 59);
+        final checkStart = DateTime(
+          currentChargeDate.year,
+          currentChargeDate.month,
+          currentChargeDate.day,
+        );
+        final checkEnd = DateTime(
+          currentChargeDate.year,
+          currentChargeDate.month,
+          currentChargeDate.day,
+          23,
+          59,
+          59,
+        );
 
         final existingTransactions = await _financeService
             .getTransactionsFiltered(

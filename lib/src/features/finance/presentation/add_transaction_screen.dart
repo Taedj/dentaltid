@@ -57,11 +57,13 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
     _type = widget.transaction?.type ?? TransactionType.expense;
     _date = widget.transaction?.date ?? DateTime.now();
     _selectedCategory = widget.transaction?.category ?? 'Other';
-    
+
     // Ensure selected category is valid for the current type
-    final categories = _type == TransactionType.expense ? _expenseCategories : _incomeCategories;
+    final categories = _type == TransactionType.expense
+        ? _expenseCategories
+        : _incomeCategories;
     if (!categories.contains(_selectedCategory)) {
-        _selectedCategory = categories.first;
+      _selectedCategory = categories.first;
     }
   }
 
@@ -94,7 +96,8 @@ class _AddTransactionScreenState extends ConsumerState<AddTransactionScreen> {
 
       try {
         final amount = double.parse(_amountController.text);
-        final transaction = widget.transaction?.copyWith(
+        final transaction =
+            widget.transaction?.copyWith(
               description: _descriptionController.text.isEmpty
                   ? _selectedCategory
                   : _descriptionController.text,

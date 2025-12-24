@@ -471,6 +471,7 @@ class FirebaseService {
     }
     return null;
   }
+
   Future<bool> redeemActivationCode(String uid, String code) async {
     try {
       _logger.info('Attempting to redeem code: $code for user: $uid');
@@ -510,41 +511,43 @@ class FirebaseService {
           .doc(uid)
           .collection('profile')
           .doc('info');
-      
+
       final userDoc = await userParamsRef.get();
       if (!userDoc.exists) {
         _logger.warning('User profile not found');
         return false;
       }
       // 3. Calculate new expiry
-    // If multiple codes are redeemed, stack the duration? No, usually extends from current premium expiry or now.
-    
-    DateTime currentExpiry = DateTime.now();
-    final userProfile = await getUserProfile(uid);
-    if (userProfile != null && userProfile.isPremium && userProfile.premiumExpiryDate != null) {
-       // If already premium and not expired, extend from existing expiry
-       if (userProfile.premiumExpiryDate!.isAfter(DateTime.now())) {
-         currentExpiry = userProfile.premiumExpiryDate!;
-       }
-    } else {
+      // If multiple codes are redeemed, stack the duration? No, usually extends from current premium expiry or now.
+
+      DateTime currentExpiry = DateTime.now();
+      final userProfile = await getUserProfile(uid);
+      if (userProfile != null &&
+          userProfile.isPremium &&
+          userProfile.premiumExpiryDate != null) {
+        // If already premium and not expired, extend from existing expiry
+        if (userProfile.premiumExpiryDate!.isAfter(DateTime.now())) {
+          currentExpiry = userProfile.premiumExpiryDate!;
+        }
+      } else {
         // Try getting current expiry from somewhere else? No, default to Now.
         // There was a logic reading 'premiumExpiryDate' from userParamsRef before, but we have userProfile now.
-    }
+      }
 
-    // Capture User Info for the Code Document
-    final userEmail = userProfile?.email;
-    final userPhone = userProfile?.phoneNumber;
+      // Capture User Info for the Code Document
+      final userEmail = userProfile?.email;
+      final userPhone = userProfile?.phoneNumber;
 
-    // 2. Mark code as redeemed (Optimistic update or Transaction?)
-    // Using transaction would be safer but let's stick to simple updates for now as per codebase style
-    await codeDoc.reference.update({
-      'isRedeemed': true,
-      'redeemedBy': uid,
-      'redeemedAt': FieldValue.serverTimestamp(),
-      'redeemedByEmail': userEmail,
-      'redeemedByPhone': userPhone,
-    });
-      
+      // 2. Mark code as redeemed (Optimistic update or Transaction?)
+      // Using transaction would be safer but let's stick to simple updates for now as per codebase style
+      await codeDoc.reference.update({
+        'isRedeemed': true,
+        'redeemedBy': uid,
+        'redeemedAt': FieldValue.serverTimestamp(),
+        'redeemedByEmail': userEmail,
+        'redeemedByPhone': userPhone,
+      });
+
       final newExpiry = currentExpiry.add(Duration(days: 30 * durationMonths));
 
       // 4. Update User Profile
@@ -564,23 +567,32 @@ class FirebaseService {
   }
 
   // --- Usage Tracking Helpers ---
-  
+
   Future<void> incrementPatientCount(String uid) async {
-     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
-       'cumulativePatients': FieldValue.increment(1),
-     });
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('profile')
+        .doc('info')
+        .update({'cumulativePatients': FieldValue.increment(1)});
   }
 
   Future<void> incrementAppointmentCount(String uid) async {
-     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
-       'cumulativeAppointments': FieldValue.increment(1),
-     });
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('profile')
+        .doc('info')
+        .update({'cumulativeAppointments': FieldValue.increment(1)});
   }
 
   Future<void> incrementInventoryCount(String uid) async {
-     await _firestore.collection('users').doc(uid).collection('profile').doc('info').update({
-       'cumulativeInventory': FieldValue.increment(1),
-     });
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('profile')
+        .doc('info')
+        .update({'cumulativeInventory': FieldValue.increment(1)});
   }
 
   // --- Developer Tools ---

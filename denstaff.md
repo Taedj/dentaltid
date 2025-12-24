@@ -36,60 +36,47 @@ The login screen is modified to accommodate two modes of authentication.
 ## 4. Staff User Experience
 The Staff interface mirrors the Dentist interface but with specific restrictions based on security and relevance.
 
+### Feature Access Table
+| Feature | Dentist | Assistant | Receptionist |
+| :--- | :---: | :---: | :---: |
+| **Dashboard** | ✅ | ✅ | ✅ |
+| **Patients** | ✅ | ✅ | ✅ |
+| **Appointments** | ✅ | ✅ | ✅ |
+| **Inventory** | ✅ | ✅ | ❌ |
+| **Finance** | ✅ | ❌ | ❌ |
+| **Settings** | ✅ (Full) | ❌ (Limited) | ❌ (Limited) |
+
 ### Hidden Features
-*   **Finance Tab**: Completely hidden.
+*   **Finance Tab**: Completely hidden for Staff. **However**, staff actions (e.g., Inventory Purchase, Appointment Payment) **automatically** generate financial transactions in the background to keep the Dentist's records accurate.
 *   **Global Settings**: The main settings tab used by the Dentist is hidden.
 
 ### Staff Settings Tab
-A limited "Special Settings" tab is available for local preferences:
+A limited "Staff Settings" screen is available for local preferences:
 *   **Language**: Local app language.
 *   **Theme**: Light/Dark mode.
 *   **Currency**: Display preference.
 *   **LAN Connection Settings**: To manage connection status.
+*   **Logout**: Securely clears local session data.
 
-## 5. Network Configuration & Synchronization (The "Ctrl+T" Menu)
-A hidden network configuration panel is accessed by pressing **`Ctrl + T`** on the Login Screen. The interface changes based on the selected Mode (Dentist vs. Staff).
+## 5. Network Configuration & Synchronization
+A hidden network configuration panel is accessed by pressing **`Ctrl + T`** on the Login Screen or via Settings.
 
 ### A. Dentist View (Server Mode)
 Used to host the database and listen for staff connections.
-
-**UI Elements:**
-1.  **Server IP Display**: Shows the machine's local IP address(es) (e.g., `192.168.1.5`).
-2.  **Port Selection**: Input field to define the listening port (default: `8080`).
-3.  **Port Management**:
-    *   **"Check Port"**: Validates if the port is available.
-    *   **"Open Port"**: Executes a `.bat` script with Administrator privileges to add a firewall rule opening the specific port.
-4.  **Server Control**:
-    *   **"Start Server"**: Initializes the WebSocket/TCP server.
-    *   **Status Indicator**: Visual badge (Online - Green / Offline - Red).
-5.  **Logs**:
-    *   A terminal-like text zone showing server events (e.g., "Client Connected", "Sync Complete", "Error: Port in use").
-    *   **Copy Button**: To copy logs to clipboard.
+*   **Auto-Start**: Can be configured to start automatically on app launch.
+*   **Port Management**: Includes tools to check and open firewall ports via Admin `.bat` scripts.
 
 ### B. Staff View (Client Mode)
 Used to connect to the Dentist's machine and synchronize data.
-
-**UI Elements:**
-1.  **Auto Connect**:
-    *   Button: "Scan & Connect".
-    *   Logic: Scans the local network (UDP Broadcast or IP range scan) to find running Dentist servers and connects automatically.
-2.  **Manual Connection**:
-    *   **IP Address Input**: To enter the Dentist's IP.
-    *   **Port Input**: To enter the Dentist's Port.
-    *   **"Connect" Button**: Initiates handshake.
-3.  **Port Management** (For Client-side Firewall):
-    *   **"Check Port"**: Checks outbound capability.
-    *   **"Open Port"**: Executes Admin `.bat` script to allow app communication through firewall.
-4.  **Connection Status**: Visual badge (Online - Green / Offline - Red).
+*   **Auto-Connect**: Tries to connect to the last known IP.
+*   **Initial Sync**: Downloads the full database and Dentist Profile (for license validation) upon first connection.
 
 ### Synchronization Logic
-1.  **Initial Handshake**: When a Staff Client connects, it requests a full copy of the Dentist's Database.
-2.  **Credential Sync**: This initial sync populates the `StaffUsers` table on the Client device, allowing the Staff member to log in using their Username and PIN.
-3.  **Real-Time Sync**:
-    *   Any create/update/delete operation (CRUD) performed by Dentist or Staff is broadcast instantly to all connected peers.
-    *   Conflict Resolution: "Last Write Wins" or Server (Dentist) timestamp priority.
+1.  **SyncBroadcaster**: A unified service ensures all CRUD operations (Create, Update, Delete) are broadcast to the network.
+2.  **Optimized Deletes**: Large deletion operations (like deleting a Patient) use optimized bulk database queries locally while still broadcasting necessary events to keep peers in sync.
+3.  **Conflict Resolution**: "Last Write Wins" strategy.
 
 ## 6. Implementation Notes
 *   **Offline Capability**: The system functions entirely without Internet. All communication happens via Local LAN.
-*   **Security**: The `.bat` script for port opening must trigger a Windows UAC (User Account Control) prompt.
-*   **Database**: Uses the existing `sqflite` implementation, extended with a sync layer.
+*   **Settings Persistence**: All local settings are stored in `Documents/DentalTid/settings/settings.json` for portability and reliability.
+*   **License Check**: Staff apps validate their license status against the synchronized Dentist Profile.

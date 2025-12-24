@@ -84,4 +84,9 @@ class FinanceRepository {
       return Transaction.fromJson(maps[i]);
     });
   }
+
+  Future<void> deleteTransactionsBySessionId(int sessionId) async {
+    final db = await _databaseService.database;
+    await db.delete(_tableName, where: 'sessionId = ?', whereArgs: [sessionId]);
+  }
 }

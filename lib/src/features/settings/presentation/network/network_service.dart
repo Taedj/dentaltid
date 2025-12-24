@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path/path.dart' as path;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 
@@ -24,22 +25,36 @@ class NetworkService {
   }
 
   Future<void> openFirewallPort(int port) async {
-    if (!Platform.isWindows) return;
+    if (!Platform.isWindows) {
+      _log.info('Firewall port opening is only supported on Windows.');
+      return;
+    }
 
+    final batPath = path.join(Directory.current.path, 'fix_network.bat');
+    
     try {
-      // Execute the .bat script as admin
-      // 'runas' verb is handled by shell execution, but creating a process
-      // directly might not trigger UAC unless we use 'runas' explicitly via shell command
-      // or rely on the user running the app as admin.
-      // However, typical pattern is to spawn a shell with runas.
-      
-      // Since we can't easily trigger UAC from Dart `Process.run` without extra tools,
-      // we will use PowerShell Start-Process with -Verb RunAs.
+      _log.info('Requesting elevated firewall setup for port $port...');
 
-      final command = 'Start-Process "open_port.bat" -ArgumentList "$port" -Verb RunAs';
+      // We use PowerShell to launch the .bat file with 'RunAs' verb for elevation.
+      // Using -Verb RunAs is the standard way to trigger the UAC prompt.
+      final result = await Process.run('powershell', [
+        '-NoProfile',
+        '-ExecutionPolicy', 'Bypass',
+        '-Command',
+        'Start-Process',
+        'cmd.exe',
+        '-ArgumentList',
+        "\"/c `\"$batPath`\"\"",
+        '-Verb',
+        'RunAs',
+      ]);
+
+      if (result.exitCode != 0) {
+        _log.severe('PowerShell elevation request failed: ${result.stderr}');
+        throw Exception('Failed to request administrative rights. Please run fix_network.bat as Administrator manually.');
+      }
       
-      await Process.run('powershell', ['-Command', command]);
-      _log.info('Requested to open port $port');
+      _log.info('Elevation prompt shown. Please accept it to open the port.');
     } catch (e) {
       _log.severe('Error opening port: $e');
       rethrow;
@@ -48,7 +63,11 @@ class NetworkService {
 
   Future<bool> isPortOpen(String host, int port) async {
     try {
-      final socket = await Socket.connect(host, port, timeout: const Duration(seconds: 2));
+      final socket = await Socket.connect(
+        host,
+        port,
+        timeout: const Duration(seconds: 2),
+      );
       socket.destroy();
       return true;
     } catch (e) {

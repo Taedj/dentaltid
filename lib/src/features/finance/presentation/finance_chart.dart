@@ -276,7 +276,9 @@ class _ExpenseBreakdownChart extends ConsumerWidget {
     }
 
     if (categoryExpenses.isEmpty) {
-      return Center(child: Text(AppLocalizations.of(context)!.noExpensesInPeriod));
+      return Center(
+        child: Text(AppLocalizations.of(context)!.noExpensesInPeriod),
+      );
     }
 
     final List<Color> colors = [

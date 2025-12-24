@@ -12,11 +12,14 @@ import 'package:dentaltid/firebase_options.dart';
 
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
+import 'package:dentaltid/src/core/log_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Setup logging
+  LogService.instance.init();
+  
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print

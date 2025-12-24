@@ -42,14 +42,19 @@ class ConnectionStatusWidget extends ConsumerWidget {
     } else {
       // Staff (Client) View
       switch (status) {
-        case ConnectionStatus.connected:
-          icon = Icons.link;
+        case ConnectionStatus.synced:
+          icon = Icons.cloud_done_outlined;
           color = Colors.green;
-          text = 'Connected to Dentist';
+          text = 'Synced with Dentist';
+          break;
+        case ConnectionStatus.syncing:
+          icon = Icons.sync;
+          color = Colors.orange;
+          text = 'Syncing Data...';
           break;
         case ConnectionStatus.connecting:
-          icon = Icons.link_off;
-          color = Colors.orange;
+          icon = Icons.wifi_tethering;
+          color = Colors.blue;
           text = 'Connecting...';
           break;
         case ConnectionStatus.disconnected:
@@ -58,14 +63,14 @@ class ConnectionStatusWidget extends ConsumerWidget {
           text = 'Disconnected';
           break;
         case ConnectionStatus.error:
-          icon = Icons.error;
+          icon = Icons.error_outline;
           color = Colors.deepOrange;
           text = 'Connection Error';
           break;
         default:
-          icon = Icons.link_off;
+          icon = Icons.help_outline;
           color = Colors.grey;
-          text = 'Connection Status';
+          text = 'Unknown Connection Status';
       }
     }
 

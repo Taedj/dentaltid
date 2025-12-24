@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/core/network/sync_broadcaster.dart';
+import 'package:dentaltid/src/core/network/sync_event.dart';
 import 'package:dentaltid/src/features/finance/data/finance_repository.dart';
 
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
@@ -19,6 +21,7 @@ final financeRepositoryProvider = Provider<FinanceRepository>((ref) {
 
 final financeServiceProvider = Provider<FinanceService>((ref) {
   return FinanceService(
+    ref,
     ref.watch(financeRepositoryProvider),
     ref.watch(recurringChargeRepositoryProvider),
     ref.watch(auditServiceProvider),
@@ -51,12 +54,12 @@ Set<TransactionSourceType> _getIncludedSourceTypesFromFilters(
 final filteredTransactionsProvider =
     FutureProvider.family<List<Transaction>, FinanceFilters>((ref, filters) {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
       ref.onDispose(() => subscription.cancel());
-      
+
       // Use adjusted transactions to handle pro-rata recurring charges
       return service.getAdjustedTransactionsFiltered(
         startDate: filters.dateRange.start,
@@ -69,7 +72,7 @@ final filteredTransactionsProvider =
 final actualTransactionsProvider =
     FutureProvider.family<List<Transaction>, FinanceFilters>((ref, filters) {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
@@ -89,7 +92,7 @@ final dailySummaryProvider =
       filters,
     ) async {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
@@ -107,7 +110,7 @@ final weeklySummaryProvider =
       filters,
     ) async {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
@@ -125,7 +128,7 @@ final monthlySummaryProvider =
       filters,
     ) async {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
@@ -143,7 +146,7 @@ final yearlySummaryProvider =
       filters,
     ) async {
       final service = ref.read(financeServiceProvider);
-      
+
       final subscription = service.onDataChanged.listen((_) {
         ref.invalidateSelf();
       });
@@ -160,20 +163,29 @@ class FinanceService {
   final RecurringChargeRepository _recurringChargeRepository;
   final AuditService _auditService;
   final FinanceSettings _settings;
+  final Ref _ref; // Add Ref
 
   // Reactive Stream
-  final StreamController<void> _dataChangeController = StreamController.broadcast();
+  final StreamController<void> _dataChangeController =
+      StreamController.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
   FinanceService(
+    this._ref, // Add Ref
     this._repository,
     this._recurringChargeRepository,
     this._auditService,
     this._settings,
   );
 
-  void _notifyDataChanged() {
+  void notifyDataChanged() {
     _dataChangeController.add(null);
+  }
+
+  void _broadcastChange(SyncAction action, Map<String, dynamic> data) {
+    _ref
+        .read(syncBroadcasterProvider)
+        .broadcast(table: 'transactions', action: action, data: data);
   }
 
   /// Returns transactions with recurring charges pro-rated for the selected period.
@@ -206,12 +218,12 @@ class FinanceService {
     }
 
     if (!showProRated) {
-        // Return actual transactions as they are in the DB
-        return await _repository.getTransactionsFiltered(
-          startDate: startDate,
-          endDate: endDate,
-          includedSourceTypes: effectiveIncluded,
-        );
+      // Return actual transactions as they are in the DB
+      return await _repository.getTransactionsFiltered(
+        startDate: startDate,
+        endDate: endDate,
+        includedSourceTypes: effectiveIncluded,
+      );
     }
 
     final oneOffs = await _repository.getTransactionsFiltered(
@@ -228,17 +240,20 @@ class FinanceService {
 
     // 2. Dynamic Pro-rating for Recurring Charges
     // We calculate the contribution of each recurring charge to the current window
-    final recurringCharges = await _recurringChargeRepository.getAllRecurringCharges();
+    final recurringCharges = await _recurringChargeRepository
+        .getAllRecurringCharges();
     final proRatedTransactions = <Transaction>[];
 
-    
-    
     for (final charge in recurringCharges) {
       if (!charge.isActive) continue;
-      
+
       // Check if the charge's lifetime overlaps with our window
-      if (charge.startDate.isAfter(endDate)) continue;
-      if (charge.endDate != null && charge.endDate!.isBefore(startDate)) continue;
+      if (charge.startDate.isAfter(endDate)) {
+        continue;
+      }
+      if (charge.endDate != null && charge.endDate!.isBefore(startDate)) {
+        continue;
+      }
 
       // Calculate daily rate
       double dailyRate = 0;
@@ -260,34 +275,44 @@ class FinanceService {
           break;
         case RecurringChargeFrequency.custom:
           if (charge.endDate != null) {
-             final totalDays = charge.endDate!.difference(charge.startDate).inDays + 1;
-             dailyRate = totalDays > 0 ? charge.amount / totalDays : charge.amount;
+            final totalDays =
+                charge.endDate!.difference(charge.startDate).inDays + 1;
+            dailyRate = totalDays > 0
+                ? charge.amount / totalDays
+                : charge.amount;
           } else {
-             dailyRate = charge.amount / 30;
+            dailyRate = charge.amount / 30;
           }
           break;
       }
 
       // Calculate how many days of this charge fall into our window
-      final effectiveStart = charge.startDate.isAfter(startDate) ? charge.startDate : startDate;
-      final effectiveEnd = (charge.endDate != null && charge.endDate!.isBefore(endDate)) ? charge.endDate! : endDate;
-      
-      final overlappingDays = effectiveEnd.difference(effectiveStart).inDays + 1;
-      
+      final effectiveStart = charge.startDate.isAfter(startDate)
+          ? charge.startDate
+          : startDate;
+      final effectiveEnd =
+          (charge.endDate != null && charge.endDate!.isBefore(endDate))
+          ? charge.endDate!
+          : endDate;
+
+      final overlappingDays =
+          effectiveEnd.difference(effectiveStart).inDays + 1;
+
       if (overlappingDays > 0) {
-          final proRatedAmount = dailyRate * overlappingDays;
-          proRatedTransactions.add(
-            Transaction(
-              description: '${charge.name} (Pro-rated)',
-              totalAmount: proRatedAmount,
-              paidAmount: proRatedAmount, // Treat as "paid" for profit calculation
-              type: TransactionType.expense,
-              date: effectiveStart,
-              sourceType: TransactionSourceType.recurringCharge,
-              sourceId: charge.id,
-              category: charge.name,
-            ),
-          );
+        final proRatedAmount = dailyRate * overlappingDays;
+        proRatedTransactions.add(
+          Transaction(
+            description: '${charge.name} (Pro-rated)',
+            totalAmount: proRatedAmount,
+            paidAmount:
+                proRatedAmount, // Treat as "paid" for profit calculation
+            type: TransactionType.expense,
+            date: effectiveStart,
+            sourceType: TransactionSourceType.recurringCharge,
+            sourceId: charge.id,
+            category: charge.name,
+          ),
+        );
       }
     }
 
@@ -306,9 +331,10 @@ class FinanceService {
       details:
           'Transaction of type ${newTransaction.type} for amount ${newTransaction.totalAmount} added.',
     );
-    
+
     // Trigger reactive listener
-    _notifyDataChanged();
+    notifyDataChanged();
+    _broadcastChange(SyncAction.create, newTransaction.toJson());
   }
 
   Future<List<Transaction>> getTransactions() async {
@@ -324,9 +350,10 @@ class FinanceService {
       AuditAction.updateTransaction,
       details: 'Transaction updated.',
     );
-    
+
     // Trigger reactive listener
-    _notifyDataChanged();
+    notifyDataChanged();
+    _broadcastChange(SyncAction.update, transaction.toJson());
   }
 
   Future<void> deleteTransaction(int id) async {
@@ -335,9 +362,16 @@ class FinanceService {
       AuditAction.deleteTransaction,
       details: 'Transaction with ID $id deleted.',
     );
-    
+
     // Trigger reactive listener
-    _notifyDataChanged();
+    notifyDataChanged();
+    _broadcastChange(SyncAction.delete, {'id': id});
+  }
+
+  Future<void> deleteTransactionsBySessionId(int sessionId) async {
+    await _repository.deleteTransactionsBySessionId(sessionId);
+    // Notify local listeners but don't broadcast individually to avoid noise
+    notifyDataChanged();
   }
 
   Future<List<Transaction>> getTransactionsBySessionId(int sessionId) async {

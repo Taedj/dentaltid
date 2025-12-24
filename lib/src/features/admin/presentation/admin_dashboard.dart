@@ -35,10 +35,14 @@ class AdminDashboard extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
                   title: Text(user.dentistName ?? user.email),
-                  subtitle: Text('${user.email} • ${user.role.toString().split('.').last}'),
+                  subtitle: Text(
+                    '${user.email} • ${user.role.toString().split('.').last}',
+                  ),
                   trailing: Chip(
                     label: Text(user.plan.toString().split('.').last),
-                    backgroundColor: user.isPremium ? Colors.amber : Colors.grey[200],
+                    backgroundColor: user.isPremium
+                        ? Colors.amber
+                        : Colors.grey[200],
                   ),
                   onTap: () {
                     _showUserActions(context, user, adminService);
@@ -52,7 +56,11 @@ class AdminDashboard extends StatelessWidget {
     );
   }
 
-  void _showUserActions(BuildContext context, UserProfile user, AdminService service) {
+  void _showUserActions(
+    BuildContext context,
+    UserProfile user,
+    AdminService service,
+  ) {
     showModalBottomSheet(
       context: context,
       builder: (context) {
@@ -73,11 +81,13 @@ class AdminDashboard extends StatelessWidget {
                   );
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Plan updated to Professional')),
+                    const SnackBar(
+                      content: Text('Plan updated to Professional'),
+                    ),
                   );
                 },
               ),
-               ListTile(
+              ListTile(
                 leading: const Icon(Icons.remove_circle),
                 title: const Text('Revoke Premium'),
                 onTap: () {

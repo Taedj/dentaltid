@@ -248,8 +248,11 @@ class _AddEditRecurringChargeScreenState
       ),
     );
   }
+
   String _getLocalizedFrequency(
-      RecurringChargeFrequency frequency, AppLocalizations l10n) {
+    RecurringChargeFrequency frequency,
+    AppLocalizations l10n,
+  ) {
     switch (frequency) {
       case RecurringChargeFrequency.daily:
         return l10n.freqDaily;

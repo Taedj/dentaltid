@@ -1,3 +1,4 @@
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart'; // Import UserType enum
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
@@ -7,7 +8,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class StaffSettingsScreen extends ConsumerWidget {
@@ -31,16 +31,14 @@ class StaffSettingsScreen extends ConsumerWidget {
                   await ref.read(languageProvider.notifier).setLocale(newValue);
                 }
               },
-              items: const [
-                Locale('en'),
-                Locale('fr'),
-                Locale('ar'),
-              ].map<DropdownMenuItem<Locale>>((Locale value) {
-                return DropdownMenuItem<Locale>(
-                  value: value,
-                  child: Text(value.languageCode.toUpperCase()),
-                );
-              }).toList(),
+              items: const [Locale('en'), Locale('fr'), Locale('ar')]
+                  .map<DropdownMenuItem<Locale>>((Locale value) {
+                    return DropdownMenuItem<Locale>(
+                      value: value,
+                      child: Text(value.languageCode.toUpperCase()),
+                    );
+                  })
+                  .toList(),
             ),
           ),
           ListTile(
@@ -76,24 +74,27 @@ class StaffSettingsScreen extends ConsumerWidget {
             title: const Text('LAN Connection Settings'),
             subtitle: const Text('Manage server connection'),
             onTap: () {
-               showDialog(
-                  context: context,
-                  builder: (context) => const NetworkConfigDialog(userType: UserType.staff),
+              showDialog(
+                context: context,
+                builder: (context) =>
+                    const NetworkConfigDialog(userType: UserType.staff),
               );
             },
           ),
           const Divider(),
           const SizedBox(height: 20),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
             onPressed: () async {
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove('remember_me');
-              await prefs.remove('managedUserProfile');
-              await prefs.remove('userRole');
-              await prefs.remove('cached_user_profile');
+              await SettingsService.instance.remove('remember_me');
+              await SettingsService.instance.remove('managedUserProfile');
+              await SettingsService.instance.remove('userRole');
+              await SettingsService.instance.remove('cached_user_profile');
               await FirebaseAuth.instance.signOut();
-              
+
               ref.invalidate(userProfileProvider);
               if (context.mounted) {
                 context.go('/login');

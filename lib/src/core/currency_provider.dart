@@ -1,5 +1,5 @@
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 final currencyProvider = StateNotifierProvider<CurrencyNotifier, String>((ref) {
   return CurrencyNotifier();
@@ -11,13 +11,12 @@ class CurrencyNotifier extends StateNotifier<String> {
   }
 
   Future<void> _loadCurrency() async {
-    final prefs = await SharedPreferences.getInstance();
-    state = prefs.getString('currency') ?? r'$';
+    await SettingsService.instance.init();
+    state = SettingsService.instance.getString('currency') ?? r'$';
   }
 
   Future<void> setCurrency(String currency) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('currency', currency);
+    await SettingsService.instance.setString('currency', currency);
     state = currency;
   }
 }

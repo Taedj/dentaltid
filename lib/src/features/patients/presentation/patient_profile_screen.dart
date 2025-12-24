@@ -33,6 +33,53 @@ class PatientProfileScreen extends ConsumerWidget {
             ],
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Patient'),
+                    content: const Text(
+                      'Are you sure you want to delete this patient? This will also delete all associated appointments and financial records. This action cannot be undone.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirmed == true && context.mounted) {
+                  try {
+                    await ref
+                        .read(patientServiceProvider)
+                        .deletePatient(patient.id!);
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to delete patient: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
             Switch(
               value: patient.isBlacklisted,
               onChanged: (value) {
@@ -216,7 +263,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       }
 
       ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
-      
+
       // Invalidate finance providers
       ref.invalidate(filteredTransactionsProvider);
       ref.invalidate(actualTransactionsProvider);
@@ -275,7 +322,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       await appointmentService.deleteAppointment(widget.appointment.id!);
 
       ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
-      
+
       // Invalidate finance providers
       ref.invalidate(filteredTransactionsProvider);
       ref.invalidate(actualTransactionsProvider);
@@ -384,9 +431,17 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                 amountPaidController.text.isNotEmpty)
             ? Text(
                 balanceDue < 0
-                    ? l10n.overpaid(NumberFormat.currency(symbol: currency).format(-balanceDue))
+                    ? l10n.overpaid(
+                        NumberFormat.currency(
+                          symbol: currency,
+                        ).format(-balanceDue),
+                      )
                     : balanceDue > 0
-                    ? l10n.due(NumberFormat.currency(symbol: currency).format(balanceDue))
+                    ? l10n.due(
+                        NumberFormat.currency(
+                          symbol: currency,
+                        ).format(balanceDue),
+                      )
                     : l10n.fullyPaid,
                 style: TextStyle(
                   color: balanceDue < 0
@@ -463,9 +518,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                     Expanded(
                       child: TextFormField(
                         controller: totalCostController,
-                        decoration: InputDecoration(
-                          labelText: l10n.totalCost,
-                        ),
+                        decoration: InputDecoration(labelText: l10n.totalCost),
                         keyboardType: TextInputType.number,
                       ),
                     ),
@@ -473,9 +526,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                     Expanded(
                       child: TextFormField(
                         controller: amountPaidController,
-                        decoration: InputDecoration(
-                          labelText: l10n.paidAmount,
-                        ),
+                        decoration: InputDecoration(labelText: l10n.paidAmount),
                         keyboardType: TextInputType.number,
                       ),
                     ),

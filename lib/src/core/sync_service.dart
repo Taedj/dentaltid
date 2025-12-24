@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
@@ -16,15 +17,23 @@ class SyncService {
 
   SyncService(this._ref);
 
-  /// Exports all relevant tables into a single JSON string.
-  Future<String> exportDatabaseForSync() async {
+  /// Exports all relevant tables into a single Map.
+  Future<Map<String, List<Map<String, dynamic>>>> exportDatabaseMapForSync() async {
     _log.info('Starting full database export for sync...');
     try {
       final db = await _ref.read(databaseServiceProvider).database;
 
       final tablesToExport = [
-        'patients', 'appointments', 'transactions', 'inventory', 'visits',
-        'sessions', 'recurring_charges', 'audit_events', 'staff_users'
+        'patients',
+        'appointments',
+        'transactions',
+        'inventory',
+        'visits',
+        'sessions',
+        'recurring_charges',
+        'audit_events',
+        'staff_users',
+        'managed_users',
       ];
 
       final Map<String, List<Map<String, dynamic>>> allData = {};
@@ -35,34 +44,52 @@ class SyncService {
         _log.info('Exported ${tableData.length} rows from "$table".');
       }
 
-      final jsonData = jsonEncode(allData);
-      _log.info('Database export complete. Total size: ${jsonData.length} bytes.');
-      return jsonData;
-
+      return allData;
     } catch (e, s) {
       _log.severe('Failed to export database', e, s);
       rethrow;
     }
   }
 
-  /// Clears local data and imports a full dataset from a JSON string.
-  /// This is a destructive operation.
-  Future<void> importDatabaseFromSync(String jsonData) async {
-    _log.info('Starting full database import from sync...');
+  /// Exports all relevant tables into a single JSON string.
+  Future<String> exportDatabaseForSync() async {
+    final allData = await exportDatabaseMapForSync();
+    try {
+      final jsonData = await Isolate.run(() => jsonEncode(allData));
+      _log.info(
+        'Database export complete. Total size: ${jsonData.length} bytes.',
+      );
+      return jsonData;
+    } catch (e, s) {
+      _log.severe('Failed to jsonEncode exported database', e, s);
+      rethrow;
+    }
+  }
+
+  /// Clears local data and imports a full dataset from a Map.
+  Future<void> importDatabaseMapFromSync(Map<String, dynamic> allData) async {
+    _log.info('Starting full database import from sync map...');
     try {
       final db = await _ref.read(databaseServiceProvider).database;
-      final Map<String, dynamic> allData = jsonDecode(jsonData);
 
       final tablesToImport = [
-        'patients', 'appointments', 'transactions', 'inventory', 'visits',
-        'sessions', 'recurring_charges', 'audit_events', 'staff_users'
+        'patients',
+        'appointments',
+        'transactions',
+        'inventory',
+        'visits',
+        'sessions',
+        'recurring_charges',
+        'audit_events',
+        'staff_users',
+        'managed_users',
       ];
-      
+
       await db.transaction((txn) async {
         // Clear existing data in reverse order of dependencies if any
         for (final table in tablesToImport.reversed) {
-           await txn.delete(table);
-           _log.info('Cleared table "$table".');
+          await txn.delete(table);
+          _log.info('Cleared table "$table".');
         }
 
         // Insert new data
@@ -72,24 +99,38 @@ class SyncService {
             int count = 0;
             for (final row in tableData) {
               if (row is Map<String, dynamic>) {
-                 await txn.insert(
-                   table,
-                   row,
-                   conflictAlgorithm: ConflictAlgorithm.replace,
-                 );
-                 count++;
+                await txn.insert(
+                  table,
+                  row,
+                  conflictAlgorithm: ConflictAlgorithm.replace,
+                );
+                count++;
               }
             }
-             _log.info('Imported $count rows into "$table".');
+            _log.info('Imported $count rows into "$table".');
           }
         }
       });
 
       _log.info('Database import complete.');
       _invalidateAllProviders();
-
     } catch (e, s) {
-      _log.severe('Failed to import database', e, s);
+      _log.severe('Failed to import database from map', e, s);
+      rethrow;
+    }
+  }
+
+  /// Clears local data and imports a full dataset from a JSON string.
+  /// This is a destructive operation.
+  Future<void> importDatabaseFromSync(String jsonData) async {
+    _log.info('Starting full database import from sync string...');
+    try {
+      final Map<String, dynamic> allData = await Isolate.run(
+        () => jsonDecode(jsonData) as Map<String, dynamic>,
+      );
+      await importDatabaseMapFromSync(allData);
+    } catch (e, s) {
+      _log.severe('Failed to import database from string', e, s);
       rethrow;
     }
   }

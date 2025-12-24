@@ -31,12 +31,14 @@ class BroadcastService {
         .limit(5)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => BroadcastModel.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => BroadcastModel.fromFirestore(doc))
+              .toList();
+        });
   }
-  
+
   Future<void> deleteBroadcast(String id) async {
-      await _firestore.collection(_collection).doc(id).delete();
+    await _firestore.collection(_collection).doc(id).delete();
   }
 }
 

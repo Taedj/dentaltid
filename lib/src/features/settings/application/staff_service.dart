@@ -40,11 +40,7 @@ class StaffService {
 
   Future<int> deleteStaff(int id) async {
     final db = await _db;
-    return await db.delete(
-      'staff_users',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    return await db.delete('staff_users', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<StaffUser?> authenticateStaff(String username, String pin) async {
