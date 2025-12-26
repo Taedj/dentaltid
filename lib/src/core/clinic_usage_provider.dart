@@ -34,7 +34,15 @@ class ClinicUsageState {
 
 final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
   final userProfile = ref.watch(userProfileProvider).value;
-  final patients = ref.watch(patientsProvider(const PatientListConfig(filter: PatientFilter.all))).value ?? [];
+  final patients =
+      ref
+          .watch(
+            patientsProvider(
+              const PatientListConfig(filter: PatientFilter.all),
+            ),
+          )
+          .value ??
+      [];
   final appointments = ref.watch(appointmentsProvider).value ?? [];
   final inventory = ref.watch(inventoryItemsProvider).value ?? [];
 

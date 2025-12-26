@@ -1071,11 +1071,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get deleteTransaction => 'حذف المعاملة';
 
   @override
-  String get premiumAccount => 'حساب بريميوم';
+  String get premiumAccount => 'حساب مميز';
 
   @override
   String premiumDaysLeft(int days) {
-    return 'بريميوم: متبقي $days يوم';
+    return 'مميز: $days أيام متبقية';
   }
 
   @override
@@ -1083,7 +1083,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String trialVersionDaysLeft(int days) {
-    return 'النسخة التجريبية: متبقي $days يوم';
+    return 'نسخة تجريبية: $days أيام متبقية';
   }
 
   @override
@@ -1276,4 +1276,351 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get port => 'المنفذ';
+
+  @override
+  String get acceptTermsError => 'يرجى قبول الشروط والأحكام';
+
+  @override
+  String get dentistLogin => 'دخول طبيب الأسنان';
+
+  @override
+  String get dentistRegistration => 'تسجيل طبيب الأسنان';
+
+  @override
+  String get staffPortal => 'بوابة الموظفين';
+
+  @override
+  String get forgotPassword => 'هل نسيت كلمة السر؟';
+
+  @override
+  String get authError => 'حدث خطأ، يرجى التحقق من بيانات الاعتماد الخاصة بك.';
+
+  @override
+  String get weakPasswordError => 'كلمة المرور المقدمة ضعيفة للغاية.';
+
+  @override
+  String get emailInUseError => 'يوجد حساب بالفعل لهذا البريد الإلكتروني.';
+
+  @override
+  String get userNotFoundError =>
+      'لم يتم العثور على مستخدم لهذا البريد الإلكتروني.';
+
+  @override
+  String get wrongPasswordError => 'كلمة مرور خاطئة لهذا المستخدم.';
+
+  @override
+  String get networkError => 'خطأ في الشبكة. تحقق من اتصالك.';
+
+  @override
+  String authFailed(String error) {
+    return 'فشل المصادقة: $error';
+  }
+
+  @override
+  String get invalidStaffCredentials => 'اسم المستخدم أو رمز PIN غير صحيح';
+
+  @override
+  String get enterEmailFirst => 'يرجى إدخال عنوان بريدك الإلكتروني أولاً';
+
+  @override
+  String get passwordResetSent =>
+      'تم إرسال بريد إلكتروني لإعادة تعيين كلمة المرور! تحقق من بريدك الوارد.';
+
+  @override
+  String get contactDeveloperLabel => 'اتصل بالمطور';
+
+  @override
+  String get contactUs => 'اتصل بنا';
+
+  @override
+  String get dentist => 'طبيب أسنان';
+
+  @override
+  String get staff => 'موظف';
+
+  @override
+  String get emailAddress => 'البريد الإلكتروني';
+
+  @override
+  String get password => 'كلمة المرور';
+
+  @override
+  String get yourName => 'اسمك';
+
+  @override
+  String get clinicNameLabel => 'اسم العيادة';
+
+  @override
+  String get licenseNumber => 'رقم الترخيص';
+
+  @override
+  String get acceptTermsAndConditions => 'أوافق على الشروط والأحكام';
+
+  @override
+  String get pin4Digits => 'رمز PIN (4 أرقام)';
+
+  @override
+  String get signIn => 'تسجيل الدخول';
+
+  @override
+  String get register => 'تسجيل';
+
+  @override
+  String get loginLabel => 'دخول';
+
+  @override
+  String get rememberLabel => 'تذكرني';
+
+  @override
+  String get dontHaveAccount => 'ليس لديك حساب؟ ';
+
+  @override
+  String get alreadyHaveAccount => 'لديك حساب بالفعل؟ ';
+
+  @override
+  String get signUpSmall => 'سجل الآن';
+
+  @override
+  String get signInSmall => 'سجل الدخول';
+
+  @override
+  String get goodMorning => 'صباح الخير';
+
+  @override
+  String get goodAfternoon => 'مساء الخير';
+
+  @override
+  String get goodEvening => 'مساء الخير';
+
+  @override
+  String get scheduledVisits => 'الزيارات المجدولة';
+
+  @override
+  String get actionNeeded => 'إجراء مطلوب';
+
+  @override
+  String get allGood => 'كل شيء جيد';
+
+  @override
+  String activeStatus(int count) {
+    return 'نشط: $count';
+  }
+
+  @override
+  String doneStatus(int count) {
+    return 'تم: $count';
+  }
+
+  @override
+  String get clinicRunningSmoothly => 'العيادة تعمل بسلاسة اليوم 🦷';
+
+  @override
+  String expiringLabel(int count) {
+    return '$count تنتهي صلاحيتها';
+  }
+
+  @override
+  String lowStockLabelText(int count) {
+    return '$count مخزون منخفض';
+  }
+
+  @override
+  String get staffActivationNotice =>
+      'يجب على طبيب الأسنان الرئيسي تفعيل العضوية المميزة للاستمرار في استخدام التطبيق.';
+
+  @override
+  String get overviewMenu => 'نظرة عامة';
+
+  @override
+  String get usersMenu => 'المستخدمين';
+
+  @override
+  String get codesMenu => 'الأكواد';
+
+  @override
+  String get broadcastsMenu => 'البث';
+
+  @override
+  String get serverOnlineNoStaff => 'الخادم متصل (لا يوجد موظفين متصلين)';
+
+  @override
+  String serverOnlineWithStaffCount(int count) {
+    return 'الخادم متصل ($count موظفين متصلين)';
+  }
+
+  @override
+  String staffConnectedList(String names) {
+    return 'المتصلون: $names';
+  }
+
+  @override
+  String get connectedToServer => 'متصل بالخادم';
+
+  @override
+  String get offline => 'غير متصل';
+
+  @override
+  String get invalidCodeLength => 'طول الكود غير صحيح (يجب أن يكون 27 حرفاً)';
+
+  @override
+  String get activationSuccess =>
+      'تم تفعيل الحساب بنجاح! الميزات المميزة مفعلة الآن.';
+
+  @override
+  String get invalidActivationCode => 'كود التفعيل غير صحيح أو منتهي الصلاحية';
+
+  @override
+  String activationError(String error) {
+    return 'خطأ أثناء التفعيل: $error';
+  }
+
+  @override
+  String get activationRequired => 'التفعيل مطلوب';
+
+  @override
+  String get trialExpiredNotice =>
+      'انتهت الفترة التجريبية الخاصة بك. يرجى إدخال كود تفعيل صالح للاستمرار في استخدام DentalTid Premium.';
+
+  @override
+  String get activationCodeLabel => 'كود التفعيل (27 حرفاً)';
+
+  @override
+  String get needACode => 'هل تحتاج إلى كود؟';
+
+  @override
+  String get editDoctorProfile => 'تعديل الملف الشخصي للطبيب';
+
+  @override
+  String get updateYourProfile => 'تحديث ملفك الشخصي';
+
+  @override
+  String get saveChanges => 'حفظ التغييرات';
+
+  @override
+  String get enterYourName => 'يرجى إدخال اسمك';
+
+  @override
+  String get profileUpdatedSuccess => 'تم تحديث الملف الشخصي بنجاح!';
+
+  @override
+  String profileUpdateError(String error) {
+    return 'فشل في حفظ الملف الشخصي: $error';
+  }
+
+  @override
+  String get loginToSaveProfileError =>
+      'تعذر حفظ الملف الشخصي. المستخدم غير مسجل الدخول.';
+
+  @override
+  String get required => 'مطلوب';
+
+  @override
+  String get mustBe4Digits => 'يجب أن يكون 4 أرقام';
+
+  @override
+  String get editStaff => 'تعديل الموظف';
+
+  @override
+  String get addNewStaff => 'إضافة موظف جديد';
+
+  @override
+  String get fullName => 'الاسم الكامل';
+
+  @override
+  String get systemHealth => 'صحة النظام';
+
+  @override
+  String get developerOverview => 'نظرة عامة للمطور';
+
+  @override
+  String get totalUsers => 'إجمالي المستخدمين';
+
+  @override
+  String get activeTrials => 'التجارب النشطة';
+
+  @override
+  String get estRevenue => 'الإيرادات المقدرة';
+
+  @override
+  String noPatientsFoundSearch(String query) {
+    return 'لم يتم العثور على مرضى يطابقون \"$query\"';
+  }
+
+  @override
+  String get paidStatusLabel => 'مدفوع';
+
+  @override
+  String get searchHintSeparator => 'أو الهاتف...';
+
+  @override
+  String get savePatientsCsvLabel => 'حفظ ملف المرضى CSV';
+
+  @override
+  String get localBackupConfirm =>
+      'سيشمل هذا النسخ الاحتياطي قاعدة بيانات عيادتك وإعدادات التطبيق وحسابات الموظفين. هل تريد الاستمرار؟';
+
+  @override
+  String get premiumOnly => 'للمشتركين فقط';
+
+  @override
+  String get cloudSyncConfirm =>
+      'سيؤدي هذا إلى رفع قاعدة بيانات عيادتك وإعداداتك وحسابات الموظفين إلى السحابة للحفاظ عليها. هل تريد الاستمرار؟';
+
+  @override
+  String get cloudSyncPremiumNotice =>
+      'المزامنة السحابية هي ميزة متقدمة للمشتركين. قم بالتفعيل للتمكين.';
+
+  @override
+  String get manageStaffMembers => 'إدارة أعضاء الفريق';
+
+  @override
+  String get addStaffSubtitle => 'إضافة مساعدين أو موظفي استقبال';
+
+  @override
+  String get lanSyncSettings => 'إعدادات مزامنة الشبكة المحلية';
+
+  @override
+  String get autoStartServerLabel => 'تشغيل الخادم تلقائياً';
+
+  @override
+  String get autoStartServerSubtitle =>
+      'بدء تشغيل خادم المزامنة عند فتح التطبيق';
+
+  @override
+  String get serverPortLabel => 'منفذ الخادم';
+
+  @override
+  String get defaultPortHelper => 'الافتراضي: 8080';
+
+  @override
+  String get advancedNetworkConfig => 'تكوين الشبكة المتقدم';
+
+  @override
+  String get advancedNetworkConfigSubtitle =>
+      'السجلات، جدار الحماية، وإعدادات IP';
+
+  @override
+  String errorLoadingProfile(String error) {
+    return 'خطأ في تحميل الملف الشخصي: $error';
+  }
+
+  @override
+  String get deleteTransactionConfirm =>
+      'هل أنت متأكد أنك تريد حذف هذه العملية؟';
+
+  @override
+  String get transactionDeletedSuccess => 'تم حذف العملية بنجاح';
+
+  @override
+  String get limitReached => 'تم الوصول إلى الحد الأقصى';
+
+  @override
+  String get inventoryLimitMessage =>
+      'لقد وصلت إلى الحد الأقصى وهو 100 عنصر مخزون للنسخة التجريبية.\nيرجى الترقية إلى النسخة المميزة لمتابعة إضافة العناصر.';
+
+  @override
+  String get okButton => 'حسناً';
+
+  @override
+  String get trialActive => 'فترة تجريبية';
 }

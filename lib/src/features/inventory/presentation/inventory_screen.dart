@@ -116,17 +116,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   }
 
   void _showLimitDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Limit Reached'),
-        content: const Text(
-          'You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.',
-        ),
+        title: Text(l10n.limitReached),
+        content: Text(l10n.inventoryLimitMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+            child: Text(l10n.okButton),
           ),
         ],
       ),

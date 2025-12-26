@@ -18,7 +18,8 @@ class SyncService {
   SyncService(this._ref);
 
   /// Exports all relevant tables into a single Map.
-  Future<Map<String, List<Map<String, dynamic>>>> exportDatabaseMapForSync() async {
+  Future<Map<String, List<Map<String, dynamic>>>>
+  exportDatabaseMapForSync() async {
     _log.info('Starting full database export for sync...');
     try {
       final db = await _ref.read(databaseServiceProvider).database;

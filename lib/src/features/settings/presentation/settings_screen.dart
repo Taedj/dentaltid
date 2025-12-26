@@ -164,9 +164,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: Text(l10n.localBackup),
-                            content: const Text(
-                              'This backup will include your clinic database, app settings, and staff accounts. Do you want to proceed?',
-                            ),
+                            content: Text(l10n.localBackupConfirm),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
@@ -240,7 +238,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         : Text(
                             isPremium
                                 ? l10n.restoreFromLocalBackup
-                                : "${l10n.restoreFromLocalBackup} (Premium Only)",
+                                : "${l10n.restoreFromLocalBackup} (${l10n.premiumOnly})",
                           ),
                   );
                 },
@@ -275,9 +273,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       context: context,
                                       builder: (context) => AlertDialog(
                                         title: Text(l10n.syncToCloud),
-                                        content: const Text(
-                                          'This will upload your clinic database, settings, and staff accounts to the cloud for safe keeping. Do you want to proceed?',
-                                        ),
+                                        content: Text(l10n.cloudSyncConfirm),
                                         actions: [
                                           TextButton(
                                             onPressed: () =>
@@ -356,10 +352,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               children: [
                                 const Icon(Icons.cloud_off, color: Colors.grey),
                                 const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Text(
-                                    'Cloud Sync is a detailed Premium feature. Activate to enable.',
-                                  ),
+                                Expanded(
+                                  child: Text(l10n.cloudSyncPremiumNotice),
                                 ),
                               ],
                             ),
@@ -370,15 +364,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                       if (isDentist) ...[
                         Text(
-                          'Staff Management',
+                          l10n.staffManagement,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
                         ListTile(
-                          title: const Text('Manage Staff Members'),
-                          subtitle: const Text(
-                            'Add Assistants or Receptionists',
-                          ),
+                          title: Text(l10n.manageStaffMembers),
+                          subtitle: Text(l10n.addStaffSubtitle),
                           leading: const Icon(Icons.people),
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
@@ -393,13 +385,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         // LAN Sync Settings - for Dentist
                         Text(
-                          'LAN Sync Settings',
+                          l10n.lanSyncSettings,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
                         SwitchListTile(
-                          title: const Text('Auto-start Server'),
-                          subtitle: const Text('Start sync server on app launch'),
+                          title: Text(l10n.autoStartServerLabel),
+                          subtitle: Text(l10n.autoStartServerSubtitle),
                           value: _autoStartServer,
                           onChanged: (value) async {
                             setState(() => _autoStartServer = value);
@@ -414,9 +406,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: TextFormField(
                             controller: _serverPortController,
-                            decoration: const InputDecoration(
-                              labelText: 'Server Port',
-                              helperText: 'Default: 8080',
+                            decoration: InputDecoration(
+                              labelText: l10n.serverPortLabel,
+                              helperText: l10n.defaultPortHelper,
                             ),
                             keyboardType: TextInputType.number,
                             onChanged: (value) async {
@@ -429,17 +421,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 10),
                         ListTile(
-                          title: const Text('Advanced Network Configuration'),
-                          subtitle: const Text('Logs, Firewall, and IP settings'),
+                          title: Text(l10n.advancedNetworkConfig),
+                          subtitle: Text(l10n.advancedNetworkConfigSubtitle),
                           leading: const Icon(Icons.lan_outlined),
                           trailing: const Icon(Icons.settings),
                           onTap: () {
                             showDialog(
                               context: context,
-                              builder:
-                                  (context) => const NetworkConfigDialog(
-                                    userType: UserType.dentist,
-                                  ),
+                              builder: (context) => const NetworkConfigDialog(
+                                userType: UserType.dentist,
+                              ),
                             );
                           },
                         ),
@@ -706,7 +697,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, stack) =>
-                    Center(child: Text('Error loading user profile: $error')),
+                    Center(child: Text(l10n.errorLoadingProfile(error.toString()))),
               ),
             ],
           ),

@@ -295,10 +295,12 @@ class FirebaseService {
         return null;
       }
       final bytes = await file.readAsBytes();
-      
+
       // Calculate MD5 for integrity check later
       final md5Hash = md5.convert(bytes).toString();
-      _logger.info('File read successfully. Size: ${bytes.length} bytes, MD5: $md5Hash');
+      _logger.info(
+        'File read successfully. Size: ${bytes.length} bytes, MD5: $md5Hash',
+      );
 
       final base64String = base64Encode(bytes);
       _logger.info('Base64 encoding complete. Length: ${base64String.length}');
@@ -342,7 +344,9 @@ class FirebaseService {
 
       // Mark as complete
       await backupDoc.update({'status': 'completed'});
-      _logger.info('All chunks uploaded and verified. Backup ID: ${backupDoc.id}');
+      _logger.info(
+        'All chunks uploaded and verified. Backup ID: ${backupDoc.id}',
+      );
 
       return backupDoc.id;
     } catch (e, s) {
@@ -364,7 +368,7 @@ class FirebaseService {
           .collection('backups')
           .doc(backupId)
           .get();
-          
+
       if (!backupDoc.exists) {
         _logger.severe('Backup document $backupId not found.');
         return null;
@@ -385,12 +389,12 @@ class FirebaseService {
             .collection('chunks')
             .doc(i.toString())
             .get();
-            
+
         if (!chunkDoc.exists) {
           throw Exception('Missing chunk $i for backup $backupId');
         }
         chunks.add(chunkDoc.data()!['data'] as String);
-        
+
         if (i % 10 == 0 || i == chunkCount - 1) {
           _logger.info('Download progress: chunk $i/$chunkCount');
         }
@@ -403,7 +407,9 @@ class FirebaseService {
       if (expectedMd5 != null) {
         final actualMd5 = md5.convert(bytes).toString();
         if (actualMd5 != expectedMd5) {
-          _logger.severe('INTEGRITY FAILURE: Expected MD5 $expectedMd5, got $actualMd5');
+          _logger.severe(
+            'INTEGRITY FAILURE: Expected MD5 $expectedMd5, got $actualMd5',
+          );
           return null;
         }
         _logger.info('Integrity verified (MD5 match).');
@@ -660,7 +666,10 @@ class FirebaseService {
     }
   }
 
-  Future<void> deleteUserBackupFromFirestore(String uid, String backupId) async {
+  Future<void> deleteUserBackupFromFirestore(
+    String uid,
+    String backupId,
+  ) async {
     try {
       _logger.info('Deleting backup $backupId for user $uid');
       final backupRef = _firestore

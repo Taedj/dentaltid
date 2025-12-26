@@ -24,12 +24,13 @@ class AppInitializer {
 
     try {
       await SettingsService.instance.init();
-      
+
       // Update last seen date for Clock Guard security
       final settings = SettingsService.instance;
       final lastSeenStr = settings.getString('last_seen_date');
       final now = DateTime.now();
-      if (lastSeenStr == null || (DateTime.tryParse(lastSeenStr)?.isBefore(now) ?? true)) {
+      if (lastSeenStr == null ||
+          (DateTime.tryParse(lastSeenStr)?.isBefore(now) ?? true)) {
         await settings.setString('last_seen_date', now.toIso8601String());
       }
 
@@ -99,7 +100,9 @@ class AppInitializer {
               .read(networkStatusProvider.notifier)
               .setStatus(ConnectionStatus.disconnected);
         } else {
-          _logger.info('Server is already running, skipping status reset to DISCONNECTED.');
+          _logger.info(
+            'Server is already running, skipping status reset to DISCONNECTED.',
+          );
         }
       }
 

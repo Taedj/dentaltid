@@ -1,6 +1,9 @@
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:flutter/material.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 class DeveloperOverviewScreen extends StatelessWidget {
   const DeveloperOverviewScreen({super.key});
@@ -8,14 +11,18 @@ class DeveloperOverviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DeveloperService developerService = DeveloperService();
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Developer Overview')),
+      appBar: AppBar(
+        title: Text(l10n.developerOverview),
+      ),
       body: StreamBuilder<List<UserProfile>>(
         stream: developerService.getAllUsers(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            return Center(child: Text('${l10n.errorLabel}: ${snapshot.error}'));
           }
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -33,43 +40,49 @@ class DeveloperOverviewScreen extends StatelessWidget {
               .length;
           final revenueEstimate = premiumUsers * 9;
 
-          return Padding(
-            padding: const EdgeInsets.all(24.0),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'System Health',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.systemHealth,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                const SizedBox(height: 24),
+                GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.5,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
                   children: [
                     _OverviewCard(
-                      'Total Users',
+                      l10n.totalUsers,
                       totalUsers.toString(),
-                      Icons.group,
+                      Icons.people_outline,
                       Colors.blue,
                     ),
                     _OverviewCard(
-                      'Premium',
+                      l10n.premiumAccount,
                       premiumUsers.toString(),
-                      Icons.star,
+                      Icons.star_outline,
                       Colors.amber,
                     ),
                     _OverviewCard(
-                      'Active Trials',
+                      l10n.activeTrials,
                       trialUsers.toString(),
-                      Icons.timer,
-                      Colors.orange,
+                      Icons.timer_outlined,
+                      Colors.green,
                     ),
                     _OverviewCard(
-                      'Est. Revenue',
-                      '\$${revenueEstimate}0',
-                      Icons.attach_money,
-                      Colors.green,
+                      l10n.estRevenue,
+                      '\$$revenueEstimate',
+                      Icons.payments_outlined,
+                      Colors.purple,
                     ),
                   ],
                 ),

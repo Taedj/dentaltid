@@ -28,11 +28,13 @@ class CurrencyNotifier extends StateNotifier<String> {
     // Broadcast change to other devices if we are the dentist (server)
     final userProfile = _ref.read(userProfileProvider).value;
     if (userProfile?.role == UserRole.dentist) {
-      _ref.read(syncBroadcasterProvider).broadcast(
-        table: 'app_settings',
-        action: SyncAction.update,
-        data: {'currency': currency},
-      );
+      _ref
+          .read(syncBroadcasterProvider)
+          .broadcast(
+            table: 'app_settings',
+            action: SyncAction.update,
+            data: {'currency': currency},
+          );
     }
   }
 }

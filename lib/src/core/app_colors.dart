@@ -7,7 +7,7 @@ class AppColors {
   static const Color success = Color(0xFF2ECC71); // Success Green
   static const Color warning = Color(0xFFF39C12); // Warning Orange
   static const Color error = Color(0xFFE74C3C); // Error Red
-  
+
   // Dark Theme
   static const Color darkBackground = Color(0xFF0E1116);
   static const Color darkCard = Color(0xFF161B22);

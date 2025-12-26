@@ -48,17 +48,26 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              _showUpcomingOnly ? LucideIcons.calendar : LucideIcons.calendarDays,
+              _showUpcomingOnly
+                  ? LucideIcons.calendar
+                  : LucideIcons.calendarDays,
               color: AppColors.primary,
             ),
-            onPressed: () => setState(() => _showUpcomingOnly = !_showUpcomingOnly),
+            onPressed: () =>
+                setState(() => _showUpcomingOnly = !_showUpcomingOnly),
           ),
           PopupMenuButton<SortOption>(
             icon: const Icon(LucideIcons.arrowUpDown, color: AppColors.primary),
             onSelected: (option) => setState(() => _sortOption = option),
             itemBuilder: (context) => [
-              PopupMenuItem(value: SortOption.dateTimeAsc, child: Text(l10n.timeEarliestFirst)),
-              PopupMenuItem(value: SortOption.dateTimeDesc, child: Text(l10n.timeLatestFirst)),
+              PopupMenuItem(
+                value: SortOption.dateTimeAsc,
+                child: Text(l10n.timeEarliestFirst),
+              ),
+              PopupMenuItem(
+                value: SortOption.dateTimeDesc,
+                child: Text(l10n.timeLatestFirst),
+              ),
             ],
           ),
         ],
@@ -77,18 +86,26 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 20,
+                ),
               ),
-              onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
+              onChanged: (value) =>
+                  setState(() => _searchQuery = value.toLowerCase()),
             ),
           ),
           Expanded(
             child: appointmentsAsyncValue.when(
               data: (appointments) {
                 var filtered = appointments.where((a) {
-                  final matchesSearch = a.patientId.toString().contains(_searchQuery);
-                  final isUpcoming = !_showUpcomingOnly || a.dateTime.isAfter(DateTime.now());
-                  final statusMatch = _statusFilter == null || a.status == _statusFilter;
+                  final matchesSearch = a.patientId.toString().contains(
+                    _searchQuery,
+                  );
+                  final isUpcoming =
+                      !_showUpcomingOnly || a.dateTime.isAfter(DateTime.now());
+                  final statusMatch =
+                      _statusFilter == null || a.status == _statusFilter;
                   return matchesSearch && isUpcoming && statusMatch;
                 }).toList();
 
@@ -103,9 +120,16 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(LucideIcons.calendarX, size: 64, color: Colors.grey),
+                        const Icon(
+                          LucideIcons.calendarX,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
                         const SizedBox(height: 16),
-                        Text(l10n.noAppointmentsFound, style: const TextStyle(color: Colors.grey)),
+                        Text(
+                          l10n.noAppointmentsFound,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
                       ],
                     ),
                   );
@@ -116,7 +140,9 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {
                     final appointment = filtered[index];
-                    final patientFuture = ref.watch(patientProvider(appointment.patientId));
+                    final patientFuture = ref.watch(
+                      patientProvider(appointment.patientId),
+                    );
 
                     return IntrinsicHeight(
                       child: Row(
@@ -127,12 +153,20 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                             child: Column(
                               children: [
                                 Text(
-                                  DateFormat('HH:mm').format(appointment.dateTime),
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  DateFormat(
+                                    'HH:mm',
+                                  ).format(appointment.dateTime),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 Text(
                                   DateFormat('a').format(appointment.dateTime),
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
                                 ),
                               ],
                             ),
@@ -140,11 +174,17 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                           Column(
                             children: [
                               Container(
-                                width: 12, height: 12,
+                                width: 12,
+                                height: 12,
                                 decoration: BoxDecoration(
                                   color: _getStatusColor(appointment.status),
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).scaffoldBackgroundColor,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                               Expanded(
@@ -160,42 +200,70 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                             child: Padding(
                               padding: const EdgeInsets.only(bottom: 16.0),
                               child: InkWell(
-                                onTap: () => context.go('/appointments/edit', extra: appointment),
+                                onTap: () => context.go(
+                                  '/appointments/edit',
+                                  extra: appointment,
+                                ),
                                 child: Container(
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).cardTheme.color,
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
-                                      BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
                                     ],
                                     border: Border(
-                                      left: BorderSide(color: _getStatusColor(appointment.status), width: 4),
+                                      left: BorderSide(
+                                        color: _getStatusColor(
+                                          appointment.status,
+                                        ),
+                                        width: 4,
+                                      ),
                                     ),
                                   ),
                                   padding: const EdgeInsets.all(12),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 patientFuture.when(
                                                   data: (p) => Text(
                                                     "${p?.name} ${p?.familyName}",
-                                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
                                                   ),
-                                                  loading: () => const Text('...'),
-                                                  error: (_, _) => const Text('Error'),
+                                                  loading: () =>
+                                                      const Text('...'),
+                                                  error: (_, _) =>
+                                                      const Text('Error'),
                                                 ),
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  appointment.createdBy ?? '...',
-                                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                  appointment.createdBy ??
+                                                      '...',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                  ),
                                                 ),
                                               ],
                                             ),
@@ -203,69 +271,167 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                           Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              _buildStatusBadge(context, appointment.status),
+                                              _buildStatusBadge(
+                                                context,
+                                                appointment.status,
+                                              ),
                                               const SizedBox(width: 4),
-                                              if (appointment.status == AppointmentStatus.waiting) ...[
+                                              if (appointment.status ==
+                                                  AppointmentStatus
+                                                      .waiting) ...[
                                                 IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  icon: const Icon(LucideIcons.playCircle, color: AppColors.primary, size: 20),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  icon: const Icon(
+                                                    LucideIcons.playCircle,
+                                                    color: AppColors.primary,
+                                                    size: 20,
+                                                  ),
                                                   onPressed: () async {
-                                                    if (appointment.id != null) {
-                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.inProgress);
-                                                      ref.invalidate(appointmentsProvider);
+                                                    if (appointment.id !=
+                                                        null) {
+                                                      await appointmentService
+                                                          .updateAppointmentStatus(
+                                                            appointment.id!,
+                                                            AppointmentStatus
+                                                                .inProgress,
+                                                          );
+                                                      ref.invalidate(
+                                                        appointmentsProvider,
+                                                      );
                                                     }
                                                   },
                                                 ),
                                                 IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  icon: const Icon(
+                                                    LucideIcons.xCircle,
+                                                    color: AppColors.error,
+                                                    size: 20,
+                                                  ),
                                                   onPressed: () async {
-                                                    if (appointment.id != null) {
-                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.cancelled);
-                                                      ref.invalidate(appointmentsProvider);
+                                                    if (appointment.id !=
+                                                        null) {
+                                                      await appointmentService
+                                                          .updateAppointmentStatus(
+                                                            appointment.id!,
+                                                            AppointmentStatus
+                                                                .cancelled,
+                                                          );
+                                                      ref.invalidate(
+                                                        appointmentsProvider,
+                                                      );
                                                     }
                                                   },
                                                 ),
-                                              ] else if (appointment.status == AppointmentStatus.inProgress) ...[
+                                              ] else if (appointment.status ==
+                                                  AppointmentStatus
+                                                      .inProgress) ...[
                                                 IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  icon: const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  icon: const Icon(
+                                                    LucideIcons.checkCircle,
+                                                    color: AppColors.success,
+                                                    size: 20,
+                                                  ),
                                                   onPressed: () async {
-                                                    if (appointment.id != null) {
-                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.completed);
-                                                      ref.invalidate(appointmentsProvider);
+                                                    if (appointment.id !=
+                                                        null) {
+                                                      await appointmentService
+                                                          .updateAppointmentStatus(
+                                                            appointment.id!,
+                                                            AppointmentStatus
+                                                                .completed,
+                                                          );
+                                                      ref.invalidate(
+                                                        appointmentsProvider,
+                                                      );
                                                     }
                                                   },
                                                 ),
                                                 IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  icon: const Icon(
+                                                    LucideIcons.xCircle,
+                                                    color: AppColors.error,
+                                                    size: 20,
+                                                  ),
                                                   onPressed: () async {
-                                                    if (appointment.id != null) {
-                                                      await appointmentService.updateAppointmentStatus(appointment.id!, AppointmentStatus.cancelled);
-                                                      ref.invalidate(appointmentsProvider);
+                                                    if (appointment.id !=
+                                                        null) {
+                                                      await appointmentService
+                                                          .updateAppointmentStatus(
+                                                            appointment.id!,
+                                                            AppointmentStatus
+                                                                .cancelled,
+                                                          );
+                                                      ref.invalidate(
+                                                        appointmentsProvider,
+                                                      );
                                                     }
                                                   },
                                                 ),
-                                              ] else if (appointment.status == AppointmentStatus.completed || appointment.status == AppointmentStatus.cancelled) ...[
+                                              ] else if (appointment.status ==
+                                                      AppointmentStatus
+                                                          .completed ||
+                                                  appointment.status ==
+                                                      AppointmentStatus
+                                                          .cancelled) ...[
                                                 IconButton(
-                                                  visualDensity: VisualDensity.compact,
-                                                  icon: const Icon(LucideIcons.trash2, color: Colors.grey, size: 20),
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  icon: const Icon(
+                                                    LucideIcons.trash2,
+                                                    color: Colors.grey,
+                                                    size: 20,
+                                                  ),
                                                   onPressed: () async {
                                                     final confirmed = await showDialog<bool>(
                                                       context: context,
                                                       builder: (context) => AlertDialog(
-                                                        title: Text(l10n.deleteAppointment),
-                                                        content: Text(l10n.confirmDeleteAppointment),
+                                                        title: Text(
+                                                          l10n.deleteAppointment,
+                                                        ),
+                                                        content: Text(
+                                                          l10n.confirmDeleteAppointment,
+                                                        ),
                                                         actions: [
-                                                          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-                                                          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.delete)),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  context,
+                                                                  false,
+                                                                ),
+                                                            child: Text(
+                                                              l10n.cancel,
+                                                            ),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () =>
+                                                                Navigator.pop(
+                                                                  context,
+                                                                  true,
+                                                                ),
+                                                            child: Text(
+                                                              l10n.delete,
+                                                            ),
+                                                          ),
                                                         ],
                                                       ),
                                                     );
-                                                    if (confirmed == true && appointment.id != null) {
-                                                      await appointmentService.deleteAppointment(appointment.id!);
-                                                      ref.invalidate(appointmentsProvider);
+                                                    if (confirmed == true &&
+                                                        appointment.id !=
+                                                            null) {
+                                                      await appointmentService
+                                                          .deleteAppointment(
+                                                            appointment.id!,
+                                                          );
+                                                      ref.invalidate(
+                                                        appointmentsProvider,
+                                                      );
                                                     }
                                                   },
                                                 ),
@@ -304,10 +470,14 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
 
   Color _getStatusColor(AppointmentStatus status) {
     switch (status) {
-      case AppointmentStatus.waiting: return AppColors.primary;
-      case AppointmentStatus.inProgress: return AppColors.warning;
-      case AppointmentStatus.completed: return AppColors.success;
-      case AppointmentStatus.cancelled: return AppColors.error;
+      case AppointmentStatus.waiting:
+        return AppColors.primary;
+      case AppointmentStatus.inProgress:
+        return AppColors.warning;
+      case AppointmentStatus.completed:
+        return AppColors.success;
+      case AppointmentStatus.cancelled:
+        return AppColors.error;
     }
   }
 
@@ -316,12 +486,20 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
     String label = '';
     final l10n = AppLocalizations.of(context)!;
     switch (status) {
-      case AppointmentStatus.waiting: label = l10n.waiting; break;
-      case AppointmentStatus.inProgress: label = l10n.inProgress; break;
-      case AppointmentStatus.completed: label = l10n.completed; break;
-      case AppointmentStatus.cancelled: label = l10n.cancelled; break;
+      case AppointmentStatus.waiting:
+        label = l10n.waiting;
+        break;
+      case AppointmentStatus.inProgress:
+        label = l10n.inProgress;
+        break;
+      case AppointmentStatus.completed:
+        label = l10n.completed;
+        break;
+      case AppointmentStatus.cancelled:
+        label = l10n.cancelled;
+        break;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -331,7 +509,11 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

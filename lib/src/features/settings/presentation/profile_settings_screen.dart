@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:logging/logging.dart';
 
 class ProfileSettingsScreen extends ConsumerStatefulWidget {
@@ -58,8 +59,8 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
     if (currentUser == null) {
       _log.warning('Attempted to save profile, but no current user was found.');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save profile. User not logged in.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.loginToSaveProfileError),
           backgroundColor: Colors.red,
         ),
       );
@@ -111,8 +112,8 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.profileUpdatedSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -122,7 +123,7 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to save profile: ${e.toString()}'),
+            content: Text(AppLocalizations.of(context)!.profileUpdateError(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -135,8 +136,9 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
     final userProfileAsync = ref.watch(userProfileProvider);
     final theme = Theme.of(context);
 
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Doctor Profile')),
+      appBar: AppBar(title: Text(l10n.editDoctorProfile)),
       body: userProfileAsync.when(
         data: (userProfile) {
           // Set initial values if they haven't been set yet
@@ -164,7 +166,7 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Update Your Profile',
+                    l10n.updateYourProfile,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -172,14 +174,14 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                   const SizedBox(height: 24),
                   TextFormField(
                     controller: _dentistNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Dr. Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person_outline),
+                    decoration: InputDecoration(
+                      labelText: l10n.yourName,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
+                        return l10n.enterYourName;
                       }
                       return null;
                     },
@@ -187,28 +189,28 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _clinicNameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Clinic Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.business_outlined),
+                    decoration: InputDecoration(
+                      labelText: l10n.clinicNameLabel,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.business_outlined),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _phoneNumberController,
-                    decoration: const InputDecoration(
-                      labelText: 'Phone Number',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.phone_outlined),
+                    decoration: InputDecoration(
+                      labelText: l10n.phoneNumber,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.phone_outlined),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _medicalLicenseNumberController,
-                    decoration: const InputDecoration(
-                      labelText: 'Medical License Number',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.badge_outlined),
+                    decoration: InputDecoration(
+                      labelText: l10n.licenseNumber,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.badge_outlined),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -221,7 +223,7 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: const Text('Save Changes'),
+                    child: Text(l10n.saveChanges),
                   ),
                 ],
               ),
@@ -230,7 +232,7 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) =>
-            Center(child: Text('Error loading profile: ${e.toString()}')),
+            Center(child: Text('${l10n.errorLabel}: ${e.toString()}')),
       ),
     );
   }

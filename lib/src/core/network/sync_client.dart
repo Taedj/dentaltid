@@ -33,7 +33,9 @@ class SyncClient {
     final isDentist = roleString == UserRole.dentist.toString();
 
     if (isDentist) {
-      _log.info('SyncClient: Role is DENTIST. Ignoring status update to $status to preserve Server state.');
+      _log.info(
+        'SyncClient: Role is DENTIST. Ignoring status update to $status to preserve Server state.',
+      );
       return;
     }
 
@@ -88,7 +90,7 @@ class SyncClient {
       );
 
       // Wait for the first message (handshake) or timeout.
-      // Now that the server sends an immediate 'connection_accepted', 
+      // Now that the server sends an immediate 'connection_accepted',
       // this timeout can be shorter for the initial handshake.
       await completer.future.timeout(
         const Duration(seconds: 10),
@@ -127,18 +129,20 @@ class SyncClient {
         final currency = json['currency'] as String?;
 
         Future.wait<void>([
-          syncService.importDatabaseMapFromSync(dbDataMap),
-          _saveDentistProfile(profileData),
-          if (currency != null) _saveCurrency(currency),
-        ]).then((_) {
-          _log.info('Initial DB and Profile sync complete!');
-          _isInitialSyncComplete = true;
-          _container.invalidate(userProfileProvider);
-          _setStatus(ConnectionStatus.synced);
-        }).catchError((e, s) {
-          _log.severe('Full sync failed!', e, s);
-          _setStatus(ConnectionStatus.error);
-        });
+              syncService.importDatabaseMapFromSync(dbDataMap),
+              _saveDentistProfile(profileData),
+              if (currency != null) _saveCurrency(currency),
+            ])
+            .then((_) {
+              _log.info('Initial DB and Profile sync complete!');
+              _isInitialSyncComplete = true;
+              _container.invalidate(userProfileProvider);
+              _setStatus(ConnectionStatus.synced);
+            })
+            .catchError((e, s) {
+              _log.severe('Full sync failed!', e, s);
+              _setStatus(ConnectionStatus.error);
+            });
       } else if (type == 'error') {
         _log.severe('Received error from server: ${json['message']}');
         _setStatus(ConnectionStatus.error);
@@ -236,7 +240,9 @@ class SyncClient {
       _log.info('Invalidated staffListProvider');
     } else if (table == 'dentist_profile') {
       _container.invalidate(userProfileProvider);
-      _log.info('Invalidated userProfileProvider due to dentist_profile update');
+      _log.info(
+        'Invalidated userProfileProvider due to dentist_profile update',
+      );
     }
   }
 
@@ -250,17 +256,19 @@ class SyncClient {
 
   void sendIdentity() {
     if (_channel == null) return;
-    
-    final cachedProfileJson = SettingsService.instance.getString('managedUserProfile');
+
+    final cachedProfileJson = SettingsService.instance.getString(
+      'managedUserProfile',
+    );
     if (cachedProfileJson != null) {
       try {
         final profileMap = jsonDecode(cachedProfileJson);
-        final fullName = profileMap['fullName'] ?? profileMap['username'] ?? 'Unknown Staff';
+        final fullName =
+            profileMap['fullName'] ?? profileMap['username'] ?? 'Unknown Staff';
         _log.info('Sending identity: $fullName');
-        _channel!.sink.add(jsonEncode({
-          'type': 'staff_identity',
-          'fullName': fullName,
-        }));
+        _channel!.sink.add(
+          jsonEncode({'type': 'staff_identity', 'fullName': fullName}),
+        );
       } catch (e) {
         _log.warning('Could not decode managedUserProfile for identity: $e');
       }

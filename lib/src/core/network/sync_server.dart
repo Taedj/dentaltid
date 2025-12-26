@@ -43,22 +43,24 @@ class SyncServer {
     final router = Router();
 
     // Middleware to log all requests
-    final pipeline = const Pipeline().addMiddleware(logRequests(
-      logger: (msg, isError) {
-        if (isError) {
-          _log.severe(msg);
-        } else {
-          _log.info('HTTP: $msg');
-        }
-      },
-    ));
+    final pipeline = const Pipeline().addMiddleware(
+      logRequests(
+        logger: (msg, isError) {
+          if (isError) {
+            _log.severe(msg);
+          } else {
+            _log.info('HTTP: $msg');
+          }
+        },
+      ),
+    );
 
     final webSocket = webSocketHandler((WebSocketChannel webSocket) {
       _log.info('WEBSOCKET: Client connection handshake initiated.');
-      
+
       // CRITICAL: Send immediate ACK to prevent client timeout during DB export
       webSocket.sink.add(jsonEncode({'type': 'connection_accepted'}));
-      
+
       _clients.add(webSocket);
       _container.read(connectedClientsCountProvider.notifier).state =
           _clients.length;
@@ -84,8 +86,8 @@ class SyncServer {
 
     try {
       _server = await shelf_io.serve(
-        pipeline.addHandler(router.call), 
-        InternetAddress.anyIPv4, 
+        pipeline.addHandler(router.call),
+        InternetAddress.anyIPv4,
         port,
       );
       _container
@@ -113,17 +115,20 @@ class SyncServer {
 
       // Attempt to get profile from provider
       _log.info('SYNC: Fetching dentist profile...');
-      
+
       Map<String, dynamic>? profileMap;
       try {
-        final dentistProfile = await _container.read(userProfileProvider.future).timeout(
-          const Duration(seconds: 2),
-        );
+        final dentistProfile = await _container
+            .read(userProfileProvider.future)
+            .timeout(const Duration(seconds: 2));
         profileMap = dentistProfile?.toJson();
       } catch (e) {
-        _log.warning('SYNC: Provider timeout/error, using local settings cache: $e');
-        final cachedJson = SettingsService.instance.getString('cached_user_profile') ?? 
-                           SettingsService.instance.getString('dentist_profile');
+        _log.warning(
+          'SYNC: Provider timeout/error, using local settings cache: $e',
+        );
+        final cachedJson =
+            SettingsService.instance.getString('cached_user_profile') ??
+            SettingsService.instance.getString('dentist_profile');
         if (cachedJson != null) {
           try {
             profileMap = jsonDecode(cachedJson);
@@ -151,32 +156,41 @@ class SyncServer {
 
       _log.info('SYNC: Constructing full payload Map...');
       final fullPayload = {
-          'type': 'initial_sync',
-          'profile': profileMap,
-          'database': dbDataMap,
-          'currency': SettingsService.instance.getString('currency') ?? r'$',
-        };
-        
-        _log.info('SYNC: Encoding and sending payload (this may take a few seconds)...');
-        try {
-          final payloadString = jsonEncode(fullPayload);
-          _log.info('SYNC: Encoded payload size: ${payloadString.length} bytes.');
-          
-          webSocket.sink.add(payloadString);
-          _log.info('SYNC: Initial sync data added to sink successfully.');
-        } catch (e) {
-          _log.severe('SYNC ERROR: jsonEncode failed. Database might be too large for memory: $e');
-          webSocket.sink.add(jsonEncode({
+        'type': 'initial_sync',
+        'profile': profileMap,
+        'database': dbDataMap,
+        'currency': SettingsService.instance.getString('currency') ?? r'$',
+      };
+
+      _log.info(
+        'SYNC: Encoding and sending payload (this may take a few seconds)...',
+      );
+      try {
+        final payloadString = jsonEncode(fullPayload);
+        _log.info('SYNC: Encoded payload size: ${payloadString.length} bytes.');
+
+        webSocket.sink.add(payloadString);
+        _log.info('SYNC: Initial sync data added to sink successfully.');
+      } catch (e) {
+        _log.severe(
+          'SYNC ERROR: jsonEncode failed. Database might be too large for memory: $e',
+        );
+        webSocket.sink.add(
+          jsonEncode({
             'type': 'error',
-            'message': 'Server ran out of memory or encountered encoding error during sync.'
-          }));
-        }
+            'message':
+                'Server ran out of memory or encountered encoding error during sync.',
+          }),
+        );
+      }
     } catch (e, stack) {
       _log.severe('SYNC ERROR: Error sending initial sync: $e', e, stack);
-      webSocket.sink.add(jsonEncode({
-        'type': 'error',
-        'message': 'Internal Server Error during sync: $e'
-      }));
+      webSocket.sink.add(
+        jsonEncode({
+          'type': 'error',
+          'message': 'Internal Server Error during sync: $e',
+        }),
+      );
     }
   }
 
@@ -275,7 +289,9 @@ class SyncServer {
       _log.info('Invalidated staffListProvider');
     } else if (table == 'dentist_profile') {
       _container.invalidate(userProfileProvider);
-      _log.info('Invalidated userProfileProvider due to dentist_profile update');
+      _log.info(
+        'Invalidated userProfileProvider due to dentist_profile update',
+      );
     }
   }
 

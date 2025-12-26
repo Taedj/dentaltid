@@ -424,20 +424,17 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       ],
     );
 
-    final Widget? subtitleWidget = (totalCostController.text.isNotEmpty ||
+    final Widget? subtitleWidget =
+        (totalCostController.text.isNotEmpty ||
             amountPaidController.text.isNotEmpty)
         ? Text(
             balanceDue < 0
                 ? l10n.overpaid(
-                    NumberFormat.currency(
-                      symbol: currency,
-                    ).format(-balanceDue),
+                    NumberFormat.currency(symbol: currency).format(-balanceDue),
                   )
                 : balanceDue > 0
                 ? l10n.due(
-                    NumberFormat.currency(
-                      symbol: currency,
-                    ).format(balanceDue),
+                    NumberFormat.currency(symbol: currency).format(balanceDue),
                   )
                 : l10n.fullyPaid,
             style: TextStyle(
@@ -458,170 +455,176 @@ class _VisitCardState extends ConsumerState<VisitCard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: isDentist
           ? ExpansionTile(
-            initiallyExpanded: false,
-            backgroundColor: colorScheme.surfaceContainerHighest.withAlpha(50),
-            collapsedBackgroundColor: colorScheme.surface,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            collapsedShape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(12)),
-            ),
-            title: titleWidget,
-            subtitle: subtitleWidget,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Appointment Type Dropdown
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedAppointmentType,
-                      decoration: InputDecoration(
-                        labelText: l10n.appointmentTypeTitle,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'consultation',
-                          child: Text(l10n.consultationType),
-                        ),
-                        DropdownMenuItem(
-                          value: 'followup',
-                          child: Text(l10n.followupType),
-                        ),
-                        DropdownMenuItem(
-                          value: 'emergency',
-                          child: Text(l10n.emergencyType),
-                        ),
-                        DropdownMenuItem(
-                          value: 'procedure',
-                          child: Text(l10n.procedureType),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            selectedAppointmentType = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    // Status Dropdown
-                    DropdownButtonFormField<AppointmentStatus>(
-                      initialValue: selectedStatus,
-                      decoration: InputDecoration(labelText: l10n.status),
-                      items: AppointmentStatus.values.map((status) {
-                        return DropdownMenuItem(
-                          value: status,
-                          child: Text(status.toString().split('.').last),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            selectedStatus = value;
-                          });
-                        }
-                      },
-                    ),
-                    const Divider(height: 24),
-                    // Payment Fields
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: totalCostController,
-                            decoration:
-                                InputDecoration(labelText: l10n.totalCost),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: amountPaidController,
-                            decoration:
-                                InputDecoration(labelText: l10n.paidAmount),
-                            keyboardType: TextInputType.number,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '${l10n.balanceDueLabel}: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: balanceDue > 0
-                            ? colorScheme.error
-                            : balanceDue < 0
-                            ? Colors.green
-                            : Colors.green,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    // Health Fields
-                    TextFormField(
-                      controller: healthStateController,
-                      decoration: InputDecoration(labelText: l10n.healthState),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: diagnosisController,
-                      decoration: InputDecoration(labelText: l10n.diagnosis),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: treatmentController,
-                      decoration: InputDecoration(labelText: l10n.treatment),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: notesController,
-                      decoration: InputDecoration(labelText: l10n.notes),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _saveChanges,
-                            child: Text(l10n.saveButton),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _deleteVisit,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: Text(l10n.deleteVisit),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              initiallyExpanded: false,
+              backgroundColor: colorScheme.surfaceContainerHighest.withAlpha(
+                50,
               ),
-            ],
-          )
+              collapsedBackgroundColor: colorScheme.surface,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              collapsedShape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(12)),
+              ),
+              title: titleWidget,
+              subtitle: subtitleWidget,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Appointment Type Dropdown
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedAppointmentType,
+                        decoration: InputDecoration(
+                          labelText: l10n.appointmentTypeTitle,
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'consultation',
+                            child: Text(l10n.consultationType),
+                          ),
+                          DropdownMenuItem(
+                            value: 'followup',
+                            child: Text(l10n.followupType),
+                          ),
+                          DropdownMenuItem(
+                            value: 'emergency',
+                            child: Text(l10n.emergencyType),
+                          ),
+                          DropdownMenuItem(
+                            value: 'procedure',
+                            child: Text(l10n.procedureType),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedAppointmentType = value;
+                            });
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Status Dropdown
+                      DropdownButtonFormField<AppointmentStatus>(
+                        initialValue: selectedStatus,
+                        decoration: InputDecoration(labelText: l10n.status),
+                        items: AppointmentStatus.values.map((status) {
+                          return DropdownMenuItem(
+                            value: status,
+                            child: Text(status.toString().split('.').last),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              selectedStatus = value;
+                            });
+                          }
+                        },
+                      ),
+                      const Divider(height: 24),
+                      // Payment Fields
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: totalCostController,
+                              decoration: InputDecoration(
+                                labelText: l10n.totalCost,
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: amountPaidController,
+                              decoration: InputDecoration(
+                                labelText: l10n.paidAmount,
+                              ),
+                              keyboardType: TextInputType.number,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${l10n.balanceDueLabel}: ${NumberFormat.currency(symbol: currency).format(balanceDue)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: balanceDue > 0
+                              ? colorScheme.error
+                              : balanceDue < 0
+                              ? Colors.green
+                              : Colors.green,
+                        ),
+                      ),
+                      const Divider(height: 24),
+                      // Health Fields
+                      TextFormField(
+                        controller: healthStateController,
+                        decoration: InputDecoration(
+                          labelText: l10n.healthState,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: diagnosisController,
+                        decoration: InputDecoration(labelText: l10n.diagnosis),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: treatmentController,
+                        decoration: InputDecoration(labelText: l10n.treatment),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: notesController,
+                        decoration: InputDecoration(labelText: l10n.notes),
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _saveChanges,
+                              child: Text(l10n.saveButton),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: _deleteVisit,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(l10n.deleteVisit),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            )
           : ListTile(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 8,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 8,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: titleWidget,
+              subtitle: subtitleWidget,
+              trailing: const Icon(Icons.lock_outline, size: 20),
             ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            title: titleWidget,
-            subtitle: subtitleWidget,
-            trailing: const Icon(Icons.lock_outline, size: 20),
-          ),
     );
   }
 

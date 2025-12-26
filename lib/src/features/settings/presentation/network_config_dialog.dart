@@ -169,14 +169,16 @@ class _NetworkConfigDialogState extends ConsumerState<NetworkConfigDialog> {
         _addLog('Error: Invalid port or no IP address selected.');
         return;
       }
-      
+
       setState(() => _isStartingServer = true);
       try {
         await ref.read(syncServerProvider).start(port);
         _addLog('Server started on $_selectedIp:$port');
       } catch (e) {
         _addLog('Failed to start server: $e');
-        ref.read(networkStatusProvider.notifier).setStatus(ConnectionStatus.error);
+        ref
+            .read(networkStatusProvider.notifier)
+            .setStatus(ConnectionStatus.error);
       } finally {
         if (mounted) setState(() => _isStartingServer = false);
       }
@@ -267,7 +269,7 @@ class _NetworkConfigDialogState extends ConsumerState<NetworkConfigDialog> {
 
     ref.listen(networkStatusProvider, (previous, status) {
       if (previous == status) return;
-      
+
       final statusText = status.toString().split('.').last;
       if (status == ConnectionStatus.error) {
         _addLog('ERROR state detected.');
@@ -549,8 +551,8 @@ class _NetworkConfigDialogState extends ConsumerState<NetworkConfigDialog> {
               status == ConnectionStatus.syncing
                   ? 'Syncing Database...'
                   : (status == ConnectionStatus.handshakeAccepted
-                      ? 'Waiting for database export...'
-                      : 'Connecting to server...'),
+                        ? 'Waiting for database export...'
+                        : 'Connecting to server...'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],

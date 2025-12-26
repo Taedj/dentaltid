@@ -16,12 +16,46 @@ final lightTheme = ThemeData.light().copyWith(
     surfaceTintColor: Colors.white,
     color: Colors.white,
   ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return AppColors.success;
+      }
+      return AppColors.error;
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return AppColors.success.withOpacity(0.5);
+      }
+      return AppColors.error.withOpacity(0.5);
+    }),
+  ),
   textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
-    displayLarge: GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black87),
-    titleLarge: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.black87),
-    titleMedium: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
-    bodyMedium: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.normal, color: Colors.black54),
-    bodySmall: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.normal, color: Colors.black54),
+    displayLarge: GoogleFonts.inter(
+      fontSize: 30,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
+    ),
+    titleLarge: GoogleFonts.inter(
+      fontSize: 26,
+      fontWeight: FontWeight.bold,
+      color: Colors.black87,
+    ),
+    titleMedium: GoogleFonts.inter(
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      color: Colors.black87,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      fontSize: 15,
+      fontWeight: FontWeight.normal,
+      color: Colors.black54,
+    ),
+    bodySmall: GoogleFonts.inter(
+      fontSize: 14,
+      fontWeight: FontWeight.normal,
+      color: Colors.black54,
+    ),
   ),
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.transparent,
@@ -29,8 +63,8 @@ final lightTheme = ThemeData.light().copyWith(
     scrolledUnderElevation: 0,
     iconTheme: IconThemeData(color: Colors.black87),
     titleTextStyle: TextStyle(
-      color: Colors.black87, 
-      fontSize: 20, 
+      color: Colors.black87,
+      fontSize: 20,
       fontWeight: FontWeight.w600,
     ),
   ),
@@ -53,12 +87,46 @@ final darkTheme = ThemeData.dark().copyWith(
       side: const BorderSide(color: AppColors.darkBorder),
     ),
   ),
+  switchTheme: SwitchThemeData(
+    thumbColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return AppColors.success;
+      }
+      return AppColors.error;
+    }),
+    trackColor: WidgetStateProperty.resolveWith((states) {
+      if (states.contains(WidgetState.selected)) {
+        return AppColors.success.withOpacity(0.5);
+      }
+      return AppColors.error.withOpacity(0.5);
+    }),
+  ),
   textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(
-    displayLarge: GoogleFonts.inter(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
-    titleLarge: GoogleFonts.inter(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
-    titleMedium: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
-    bodyMedium: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.normal, color: Colors.white70),
-    bodySmall: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.normal, color: Colors.white70),
+    displayLarge: GoogleFonts.inter(
+      fontSize: 30,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+    titleLarge: GoogleFonts.inter(
+      fontSize: 26,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+    titleMedium: GoogleFonts.inter(
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
+    bodyMedium: GoogleFonts.inter(
+      fontSize: 15,
+      fontWeight: FontWeight.normal,
+      color: Colors.white70,
+    ),
+    bodySmall: GoogleFonts.inter(
+      fontSize: 14,
+      fontWeight: FontWeight.normal,
+      color: Colors.white70,
+    ),
   ),
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.transparent,
@@ -66,12 +134,10 @@ final darkTheme = ThemeData.dark().copyWith(
     scrolledUnderElevation: 0,
     iconTheme: IconThemeData(color: Colors.white),
     titleTextStyle: TextStyle(
-      color: Colors.white, 
-      fontSize: 20, 
+      color: Colors.white,
+      fontSize: 20,
       fontWeight: FontWeight.w600,
     ),
   ),
-  dividerTheme: const DividerThemeData(
-    color: AppColors.darkBorder,
-  ),
+  dividerTheme: const DividerThemeData(color: AppColors.darkBorder),
 );

@@ -31,7 +31,7 @@ class NetworkService {
     }
 
     final batPath = path.join(Directory.current.path, 'fix_network.bat');
-    
+
     try {
       _log.info('Requesting elevated firewall setup for port $port...');
 
@@ -39,7 +39,8 @@ class NetworkService {
       // Using -Verb RunAs is the standard way to trigger the UAC prompt.
       final result = await Process.run('powershell', [
         '-NoProfile',
-        '-ExecutionPolicy', 'Bypass',
+        '-ExecutionPolicy',
+        'Bypass',
         '-Command',
         'Start-Process',
         'cmd.exe',
@@ -51,9 +52,11 @@ class NetworkService {
 
       if (result.exitCode != 0) {
         _log.severe('PowerShell elevation request failed: ${result.stderr}');
-        throw Exception('Failed to request administrative rights. Please run fix_network.bat as Administrator manually.');
+        throw Exception(
+          'Failed to request administrative rights. Please run fix_network.bat as Administrator manually.',
+        );
       }
-      
+
       _log.info('Elevation prompt shown. Please accept it to open the port.');
     } catch (e) {
       _log.severe('Error opening port: $e');

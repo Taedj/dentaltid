@@ -2541,6 +2541,630 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Port'**
   String get port;
+
+  /// No description provided for @acceptTermsError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please accept the terms and conditions'**
+  String get acceptTermsError;
+
+  /// No description provided for @dentistLogin.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist Login'**
+  String get dentistLogin;
+
+  /// No description provided for @dentistRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist Registration'**
+  String get dentistRegistration;
+
+  /// No description provided for @staffPortal.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff Portal'**
+  String get staffPortal;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPassword;
+
+  /// No description provided for @authError.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred, please check your credentials.'**
+  String get authError;
+
+  /// No description provided for @weakPasswordError.
+  ///
+  /// In en, this message translates to:
+  /// **'The password provided is too weak.'**
+  String get weakPasswordError;
+
+  /// No description provided for @emailInUseError.
+  ///
+  /// In en, this message translates to:
+  /// **'An account already exists for that email.'**
+  String get emailInUseError;
+
+  /// No description provided for @userNotFoundError.
+  ///
+  /// In en, this message translates to:
+  /// **'No user found for that email.'**
+  String get userNotFoundError;
+
+  /// No description provided for @wrongPasswordError.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong password provided for that user.'**
+  String get wrongPasswordError;
+
+  /// No description provided for @networkError.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error. check your connection.'**
+  String get networkError;
+
+  /// No description provided for @authFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication failed: {error}'**
+  String authFailed(String error);
+
+  /// No description provided for @invalidStaffCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid Username or PIN'**
+  String get invalidStaffCredentials;
+
+  /// No description provided for @enterEmailFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email address first'**
+  String get enterEmailFirst;
+
+  /// No description provided for @passwordResetSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset email sent! Check your inbox.'**
+  String get passwordResetSent;
+
+  /// No description provided for @contactDeveloperLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Developer'**
+  String get contactDeveloperLabel;
+
+  /// No description provided for @contactUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Us'**
+  String get contactUs;
+
+  /// No description provided for @dentist.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist'**
+  String get dentist;
+
+  /// No description provided for @staff.
+  ///
+  /// In en, this message translates to:
+  /// **'Staff'**
+  String get staff;
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @yourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Name'**
+  String get yourName;
+
+  /// No description provided for @clinicNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic Name'**
+  String get clinicNameLabel;
+
+  /// No description provided for @licenseNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'License Number'**
+  String get licenseNumber;
+
+  /// No description provided for @acceptTermsAndConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'I accept the Terms and Conditions'**
+  String get acceptTermsAndConditions;
+
+  /// No description provided for @pin4Digits.
+  ///
+  /// In en, this message translates to:
+  /// **'PIN (4 Digits)'**
+  String get pin4Digits;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN IN'**
+  String get signIn;
+
+  /// No description provided for @register.
+  ///
+  /// In en, this message translates to:
+  /// **'REGISTER'**
+  String get register;
+
+  /// No description provided for @loginLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LOGIN'**
+  String get loginLabel;
+
+  /// No description provided for @rememberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember'**
+  String get rememberLabel;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? '**
+  String get dontHaveAccount;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account? '**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @signUpSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get signUpSmall;
+
+  /// No description provided for @signInSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get signInSmall;
+
+  /// No description provided for @goodMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Morning'**
+  String get goodMorning;
+
+  /// No description provided for @goodAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Afternoon'**
+  String get goodAfternoon;
+
+  /// No description provided for @goodEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good Evening'**
+  String get goodEvening;
+
+  /// No description provided for @scheduledVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled Visits'**
+  String get scheduledVisits;
+
+  /// No description provided for @actionNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Action Needed'**
+  String get actionNeeded;
+
+  /// No description provided for @allGood.
+  ///
+  /// In en, this message translates to:
+  /// **'All Good'**
+  String get allGood;
+
+  /// No description provided for @activeStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Active: {count}'**
+  String activeStatus(int count);
+
+  /// No description provided for @doneStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {count}'**
+  String doneStatus(int count);
+
+  /// No description provided for @clinicRunningSmoothly.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic running smoothly today 🦷'**
+  String get clinicRunningSmoothly;
+
+  /// No description provided for @expiringLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Expiring'**
+  String expiringLabel(int count);
+
+  /// No description provided for @lowStockLabelText.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Low Stock'**
+  String lowStockLabelText(int count);
+
+  /// No description provided for @staffActivationNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The main dentist user must activate premium to continue using the application.'**
+  String get staffActivationNotice;
+
+  /// No description provided for @overviewMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Overview'**
+  String get overviewMenu;
+
+  /// No description provided for @usersMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Users'**
+  String get usersMenu;
+
+  /// No description provided for @codesMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Codes'**
+  String get codesMenu;
+
+  /// No description provided for @broadcastsMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Broadcasts'**
+  String get broadcastsMenu;
+
+  /// No description provided for @serverOnlineNoStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Online (No staff connected)'**
+  String get serverOnlineNoStaff;
+
+  /// No description provided for @serverOnlineWithStaffCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Online ({count} staff connected)'**
+  String serverOnlineWithStaffCount(int count);
+
+  /// No description provided for @staffConnectedList.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected: {names}'**
+  String staffConnectedList(String names);
+
+  /// No description provided for @connectedToServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to Server'**
+  String get connectedToServer;
+
+  /// No description provided for @offline.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offline;
+
+  /// No description provided for @invalidCodeLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid code length (must be 27 characters)'**
+  String get invalidCodeLength;
+
+  /// No description provided for @activationSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Activated Successfully! Premium features are now enabled.'**
+  String get activationSuccess;
+
+  /// No description provided for @invalidActivationCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired activation code'**
+  String get invalidActivationCode;
+
+  /// No description provided for @activationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error during activation: {error}'**
+  String activationError(String error);
+
+  /// No description provided for @activationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation Required'**
+  String get activationRequired;
+
+  /// No description provided for @trialExpiredNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Your trial period has expired. Please enter a valid activation code to continue using DentalTid Premium.'**
+  String get trialExpiredNotice;
+
+  /// No description provided for @activationCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation Code (27 chars)'**
+  String get activationCodeLabel;
+
+  /// No description provided for @needACode.
+  ///
+  /// In en, this message translates to:
+  /// **'Need a code?'**
+  String get needACode;
+
+  /// No description provided for @editDoctorProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Doctor Profile'**
+  String get editDoctorProfile;
+
+  /// No description provided for @updateYourProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Your Profile'**
+  String get updateYourProfile;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @enterYourName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your name'**
+  String get enterYourName;
+
+  /// No description provided for @profileUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully!'**
+  String get profileUpdatedSuccess;
+
+  /// No description provided for @profileUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save profile: {error}'**
+  String profileUpdateError(String error);
+
+  /// No description provided for @loginToSaveProfileError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save profile. User not logged in.'**
+  String get loginToSaveProfileError;
+
+  /// No description provided for @required.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
+  /// No description provided for @mustBe4Digits.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be 4 digits'**
+  String get mustBe4Digits;
+
+  /// No description provided for @editStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Staff'**
+  String get editStaff;
+
+  /// No description provided for @addNewStaff.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Staff'**
+  String get addNewStaff;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @systemHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'System Health'**
+  String get systemHealth;
+
+  /// No description provided for @developerOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer Overview'**
+  String get developerOverview;
+
+  /// No description provided for @totalUsers.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Users'**
+  String get totalUsers;
+
+  /// No description provided for @activeTrials.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Trials'**
+  String get activeTrials;
+
+  /// No description provided for @estRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. Revenue'**
+  String get estRevenue;
+
+  /// No description provided for @noPatientsFoundSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'No patients found matching \"{query}\"'**
+  String noPatientsFoundSearch(String query);
+
+  /// No description provided for @paidStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paidStatusLabel;
+
+  /// No description provided for @searchHintSeparator.
+  ///
+  /// In en, this message translates to:
+  /// **'or Phone...'**
+  String get searchHintSeparator;
+
+  /// No description provided for @savePatientsCsvLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Patients CSV'**
+  String get savePatientsCsvLabel;
+
+  /// No description provided for @localBackupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup will include your clinic database, app settings, and staff accounts. Do you want to proceed?'**
+  String get localBackupConfirm;
+
+  /// No description provided for @premiumOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Only'**
+  String get premiumOnly;
+
+  /// No description provided for @cloudSyncConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This will upload your clinic database, settings, and staff accounts to the cloud for safe keeping. Do you want to proceed?'**
+  String get cloudSyncConfirm;
+
+  /// No description provided for @cloudSyncPremiumNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud Sync is a detailed Premium feature. Activate to enable.'**
+  String get cloudSyncPremiumNotice;
+
+  /// No description provided for @manageStaffMembers.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Staff Members'**
+  String get manageStaffMembers;
+
+  /// No description provided for @addStaffSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Assistants or Receptionists'**
+  String get addStaffSubtitle;
+
+  /// No description provided for @lanSyncSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'LAN Sync Settings'**
+  String get lanSyncSettings;
+
+  /// No description provided for @autoStartServerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-start Server'**
+  String get autoStartServerLabel;
+
+  /// No description provided for @autoStartServerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start sync server on app launch'**
+  String get autoStartServerSubtitle;
+
+  /// No description provided for @serverPortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Server Port'**
+  String get serverPortLabel;
+
+  /// No description provided for @defaultPortHelper.
+  ///
+  /// In en, this message translates to:
+  /// **'Default: 8080'**
+  String get defaultPortHelper;
+
+  /// No description provided for @advancedNetworkConfig.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Network Configuration'**
+  String get advancedNetworkConfig;
+
+  /// No description provided for @advancedNetworkConfigSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs, Firewall, and IP settings'**
+  String get advancedNetworkConfigSubtitle;
+
+  /// No description provided for @errorLoadingProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading user profile: {error}'**
+  String errorLoadingProfile(String error);
+
+  /// No description provided for @deleteTransactionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this transaction?'**
+  String get deleteTransactionConfirm;
+
+  /// No description provided for @transactionDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction deleted successfully'**
+  String get transactionDeletedSuccess;
+
+  /// No description provided for @limitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit Reached'**
+  String get limitReached;
+
+  /// No description provided for @inventoryLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.'**
+  String get inventoryLimitMessage;
+
+  /// No description provided for @okButton.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get okButton;
+
+  /// No description provided for @trialActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Trial Active'**
+  String get trialActive;
 }
 
 class _AppLocalizationsDelegate

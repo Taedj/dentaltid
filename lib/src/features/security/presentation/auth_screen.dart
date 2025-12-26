@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
@@ -138,8 +139,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     if (_authMode == AuthMode.register && !_acceptTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the terms and conditions'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.acceptTermsError),
           backgroundColor: Colors.red,
         ),
       );
@@ -232,22 +233,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       if (mounted) context.go('/');
     } on FirebaseAuthException catch (e) {
-      String message = 'An error occurred, please check your credentials.';
+      final l10n = AppLocalizations.of(context)!;
+      String errorMessage = l10n.authError;
       if (e.code == 'weak-password') {
-        message = 'The password provided is too weak.';
+        errorMessage = l10n.weakPasswordError;
       } else if (e.code == 'email-already-in-use') {
-        message = 'An account already exists for that email.';
+        errorMessage = l10n.emailInUseError;
       } else if (e.code == 'user-not-found') {
-        message = 'No user found for that email.';
+        errorMessage = l10n.userNotFoundError;
       } else if (e.code == 'wrong-password') {
-        message = 'Wrong password provided for that user.';
+        errorMessage = l10n.wrongPasswordError;
       } else if (e.code == 'network-request-failed') {
-        message = 'Network error. check your connection.';
+        errorMessage = l10n.networkError;
+      } else {
+        errorMessage = l10n.authFailed(e.toString());
       }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } catch (e) {
@@ -330,7 +334,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         await FirebaseAuth.instance.signOut(); // Ensure no firebase session
 
         final _ = await ref.refresh(userProfileProvider.future);
-        
+
         // IDENTIFY to server if already connected
         ref.read(syncClientProvider).sendIdentity();
 
@@ -345,8 +349,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Invalid Username or PIN'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.invalidStaffCredentials),
               backgroundColor: Colors.red,
             ),
           );
@@ -382,10 +386,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
+    final l10n = AppLocalizations.of(context)!;
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your email address first'),
+        SnackBar(
+          content: Text(l10n.enterEmailFirst),
           backgroundColor: Colors.orangeAccent,
         ),
       );
@@ -397,8 +402,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password reset email sent! Check your inbox.'),
+          SnackBar(
+            content: Text(l10n.passwordResetSent),
             backgroundColor: Colors.greenAccent,
           ),
         );
@@ -407,7 +412,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message ?? 'An error occurred'),
+            content: Text(l10n.authFailed(e.message ?? 'An error occurred')),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -425,21 +430,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
 
   void _showContactDialog() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         backgroundColor: const Color(0xFF1E293B),
         title: Text(
-          'Contact Developer',
+          l10n.contactDeveloperLabel,
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -523,7 +529,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Close',
+              l10n.close,
               style: GoogleFonts.poppins(color: Colors.white70),
             ),
           ),
@@ -549,6 +555,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final size = MediaQuery.of(context).size;
+    final l10n = AppLocalizations.of(context)!;
 
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _focusNode.requestFocus(),
@@ -585,14 +592,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Container(
                         constraints: const BoxConstraints(maxWidth: 850),
                         decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: Colors.black.withOpacity(0.4),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
+                            color: Colors.white.withOpacity(0.1),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.4),
+                              color: Colors.black.withOpacity(0.4),
                               blurRadius: 40,
                               spreadRadius: 5,
                             ),
@@ -604,11 +611,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Expanded(
                               flex: 5,
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(40, 100, 40, 40), // Increased top padding to 100
+                                padding: const EdgeInsets.fromLTRB(
+                                  40,
+                                  100,
+                                  40,
+                                  40,
+                                ), // Increased top padding to 100
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       // Tab Switcher (ONLY show in Login mode)
@@ -616,14 +629,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         _buildTabSwitcher(colorScheme),
                                         const SizedBox(height: 24),
                                       ],
-                                      
+
+                                      // Title
                                       // Title
                                       Text(
                                         _userType == UserType.dentist
                                             ? (_authMode == AuthMode.login
-                                                  ? 'Dentist Login'
-                                                  : 'Dentist Registration')
-                                            : 'Staff Portal',
+                                                  ? l10n.dentistLogin
+                                                  : l10n.dentistRegistration)
+                                            : l10n.staffPortal,
                                         style: GoogleFonts.poppins(
                                           fontSize: 20,
                                           fontWeight: FontWeight.w600,
@@ -631,16 +645,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         ),
                                         textAlign: TextAlign.center,
                                       ),
-                                      const SizedBox(height: 20), // Reduced height
-
+                                      const SizedBox(
+                                        height: 20,
+                                      ), // Reduced height
                                       // Stable height container for forms
                                       AnimatedContainer(
-                                        duration: const Duration(milliseconds: 300),
-                                        height: _authMode == AuthMode.login ? 160 : 440,
+                                        duration: const Duration(
+                                          milliseconds: 300,
+                                        ),
+                                        height: _authMode == AuthMode.login
+                                            ? 160
+                                            : 440,
                                         child: SingleChildScrollView(
-                                          physics: const NeverScrollableScrollPhysics(),
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
                                           child: AnimatedSwitcher(
-                                            duration: const Duration(milliseconds: 300),
+                                            duration: const Duration(
+                                              milliseconds: 300,
+                                            ),
                                             child: _userType == UserType.dentist
                                                 ? _buildDentistForm(theme)
                                                 : _buildStaffForm(theme),
@@ -649,25 +671,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       ),
 
                                       const SizedBox(height: 8), // Reduced gap
-
                                       // Sign In Button
                                       _buildActionButton(colorScheme),
 
-                                      const SizedBox(height: 12), // Reduced height
-
+                                      const SizedBox(
+                                        height: 12,
+                                      ), // Reduced height
                                       // Remember Me & Forgot Password
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
-                                          if (_authMode == AuthMode.login || _userType == UserType.staff)
+                                          if (_authMode == AuthMode.login ||
+                                              _userType == UserType.staff)
                                             _buildRememberMeSection(),
-                                          if (_userType == UserType.dentist && _authMode == AuthMode.login)
+                                          if (_userType == UserType.dentist &&
+                                              _authMode == AuthMode.login)
                                             TextButton(
-                                              onPressed: _isLoading ? null : _resetPassword,
+                                              onPressed: _isLoading
+                                                  ? null
+                                                  : _resetPassword,
                                               child: Text(
-                                                'Forgot Password?',
+                                                AppLocalizations.of(context)!.forgotPassword,
                                                 style: GoogleFonts.poppins(
-                                                  color: const Color(0xFFA78BFA),
+                                                  color: const Color(
+                                                    0xFFA78BFA,
+                                                  ),
                                                   fontSize: 12,
                                                 ),
                                               ),
@@ -691,7 +720,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               Expanded(
                                 flex: 4,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(right: 20, top: 20, bottom: 20),
+                                  padding: const EdgeInsets.only(
+                                    right: 20,
+                                    top: 20,
+                                    bottom: 20,
+                                  ),
                                   child: ClipRRect(
                                     borderRadius: const BorderRadius.only(
                                       topRight: Radius.circular(24),
@@ -716,17 +749,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Container(
-                             padding: const EdgeInsets.all(4),
-                             decoration: BoxDecoration(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.blue.withValues(alpha: 0.3),
+                                    color: Colors.blue.withOpacity(0.3),
                                     blurRadius: 15,
                                     spreadRadius: 2,
                                   ),
                                 ],
-                             ),
+                              ),
                               child: Image.asset(
                                 'assets/images/DT!d.png',
                                 width: 140,
@@ -751,7 +784,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         const TextSpan(text: 'Dental'),
                                         TextSpan(
                                           text: 'T!D',
-                                          style: TextStyle(color: Colors.greenAccent.shade400),
+                                          style: TextStyle(
+                                            color: Colors.greenAccent.shade400,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -783,21 +818,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               child: SafeArea(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.5),
+                    color: Colors.black.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.1),
+                    ),
                   ),
                   child: InkWell(
                     onTap: _showContactDialog,
                     borderRadius: BorderRadius.circular(30),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         children: [
-                          const Icon(Icons.support_agent, color: Colors.blueAccent, size: 18),
+                          const Icon(
+                            Icons.support_agent,
+                            color: Colors.blueAccent,
+                            size: 18,
+                          ),
                           const SizedBox(width: 8),
                           Text(
-                            'Contact Us',
+                            AppLocalizations.of(context)!.contactUs,
                             style: GoogleFonts.poppins(
                               color: Colors.white,
                               fontWeight: FontWeight.w500,
@@ -818,6 +862,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildTabSwitcher(ColorScheme colorScheme) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       height: 40,
       decoration: BoxDecoration(
@@ -826,8 +871,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ),
       child: Row(
         children: [
-          Expanded(child: _buildTabItem('Dentist', UserType.dentist)),
-          Expanded(child: _buildTabItem('Staff', UserType.staff)),
+          Expanded(child: _buildTabItem(l10n.dentist, UserType.dentist)),
+          Expanded(child: _buildTabItem(l10n.staff, UserType.staff)),
         ],
       ),
     );
@@ -862,18 +907,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildDentistForm(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildTextField(
           controller: _emailController,
-          label: 'Email Address',
+          label: l10n.emailAddress,
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: 12), // Reduced from 16
         _buildTextField(
           controller: _passwordController,
-          label: 'Password',
+          label: l10n.password,
           icon: Icons.lock_outline,
           obscureText: true,
         ),
@@ -881,42 +927,39 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           const SizedBox(height: 12),
           _buildTextField(
             controller: _clinicNameController,
-            label: 'Clinic Name',
+            label: l10n.clinicNameLabel,
             icon: Icons.business_outlined,
           ),
           const SizedBox(height: 12),
           _buildTextField(
             controller: _dentistNameController,
-            label: 'Your Name',
+            label: l10n.yourName,
             icon: Icons.person_outline,
           ),
           const SizedBox(height: 12),
           _buildTextField(
             controller: _phoneNumberController,
-            label: 'Phone Number',
+            label: l10n.phoneNumber,
             icon: Icons.phone_outlined,
             keyboardType: TextInputType.phone,
           ),
           const SizedBox(height: 12),
           _buildTextField(
             controller: _medicalLicenseNumberController,
-            label: 'License Number',
+            label: l10n.licenseNumber,
             icon: Icons.badge_outlined,
           ),
           const SizedBox(height: 12),
           Theme(
-            data: theme.copyWith(
-              unselectedWidgetColor: Colors.white54,
-            ),
+            data: theme.copyWith(unselectedWidgetColor: Colors.white54),
             child: CheckboxListTile(
               title: Text(
-                'I accept the Terms and Conditions',
+                l10n.acceptTermsAndConditions,
                 style: GoogleFonts.poppins(fontSize: 11, color: Colors.white70),
               ),
               value: _acceptTerms,
-              onChanged: (value) => setState(
-                () => _acceptTerms = value ?? false,
-              ),
+              onChanged: (value) =>
+                  setState(() => _acceptTerms = value ?? false),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               activeColor: const Color(0xFF8B5CF6),
@@ -929,17 +972,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Widget _buildStaffForm(ThemeData theme) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         _buildTextField(
           controller: _usernameController,
-          label: 'Username',
+          label: l10n.username,
           icon: Icons.person_outline,
         ),
         const SizedBox(height: 16),
         _buildTextField(
           controller: _pinController,
-          label: 'PIN (4 Digits)',
+          label: l10n.pin4Digits,
           icon: Icons.lock_outline,
           obscureText: true,
           maxLength: 4,
@@ -982,7 +1026,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF8B5CF6)),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }
@@ -1010,18 +1057,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
         child: _isLoading
             ? const SizedBox(
                 height: 20,
                 width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
             : Text(
                 _userType == UserType.dentist
-                    ? (_authMode == AuthMode.login ? 'SIGN IN' : 'REGISTER')
-                    : 'LOGIN',
+                    ? (_authMode == AuthMode.login
+                        ? AppLocalizations.of(context)!.signIn
+                        : AppLocalizations.of(context)!.register)
+                    : AppLocalizations.of(context)!.loginLabel,
                 style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
@@ -1040,7 +1094,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         const Icon(Icons.check_circle_outline, color: Colors.white54, size: 16),
         const SizedBox(width: 4),
         Text(
-          'Remember',
+          AppLocalizations.of(context)!.rememberLabel,
           style: GoogleFonts.poppins(color: Colors.white70, fontSize: 12),
         ),
         const SizedBox(width: 4),
@@ -1067,11 +1121,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             children: [
               TextSpan(
                 text: _authMode == AuthMode.login
-                    ? "Don't have an account? "
-                    : "Already have an account? ",
+                    ? AppLocalizations.of(context)!.dontHaveAccount
+                    : AppLocalizations.of(context)!.alreadyHaveAccount,
               ),
               TextSpan(
-                text: _authMode == AuthMode.login ? 'Sign up' : 'Sign in',
+                text: _authMode == AuthMode.login
+                    ? AppLocalizations.of(context)!.signUpSmall
+                    : AppLocalizations.of(context)!.signInSmall,
                 style: const TextStyle(
                   color: Color(0xFFA78BFA),
                   fontWeight: FontWeight.w600,

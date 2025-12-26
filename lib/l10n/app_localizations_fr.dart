@@ -1294,4 +1294,357 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get port => 'Port';
+
+  @override
+  String get acceptTermsError => 'Veuillez accepter les termes et conditions';
+
+  @override
+  String get dentistLogin => 'Connexion Dentiste';
+
+  @override
+  String get dentistRegistration => 'Inscription Dentiste';
+
+  @override
+  String get staffPortal => 'Portail Personnel';
+
+  @override
+  String get forgotPassword => 'Mot de passe oublié ?';
+
+  @override
+  String get authError =>
+      'Une erreur est survenue, veuillez vérifier vos identifiants.';
+
+  @override
+  String get weakPasswordError => 'Le mot de passe fourni est trop faible.';
+
+  @override
+  String get emailInUseError => 'Un compte existe déjà pour cet e-mail.';
+
+  @override
+  String get userNotFoundError => 'Aucun utilisateur trouvé pour cet e-mail.';
+
+  @override
+  String get wrongPasswordError =>
+      'Mot de passe incorrect pour cet utilisateur.';
+
+  @override
+  String get networkError => 'Erreur réseau. Vérifiez votre connexion.';
+
+  @override
+  String authFailed(String error) {
+    return 'Échec de l\'authentification : $error';
+  }
+
+  @override
+  String get invalidStaffCredentials =>
+      'Nom d\'utilisateur ou code PIN invalide';
+
+  @override
+  String get enterEmailFirst => 'Veuillez d\'abord saisir votre adresse e-mail';
+
+  @override
+  String get passwordResetSent =>
+      'E-mail de réinitialisation envoyé ! Consultez votre boîte de réception.';
+
+  @override
+  String get contactDeveloperLabel => 'Contacter le développeur';
+
+  @override
+  String get contactUs => 'Contactez-nous';
+
+  @override
+  String get dentist => 'Dentiste';
+
+  @override
+  String get staff => 'Personnel';
+
+  @override
+  String get emailAddress => 'Adresse e-mail';
+
+  @override
+  String get password => 'Mot de passe';
+
+  @override
+  String get yourName => 'Votre nom';
+
+  @override
+  String get clinicNameLabel => 'Nom de la clinique';
+
+  @override
+  String get licenseNumber => 'Numéro de licence';
+
+  @override
+  String get acceptTermsAndConditions => 'J\'accepte les termes et conditions';
+
+  @override
+  String get pin4Digits => 'PIN (4 chiffres)';
+
+  @override
+  String get signIn => 'S\'IDENTIFIER';
+
+  @override
+  String get register => 'S\'INSCRIRE';
+
+  @override
+  String get loginLabel => 'CONNEXION';
+
+  @override
+  String get rememberLabel => 'Se souvenir';
+
+  @override
+  String get dontHaveAccount => 'Vous n\'avez pas de compte ? ';
+
+  @override
+  String get alreadyHaveAccount => 'Vous avez déjà un compte ? ';
+
+  @override
+  String get signUpSmall => 'Inscrivez-vous';
+
+  @override
+  String get signInSmall => 'Se connecter';
+
+  @override
+  String get goodMorning => 'Bonjour';
+
+  @override
+  String get goodAfternoon => 'Bon après-midi';
+
+  @override
+  String get goodEvening => 'Bonsoir';
+
+  @override
+  String get scheduledVisits => 'Visites prévues';
+
+  @override
+  String get actionNeeded => 'Action nécessaire';
+
+  @override
+  String get allGood => 'Tout va bien';
+
+  @override
+  String activeStatus(int count) {
+    return 'Actif : $count';
+  }
+
+  @override
+  String doneStatus(int count) {
+    return 'Terminé : $count';
+  }
+
+  @override
+  String get clinicRunningSmoothly => 'La clinique tourne bien aujourd\'hui 🦷';
+
+  @override
+  String expiringLabel(int count) {
+    return '$count Expirant';
+  }
+
+  @override
+  String lowStockLabelText(int count) {
+    return '$count Stock faible';
+  }
+
+  @override
+  String get staffActivationNotice =>
+      'L\'utilisateur dentiste principal doit activer le premium pour continuer à utiliser l\'application.';
+
+  @override
+  String get overviewMenu => 'Aperçu';
+
+  @override
+  String get usersMenu => 'Utilisateurs';
+
+  @override
+  String get codesMenu => 'Codes';
+
+  @override
+  String get broadcastsMenu => 'Diffusions';
+
+  @override
+  String get serverOnlineNoStaff =>
+      'Serveur en ligne (aucun personnel connecté)';
+
+  @override
+  String serverOnlineWithStaffCount(int count) {
+    return 'Serveur en ligne ($count personnel connectés)';
+  }
+
+  @override
+  String staffConnectedList(String names) {
+    return 'Connectés : $names';
+  }
+
+  @override
+  String get connectedToServer => 'Connecté au serveur';
+
+  @override
+  String get offline => 'Hors ligne';
+
+  @override
+  String get invalidCodeLength =>
+      'Longueur de code invalide (doit être de 27 caractères)';
+
+  @override
+  String get activationSuccess =>
+      'Compte activé avec succès ! Les fonctionnalités Premium sont maintenant activées.';
+
+  @override
+  String get invalidActivationCode =>
+      'Code d\' d\'activation invalide ou expiré';
+
+  @override
+  String activationError(String error) {
+    return 'Erreur lors de l\'activation : $error';
+  }
+
+  @override
+  String get activationRequired => 'Activation requise';
+
+  @override
+  String get trialExpiredNotice =>
+      'Votre période d\'essai a expiré. Veuillez saisir un code d\'activation valide pour continuer à utiliser DentalTid Premium.';
+
+  @override
+  String get activationCodeLabel => 'Code d\'activation (27 chars)';
+
+  @override
+  String get needACode => 'Besoin d\'un code ?';
+
+  @override
+  String get editDoctorProfile => 'Modifier le profil du docteur';
+
+  @override
+  String get updateYourProfile => 'Mettre à jour votre profil';
+
+  @override
+  String get saveChanges => 'Enregistrer les modifications';
+
+  @override
+  String get enterYourName => 'Veuillez saisir votre nom';
+
+  @override
+  String get profileUpdatedSuccess => 'Profil mis à jour avec succès !';
+
+  @override
+  String profileUpdateError(String error) {
+    return 'Échec de l\'enregistrement du profil : $error';
+  }
+
+  @override
+  String get loginToSaveProfileError =>
+      'Impossible d\'enregistrer le profil. Utilisateur non connecté.';
+
+  @override
+  String get required => 'Obligatoire';
+
+  @override
+  String get mustBe4Digits => 'Doit être de 4 chiffres';
+
+  @override
+  String get editStaff => 'Modifier le personnel';
+
+  @override
+  String get addNewStaff => 'Ajouter un nouveau personnel';
+
+  @override
+  String get fullName => 'Nom complet';
+
+  @override
+  String get systemHealth => 'Santé du système';
+
+  @override
+  String get developerOverview => 'Aperçu développeur';
+
+  @override
+  String get totalUsers => 'Total utilisateurs';
+
+  @override
+  String get activeTrials => 'Essais actifs';
+
+  @override
+  String get estRevenue => 'Revenu est.';
+
+  @override
+  String noPatientsFoundSearch(String query) {
+    return 'Aucun patient trouvé correspondant à \"$query\"';
+  }
+
+  @override
+  String get paidStatusLabel => 'Payé';
+
+  @override
+  String get searchHintSeparator => 'ou Téléphone...';
+
+  @override
+  String get savePatientsCsvLabel => 'Enregistrer le CSV des patients';
+
+  @override
+  String get localBackupConfirm =>
+      'Cette sauvegarde inclura la base de données de votre clinique, les paramètres de l\'application et les comptes du personnel. Voulez-vous continuer ?';
+
+  @override
+  String get premiumOnly => 'Premium Uniquement';
+
+  @override
+  String get cloudSyncConfirm =>
+      'Cela téléchargera la base de données de votre clinique, vos paramètres et les comptes du personnel sur le cloud pour les mettre en sécurité. Voulez-vous continuer ?';
+
+  @override
+  String get cloudSyncPremiumNotice =>
+      'La synchronisation cloud est une fonctionnalité Premium. Activez-la pour l\'utiliser.';
+
+  @override
+  String get manageStaffMembers => 'Gérer les membres du personnel';
+
+  @override
+  String get addStaffSubtitle =>
+      'Ajouter des assistants ou des réceptionnistes';
+
+  @override
+  String get lanSyncSettings => 'Paramètres de synchronisation LAN';
+
+  @override
+  String get autoStartServerLabel => 'Démarrage automatique du serveur';
+
+  @override
+  String get autoStartServerSubtitle =>
+      'Démarrer le serveur de synchronisation au lancement de l\'application';
+
+  @override
+  String get serverPortLabel => 'Port du serveur';
+
+  @override
+  String get defaultPortHelper => 'Par défaut : 8080';
+
+  @override
+  String get advancedNetworkConfig => 'Configuration réseau avancée';
+
+  @override
+  String get advancedNetworkConfigSubtitle =>
+      'Journaux, pare-feu et paramètres IP';
+
+  @override
+  String errorLoadingProfile(String error) {
+    return 'Erreur lors du chargement du profil utilisateur : $error';
+  }
+
+  @override
+  String get deleteTransactionConfirm =>
+      'Êtes-vous sûr de vouloir supprimer cette transaction ?';
+
+  @override
+  String get transactionDeletedSuccess => 'Transaction supprimée avec succès';
+
+  @override
+  String get limitReached => 'Limite atteinte';
+
+  @override
+  String get inventoryLimitMessage =>
+      'Vous avez atteint la limite de 100 articles en inventaire pour la version d\'essai.\nVeuillez passer à la version Premium pour continuer à ajouter des articles.';
+
+  @override
+  String get okButton => 'OK';
+
+  @override
+  String get trialActive => 'Essai Actif';
 }

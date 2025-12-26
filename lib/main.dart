@@ -19,7 +19,7 @@ void main() async {
 
   // Setup logging
   LogService.instance.init();
-  
+
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     // ignore: avoid_print

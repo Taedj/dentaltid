@@ -122,7 +122,7 @@ class _AddEditAppointmentScreenState
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final appointmentService = ref.watch(appointmentServiceProvider);
-    
+
     // Limit to 'today' patients by default to keep the list concise.
     // Patients synced from other devices today will still appear instantly
     // thanks to the real-time invalidation logic.

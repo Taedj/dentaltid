@@ -8,6 +8,7 @@ import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:dentaltid/src/features/settings/domain/staff_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddStaffDialog extends ConsumerStatefulWidget {
@@ -108,8 +109,9 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
   Widget build(BuildContext context) {
     final isEditing = widget.staffToEdit != null;
 
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: Text(isEditing ? 'Edit Staff' : 'Add New Staff'),
+      title: Text(isEditing ? l10n.editStaff : l10n.addNewStaff),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -118,25 +120,25 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
             children: [
               TextFormField(
                 controller: _fullNameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                decoration: InputDecoration(labelText: l10n.fullName),
+                validator: (v) => v == null || v.isEmpty ? l10n.required : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _usernameController,
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                decoration: InputDecoration(labelText: l10n.username),
+                validator: (v) => v == null || v.isEmpty ? l10n.required : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _pinController,
-                decoration: const InputDecoration(labelText: 'PIN (4 Digits)'),
+                decoration: InputDecoration(labelText: l10n.pin4Digits),
                 keyboardType: TextInputType.number,
                 maxLength: 4,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 obscureText: true,
                 validator: (v) {
-                  if (v == null || v.length != 4) return 'Must be 4 digits';
+                  if (v == null || v.length != 4) return l10n.mustBe4Digits;
                   return null;
                 },
               ),
@@ -159,13 +161,13 @@ class _AddStaffDialogState extends ConsumerState<AddStaffDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _save,
           child: _isLoading
               ? const CircularProgressIndicator()
-              : Text(isEditing ? 'Update' : 'Add'),
+              : Text(isEditing ? l10n.update : l10n.add),
         ),
       ],
     );

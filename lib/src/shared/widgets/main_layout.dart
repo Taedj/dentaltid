@@ -100,9 +100,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               barrierDismissible: false,
               builder: (context) => AlertDialog(
                 title: Text(l10n.trialExpired),
-                content: const Text(
-                  'The main dentist user must activate premium to continue using the application.',
-                ),
+                content: Text(l10n.staffActivationNotice),
                 actions: [
                   TextButton(
                     onPressed: () {
@@ -127,31 +125,31 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     if (_currentUserRole == UserRole.developer) {
       // Developer Sidebar
       destinations.add(
-        const NavigationRailDestination(
-          icon: Icon(Icons.analytics_outlined),
-          selectedIcon: Icon(Icons.analytics),
-          label: Text('Overview'),
+        NavigationRailDestination(
+          icon: const Icon(Icons.dashboard_outlined),
+          selectedIcon: const Icon(Icons.dashboard),
+          label: Text(l10n.overviewMenu),
         ),
       );
       destinations.add(
-        const NavigationRailDestination(
-          icon: Icon(Icons.group_outlined),
-          selectedIcon: Icon(Icons.group),
-          label: Text('Users'),
+        NavigationRailDestination(
+          icon: const Icon(Icons.group_outlined),
+          selectedIcon: const Icon(Icons.group),
+          label: Text(l10n.usersMenu),
         ),
       );
       destinations.add(
-        const NavigationRailDestination(
-          icon: Icon(Icons.vpn_key_outlined),
-          selectedIcon: Icon(Icons.vpn_key),
-          label: Text('Codes'),
+        NavigationRailDestination(
+          icon: const Icon(Icons.vpn_key_outlined),
+          selectedIcon: const Icon(Icons.vpn_key),
+          label: Text(l10n.codesMenu),
         ),
       );
       destinations.add(
-        const NavigationRailDestination(
-          icon: Icon(Icons.campaign_outlined),
-          selectedIcon: Icon(Icons.campaign),
-          label: Text('Broadcasts'),
+        NavigationRailDestination(
+          icon: const Icon(Icons.campaign_outlined),
+          selectedIcon: const Icon(Icons.campaign),
+          label: Text(l10n.broadcastsMenu),
         ),
       );
     } else {
@@ -242,18 +240,18 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
               : Colors.red);
     final connectedStaff = ref.watch(connectedStaffNamesProvider);
 
-    String statusTooltip = 'Offline';
+    String statusTooltip = l10n.offline;
     if (isOnline) {
       if (_currentUserRole == UserRole.dentist) {
         if (connectedStaff.isEmpty) {
-          statusTooltip = 'Server Online (No staff connected)';
+          statusTooltip = l10n.serverOnlineNoStaff;
         } else {
           statusTooltip =
-              'Server Online (${connectedStaff.length} staff connected)\n'
-              'Connected: ${connectedStaff.join(', ')}';
+              l10n.serverOnlineWithStaffCount(connectedStaff.length) + '\n' +
+              l10n.staffConnectedList(connectedStaff.join(', '));
         }
       } else {
-        statusTooltip = 'Connected to Server';
+        statusTooltip = l10n.connectedToServer;
       }
     }
 
@@ -348,7 +346,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         }
                       } else {
                         // Prevent navigation if expired
-                        if (usage.isExpired && _currentUserRole == UserRole.dentist) {
+                        if (usage.isExpired &&
+                            _currentUserRole == UserRole.dentist) {
                           return;
                         }
                         route = '/';

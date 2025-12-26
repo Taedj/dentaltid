@@ -14,7 +14,8 @@ class LogService {
 
   void init() {
     Logger.root.onRecord.listen((record) {
-      final msg = '[${record.time.hour}:${record.time.minute}:${record.time.second}] ${record.message}';
+      final msg =
+          '[${record.time.hour}:${record.time.minute}:${record.time.second}] ${record.message}';
       _history.add(msg);
       if (_history.length > 200) _history.removeAt(0);
       _logController.add(msg);

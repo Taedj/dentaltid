@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class ActivationDialog extends ConsumerStatefulWidget {
@@ -26,7 +27,7 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
   Future<void> _activate() async {
     final code = _codeController.text.trim();
     if (code.length != 27) {
-      setState(() => _error = 'Invalid code length (must be 27 characters)');
+      setState(() => _error = AppLocalizations.of(context)!.invalidCodeLength);
       return;
     }
 
@@ -47,18 +48,18 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
           ref.invalidate(userProfileProvider); // Refresh profile
           Navigator.of(context).pop(); // Close dialog
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text(
-                'Account Activated Successfully! Premium features are now enabled.',
+                AppLocalizations.of(context)!.activationSuccess,
               ),
             ),
           );
         }
       } else {
-        setState(() => _error = 'Invalid or expired activation code');
+        setState(() => _error = AppLocalizations.of(context)!.invalidActivationCode);
       }
     } catch (e) {
-      setState(() => _error = 'Error during activation: $e');
+      setState(() => _error = AppLocalizations.of(context)!.activationError(e.toString()));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -76,7 +77,7 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(
-        'Activation Required',
+        AppLocalizations.of(context)!.activationRequired,
         style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
@@ -85,14 +86,14 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Your trial period has expired. Please enter a valid activation code to continue using DentalTid Premium.',
+              AppLocalizations.of(context)!.trialExpiredNotice,
               style: GoogleFonts.poppins(fontSize: 14),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: _codeController,
               decoration: InputDecoration(
-                labelText: 'Activation Code (27 chars)',
+                labelText: AppLocalizations.of(context)!.activationCodeLabel,
                 border: const OutlineInputBorder(),
                 errorText: _error,
               ),
@@ -100,7 +101,7 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Need a code?',
+              AppLocalizations.of(context)!.needACode,
               style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
@@ -143,9 +144,9 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
               // Allow closing, but Auth logic will logout/kick user back if they try to proceed without valid license
               Navigator.of(context).pop();
             },
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
-          ElevatedButton(onPressed: _activate, child: const Text('Activate')),
+          ElevatedButton(onPressed: _activate, child: Text(AppLocalizations.of(context)!.activatePremium)),
         ],
       ],
     );

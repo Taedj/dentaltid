@@ -1281,4 +1281,348 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get port => 'Port';
+
+  @override
+  String get acceptTermsError => 'Please accept the terms and conditions';
+
+  @override
+  String get dentistLogin => 'Dentist Login';
+
+  @override
+  String get dentistRegistration => 'Dentist Registration';
+
+  @override
+  String get staffPortal => 'Staff Portal';
+
+  @override
+  String get forgotPassword => 'Forgot Password?';
+
+  @override
+  String get authError => 'An error occurred, please check your credentials.';
+
+  @override
+  String get weakPasswordError => 'The password provided is too weak.';
+
+  @override
+  String get emailInUseError => 'An account already exists for that email.';
+
+  @override
+  String get userNotFoundError => 'No user found for that email.';
+
+  @override
+  String get wrongPasswordError => 'Wrong password provided for that user.';
+
+  @override
+  String get networkError => 'Network error. check your connection.';
+
+  @override
+  String authFailed(String error) {
+    return 'Authentication failed: $error';
+  }
+
+  @override
+  String get invalidStaffCredentials => 'Invalid Username or PIN';
+
+  @override
+  String get enterEmailFirst => 'Please enter your email address first';
+
+  @override
+  String get passwordResetSent =>
+      'Password reset email sent! Check your inbox.';
+
+  @override
+  String get contactDeveloperLabel => 'Contact Developer';
+
+  @override
+  String get contactUs => 'Contact Us';
+
+  @override
+  String get dentist => 'Dentist';
+
+  @override
+  String get staff => 'Staff';
+
+  @override
+  String get emailAddress => 'Email Address';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get yourName => 'Your Name';
+
+  @override
+  String get clinicNameLabel => 'Clinic Name';
+
+  @override
+  String get licenseNumber => 'License Number';
+
+  @override
+  String get acceptTermsAndConditions => 'I accept the Terms and Conditions';
+
+  @override
+  String get pin4Digits => 'PIN (4 Digits)';
+
+  @override
+  String get signIn => 'SIGN IN';
+
+  @override
+  String get register => 'REGISTER';
+
+  @override
+  String get loginLabel => 'LOGIN';
+
+  @override
+  String get rememberLabel => 'Remember';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account? ';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account? ';
+
+  @override
+  String get signUpSmall => 'Sign up';
+
+  @override
+  String get signInSmall => 'Sign in';
+
+  @override
+  String get goodMorning => 'Good Morning';
+
+  @override
+  String get goodAfternoon => 'Good Afternoon';
+
+  @override
+  String get goodEvening => 'Good Evening';
+
+  @override
+  String get scheduledVisits => 'Scheduled Visits';
+
+  @override
+  String get actionNeeded => 'Action Needed';
+
+  @override
+  String get allGood => 'All Good';
+
+  @override
+  String activeStatus(int count) {
+    return 'Active: $count';
+  }
+
+  @override
+  String doneStatus(int count) {
+    return 'Done: $count';
+  }
+
+  @override
+  String get clinicRunningSmoothly => 'Clinic running smoothly today 🦷';
+
+  @override
+  String expiringLabel(int count) {
+    return '$count Expiring';
+  }
+
+  @override
+  String lowStockLabelText(int count) {
+    return '$count Low Stock';
+  }
+
+  @override
+  String get staffActivationNotice =>
+      'The main dentist user must activate premium to continue using the application.';
+
+  @override
+  String get overviewMenu => 'Overview';
+
+  @override
+  String get usersMenu => 'Users';
+
+  @override
+  String get codesMenu => 'Codes';
+
+  @override
+  String get broadcastsMenu => 'Broadcasts';
+
+  @override
+  String get serverOnlineNoStaff => 'Server Online (No staff connected)';
+
+  @override
+  String serverOnlineWithStaffCount(int count) {
+    return 'Server Online ($count staff connected)';
+  }
+
+  @override
+  String staffConnectedList(String names) {
+    return 'Connected: $names';
+  }
+
+  @override
+  String get connectedToServer => 'Connected to Server';
+
+  @override
+  String get offline => 'Offline';
+
+  @override
+  String get invalidCodeLength => 'Invalid code length (must be 27 characters)';
+
+  @override
+  String get activationSuccess =>
+      'Account Activated Successfully! Premium features are now enabled.';
+
+  @override
+  String get invalidActivationCode => 'Invalid or expired activation code';
+
+  @override
+  String activationError(String error) {
+    return 'Error during activation: $error';
+  }
+
+  @override
+  String get activationRequired => 'Activation Required';
+
+  @override
+  String get trialExpiredNotice =>
+      'Your trial period has expired. Please enter a valid activation code to continue using DentalTid Premium.';
+
+  @override
+  String get activationCodeLabel => 'Activation Code (27 chars)';
+
+  @override
+  String get needACode => 'Need a code?';
+
+  @override
+  String get editDoctorProfile => 'Edit Doctor Profile';
+
+  @override
+  String get updateYourProfile => 'Update Your Profile';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get enterYourName => 'Please enter your name';
+
+  @override
+  String get profileUpdatedSuccess => 'Profile updated successfully!';
+
+  @override
+  String profileUpdateError(String error) {
+    return 'Failed to save profile: $error';
+  }
+
+  @override
+  String get loginToSaveProfileError =>
+      'Could not save profile. User not logged in.';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get mustBe4Digits => 'Must be 4 digits';
+
+  @override
+  String get editStaff => 'Edit Staff';
+
+  @override
+  String get addNewStaff => 'Add New Staff';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get systemHealth => 'System Health';
+
+  @override
+  String get developerOverview => 'Developer Overview';
+
+  @override
+  String get totalUsers => 'Total Users';
+
+  @override
+  String get activeTrials => 'Active Trials';
+
+  @override
+  String get estRevenue => 'Est. Revenue';
+
+  @override
+  String noPatientsFoundSearch(String query) {
+    return 'No patients found matching \"$query\"';
+  }
+
+  @override
+  String get paidStatusLabel => 'Paid';
+
+  @override
+  String get searchHintSeparator => 'or Phone...';
+
+  @override
+  String get savePatientsCsvLabel => 'Save Patients CSV';
+
+  @override
+  String get localBackupConfirm =>
+      'This backup will include your clinic database, app settings, and staff accounts. Do you want to proceed?';
+
+  @override
+  String get premiumOnly => 'Premium Only';
+
+  @override
+  String get cloudSyncConfirm =>
+      'This will upload your clinic database, settings, and staff accounts to the cloud for safe keeping. Do you want to proceed?';
+
+  @override
+  String get cloudSyncPremiumNotice =>
+      'Cloud Sync is a detailed Premium feature. Activate to enable.';
+
+  @override
+  String get manageStaffMembers => 'Manage Staff Members';
+
+  @override
+  String get addStaffSubtitle => 'Add Assistants or Receptionists';
+
+  @override
+  String get lanSyncSettings => 'LAN Sync Settings';
+
+  @override
+  String get autoStartServerLabel => 'Auto-start Server';
+
+  @override
+  String get autoStartServerSubtitle => 'Start sync server on app launch';
+
+  @override
+  String get serverPortLabel => 'Server Port';
+
+  @override
+  String get defaultPortHelper => 'Default: 8080';
+
+  @override
+  String get advancedNetworkConfig => 'Advanced Network Configuration';
+
+  @override
+  String get advancedNetworkConfigSubtitle => 'Logs, Firewall, and IP settings';
+
+  @override
+  String errorLoadingProfile(String error) {
+    return 'Error loading user profile: $error';
+  }
+
+  @override
+  String get deleteTransactionConfirm =>
+      'Are you sure you want to delete this transaction?';
+
+  @override
+  String get transactionDeletedSuccess => 'Transaction deleted successfully';
+
+  @override
+  String get limitReached => 'Limit Reached';
+
+  @override
+  String get inventoryLimitMessage =>
+      'You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.';
+
+  @override
+  String get okButton => 'OK';
+
+  @override
+  String get trialActive => 'Trial Active';
 }

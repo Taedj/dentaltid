@@ -543,5 +543,187 @@
   "stopServer": "Stop Server",
   "serverLogs": "Server Logs",
   "copyLogsSuccess": "Logs copied to clipboard",
-  "port": "Port"
+  "port": "Port",
+  "acceptTermsError": "Please accept the terms and conditions",
+  "dentistLogin": "Dentist Login",
+  "dentistRegistration": "Dentist Registration",
+  "staffPortal": "Staff Portal",
+  "forgotPassword": "Forgot Password?",
+  "authError": "An error occurred, please check your credentials.",
+  "weakPasswordError": "The password provided is too weak.",
+  "emailInUseError": "An account already exists for that email.",
+  "userNotFoundError": "No user found for that email.",
+  "wrongPasswordError": "Wrong password provided for that user.",
+  "networkError": "Network error. check your connection.",
+  "authFailed": "Authentication failed: {error}",
+  "@authFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "invalidStaffCredentials": "Invalid Username or PIN",
+  "enterEmailFirst": "Please enter your email address first",
+  "passwordResetSent": "Password reset email sent! Check your inbox.",
+  "contactDeveloperLabel": "Contact Developer",
+  "contactUs": "Contact Us",
+  "dentist": "Dentist",
+  "staff": "Staff",
+  "emailAddress": "Email Address",
+  "password": "Password",
+  "yourName": "Your Name",
+  "clinicNameLabel": "Clinic Name",
+  "licenseNumber": "License Number",
+  "acceptTermsAndConditions": "I accept the Terms and Conditions",
+  "pin4Digits": "PIN (4 Digits)",
+  "signIn": "SIGN IN",
+  "register": "REGISTER",
+  "loginLabel": "LOGIN",
+  "rememberLabel": "Remember",
+  "dontHaveAccount": "Don't have an account? ",
+  "alreadyHaveAccount": "Already have an account? ",
+  "signUpSmall": "Sign up",
+  "signInSmall": "Sign in",
+  "goodMorning": "Good Morning",
+  "goodAfternoon": "Good Afternoon",
+  "goodEvening": "Good Evening",
+  "scheduledVisits": "Scheduled Visits",
+  "actionNeeded": "Action Needed",
+  "allGood": "All Good",
+  "activeStatus": "Active: {count}",
+  "@activeStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "doneStatus": "Done: {count}",
+  "@doneStatus": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "clinicRunningSmoothly": "Clinic running smoothly today 🦷",
+  "expiringLabel": "{count} Expiring",
+  "@expiringLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lowStockLabelText": "{count} Low Stock",
+  "@lowStockLabelText": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffActivationNotice": "The main dentist user must activate premium to continue using the application.",
+  "overviewMenu": "Overview",
+  "usersMenu": "Users",
+  "codesMenu": "Codes",
+  "broadcastsMenu": "Broadcasts",
+  "serverOnlineNoStaff": "Server Online (No staff connected)",
+  "serverOnlineWithStaffCount": "Server Online ({count} staff connected)",
+  "@serverOnlineWithStaffCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "staffConnectedList": "Connected: {names}",
+  "@staffConnectedList": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "connectedToServer": "Connected to Server",
+  "offline": "Offline",
+  "invalidCodeLength": "Invalid code length (must be 27 characters)",
+  "activationSuccess": "Account Activated Successfully! Premium features are now enabled.",
+  "invalidActivationCode": "Invalid or expired activation code",
+  "activationError": "Error during activation: {error}",
+  "@activationError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "activationRequired": "Activation Required",
+  "trialExpiredNotice": "Your trial period has expired. Please enter a valid activation code to continue using DentalTid Premium.",
+  "activationCodeLabel": "Activation Code (27 chars)",
+  "needACode": "Need a code?",
+  "editDoctorProfile": "Edit Doctor Profile",
+  "updateYourProfile": "Update Your Profile",
+  "saveChanges": "Save Changes",
+  "enterYourName": "Please enter your name",
+  "profileUpdatedSuccess": "Profile updated successfully!",
+  "profileUpdateError": "Failed to save profile: {error}",
+  "@profileUpdateError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "loginToSaveProfileError": "Could not save profile. User not logged in.",
+  "required": "Required",
+  "mustBe4Digits": "Must be 4 digits",
+  "editStaff": "Edit Staff",
+  "addNewStaff": "Add New Staff",
+  "fullName": "Full Name",
+  "systemHealth": "System Health",
+  "developerOverview": "Developer Overview",
+  "totalUsers": "Total Users",
+  "activeTrials": "Active Trials",
+  "estRevenue": "Est. Revenue",
+  "noPatientsFoundSearch": "No patients found matching \"{query}\"",
+  "@noPatientsFoundSearch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "paidStatusLabel": "Paid",
+  "searchHintSeparator": "or Phone...",
+  "savePatientsCsvLabel": "Save Patients CSV",
+  "localBackupConfirm": "This backup will include your clinic database, app settings, and staff accounts. Do you want to proceed?",
+  "premiumOnly": "Premium Only",
+  "cloudSyncConfirm": "This will upload your clinic database, settings, and staff accounts to the cloud for safe keeping. Do you want to proceed?",
+  "cloudSyncPremiumNotice": "Cloud Sync is a detailed Premium feature. Activate to enable.",
+  "manageStaffMembers": "Manage Staff Members",
+  "addStaffSubtitle": "Add Assistants or Receptionists",
+  "lanSyncSettings": "LAN Sync Settings",
+  "autoStartServerLabel": "Auto-start Server",
+  "autoStartServerSubtitle": "Start sync server on app launch",
+  "serverPortLabel": "Server Port",
+  "defaultPortHelper": "Default: 8080",
+  "advancedNetworkConfig": "Advanced Network Configuration",
+  "advancedNetworkConfigSubtitle": "Logs, Firewall, and IP settings",
+  "errorLoadingProfile": "Error loading user profile: {error}",
+  "deleteTransactionConfirm": "Are you sure you want to delete this transaction?",
+  "transactionDeletedSuccess": "Transaction deleted successfully",
+  "limitReached": "Limit Reached",
+  "inventoryLimitMessage": "You have reached the limit of 100 inventory items for the Trial version.\nPlease upgrade to Premium to continue adding items.",
+  "okButton": "OK",
+  "premiumAccount": "Premium Account",
+  "trialActive": "Trial Active",
+  "@errorLoadingProfile": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

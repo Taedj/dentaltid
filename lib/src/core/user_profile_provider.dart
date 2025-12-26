@@ -39,14 +39,17 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
 
       // IF STAFF: Strictly merge licensing info from synced Dentist profile if available
       if (syncedDentistProfile != null) {
-        log.info('Merging license from synced dentist: ${syncedDentistProfile.plan}');
+        log.info(
+          'Merging license from synced dentist: ${syncedDentistProfile.plan}',
+        );
         return staffProfile.copyWith(
           plan: syncedDentistProfile.plan,
           isPremium: syncedDentistProfile.isPremium,
           trialStartDate: syncedDentistProfile.trialStartDate,
           premiumExpiryDate: syncedDentistProfile.premiumExpiryDate,
           licenseExpiry: syncedDentistProfile.licenseExpiry,
-          dentistName: syncedDentistProfile.dentistName ?? staffProfile.dentistName,
+          dentistName:
+              syncedDentistProfile.dentistName ?? staffProfile.dentistName,
           status: syncedDentistProfile.status,
           licenseKey: syncedDentistProfile.licenseKey,
         );
@@ -74,7 +77,10 @@ final userProfileProvider = FutureProvider<UserProfile?>((ref) async {
           );
         }
         // Also update the 'dentist_profile' so staff get it if they sync
-        await settings.setString('dentist_profile', jsonEncode(profile.toJson()));
+        await settings.setString(
+          'dentist_profile',
+          jsonEncode(profile.toJson()),
+        );
         return profile;
       }
     } catch (e) {
