@@ -2,7 +2,6 @@ import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 
 class DeveloperOverviewScreen extends StatelessWidget {

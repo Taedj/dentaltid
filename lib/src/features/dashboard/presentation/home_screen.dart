@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
@@ -13,9 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
-import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
-import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:dentaltid/src/features/developer/data/broadcast_service.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'dart:convert';
@@ -970,13 +967,14 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
           );
           return patientsAsync.when(
             data: (patients) {
-              if (patients.isEmpty)
+              if (patients.isEmpty) {
                 return Center(
                   child: Text(
                     l10n.noPatientsToday,
                     style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
                 );
+              }
               // Sort by creation time to ensure consistent order
               final sorted = List<Patient>.from(patients)
                 ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -1221,7 +1219,7 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
                           currentList = completed;
                         }
 
-                        if (currentList.isEmpty)
+                        if (currentList.isEmpty) {
                           return Center(
                             child: Text(
                               l10n.noAppointmentsFound,
@@ -1231,6 +1229,7 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
                               ),
                             ),
                           );
+                        }
 
                         // Sort by time
                         final sorted = List<Appointment>.from(currentList)

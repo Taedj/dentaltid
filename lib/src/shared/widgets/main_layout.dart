@@ -247,8 +247,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
           statusTooltip = l10n.serverOnlineNoStaff;
         } else {
           statusTooltip =
-              l10n.serverOnlineWithStaffCount(connectedStaff.length) + '\n' +
-              l10n.staffConnectedList(connectedStaff.join(', '));
+              '${l10n.serverOnlineWithStaffCount(connectedStaff.length)}\n${l10n.staffConnectedList(connectedStaff.join(', '))}';
         }
       } else {
         statusTooltip = l10n.connectedToServer;

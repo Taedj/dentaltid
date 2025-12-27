@@ -262,6 +262,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       if (mounted) context.go('/');
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       String errorMessage = l10n.authError;
       if (e.code == 'weak-password') {

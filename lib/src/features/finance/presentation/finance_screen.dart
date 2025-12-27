@@ -317,13 +317,14 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
 
               actualTransactionsAsyncValue.when(
                 data: (actualTransactions) {
-                  if (actualTransactions.isEmpty)
+                  if (actualTransactions.isEmpty) {
                     return Center(
                       child: Text(
                         l10n.noTransactionsFound,
                         style: const TextStyle(color: Colors.grey),
                       ),
                     );
+                  }
                   return ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
