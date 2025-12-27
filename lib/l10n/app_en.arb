@@ -725,5 +725,17 @@
         "type": "String"
       }
     }
-  }
+  },
+  "email": "Email",
+  "enterEmail": "Please enter an email",
+  "enterValidEmail": "Please enter a valid email",
+  "enterPassword": "Please enter a password",
+  "clinicAddress": "Clinic Address",
+  "enterClinicAddress": "Please enter clinic address",
+  "province": "Province",
+  "enterProvince": "Please enter province",
+  "country": "Country",
+  "enterCountry": "Please enter country",
+  "supplierContact": "Supplier Contact",
+  "enterSupplierContact": "Enter supplier contact info"
 }

@@ -1647,4 +1647,40 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get trialActive => 'Essai Actif';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get enterEmail => 'Veuillez entrer un email';
+
+  @override
+  String get enterValidEmail => 'Veuillez entrer un email valide';
+
+  @override
+  String get enterPassword => 'Veuillez entrer un mot de passe';
+
+  @override
+  String get clinicAddress => 'Adresse de la clinique';
+
+  @override
+  String get enterClinicAddress => 'Veuillez entrer l\'adresse de la clinique';
+
+  @override
+  String get province => 'Province';
+
+  @override
+  String get enterProvince => 'Veuillez entrer la province';
+
+  @override
+  String get country => 'Pays';
+
+  @override
+  String get enterCountry => 'Veuillez entrer le pays';
+
+  @override
+  String get supplierContact => 'Contact fournisseur';
+
+  @override
+  String get enterSupplierContact => 'Entrez info fournisseur';
 }

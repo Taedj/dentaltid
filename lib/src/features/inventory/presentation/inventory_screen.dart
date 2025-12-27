@@ -170,6 +170,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ],
         ),
         actions: [
+          if (!usage.hasReachedInventoryLimit)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () => _showAddEditDialog(),
+              tooltip: l10n.addItem,
+            ),
           IconButton(
             icon: Icon(_showExpiredOnly ? Icons.warning : Icons.inventory),
             onPressed: () {
@@ -303,7 +309,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
+                  padding: const EdgeInsets.only(bottom: 32),
                   itemCount: filteredItems.length,
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
@@ -456,13 +462,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ],
       ),
-      floatingActionButton: usage.hasReachedInventoryLimit
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showAddEditDialog(),
-              icon: const Icon(Icons.add),
-              label: Text(l10n.addItem),
-            ),
     );
   }
 }

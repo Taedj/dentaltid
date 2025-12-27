@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:logging/logging.dart';
@@ -12,12 +13,15 @@ class SettingsService {
   Map<String, dynamic> _settings = {};
   File? _file;
   bool _initialized = false;
+  Completer<void>? _initCompleter;
 
   SettingsService._internal();
 
   Future<void> init({bool force = false}) async {
     if (_initialized && !force) return;
+    if (_initCompleter != null && !force) return _initCompleter!.future;
 
+    _initCompleter = Completer<void>();
     try {
       final docsDir = await getApplicationDocumentsDirectory();
       final settingsDir = Directory(
@@ -49,8 +53,12 @@ class SettingsService {
       }
       _initialized = true;
       _logger.info('Settings initialized at ${_file!.path}');
+      _initCompleter!.complete();
     } catch (e) {
       _logger.severe('Failed to initialize settings service', e);
+      _initCompleter!.completeError(e);
+      _initCompleter = null; // Allow retry on failure
+      rethrow;
     }
   }
 
@@ -68,9 +76,16 @@ class SettingsService {
   bool? getBool(String key) => _settings[key] as bool?;
   int? getInt(String key) => _settings[key] as int?;
   double? getDouble(String key) => _settings[key] as double?;
+  List<String>? getStringList(String key) =>
+      (_settings[key] as List?)?.map((e) => e.toString()).toList();
 
   // Setters
   Future<void> setString(String key, String value) async {
+    _settings[key] = value;
+    await _save();
+  }
+
+  Future<void> setStringList(String key, List<String> value) async {
     _settings[key] = value;
     await _save();
   }

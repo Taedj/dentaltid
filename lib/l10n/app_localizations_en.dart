@@ -1625,4 +1625,40 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get trialActive => 'Trial Active';
+
+  @override
+  String get email => 'Email';
+
+  @override
+  String get enterEmail => 'Please enter an email';
+
+  @override
+  String get enterValidEmail => 'Please enter a valid email';
+
+  @override
+  String get enterPassword => 'Please enter a password';
+
+  @override
+  String get clinicAddress => 'Clinic Address';
+
+  @override
+  String get enterClinicAddress => 'Please enter clinic address';
+
+  @override
+  String get province => 'Province';
+
+  @override
+  String get enterProvince => 'Please enter province';
+
+  @override
+  String get country => 'Country';
+
+  @override
+  String get enterCountry => 'Please enter country';
+
+  @override
+  String get supplierContact => 'Supplier Contact';
+
+  @override
+  String get enterSupplierContact => 'Enter supplier contact info';
 }

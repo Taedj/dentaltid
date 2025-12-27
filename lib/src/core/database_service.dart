@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:path/path.dart';
@@ -6,17 +7,28 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 19; // Incremented version
+  static const int _databaseVersion = 20; // Incremented version
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
 
   static Database? _database;
+  static Completer<Database>? _dbInitCompleter;
 
   Future<Database> get database async {
     if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
+    if (_dbInitCompleter != null) return _dbInitCompleter!.future;
+
+    _dbInitCompleter = Completer<Database>();
+    try {
+      _database = await _initDB();
+      _dbInitCompleter!.complete(_database!);
+      return _database!;
+    } catch (e) {
+      _dbInitCompleter!.completeError(e);
+      _dbInitCompleter = null; // Allow retry
+      rethrow;
+    }
   }
 
   Future<Database> _initDB() async {
@@ -408,6 +420,18 @@ class DatabaseService {
         );
       }
     }
+
+    if (oldVersion < 20) {
+      try {
+        await db.execute('ALTER TABLE inventory ADD COLUMN supplierContact TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (supplierContact column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+    }
   }
 
   Future<void> close() async {
@@ -474,6 +498,7 @@ class DatabaseService {
         quantity INTEGER,
         expirationDate TEXT,
         supplier TEXT,
+        supplierContact TEXT,
         thresholdDays INTEGER DEFAULT 30,
         lowStockThreshold INTEGER DEFAULT 5,
         cost REAL

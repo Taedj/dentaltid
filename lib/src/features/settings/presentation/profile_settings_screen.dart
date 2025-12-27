@@ -20,6 +20,9 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
   final _clinicNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _medicalLicenseNumberController = TextEditingController();
+  final _provinceController = TextEditingController();
+  final _countryController = TextEditingController();
+  final _clinicAddressController = TextEditingController();
   final _log = Logger('ProfileSettingsScreen');
 
   @override
@@ -45,6 +48,9 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
     _clinicNameController.dispose();
     _phoneNumberController.dispose();
     _medicalLicenseNumberController.dispose();
+    _provinceController.dispose();
+    _countryController.dispose();
+    _clinicAddressController.dispose();
     super.dispose();
   }
 
@@ -99,6 +105,9 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
           clinicName: _clinicNameController.text,
           phoneNumber: _phoneNumberController.text,
           medicalLicenseNumber: _medicalLicenseNumberController.text,
+          clinicAddress: _clinicAddressController.text,
+          province: _provinceController.text,
+          country: _countryController.text,
         );
         await firebaseService.updateUserProfile(
           userProfile.uid,
@@ -156,6 +165,15 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
               _medicalLicenseNumberController.text =
                   userProfile.medicalLicenseNumber ?? '';
             }
+            if (_provinceController.text.isEmpty) {
+              _provinceController.text = userProfile.province ?? '';
+            }
+            if (_countryController.text.isEmpty) {
+              _countryController.text = userProfile.country ?? '';
+            }
+            if (_clinicAddressController.text.isEmpty) {
+              _clinicAddressController.text = userProfile.clinicAddress ?? '';
+            }
           }
 
           return SingleChildScrollView(
@@ -212,6 +230,41 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.badge_outlined),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _clinicAddressController,
+                    decoration: InputDecoration(
+                      labelText: l10n.clinicAddress,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.location_on_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _provinceController,
+                          decoration: InputDecoration(
+                            labelText: l10n.province,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.map_outlined),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _countryController,
+                          decoration: InputDecoration(
+                            labelText: l10n.country,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.flag_outlined),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(

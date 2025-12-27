@@ -569,5 +569,17 @@
       }
     }
   },
-  "trialActive": "فترة تجريبية"
+  "trialActive": "فترة تجريبية",
+  "email": "البريد الإلكتروني",
+  "enterEmail": "الرجاء إدخال البريد الإلكتروني",
+  "enterValidEmail": "الرجاء إدخال بريد إلكتروني صالح",
+  "enterPassword": "الرجاء إدخال كلمة المرور",
+  "clinicAddress": "عنوان العيادة",
+  "enterClinicAddress": "الرجاء إدخال عنوان العيادة",
+  "province": "المقاطعة",
+  "enterProvince": "الرجاء إدخال المقاطعة",
+  "country": "البلد",
+  "enterCountry": "الرجاء إدخال البلد",
+  "supplierContact": "جهة الاتصال",
+  "enterSupplierContact": "أدخل معلومات المورد"
 }

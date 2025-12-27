@@ -509,5 +509,17 @@
       }
     }
   },
-  "trialActive": "Essai Actif"
+  "trialActive": "Essai Actif",
+  "email": "Email",
+  "enterEmail": "Veuillez entrer un email",
+  "enterValidEmail": "Veuillez entrer un email valide",
+  "enterPassword": "Veuillez entrer un mot de passe",
+  "clinicAddress": "Adresse de la clinique",
+  "enterClinicAddress": "Veuillez entrer l'adresse de la clinique",
+  "province": "Province",
+  "enterProvince": "Veuillez entrer la province",
+  "country": "Pays",
+  "enterCountry": "Veuillez entrer le pays",
+  "supplierContact": "Contact fournisseur",
+  "enterSupplierContact": "Entrez info fournisseur"
 }

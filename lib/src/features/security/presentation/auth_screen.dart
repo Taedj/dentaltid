@@ -33,13 +33,17 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _focusNode = FocusNode();
+  final _keyboardFocusNode = FocusNode();
+  final _autocompleteFocusNode = FocusNode();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _clinicNameController = TextEditingController();
   final _dentistNameController = TextEditingController();
   final _phoneNumberController = TextEditingController();
   final _medicalLicenseNumberController = TextEditingController();
+  final _provinceController = TextEditingController();
+  final _countryController = TextEditingController();
+  final _clinicAddressController = TextEditingController();
 
   // Staff Controllers
   final _usernameController = TextEditingController();
@@ -54,7 +58,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   bool _acceptTerms = false;
 
+
   bool _rememberMe = false;
+  List<String> _savedEmails = [];
 
   @override
   void initState() {
@@ -64,13 +70,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _keyboardFocusNode.dispose();
+    _autocompleteFocusNode.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _clinicNameController.dispose();
     _dentistNameController.dispose();
     _phoneNumberController.dispose();
     _medicalLicenseNumberController.dispose();
+    _provinceController.dispose();
+    _countryController.dispose();
+    _clinicAddressController.dispose();
     _usernameController.dispose();
     _pinController.dispose();
     super.dispose();
@@ -108,6 +118,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           // invalid cache
         }
       }
+    }
+
+    // Load saved emails
+    final emails = settings.getStringList('saved_emails');
+    if (emails != null) {
+      if (mounted) setState(() => _savedEmails = emails);
     }
   }
 
@@ -167,6 +183,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             dentistName: _dentistNameController.text,
             phoneNumber: _phoneNumberController.text,
             medicalLicenseNumber: _medicalLicenseNumberController.text,
+            province: _provinceController.text,
+            country: _countryController.text,
+            clinicAddress: _clinicAddressController.text,
             plan: SubscriptionPlan.trial,
             licenseKey: licenseKey,
             status: SubscriptionStatus.active,
@@ -198,6 +217,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           await FirebaseAuth.instance.signOut();
           if (mounted) _showActivationDialog(userProfile.uid);
           return;
+        }
+
+        // Save email to list if not present
+        final email = _emailController.text;
+        if (!_savedEmails.contains(email)) {
+          _savedEmails.add(email);
+          await SettingsService.instance.setStringList(
+            'saved_emails',
+            _savedEmails,
+          );
         }
 
         final settings = SettingsService.instance;
@@ -377,9 +406,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   void _switchAuthMode() {
     setState(() {
-      _authMode = _authMode == AuthMode.login
-          ? AuthMode.register
-          : AuthMode.login;
+      if (_authMode == AuthMode.login) {
+        _authMode = AuthMode.register;
+        _userType = UserType.dentist; // Registration is only for dentists
+      } else {
+        _authMode = AuthMode.login;
+      }
       _formKey.currentState?.reset();
     });
   }
@@ -499,6 +531,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            InkWell(
+              onTap: () => _launchUrl('https://www.tidjanizitouni.com'),
+              child: Row(
+                children: [
+                  const Icon(Icons.language, color: Colors.purpleAccent),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'www.tidjanizitouni.com',
+                      style: GoogleFonts.poppins(
+                        color: Colors.purpleAccent,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const Divider(height: 32, color: Colors.white12),
             Center(
               child: Column(
@@ -557,12 +608,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final size = MediaQuery.of(context).size;
     final l10n = AppLocalizations.of(context)!;
 
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _focusNode.requestFocus(),
-    );
-
     return KeyboardListener(
-      focusNode: _focusNode,
+      focusNode: _keyboardFocusNode,
       autofocus: true,
       onKeyEvent: _handleKeyEvents,
       child: Scaffold(
@@ -592,14 +639,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                       Container(
                         constraints: const BoxConstraints(maxWidth: 850),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.4),
+                              color: Colors.black.withValues(alpha: 0.4),
                               blurRadius: 40,
                               spreadRadius: 5,
                             ),
@@ -611,12 +658,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Expanded(
                               flex: 5,
                               child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  40,
-                                  100,
-                                  40,
-                                  40,
-                                ), // Increased top padding to 100
+                                  padding: const EdgeInsets.fromLTRB(
+                                    40,
+                                    125, // Increased to clear branding
+                                    40,
+                                    25,  // Slightly reduced bottom padding
+                                  ),
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
@@ -646,8 +693,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         textAlign: TextAlign.center,
                                       ),
                                       const SizedBox(
-                                        height: 20,
-                                      ), // Reduced height
+                                        height: 4,
+                                      ), // Minimal gap to save space
                                       // Stable height container for forms
                                       AnimatedContainer(
                                         duration: const Duration(
@@ -655,10 +702,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         ),
                                         height: _authMode == AuthMode.login
                                             ? 160
-                                            : 440,
+                                            : 400, // Slightly more compact
                                         child: SingleChildScrollView(
                                           physics:
-                                              const NeverScrollableScrollPhysics(),
+                                              const BouncingScrollPhysics(),
                                           child: AnimatedSwitcher(
                                             duration: const Duration(
                                               milliseconds: 300,
@@ -674,9 +721,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       // Sign In Button
                                       _buildActionButton(colorScheme),
 
-                                      const SizedBox(
-                                        height: 12,
-                                      ), // Reduced height
+                                    const SizedBox(
+                                      height: 8,
+                                    ), // Tightened gap
                                       // Remember Me & Forgot Password
                                       Row(
                                         mainAxisAlignment:
@@ -743,7 +790,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
                       // --- Overlapping Logo & Branding ---
                       Positioned(
-                        top: -45,
+                        top: -35, // Shunted slightly lower
                         left: 20,
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.end,
@@ -754,18 +801,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.blue.withOpacity(0.3),
+                                    color: Colors.blue.withValues(alpha: 0.3),
                                     blurRadius: 15,
                                     spreadRadius: 2,
                                   ),
                                 ],
                               ),
-                              child: Image.asset(
-                                'assets/images/DT!d.png',
-                                width: 140,
-                                height: 140,
-                                fit: BoxFit.contain,
-                              ),
+                                child: Image.asset(
+                                  'assets/images/DT!d.png',
+                                  width: 120, // Reduced from 140
+                                  height: 120, // Reduced from 140
+                                  fit: BoxFit.contain,
+                                ),
                             ),
                             const SizedBox(width: 12),
                             Padding(
@@ -818,10 +865,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               child: SafeArea(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(30),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                   child: InkWell(
@@ -910,11 +957,76 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
-        _buildTextField(
-          controller: _emailController,
-          label: l10n.emailAddress,
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
+        RawAutocomplete<String>(
+          textEditingController: _emailController,
+          focusNode: _autocompleteFocusNode,
+          optionsBuilder: (TextEditingValue textEditingValue) {
+            if (textEditingValue.text == '') {
+              return _savedEmails;
+            }
+            return _savedEmails.where((String option) {
+              return option
+                  .toLowerCase()
+                  .contains(textEditingValue.text.toLowerCase());
+            }).toList();
+          },
+          fieldViewBuilder: (
+            BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode fieldFocusNode,
+            VoidCallback onFieldSubmitted,
+          ) {
+            return _buildTextField(
+              controller: textEditingController,
+              label: l10n.emailAddress,
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              focusNode: fieldFocusNode,
+            );
+          },
+          optionsViewBuilder: (
+            BuildContext context,
+            AutocompleteOnSelected<String> onSelected,
+            Iterable<String> options,
+          ) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200, maxWidth: 300),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final String option = options.elementAt(index);
+                      return ListTile(
+                        title: Text(
+                          option,
+                          style: GoogleFonts.poppins(color: Colors.white),
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
+                          onPressed: () async {
+                            setState(() {
+                              _savedEmails.remove(option);
+                            });
+                             await SettingsService.instance.setStringList('saved_emails', _savedEmails);
+                          },
+                        ),
+                        onTap: () {
+                          onSelected(option);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
         ),
         const SizedBox(height: 12), // Reduced from 16
         _buildTextField(
@@ -924,32 +1036,74 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           obscureText: true,
         ),
         if (_authMode == AuthMode.register) ...[
-          const SizedBox(height: 12),
-          _buildTextField(
-            controller: _clinicNameController,
-            label: l10n.clinicNameLabel,
-            icon: Icons.business_outlined,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _clinicNameController,
+                  label: l10n.clinicNameLabel,
+                  icon: Icons.business_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  controller: _dentistNameController,
+                  label: l10n.yourName,
+                  icon: Icons.person_outline,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
-            controller: _dentistNameController,
-            label: l10n.yourName,
-            icon: Icons.person_outline,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _phoneNumberController,
+                  label: l10n.phoneNumber,
+                  icon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  controller: _medicalLicenseNumberController,
+                  label: l10n.licenseNumber,
+                  icon: Icons.badge_outlined,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _buildTextField(
-            controller: _phoneNumberController,
-            label: l10n.phoneNumber,
-            icon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
+            controller: _clinicAddressController,
+            label: l10n.clinicAddress,
+            icon: Icons.location_on_outlined,
           ),
-          const SizedBox(height: 12),
-          _buildTextField(
-            controller: _medicalLicenseNumberController,
-            label: l10n.licenseNumber,
-            icon: Icons.badge_outlined,
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _provinceController,
+                  label: l10n.province,
+                  icon: Icons.map_outlined,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  controller: _countryController,
+                  label: l10n.country,
+                  icon: Icons.public_outlined,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Theme(
             data: theme.copyWith(unselectedWidgetColor: Colors.white54),
             child: CheckboxListTile(
@@ -986,8 +1140,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           label: l10n.pin4Digits,
           icon: Icons.lock_outline,
           obscureText: true,
-          maxLength: 4,
           keyboardType: TextInputType.number,
+          maxLength: 6,
         ),
       ],
     );
@@ -1000,9 +1154,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     bool obscureText = false,
     TextInputType? keyboardType,
     int? maxLength,
+    FocusNode? focusNode,
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       obscureText: obscureText,
       keyboardType: keyboardType,
       maxLength: maxLength,
@@ -1028,7 +1184,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
-          vertical: 16,
+          vertical: 12,
         ),
       ),
     );

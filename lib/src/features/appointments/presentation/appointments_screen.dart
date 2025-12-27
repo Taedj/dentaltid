@@ -46,6 +46,12 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         actions: [
+          if (!usage.hasReachedAppointmentLimit)
+            IconButton(
+              icon: const Icon(LucideIcons.plus, color: AppColors.primary),
+              onPressed: () => context.go('/appointments/add'),
+              tooltip: l10n.addAppointment,
+            ),
           IconButton(
             icon: Icon(
               _showUpcomingOnly
@@ -458,13 +464,6 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
           ),
         ],
       ),
-      floatingActionButton: usage.hasReachedAppointmentLimit
-          ? null
-          : FloatingActionButton(
-              backgroundColor: AppColors.primary,
-              onPressed: () => context.go('/appointments/add'),
-              child: const Icon(LucideIcons.plus, color: Colors.white),
-            ),
     );
   }
 

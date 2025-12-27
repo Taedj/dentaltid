@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui';
 
 class AddEditAppointmentScreen extends ConsumerStatefulWidget {
   const AddEditAppointmentScreen({super.key, this.appointment});
@@ -137,100 +138,118 @@ class _AddEditAppointmentScreenState
     ).format(_unpaid);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
           widget.appointment == null
               ? l10n.addAppointment
               : l10n.editAppointment,
         ),
-        elevation: 2,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWideScreen = constraints.maxWidth > 800;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  if (isWideScreen) ...[
-                    // Wide screen: Organized 3-column grid layout
-                    Column(
-                      children: [
-                        // First row: Core appointment details
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: _buildPatientSelectionCard(
-                                  l10n,
-                                  patientsAsyncValue,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8.0,
-                                ),
-                                child: _buildAppointmentDateTimeCard(l10n),
-                              ),
-                            ),
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: _buildAppointmentTypeCard(l10n),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // Second row: Payment and history
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: _buildPaymentStatusCard(l10n, currency),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: _buildLastVisitCard(l10n),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSaveButtonLarge(l10n, appointmentService),
-                  ] else ...[
-                    // Narrow screen: Single column layout
-                    _buildPatientSelectionSection(l10n, patientsAsyncValue),
-                    const SizedBox(height: 16),
-                    _buildPaymentStatusCard(l10n, currency),
-                    const SizedBox(height: 16),
-                    _buildAppointmentDateTimeSection(l10n),
-                    const SizedBox(height: 16),
-                    _buildAppointmentTypeCard(l10n),
-                    const SizedBox(height: 16),
-                    _buildLastVisitCard(l10n),
-                    const SizedBox(height: 24),
-                    _buildSaveButton(l10n, appointmentService),
-                  ],
-                ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.1),
               ),
             ),
-          );
-        },
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWideScreen = constraints.maxWidth > 800;
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      if (isWideScreen) ...[
+                        // Wide screen: Organized 3-column grid layout
+                        Column(
+                          children: [
+                            // First row: Core appointment details
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: _buildPatientSelectionCard(
+                                      l10n,
+                                      patientsAsyncValue,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                    ),
+                                    child: _buildAppointmentDateTimeCard(l10n),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: _buildAppointmentTypeCard(l10n),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            // Second row: Payment and history
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 8.0),
+                                    child: _buildPaymentStatusCard(l10n, currency),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: _buildLastVisitCard(l10n),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        _buildSaveButtonLarge(l10n, appointmentService),
+                      ] else ...[
+                        // Narrow screen: Single column layout
+                        _buildPatientSelectionSection(l10n, patientsAsyncValue),
+                        const SizedBox(height: 16),
+                        _buildPaymentStatusCard(l10n, currency),
+                        const SizedBox(height: 16),
+                        _buildAppointmentDateTimeSection(l10n),
+                        const SizedBox(height: 16),
+                        _buildAppointmentTypeCard(l10n),
+                        const SizedBox(height: 16),
+                        _buildLastVisitCard(l10n),
+                        const SizedBox(height: 24),
+                        _buildSaveButton(l10n, appointmentService),
+                      ],
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -240,7 +259,8 @@ class _AddEditAppointmentScreenState
     AsyncValue<List<Patient>> patientsAsyncValue,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    return Container(
+      decoration: _buildThemedCardDecoration(colorScheme.primary),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -270,7 +290,7 @@ class _AddEditAppointmentScreenState
                     ),
                   ),
                   filled: true,
-                  fillColor: colorScheme.surface,
+                  fillColor: Colors.white.withValues(alpha: 0.1),
                 ),
                 items: patients.map((patient) {
                   return DropdownMenuItem<int>(
@@ -310,7 +330,8 @@ class _AddEditAppointmentScreenState
 
   Widget _buildAppointmentDateTimeSection(AppLocalizations l10n) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Card(
+    return Container(
+      decoration: _buildThemedCardDecoration(colorScheme.tertiary),
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
@@ -343,7 +364,7 @@ class _AddEditAppointmentScreenState
                   borderSide: BorderSide(color: colorScheme.tertiary, width: 2),
                 ),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white.withValues(alpha: 0.1),
               ),
               readOnly: true,
               validator: (value) =>
@@ -740,7 +761,7 @@ class _AddEditAppointmentScreenState
                       ),
                     ),
                     filled: true,
-                    fillColor: colorScheme.surface,
+                    fillColor: Colors.white.withValues(alpha: 0.1),
                   ),
                   style: TextStyle(
                     color: colorScheme.onSurface,
@@ -869,7 +890,7 @@ class _AddEditAppointmentScreenState
                     ),
                   ),
                   filled: true,
-                  fillColor: colorScheme.surface,
+                  fillColor: Colors.white.withValues(alpha: 0.1),
                 ),
                 style: TextStyle(
                   color: colorScheme.onSurface,
@@ -948,7 +969,7 @@ class _AddEditAppointmentScreenState
                     ),
                   ),
                   filled: true,
-                  fillColor: colorScheme.surface,
+                  fillColor: Colors.white.withValues(alpha: 0.1),
                 ),
                 style: TextStyle(
                   color: colorScheme.onSurface,
@@ -1047,7 +1068,7 @@ class _AddEditAppointmentScreenState
                   borderSide: BorderSide(color: colorScheme.primary, width: 2),
                 ),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white.withValues(alpha: 0.1),
               ),
               style: TextStyle(
                 color: colorScheme.onSurface,
@@ -1080,7 +1101,7 @@ class _AddEditAppointmentScreenState
                   borderSide: BorderSide(color: colorScheme.primary, width: 2),
                 ),
                 filled: true,
-                fillColor: colorScheme.surface,
+                fillColor: Colors.white.withValues(alpha: 0.1),
               ),
               style: TextStyle(
                 color: colorScheme.onSurface,
@@ -1131,10 +1152,8 @@ class _AddEditAppointmentScreenState
                 ),
                 filled: true,
                 fillColor: _unpaid == 0
-                    ? colorScheme.surface
-                    : colorScheme.surfaceContainerHighest.withAlpha(
-                        (255 * 0.2).round(),
-                      ),
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
               ),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -1307,19 +1326,11 @@ class _AddEditAppointmentScreenState
   }
 
   BoxDecoration _buildThemedCardDecoration(Color primaryColor) {
-    final colorScheme = Theme.of(context).colorScheme;
     return BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          primaryColor.withAlpha((255 * 0.05).round()),
-          colorScheme.surface,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
+      color: Colors.white.withValues(alpha: 0.05),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: primaryColor.withAlpha((255 * 0.2).round()),
+        color: primaryColor.withValues(alpha: 0.3),
         width: 1,
       ),
     );

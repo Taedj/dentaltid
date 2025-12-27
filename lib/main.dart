@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/core/router.dart';
 import 'package:dentaltid/src/core/theme_provider.dart';
 import 'package:dentaltid/src/core/app_initializer.dart';
+import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:logging/logging.dart';
@@ -30,10 +31,18 @@ void main() async {
   log.info('Application starting...');
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    log.info('Initializing native database factory...');
     sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi; // Set the database factory
+    databaseFactory = databaseFactoryFfi; 
   }
+
+  log.info('Initializing Firebase...');
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  
+  log.info('Initializing Settings...');
+  await SettingsService.instance.init(); 
+  
+  log.info('Ready to runApp...');
   runApp(const ProviderScope(child: MyApp()));
 }
 
@@ -62,7 +71,6 @@ class _MyAppState extends ConsumerState<MyApp> {
     final theme = ref.watch(themeProvider);
 
     return MaterialApp.router(
-      key: ValueKey(locale), // Force rebuild when locale changes
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       theme: appThemes[theme],

@@ -39,7 +39,6 @@ final router = GoRouter(
     bool isStaffLoggedIn = false;
     if (!isLoggedIn) {
       try {
-        await SettingsService.instance.init();
         final settings = SettingsService.instance;
         hasRememberMe =
             (settings.getBool('remember_me') ?? false) &&
@@ -58,7 +57,6 @@ final router = GoRouter(
     // --- DEVELOPER REDIRECT ---
     if (effectiveLoggedIn) {
       try {
-        await SettingsService.instance.init();
         final settings = SettingsService.instance;
         final roleString = settings.getString('userRole');
 
@@ -102,12 +100,27 @@ final router = GoRouter(
           routes: [
             GoRoute(
               path: 'add',
-              builder: (context, state) => const AddEditAppointmentScreen(),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: const AddEditAppointmentScreen(),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                opaque: false,
+                barrierColor: Colors.black.withValues(alpha: 0.1),
+              ),
             ),
             GoRoute(
               path: 'edit',
-              builder: (context, state) =>
-                  AddEditAppointmentScreen(appointment: state.extra as dynamic),
+              pageBuilder: (context, state) => CustomTransitionPage(
+                key: state.pageKey,
+                child: AddEditAppointmentScreen(appointment: state.extra as dynamic),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                opaque: false,
+                barrierColor: Colors.black.withValues(alpha: 0.1),
+              ),
             ),
           ],
         ),

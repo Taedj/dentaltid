@@ -23,6 +23,7 @@ class _AddInventoryItemDialogState
   late TextEditingController _quantityController;
   late TextEditingController _costController;
   late TextEditingController _supplierController;
+  late TextEditingController _supplierContactController;
   late TextEditingController _thresholdController;
   late TextEditingController _lowStockController;
   late DateTime _expirationDate;
@@ -42,6 +43,9 @@ class _AddInventoryItemDialogState
     _supplierController = TextEditingController(
       text: widget.item?.supplier ?? '',
     );
+    _supplierContactController = TextEditingController(
+      text: widget.item?.supplierContact ?? '',
+    );
     _thresholdController = TextEditingController(
       text: widget.item?.thresholdDays.toString() ?? '30',
     );
@@ -57,6 +61,7 @@ class _AddInventoryItemDialogState
     _quantityController.dispose();
     _costController.dispose();
     _supplierController.dispose();
+    _supplierContactController.dispose();
     _thresholdController.dispose();
     _lowStockController.dispose();
     super.dispose();
@@ -158,6 +163,16 @@ class _AddInventoryItemDialogState
                     value!.isEmpty ? l10n.enterSupplier : null,
               ),
               const SizedBox(height: 8),
+              TextFormField(
+                controller: _supplierContactController,
+                decoration: InputDecoration(
+                  labelText: l10n.supplierContact,
+                  prefixIcon: const Icon(Icons.contact_phone_outlined),
+                ),
+                validator: (value) =>
+                    value!.isEmpty ? l10n.enterSupplierContact : null,
+              ),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
@@ -218,6 +233,7 @@ class _AddInventoryItemDialogState
                 quantity: int.parse(_quantityController.text),
                 cost: _calculateUnitCost(), // Use logic to set unit cost
                 supplier: _supplierController.text,
+                supplierContact: _supplierContactController.text,
                 expirationDate: _expirationDate,
                 thresholdDays: int.parse(_thresholdController.text),
                 lowStockThreshold: int.parse(_lowStockController.text),

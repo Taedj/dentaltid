@@ -1623,4 +1623,40 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get trialActive => 'فترة تجريبية';
+
+  @override
+  String get email => 'البريد الإلكتروني';
+
+  @override
+  String get enterEmail => 'الرجاء إدخال البريد الإلكتروني';
+
+  @override
+  String get enterValidEmail => 'الرجاء إدخال بريد إلكتروني صالح';
+
+  @override
+  String get enterPassword => 'الرجاء إدخال كلمة المرور';
+
+  @override
+  String get clinicAddress => 'عنوان العيادة';
+
+  @override
+  String get enterClinicAddress => 'الرجاء إدخال عنوان العيادة';
+
+  @override
+  String get province => 'المقاطعة';
+
+  @override
+  String get enterProvince => 'الرجاء إدخال المقاطعة';
+
+  @override
+  String get country => 'البلد';
+
+  @override
+  String get enterCountry => 'الرجاء إدخال البلد';
+
+  @override
+  String get supplierContact => 'جهة الاتصال';
+
+  @override
+  String get enterSupplierContact => 'أدخل معلومات المورد';
 }

@@ -25,9 +25,9 @@ final lightTheme = ThemeData.light().copyWith(
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
-        return AppColors.success.withOpacity(0.5);
+        return AppColors.success.withValues(alpha: 0.5);
       }
-      return AppColors.error.withOpacity(0.5);
+      return AppColors.error.withValues(alpha: 0.5);
     }),
   ),
   textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme).copyWith(
@@ -96,9 +96,9 @@ final darkTheme = ThemeData.dark().copyWith(
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
-        return AppColors.success.withOpacity(0.5);
+        return AppColors.success.withValues(alpha: 0.5);
       }
-      return AppColors.error.withOpacity(0.5);
+      return AppColors.error.withValues(alpha: 0.5);
     }),
   ),
   textTheme: GoogleFonts.interTextTheme(ThemeData.dark().textTheme).copyWith(

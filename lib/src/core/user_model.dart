@@ -19,6 +19,9 @@ class UserProfile {
   final String? fullName; // Full name of the user (e.g. for staff)
   final String? phoneNumber;
   final String? medicalLicenseNumber;
+  final String? province;
+  final String? country;
+  final String? clinicAddress;
 
   // Trial & Application Limits
   final DateTime? trialStartDate;
@@ -68,6 +71,9 @@ class UserProfile {
     this.role = UserRole.dentist,
     this.username,
     this.pin,
+    this.province,
+    this.country,
+    this.clinicAddress,
   });
 
   Map<String, dynamic> toJson() => {
@@ -96,6 +102,9 @@ class UserProfile {
     'role': role.toString(),
     'username': username,
     'pin': pin,
+    'province': province,
+    'country': country,
+    'clinicAddress': clinicAddress,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -137,6 +146,9 @@ class UserProfile {
     ),
     username: json['username'],
     pin: json['pin'],
+    province: json['province'],
+    country: json['country'],
+    clinicAddress: json['clinicAddress'],
   );
 
   UserProfile copyWith({
@@ -165,6 +177,9 @@ class UserProfile {
     UserRole? role,
     String? username,
     String? pin,
+    String? province,
+    String? country,
+    String? clinicAddress,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -193,6 +208,9 @@ class UserProfile {
       role: role ?? this.role,
       username: username ?? this.username,
       pin: pin ?? this.pin,
+      province: province ?? this.province,
+      country: country ?? this.country,
+      clinicAddress: clinicAddress ?? this.clinicAddress,
     );
   }
 }

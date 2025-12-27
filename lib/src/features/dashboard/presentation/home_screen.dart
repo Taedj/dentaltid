@@ -571,9 +571,9 @@ class _DashboardHeader extends ConsumerWidget {
 
     return userProfileAsyncValue.when(
       data: (userProfile) {
-        final displayName = userProfile?.dentistName ?? 'User';
-        final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
         final isDentist = userProfile?.role == UserRole.dentist;
+        final displayName = (isDentist ? userProfile?.dentistName : userProfile?.fullName) ?? userProfile?.dentistName ?? 'User';
+        final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
         final greetingPrefix = isDentist ? 'Dr. ' : '';
         
         // Subscription Status Logic
@@ -596,66 +596,70 @@ class _DashboardHeader extends ConsumerWidget {
         return Padding(
           padding: const EdgeInsets.all(24.0),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          "$greeting 👋 $greetingPrefix$displayName",
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontSize: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: statusColor),
-                          ),
-                          child: Text(
-                            statusText,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
-                        .shimmer(delay: 2000.ms, duration: 1000.ms),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.clinicRunningSmoothly,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 16),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            "$greeting 👋 $greetingPrefix$displayName",
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontSize: 22,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: statusColor),
+                            ),
+                            child: Text(
+                              statusText,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                          .animate(onPlay: (c) => c.repeat(reverse: true))
+                          .shimmer(delay: 2000.ms, duration: 1000.ms),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.clinicRunningSmoothly,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
+              const _LiveClock(),
             ],
           ),
         );
@@ -754,41 +758,45 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
-      onEnter: (_) {
-        setState(() => _isHovering = true);
-        _controller.forward();
-        setState(() => _isFront = false);
-      },
-      onExit: (_) {
-        setState(() => _isHovering = false);
-        _controller.reverse();
-        setState(() => _isFront = true);
-      },
-      child: AnimatedBuilder(
-        animation: _animation,
-        builder: (context, child) {
-          final angle = _animation.value * 3.14159;
-          final transform = Matrix4.identity()
-            ..setEntry(3, 2, 0.001)
-            ..rotateY(angle)
-            ..setTranslationRaw(
-              0.0,
-              _isHovering ? -10.0 : 0.0,
-              0.0,
-            ); // Floating effect
-
-          return Transform(
-            transform: transform,
-            alignment: Alignment.center,
-            child: _isFront
-                ? _buildFrontCard()
-                : Transform(
-                    transform: Matrix4.rotationY(3.14159),
-                    alignment: Alignment.center,
-                    child: _buildBackCard(),
-                  ),
-          );
+      onEnter: (_) => setState(() => _isHovering = true),
+      onExit: (_) => setState(() => _isHovering = false),
+      child: GestureDetector(
+        onTap: () {
+          if (_controller.isAnimating) return;
+          if (_isFront) {
+            _controller.forward();
+            setState(() => _isFront = false);
+          } else {
+            _controller.reverse();
+            setState(() => _isFront = true);
+          }
         },
+        child: AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) {
+            final angle = _animation.value * 3.14159;
+            final transform = Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY(angle)
+              ..setTranslationRaw(
+                0.0,
+                _isHovering ? -10.0 : 0.0,
+                0.0,
+              ); // Floating effect
+
+            return Transform(
+              transform: transform,
+              alignment: Alignment.center,
+              child: _isFront
+                  ? _buildFrontCard()
+                  : Transform(
+                      transform: Matrix4.rotationY(3.14159),
+                      alignment: Alignment.center,
+                      child: _buildBackCard(),
+                    ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -1297,25 +1305,86 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
   ) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? color : Colors.transparent,
-              width: 2,
-            ),
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? color : Colors.transparent,
+            width: 1,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: isSelected ? color : Colors.grey,
-            fontWeight: FontWeight.bold,
-            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 11,
           ),
         ),
       ),
+    );
+  }
+}
+
+class _LiveClock extends StatefulWidget {
+  const _LiveClock();
+
+  @override
+  State<_LiveClock> createState() => _LiveClockState();
+}
+
+class _LiveClockState extends State<_LiveClock> {
+  late Stream<DateTime> _timerStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _timerStream = Stream.periodic(
+      const Duration(seconds: 1),
+      (_) => DateTime.now(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DateTime>(
+      stream: _timerStream,
+      initialData: DateTime.now(),
+      builder: (context, snapshot) {
+        final now = snapshot.data ?? DateTime.now();
+        final dateStr = DateFormat.yMMMMEEEEd(
+          Localizations.localeOf(context).toString(),
+        ).format(now);
+        final timeStr = DateFormat.Hms(
+          Localizations.localeOf(context).toString(),
+        ).format(now);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              timeStr,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                // Using monospaced font for numbers prevents jitter
+                fontFeatures: [FontFeature.tabularFigures()],
+              ),
+            ),
+            Text(
+              dateStr,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

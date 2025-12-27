@@ -3165,6 +3165,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Trial Active'**
   String get trialActive;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an email'**
+  String get enterEmail;
+
+  /// No description provided for @enterValidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get enterValidEmail;
+
+  /// No description provided for @enterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password'**
+  String get enterPassword;
+
+  /// No description provided for @clinicAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic Address'**
+  String get clinicAddress;
+
+  /// No description provided for @enterClinicAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter clinic address'**
+  String get enterClinicAddress;
+
+  /// No description provided for @province.
+  ///
+  /// In en, this message translates to:
+  /// **'Province'**
+  String get province;
+
+  /// No description provided for @enterProvince.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter province'**
+  String get enterProvince;
+
+  /// No description provided for @country.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get country;
+
+  /// No description provided for @enterCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter country'**
+  String get enterCountry;
+
+  /// No description provided for @supplierContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Contact'**
+  String get supplierContact;
+
+  /// No description provided for @enterSupplierContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter supplier contact info'**
+  String get enterSupplierContact;
 }
 
 class _AppLocalizationsDelegate
