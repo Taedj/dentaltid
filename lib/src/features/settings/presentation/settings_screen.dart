@@ -15,6 +15,7 @@ import 'package:dentaltid/src/core/backup_service.dart';
 import 'package:dentaltid/src/features/settings/presentation/network_config_dialog.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/staff_list_screen.dart';
+import 'package:file_picker/file_picker.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -432,6 +433,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 userType: UserType.dentist,
                               ),
                             );
+                          },
+                        ),
+                        const Divider(height: 40),
+
+                        // Imaging Storage Settings
+                        Text(
+                          'Imaging Storage',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 10),
+                        ListTile(
+                          title: const Text('Storage Path'),
+                          subtitle: FutureBuilder<String?>(
+                            future: Future.value(SettingsService.instance.getString('imaging_storage_path')),
+                            builder: (context, snapshot) {
+                              return Text(snapshot.data ?? 'Default (Documents/DentalTid/Imaging)');
+                            },
+                          ),
+                          leading: const Icon(Icons.folder_shared),
+                          trailing: const Icon(Icons.edit),
+                          onTap: () async {
+                            final String? result = await FilePicker.platform.getDirectoryPath();
+                            if (result != null) {
+                              await SettingsService.instance.setString('imaging_storage_path', result);
+                              setState(() {}); // Rebuild to show new path
+                            }
                           },
                         ),
                         const Divider(height: 40),

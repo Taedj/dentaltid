@@ -1660,5 +1660,235 @@ class AppLocalizationsEn extends AppLocalizations {
   String get supplierContact => 'Supplier Contact';
 
   @override
-  String get enterSupplierContact => 'Enter supplier contact info';
+  String get enterSupplierContact => 'Enter supplier info';
+
+  @override
+  String get addLabel => 'Add Label';
+
+  @override
+  String get intraoralXrayDefault => 'Intraoral X-Ray';
+
+  @override
+  String get clinicalObservationHint => 'Enter clinical observations here...';
+
+  @override
+  String get selectSensorLabel => 'Select Sensor/Scanner';
+
+  @override
+  String get initiateCapture => 'Initiate Capture';
+
+  @override
+  String get saveToPatientRecord => 'Save to Patient Record';
+
+  @override
+  String get scanFailed => 'Scan failed';
+
+  @override
+  String get saveCopySuccess => 'Saved copy successfully!';
+
+  @override
+  String usageLimitDisplay(Object current, Object max) {
+    return '$current/$max';
+  }
+
+  @override
+  String get negativeFilter => 'Negative';
+
+  @override
+  String todayCountLabel(Object count) {
+    return 'Today: $count';
+  }
+
+  @override
+  String waitingCountLabel(Object count) {
+    return 'Waiting: $count';
+  }
+
+  @override
+  String inProgressCountLabel(Object count) {
+    return 'In Progress: $count';
+  }
+
+  @override
+  String completedCountLabel(Object count) {
+    return 'Completed: $count';
+  }
+
+  @override
+  String get patientSelection => 'Patient Selection';
+
+  @override
+  String get appointmentDateTime => 'Appointment Date & Time';
+
+  @override
+  String get appointmentType => 'Appointment Type';
+
+  @override
+  String get paymentStatus => 'Payment Status';
+
+  @override
+  String get incomeLabel => 'Income';
+
+  @override
+  String get expenseLabel => 'Expense';
+
+  @override
+  String get netProfit => 'Net Profit';
+
+  @override
+  String get category => 'Category';
+
+  @override
+  String get rentLabel => 'Rent';
+
+  @override
+  String get salariesLabel => 'Salaries';
+
+  @override
+  String get inventoryLabel => 'Inventory';
+
+  @override
+  String get equipmentLabel => 'Equipment';
+
+  @override
+  String get marketingLabel => 'Marketing';
+
+  @override
+  String get utilitiesLabel => 'Utilities';
+
+  @override
+  String get maintenanceLabel => 'Maintenance';
+
+  @override
+  String get taxesLabel => 'Taxes';
+
+  @override
+  String get otherLabel => 'Other';
+
+  @override
+  String get productSalesLabel => 'Product Sales';
+
+  @override
+  String get daily => 'Daily';
+
+  @override
+  String get weekly => 'Weekly';
+
+  @override
+  String get monthly => 'Monthly';
+
+  @override
+  String get quarterly => 'Quarterly';
+
+  @override
+  String get yearly => 'Yearly';
+
+  @override
+  String get custom => 'Custom';
+
+  @override
+  String get editProfileTitle => 'Edit Profile';
+
+  @override
+  String get updateProfile => 'Update Profile';
+
+  @override
+  String get profileUpdated => 'Profile updated';
+
+  @override
+  String get saveFailed => 'Save failed';
+
+  @override
+  String get deleteVisitConfirm =>
+      'Are you sure you want to delete this visit?';
+
+  @override
+  String get actionNeededLabel => 'Action Needed';
+
+  @override
+  String get allGoodLabel => 'All Good';
+
+  @override
+  String get offlineLabel => 'Offline';
+
+  @override
+  String get activationRequiredTitle => 'Activation Required';
+
+  @override
+  String get needACodeLabel => 'Need a code?';
+
+  @override
+  String get fullNameLabel => 'Full Name';
+
+  @override
+  String get premiumOnlyLabel => 'Premium Only';
+
+  @override
+  String get limitReachedTitle => 'Limit Reached';
+
+  @override
+  String get emailLabel => 'Email';
+
+  @override
+  String get passwordLabel => 'Password';
+
+  @override
+  String get clinicAddressLabel => 'Clinic Address';
+
+  @override
+  String get provinceLabel => 'Province';
+
+  @override
+  String get countryLabel => 'Country';
+
+  @override
+  String get totalAmountLabel => 'Total Amount';
+
+  @override
+  String get paidAmountLabel => 'Paid Amount';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get dentistNotes => 'Dentist Notes';
+
+  @override
+  String get resetAll => 'Reset All';
+
+  @override
+  String get captureXray => 'Capture X-Ray';
+
+  @override
+  String get waitingForSensorHardware => 'Waiting for sensor hardware...';
+
+  @override
+  String get rotate90 => 'Rotate 90°';
+
+  @override
+  String get flipHorizontal => 'Flip Horizontal';
+
+  @override
+  String get sharpenFilter => 'Sharpen Filter';
+
+  @override
+  String get embossFilter => 'Emboss Filter';
+
+  @override
+  String get saveCopy => 'Save Copy';
+
+  @override
+  String get smartZoomTool => 'Smart Zoom Tool';
+
+  @override
+  String get measurementTool => 'Measurement Tool';
+
+  @override
+  String get draw => 'Draw';
+
+  @override
+  String get addText => 'Add Text';
+
+  @override
+  String get undo => 'Undo';
 }

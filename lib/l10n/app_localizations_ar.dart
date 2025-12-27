@@ -1659,4 +1659,233 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get enterSupplierContact => 'أدخل معلومات المورد';
+
+  @override
+  String get addLabel => 'إضافة تسمية';
+
+  @override
+  String get intraoralXrayDefault => 'أشعة سينية داخل الفم';
+
+  @override
+  String get clinicalObservationHint => 'أدخل الملاحظات السريرية هنا...';
+
+  @override
+  String get selectSensorLabel => 'اختر المستشعر/الماسح الضوئي';
+
+  @override
+  String get initiateCapture => 'بدء الالتقاط';
+
+  @override
+  String get saveToPatientRecord => 'حفظ في ملف المريض';
+
+  @override
+  String get scanFailed => 'فشل المسح';
+
+  @override
+  String get saveCopySuccess => 'تم حفظ النسخة بنجاح!';
+
+  @override
+  String usageLimitDisplay(Object current, Object max) {
+    return '$current/$max';
+  }
+
+  @override
+  String get negativeFilter => 'سلبي';
+
+  @override
+  String todayCountLabel(Object count) {
+    return 'اليوم: $count';
+  }
+
+  @override
+  String waitingCountLabel(Object count) {
+    return 'في الانتظار: $count';
+  }
+
+  @override
+  String inProgressCountLabel(Object count) {
+    return 'قيد التنفيذ: $count';
+  }
+
+  @override
+  String completedCountLabel(Object count) {
+    return 'مكتمل: $count';
+  }
+
+  @override
+  String get patientSelection => 'اختيار المريض';
+
+  @override
+  String get appointmentDateTime => 'تاريخ ووقت الموعد';
+
+  @override
+  String get appointmentType => 'نوع الموعد';
+
+  @override
+  String get paymentStatus => 'حالة الدفع';
+
+  @override
+  String get incomeLabel => 'الدخل';
+
+  @override
+  String get expenseLabel => 'المصروفات';
+
+  @override
+  String get netProfit => 'صافي الربح';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get rentLabel => 'إيجار';
+
+  @override
+  String get salariesLabel => 'رواتب';
+
+  @override
+  String get inventoryLabel => 'مخزون';
+
+  @override
+  String get equipmentLabel => 'معدات';
+
+  @override
+  String get marketingLabel => 'تسويق';
+
+  @override
+  String get utilitiesLabel => 'خدمات';
+
+  @override
+  String get maintenanceLabel => 'صيانة';
+
+  @override
+  String get taxesLabel => 'ضرائب';
+
+  @override
+  String get otherLabel => 'أخرى';
+
+  @override
+  String get productSalesLabel => 'مبيعات المنتجات';
+
+  @override
+  String get daily => 'يومي';
+
+  @override
+  String get weekly => 'أسبوعي';
+
+  @override
+  String get monthly => 'شهري';
+
+  @override
+  String get quarterly => 'ربع سنوي';
+
+  @override
+  String get yearly => 'سنوي';
+
+  @override
+  String get custom => 'مخصص';
+
+  @override
+  String get editProfileTitle => 'تعديل الملف الشخصي';
+
+  @override
+  String get updateProfile => 'تحديث الملف الشخصي';
+
+  @override
+  String get profileUpdated => 'تم تحديث الملف الشخصي';
+
+  @override
+  String get saveFailed => 'فشل الحفظ';
+
+  @override
+  String get deleteVisitConfirm => 'هل أنت متأكد من حذف هذه الزيارة؟';
+
+  @override
+  String get actionNeededLabel => 'إجراء مطلوب';
+
+  @override
+  String get allGoodLabel => 'كل شيء على ما يرام';
+
+  @override
+  String get offlineLabel => 'غير متصل';
+
+  @override
+  String get activationRequiredTitle => 'التفعيل مطلوب';
+
+  @override
+  String get needACodeLabel => 'هل تحتاج لكود؟';
+
+  @override
+  String get fullNameLabel => 'الاسم الكامل';
+
+  @override
+  String get premiumOnlyLabel => 'بريميوم فقط';
+
+  @override
+  String get limitReachedTitle => 'تم الوصول للحد الأقصى';
+
+  @override
+  String get emailLabel => 'البريد الإلكتروني';
+
+  @override
+  String get passwordLabel => 'كلمة المرور';
+
+  @override
+  String get clinicAddressLabel => 'عنوان العيادة';
+
+  @override
+  String get provinceLabel => 'المقاطعة';
+
+  @override
+  String get countryLabel => 'البلد';
+
+  @override
+  String get totalAmountLabel => 'المبلغ الإجمالي';
+
+  @override
+  String get paidAmountLabel => 'المبلغ المدفوع';
+
+  @override
+  String get descriptionLabel => 'الوصف';
+
+  @override
+  String get dentistNotes => 'ملاحظات الطبيب';
+
+  @override
+  String get resetAll => 'إعادة ضبط الكل';
+
+  @override
+  String get captureXray => 'التقاط صورة أشعة';
+
+  @override
+  String get waitingForSensorHardware => 'في انتظار مستشعر الأشعة...';
+
+  @override
+  String get rotate90 => 'تدوير 90 درجة';
+
+  @override
+  String get flipHorizontal => 'انعكاس أفقي';
+
+  @override
+  String get sharpenFilter => 'فلتر التوضيح';
+
+  @override
+  String get embossFilter => 'فلتر البروز';
+
+  @override
+  String get saveCopy => 'حفظ نسخة';
+
+  @override
+  String get smartZoomTool => 'أداة الزووم الذكي';
+
+  @override
+  String get measurementTool => 'أداة القياس';
+
+  @override
+  String get draw => 'رسم';
+
+  @override
+  String get addText => 'إضافة نص';
+
+  @override
+  String get undo => 'تراجع';
 }

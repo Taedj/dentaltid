@@ -11,6 +11,9 @@ PrivilegesRequired=admin
 Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs
 Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
+; Drivers (Optional) - User should create a 'drivers' folder next to this script
+Source: "drivers\*"; DestDir: "{app}\drivers"; Flags: skipifsourcedoesntexist recursesubdirs
+
 [Icons]
 Name: "{group}\DentalTid"; Filename: "{app}\dentaltid.exe"
 Name: "{commondesktop}\DentalTid"; Filename: "{app}\dentaltid.exe"

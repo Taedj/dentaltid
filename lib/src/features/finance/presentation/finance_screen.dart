@@ -389,13 +389,7 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                               itemBuilder: (context) => [
                                 PopupMenuItem(
                                   value: 'edit',
-                                  child: Row(
-                                    children: [
-                                      const Icon(LucideIcons.edit, size: 18),
-                                      const SizedBox(width: 8),
-                                      Text(l10n.edit),
-                                    ],
-                                  ),
+                                  child: Text(l10n.edit),
                                 ),
                                 PopupMenuItem(
                                   value: 'delete',

@@ -12,6 +12,7 @@ import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/features/imaging/presentation/patient_imaging_gallery.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 class PatientProfileScreen extends ConsumerWidget {
@@ -22,9 +23,12 @@ class PatientProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final userProfile = ref.watch(userProfileProvider).value;
+    final isDentist = userProfile?.role == UserRole.dentist;
+
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text('${patient.name} ${patient.familyName}'),
@@ -32,6 +36,7 @@ class PatientProfileScreen extends ConsumerWidget {
             tabs: [
               Tab(text: 'Info'),
               Tab(text: 'Visits'),
+              Tab(text: 'Imaging'),
             ],
           ),
           actions: [
@@ -117,8 +122,31 @@ class PatientProfileScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            // Visits Section
             VisitsListWidget(patient: patient),
+            isDentist
+                ? PatientImagingGallery(patient: patient)
+                : const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.lock_outline, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'Access Restricted',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'Only dentists can view imaging records.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
           ],
         ),
       ),

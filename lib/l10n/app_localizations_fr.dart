@@ -1679,8 +1679,239 @@ class AppLocalizationsFr extends AppLocalizations {
   String get enterCountry => 'Veuillez entrer le pays';
 
   @override
-  String get supplierContact => 'Contact fournisseur';
+  String get supplierContact => 'Contact du fournisseur';
 
   @override
-  String get enterSupplierContact => 'Entrez info fournisseur';
+  String get enterSupplierContact => 'Entrez les informations du fournisseur';
+
+  @override
+  String get addLabel => 'Ajouter une étiquette';
+
+  @override
+  String get intraoralXrayDefault => 'Radiographie intrabuccale';
+
+  @override
+  String get clinicalObservationHint =>
+      'Entrez les observations cliniques ici...';
+
+  @override
+  String get selectSensorLabel => 'Sélectionner le capteur/scanner';
+
+  @override
+  String get initiateCapture => 'Lancer la capture';
+
+  @override
+  String get saveToPatientRecord => 'Enregistrer dans le dossier du patient';
+
+  @override
+  String get scanFailed => 'Échec de la numérisation';
+
+  @override
+  String get saveCopySuccess => 'Copie enregistrée avec succès !';
+
+  @override
+  String usageLimitDisplay(Object current, Object max) {
+    return '$current/$max';
+  }
+
+  @override
+  String get negativeFilter => 'Négatif';
+
+  @override
+  String todayCountLabel(Object count) {
+    return 'Aujourd\'hui : $count';
+  }
+
+  @override
+  String waitingCountLabel(Object count) {
+    return 'En attente : $count';
+  }
+
+  @override
+  String inProgressCountLabel(Object count) {
+    return 'En cours : $count';
+  }
+
+  @override
+  String completedCountLabel(Object count) {
+    return 'Terminé : $count';
+  }
+
+  @override
+  String get patientSelection => 'Sélection du patient';
+
+  @override
+  String get appointmentDateTime => 'Date et heure du rendez-vous';
+
+  @override
+  String get appointmentType => 'Type de rendez-vous';
+
+  @override
+  String get paymentStatus => 'Statut du paiement';
+
+  @override
+  String get incomeLabel => 'Revenu';
+
+  @override
+  String get expenseLabel => 'Dépense';
+
+  @override
+  String get netProfit => 'Bénéfice net';
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get rentLabel => 'Loyer';
+
+  @override
+  String get salariesLabel => 'Salaires';
+
+  @override
+  String get inventoryLabel => 'Inventaire';
+
+  @override
+  String get equipmentLabel => 'Équipement';
+
+  @override
+  String get marketingLabel => 'Marketing';
+
+  @override
+  String get utilitiesLabel => 'Services publics';
+
+  @override
+  String get maintenanceLabel => 'Maintenance';
+
+  @override
+  String get taxesLabel => 'Taxes';
+
+  @override
+  String get otherLabel => 'Autre';
+
+  @override
+  String get productSalesLabel => 'Ventes de produits';
+
+  @override
+  String get daily => 'Quotidien';
+
+  @override
+  String get weekly => 'Hebdomadaire';
+
+  @override
+  String get monthly => 'Mensuel';
+
+  @override
+  String get quarterly => 'Trimestriel';
+
+  @override
+  String get yearly => 'Annuel';
+
+  @override
+  String get custom => 'Personnalisé';
+
+  @override
+  String get editProfileTitle => 'Modifier le profil';
+
+  @override
+  String get updateProfile => 'Mettre à jour le profil';
+
+  @override
+  String get profileUpdated => 'Profil mis à jour';
+
+  @override
+  String get saveFailed => 'Échec de l\'enregistrement';
+
+  @override
+  String get deleteVisitConfirm =>
+      'Êtes-vous sûr de vouloir supprimer cette visite ?';
+
+  @override
+  String get actionNeededLabel => 'Action requise';
+
+  @override
+  String get allGoodLabel => 'Tout est correct';
+
+  @override
+  String get offlineLabel => 'Hors ligne';
+
+  @override
+  String get activationRequiredTitle => 'Activation requise';
+
+  @override
+  String get needACodeLabel => 'Besoin d\'un code ?';
+
+  @override
+  String get fullNameLabel => 'Nom complet';
+
+  @override
+  String get premiumOnlyLabel => 'Premium uniquement';
+
+  @override
+  String get limitReachedTitle => 'Limite atteinte';
+
+  @override
+  String get emailLabel => 'E-mail';
+
+  @override
+  String get passwordLabel => 'Mot de passe';
+
+  @override
+  String get clinicAddressLabel => 'Adresse de la clinique';
+
+  @override
+  String get provinceLabel => 'Province';
+
+  @override
+  String get countryLabel => 'Pays';
+
+  @override
+  String get totalAmountLabel => 'Montant total';
+
+  @override
+  String get paidAmountLabel => 'Montant payé';
+
+  @override
+  String get descriptionLabel => 'Description';
+
+  @override
+  String get dentistNotes => 'Notes du dentiste';
+
+  @override
+  String get resetAll => 'Tout réinitialiser';
+
+  @override
+  String get captureXray => 'Capturer une radiographie';
+
+  @override
+  String get waitingForSensorHardware => 'En attente du matériel du capteur...';
+
+  @override
+  String get rotate90 => 'Rotation 90°';
+
+  @override
+  String get flipHorizontal => 'Retournement horizontal';
+
+  @override
+  String get sharpenFilter => 'Filtre Netteté';
+
+  @override
+  String get embossFilter => 'Filtre Relief';
+
+  @override
+  String get saveCopy => 'Enregistrer une copie';
+
+  @override
+  String get smartZoomTool => 'Outil Zoom intelligent';
+
+  @override
+  String get measurementTool => 'Outil de mesure';
+
+  @override
+  String get draw => 'Dessiner';
+
+  @override
+  String get addText => 'Ajouter du texte';
+
+  @override
+  String get undo => 'Annuler';
 }

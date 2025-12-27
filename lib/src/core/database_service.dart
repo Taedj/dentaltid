@@ -7,7 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 20; // Incremented version
+  static const int _databaseVersion = 21; // Added xrays table
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -432,6 +432,21 @@ class DatabaseService {
         );
       }
     }
+
+    if (oldVersion < 21) {
+      await db.execute('''
+        CREATE TABLE xrays(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patientId INTEGER,
+          visitId INTEGER,
+          filePath TEXT,
+          label TEXT,
+          capturedAt TEXT,
+          notes TEXT,
+          type TEXT DEFAULT 'intraoral'
+        )
+      ''');
+    }
   }
 
   Future<void> close() async {
@@ -583,13 +598,19 @@ class DatabaseService {
         )
       ''');
     await db.execute('''
-        CREATE TABLE staff_users(
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          fullName TEXT,
-          username TEXT UNIQUE,
-          pin TEXT,
-          role TEXT,
           createdAt TEXT
+        )
+      ''');
+    await db.execute('''
+        CREATE TABLE xrays(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          patientId INTEGER,
+          visitId INTEGER,
+          filePath TEXT,
+          label TEXT,
+          capturedAt TEXT,
+          notes TEXT,
+          type TEXT DEFAULT 'intraoral'
         )
       ''');
   }

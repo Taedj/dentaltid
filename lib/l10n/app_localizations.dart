@@ -3235,8 +3235,446 @@ abstract class AppLocalizations {
   /// No description provided for @enterSupplierContact.
   ///
   /// In en, this message translates to:
-  /// **'Enter supplier contact info'**
+  /// **'Enter supplier info'**
   String get enterSupplierContact;
+
+  /// No description provided for @addLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Label'**
+  String get addLabel;
+
+  /// No description provided for @intraoralXrayDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Intraoral X-Ray'**
+  String get intraoralXrayDefault;
+
+  /// No description provided for @clinicalObservationHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter clinical observations here...'**
+  String get clinicalObservationHint;
+
+  /// No description provided for @selectSensorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Sensor/Scanner'**
+  String get selectSensorLabel;
+
+  /// No description provided for @initiateCapture.
+  ///
+  /// In en, this message translates to:
+  /// **'Initiate Capture'**
+  String get initiateCapture;
+
+  /// No description provided for @saveToPatientRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Patient Record'**
+  String get saveToPatientRecord;
+
+  /// No description provided for @scanFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan failed'**
+  String get scanFailed;
+
+  /// No description provided for @saveCopySuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved copy successfully!'**
+  String get saveCopySuccess;
+
+  /// No description provided for @usageLimitDisplay.
+  ///
+  /// In en, this message translates to:
+  /// **'{current}/{max}'**
+  String usageLimitDisplay(Object current, Object max);
+
+  /// No description provided for @negativeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Negative'**
+  String get negativeFilter;
+
+  /// No description provided for @todayCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {count}'**
+  String todayCountLabel(Object count);
+
+  /// No description provided for @waitingCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting: {count}'**
+  String waitingCountLabel(Object count);
+
+  /// No description provided for @inProgressCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'In Progress: {count}'**
+  String inProgressCountLabel(Object count);
+
+  /// No description provided for @completedCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {count}'**
+  String completedCountLabel(Object count);
+
+  /// No description provided for @patientSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Patient Selection'**
+  String get patientSelection;
+
+  /// No description provided for @appointmentDateTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment Date & Time'**
+  String get appointmentDateTime;
+
+  /// No description provided for @appointmentType.
+  ///
+  /// In en, this message translates to:
+  /// **'Appointment Type'**
+  String get appointmentType;
+
+  /// No description provided for @paymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Status'**
+  String get paymentStatus;
+
+  /// No description provided for @incomeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Income'**
+  String get incomeLabel;
+
+  /// No description provided for @expenseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Expense'**
+  String get expenseLabel;
+
+  /// No description provided for @netProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'Net Profit'**
+  String get netProfit;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @rentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent'**
+  String get rentLabel;
+
+  /// No description provided for @salariesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Salaries'**
+  String get salariesLabel;
+
+  /// No description provided for @inventoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get inventoryLabel;
+
+  /// No description provided for @equipmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment'**
+  String get equipmentLabel;
+
+  /// No description provided for @marketingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Marketing'**
+  String get marketingLabel;
+
+  /// No description provided for @utilitiesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Utilities'**
+  String get utilitiesLabel;
+
+  /// No description provided for @maintenanceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get maintenanceLabel;
+
+  /// No description provided for @taxesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Taxes'**
+  String get taxesLabel;
+
+  /// No description provided for @otherLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get otherLabel;
+
+  /// No description provided for @productSalesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Product Sales'**
+  String get productSalesLabel;
+
+  /// No description provided for @daily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get daily;
+
+  /// No description provided for @weekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get weekly;
+
+  /// No description provided for @monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthly;
+
+  /// No description provided for @quarterly.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarterly'**
+  String get quarterly;
+
+  /// No description provided for @yearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get yearly;
+
+  /// No description provided for @custom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get custom;
+
+  /// No description provided for @editProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfileTitle;
+
+  /// No description provided for @updateProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Profile'**
+  String get updateProfile;
+
+  /// No description provided for @profileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get profileUpdated;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Save failed'**
+  String get saveFailed;
+
+  /// No description provided for @deleteVisitConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this visit?'**
+  String get deleteVisitConfirm;
+
+  /// No description provided for @actionNeededLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Action Needed'**
+  String get actionNeededLabel;
+
+  /// No description provided for @allGoodLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All Good'**
+  String get allGoodLabel;
+
+  /// No description provided for @offlineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline'**
+  String get offlineLabel;
+
+  /// No description provided for @activationRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Activation Required'**
+  String get activationRequiredTitle;
+
+  /// No description provided for @needACodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Need a code?'**
+  String get needACodeLabel;
+
+  /// No description provided for @fullNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullNameLabel;
+
+  /// No description provided for @premiumOnlyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Only'**
+  String get premiumOnlyLabel;
+
+  /// No description provided for @limitReachedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Limit Reached'**
+  String get limitReachedTitle;
+
+  /// No description provided for @emailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get emailLabel;
+
+  /// No description provided for @passwordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordLabel;
+
+  /// No description provided for @clinicAddressLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clinic Address'**
+  String get clinicAddressLabel;
+
+  /// No description provided for @provinceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Province'**
+  String get provinceLabel;
+
+  /// No description provided for @countryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get countryLabel;
+
+  /// No description provided for @totalAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Amount'**
+  String get totalAmountLabel;
+
+  /// No description provided for @paidAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid Amount'**
+  String get paidAmountLabel;
+
+  /// No description provided for @descriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get descriptionLabel;
+
+  /// No description provided for @dentistNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Dentist Notes'**
+  String get dentistNotes;
+
+  /// No description provided for @resetAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset All'**
+  String get resetAll;
+
+  /// No description provided for @captureXray.
+  ///
+  /// In en, this message translates to:
+  /// **'Capture X-Ray'**
+  String get captureXray;
+
+  /// No description provided for @waitingForSensorHardware.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for sensor hardware...'**
+  String get waitingForSensorHardware;
+
+  /// No description provided for @rotate90.
+  ///
+  /// In en, this message translates to:
+  /// **'Rotate 90°'**
+  String get rotate90;
+
+  /// No description provided for @flipHorizontal.
+  ///
+  /// In en, this message translates to:
+  /// **'Flip Horizontal'**
+  String get flipHorizontal;
+
+  /// No description provided for @sharpenFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Sharpen Filter'**
+  String get sharpenFilter;
+
+  /// No description provided for @embossFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Emboss Filter'**
+  String get embossFilter;
+
+  /// No description provided for @saveCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Copy'**
+  String get saveCopy;
+
+  /// No description provided for @smartZoomTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Zoom Tool'**
+  String get smartZoomTool;
+
+  /// No description provided for @measurementTool.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurement Tool'**
+  String get measurementTool;
+
+  /// No description provided for @draw.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw'**
+  String get draw;
+
+  /// No description provided for @addText.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Text'**
+  String get addText;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
 }
 
 class _AppLocalizationsDelegate
