@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -50,14 +49,14 @@ class _XRayViewerState extends State<XRayViewer> {
 
   // Drawing Tool
   bool _isDrawing = false;
-  List<DrawingStroke> _strokes = [];
-  List<Offset> _currentStroke = [];
+  final List<DrawingStroke> _strokes = [];
+  final List<Offset> _currentStroke = [];
   Color _drawColor = Colors.redAccent;
   double _strokeWidth = 3.0;
 
   // Text Tool
   bool _isTextMode = false;
-  List<TextAnnotation> _textAnnotations = [];
+  final List<TextAnnotation> _textAnnotations = [];
 
   // Laser Pointer
   Offset? _laserPosition;
@@ -107,9 +106,9 @@ class _XRayViewerState extends State<XRayViewer> {
   void _zoomAtPoint(Offset localPoint, double scaleFactor) {
     final Matrix4 oldMatrix = _transformController.value;
     final Matrix4 newMatrix = oldMatrix.clone()
-      ..translate(localPoint.dx, localPoint.dy)
-      ..scale(scaleFactor)
-      ..translate(-localPoint.dx, -localPoint.dy);
+      ..multiply(Matrix4.translationValues(localPoint.dx, localPoint.dy, 0.0))
+      ..multiply(Matrix4.diagonal3Values(scaleFactor, scaleFactor, 1.0))
+      ..multiply(Matrix4.translationValues(-localPoint.dx, -localPoint.dy, 0.0));
 
     setState(() {
       _transformController.value = newMatrix;
@@ -141,7 +140,9 @@ class _XRayViewerState extends State<XRayViewer> {
           label: 'Copy of ${widget.xray.label}',
           notes: _currentNotes, // Preserve notes in copy
         );
-         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saveCopySuccess)));
+         if (context.mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saveCopySuccess)));
+         }
       }
     } catch (e) {
       if (context.mounted) {
@@ -177,12 +178,11 @@ class _XRayViewerState extends State<XRayViewer> {
 
     if (newNotes != null && newNotes != _currentNotes) {
       await ref.read(imagingServiceProvider).updateXray(widget.xray.copyWith(notes: newNotes));
+      if (!context.mounted) return;
       setState(() {
         _currentNotes = newNotes;
       });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved')));
     }
   }
 
@@ -289,7 +289,7 @@ class _XRayViewerState extends State<XRayViewer> {
                           Switch(
                             value: _isInverted,
                             onChanged: (v) => setState(() => _isInverted = v),
-                            activeColor: AppColors.primary,
+                            activeTrackColor: AppColors.primary,
                           ),
                         ],
                       )
@@ -326,7 +326,7 @@ class _XRayViewerState extends State<XRayViewer> {
                                     quarterTurns: _rotationQuarterTurns,
                                     child: Transform(
                                       alignment: Alignment.center,
-                                      transform: Matrix4.identity()..scale(_isFlipped ? -1.0 : 1.0, 1.0),
+                                      transform: Matrix4.identity()..multiply(Matrix4.diagonal3Values(_isFlipped ? -1.0 : 1.0, 1.0, 1.0)),
                                       child: Image.file(
                                         File(widget.xray.filePath),
                                         fit: BoxFit.contain,

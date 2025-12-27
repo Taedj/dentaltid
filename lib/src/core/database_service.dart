@@ -598,6 +598,12 @@ class DatabaseService {
         )
       ''');
     await db.execute('''
+        CREATE TABLE staff_users(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          fullName TEXT,
+          username TEXT UNIQUE,
+          pin TEXT,
+          role TEXT,
           createdAt TEXT
         )
       ''');

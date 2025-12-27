@@ -128,7 +128,7 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
                   children: [
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
-                    Text(AppLocalizations.of(context)!.waitingForSensorHardware ?? 'Waiting for sensor hardware...'),
+                    Text(AppLocalizations.of(context)!.waitingForSensorHardware),
                   ],
                 )
               else

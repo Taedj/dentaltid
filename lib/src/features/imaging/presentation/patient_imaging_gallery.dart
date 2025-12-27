@@ -188,8 +188,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
               title: const Text('Digital Sensor (TWAIN)'),
               onTap: () async {
                 Navigator.pop(sheetContext);
+                if (!mounted) return;
                 final result = await showDialog<bool>(
-                  context: parentContext,
+                  context: context,
                   builder: (context) => SensorCaptureDialog(
                     patientId: widget.patient.id!,
                     patientName: '${widget.patient.name} ${widget.patient.familyName}',
@@ -213,7 +214,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                 
                 if (result != null && result.files.single.path != null) {
                   if (!mounted) return;
-                  final label = await _showLabelDialog(parentContext);
+                  final label = await _showLabelDialog(context);
                   
                   if (label != null && mounted) {
                     final patientName = '${widget.patient.name} ${widget.patient.familyName}';
@@ -226,14 +227,14 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                       );
                       
                       if (mounted) {
-                        ScaffoldMessenger.of(parentContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Image imported successfully!')),
                         );
                         setState(() {});
                       }
                     } catch (e) {
                       if (mounted) {
-                        ScaffoldMessenger.of(parentContext).showSnackBar(
+                        ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Import failed: $e'),
                             backgroundColor: Colors.red,
@@ -407,7 +408,7 @@ class _XrayThumbnail extends ConsumerWidget {
       try {
         final sourceFile = File(xray.filePath);
         final fileName = sourceFile.uri.pathSegments.last;
-        final targetPath = '${result}/$fileName';
+        final targetPath = '$result/$fileName';
         await sourceFile.copy(targetPath);
         
         if (context.mounted) {
@@ -559,7 +560,7 @@ class _XrayListItem extends ConsumerWidget {
       try {
         final sourceFile = File(xray.filePath);
         final fileName = sourceFile.uri.pathSegments.last;
-        final targetPath = '${result}/$fileName';
+        final targetPath = '$result/$fileName';
         await sourceFile.copy(targetPath);
         
         if (context.mounted) {
