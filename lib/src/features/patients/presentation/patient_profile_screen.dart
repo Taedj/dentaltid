@@ -32,11 +32,11 @@ class PatientProfileScreen extends ConsumerWidget {
       child: Scaffold(
         appBar: AppBar(
           title: Text('${patient.name} ${patient.familyName}'),
-          bottom: const TabBar(
+          bottom: TabBar(
             tabs: [
-              Tab(text: 'Info'),
-              Tab(text: 'Visits'),
-              Tab(text: 'Imaging'),
+              Tab(text: l10n.tabInfo),
+              Tab(text: l10n.tabVisits),
+              Tab(text: l10n.tabImaging),
             ],
           ),
           actions: [
@@ -46,21 +46,21 @@ class PatientProfileScreen extends ConsumerWidget {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text('Delete Patient'),
-                    content: const Text(
-                      'Are you sure you want to delete this patient? This will also delete all associated appointments and financial records. This action cannot be undone.',
+                    title: Text(l10n.deletePatient),
+                    content: Text(
+                      l10n.confirmDeletePatient,
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.cancel),
                       ),
                       ElevatedButton(
                         onPressed: () => Navigator.of(context).pop(true),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                         ),
-                        child: const Text('Delete'),
+                        child: Text(l10n.delete),
                       ),
                     ],
                   ),
@@ -98,7 +98,7 @@ class PatientProfileScreen extends ConsumerWidget {
               },
               activeThumbColor: Colors.red,
             ),
-            const Text('Blacklist'),
+            Text(l10n.blacklist),
           ],
         ),
         body: TabBarView(
@@ -113,36 +113,46 @@ class PatientProfileScreen extends ConsumerWidget {
                   Text('${l10n.age}: ${patient.age}'),
                   Text('${l10n.phoneNumber}: ${patient.phoneNumber}'),
                   Text('${l10n.healthState}: ${patient.healthState}'),
-                  Text(patient.isEmergency ? "Emergency" : "Not Emergency"),
                   Text(
-                    patient.isBlacklisted ? "Blacklisted" : "Not Blacklisted",
+                    patient.isEmergency
+                        ? l10n.emergencyLabel
+                        : l10n.notEmergencyLabel,
+                  ),
+                  Text(
+                    patient.isBlacklisted
+                        ? l10n.blacklistedLabel
+                        : l10n.notBlacklistedLabel,
                   ),
                   if (patient.healthAlerts.isNotEmpty)
-                    Text('Health Alerts: ${patient.healthAlerts}'),
+                    Text(l10n.healthAlertsLabel(patient.healthAlerts)),
                 ],
               ),
             ),
             VisitsListWidget(patient: patient),
             isDentist
                 ? PatientImagingGallery(patient: patient)
-                : const Center(
+                : Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.lock_outline, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
+                        const Icon(
+                          Icons.lock_outline,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
                         Text(
-                          'Access Restricted',
-                          style: TextStyle(
+                          l10n.accessRestricted,
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.grey,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          'Only dentists can view imaging records.',
-                          style: TextStyle(color: Colors.grey),
+                          l10n.onlyDentistsImaging,
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),

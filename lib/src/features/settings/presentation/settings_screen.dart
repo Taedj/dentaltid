@@ -439,16 +439,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                         // Imaging Storage Settings
                         Text(
-                          'Imaging Storage',
+                          l10n.imagingStorage,
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
                         ListTile(
-                          title: const Text('Storage Path'),
+                          title: Text(l10n.imagingStorageSettings),
                           subtitle: FutureBuilder<String?>(
                             future: Future.value(SettingsService.instance.getString('imaging_storage_path')),
                             builder: (context, snapshot) {
-                              return Text(snapshot.data ?? 'Default (Documents/DentalTid/Imaging)');
+                              return Text(snapshot.data ?? l10n.defaultImagingPath);
                             },
                           ),
                           leading: const Icon(Icons.folder_shared),

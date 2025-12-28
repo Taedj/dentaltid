@@ -102,12 +102,13 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AlertDialog(
       title: Row(
         children: [
           const Icon(LucideIcons.camera),
           const SizedBox(width: 12),
-          Text(AppLocalizations.of(context)!.captureXray),
+          Text(l10n.captureXray),
         ],
       ),
       content: SizedBox(
@@ -118,7 +119,7 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
             if (_capturedImage == null) ...[
               DropdownButtonFormField<String>(
                 initialValue: _selectedSource,
-                decoration: const InputDecoration(labelText: 'Select Sensor/Scanner'),
+                decoration: InputDecoration(labelText: l10n.selectSensorLabel),
                 items: _sources.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _selectedSource = v),
               ),
@@ -128,14 +129,14 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
                   children: [
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
-                    Text(AppLocalizations.of(context)!.waitingForSensorHardware),
+                    Text(l10n.waitingForSensorHardware),
                   ],
                 )
               else
                 ElevatedButton.icon(
                   onPressed: _sources.isEmpty ? null : _startScan,
                   icon: const Icon(LucideIcons.play),
-                  label: Text(AppLocalizations.of(context)!.initiateCapture),
+                  label: Text(l10n.initiateCapture),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
                   ),
@@ -155,7 +156,7 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _labelController,
-                decoration: const InputDecoration(labelText: 'Image Label'),
+                decoration: InputDecoration(labelText: l10n.addLabel),
               ),
             ],
           ],
@@ -164,12 +165,12 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text(AppLocalizations.of(context)!.cancel),
+          child: Text(l10n.cancel),
         ),
         if (_capturedImage != null)
           ElevatedButton(
             onPressed: _saveAndClose,
-            child: Text(AppLocalizations.of(context)!.saveToPatientRecord),
+            child: Text(l10n.saveToPatientRecord),
           ),
       ],
     );

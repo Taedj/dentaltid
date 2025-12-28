@@ -810,5 +810,88 @@
   "measurementTool": "Measurement Tool",
   "draw": "Draw",
   "addText": "Add Text",
-  "undo": "Undo"
+  "undo": "Undo",
+  "tabInfo": "Info",
+  "tabVisits": "Visits",
+  "tabImaging": "Imaging",
+  "blacklist": "Blacklist",
+  "emergencyLabel": "Emergency",
+  "notEmergencyLabel": "Not Emergency",
+  "blacklistedLabel": "Blacklisted",
+  "notBlacklistedLabel": "Not Blacklisted",
+  "healthAlertsLabel": "Health Alerts: {alerts}",
+  "@healthAlertsLabel": {
+    "placeholders": {
+      "alerts": {
+        "type": "String"
+      }
+    }
+  },
+  "accessRestricted": "Access Restricted",
+  "onlyDentistsImaging": "Only dentists can view imaging records.",
+  "imagingHistory": "Imaging History ({count})",
+  "@imagingHistory": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "imagingStorage": "Imaging Storage",
+  "defaultImagingPath": "Default (Documents/DentalTid/Imaging)",
+  "imagingStorageSettings": "Imaging Storage Settings",
+  "newXray": "New X-Ray",
+  "gridView": "Grid View",
+  "listView": "List View",
+  "columnsCount": "{count} columns",
+  "@columnsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sortBy": "Sort by: ",
+  "noXraysFound": "No X-Rays found for this patient",
+  "digitalSensor": "Digital Sensor (TWAIN)",
+  "uploadFromFile": "Upload from File",
+  "xrayLabel": "X-Ray Label",
+  "renameXray": "Rename X-Ray",
+  "deleteXrayConfirmTitle": "Delete X-Ray?",
+  "deleteXrayWarning": "This cannot be undone. The file will be permanently removed.",
+  "capturedDate": "Captured: {date}",
+  "importSuccess": "Imported successfully",
+  "importError": "Import failed: {error}",
+  "@importError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exportSuccess": "Exported to {path}",
+  "@exportSuccess": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "exportError": "Export failed: {error}",
+  "@exportError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noNotes": "No notes",
+  "notesLabel": "Notes: {notes}",
+  "@notesLabel": {
+    "placeholders": {
+      "notes": {
+        "type": "String"
+      }
+    }
+  }
 }

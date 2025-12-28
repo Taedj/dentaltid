@@ -1888,4 +1888,124 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get undo => 'تراجع';
+
+  @override
+  String get tabInfo => 'معلومات';
+
+  @override
+  String get tabVisits => 'زيارات';
+
+  @override
+  String get tabImaging => 'الأشعة';
+
+  @override
+  String get blacklist => 'القائمة السوداء';
+
+  @override
+  String get emergencyLabel => 'حالة طارئة';
+
+  @override
+  String get notEmergencyLabel => 'ليست حالة طارئة';
+
+  @override
+  String get blacklistedLabel => 'في القائمة السوداء';
+
+  @override
+  String get notBlacklistedLabel => 'ليست في القائمة السوداء';
+
+  @override
+  String healthAlertsLabel(String alerts) {
+    return 'تنبيهات صحية: $alerts';
+  }
+
+  @override
+  String get accessRestricted => 'الدخول مقيد';
+
+  @override
+  String get onlyDentistsImaging =>
+      'فقط أطباء الأسنان يمكنهم عرض سجلات الأشعة.';
+
+  @override
+  String imagingHistory(int count) {
+    return 'سجل الأشعة ($count)';
+  }
+
+  @override
+  String get imagingStorage => 'تخزين الأشعة';
+
+  @override
+  String get defaultImagingPath => 'الافتراضي (Documents/DentalTid/Imaging)';
+
+  @override
+  String get imagingStorageSettings => 'إعدادات تخزين الأشعة';
+
+  @override
+  String get newXray => 'صورة أشعة جديدة';
+
+  @override
+  String get gridView => 'عرض الشبكة';
+
+  @override
+  String get listView => 'عرض القائمة';
+
+  @override
+  String columnsCount(int count) {
+    return '$count أعمدة';
+  }
+
+  @override
+  String get sortBy => 'فرز حسب: ';
+
+  @override
+  String get noXraysFound => 'لم يتم العثور على صور أشعة لهذا المريض';
+
+  @override
+  String get digitalSensor => 'مستشعر رقمي (TWAIN)';
+
+  @override
+  String get uploadFromFile => 'رفع من ملف';
+
+  @override
+  String get xrayLabel => 'تسمية صورة الأشعة';
+
+  @override
+  String get renameXray => 'إعادة تسمية صورة الأشعة';
+
+  @override
+  String get deleteXrayConfirmTitle => 'حذف صورة الأشعة؟';
+
+  @override
+  String get deleteXrayWarning =>
+      'هذا الإجراء لا يمكن التراجع عنه. سيتم حذف الملف بشكل دائم.';
+
+  @override
+  String capturedDate(Object date) {
+    return 'تم الالتقاط في: $date';
+  }
+
+  @override
+  String get importSuccess => 'تم الاستيراد بنجاح';
+
+  @override
+  String importError(String error) {
+    return 'فشل الاستيراد: $error';
+  }
+
+  @override
+  String exportSuccess(String path) {
+    return 'تم التصدير إلى $path';
+  }
+
+  @override
+  String exportError(String error) {
+    return 'فشل التصدير: $error';
+  }
+
+  @override
+  String get noNotes => 'لا توجد ملاحظات';
+
+  @override
+  String notesLabel(String notes) {
+    return 'الملاحظات: $notes';
+  }
 }

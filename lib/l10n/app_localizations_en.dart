@@ -1891,4 +1891,123 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get undo => 'Undo';
+
+  @override
+  String get tabInfo => 'Info';
+
+  @override
+  String get tabVisits => 'Visits';
+
+  @override
+  String get tabImaging => 'Imaging';
+
+  @override
+  String get blacklist => 'Blacklist';
+
+  @override
+  String get emergencyLabel => 'Emergency';
+
+  @override
+  String get notEmergencyLabel => 'Not Emergency';
+
+  @override
+  String get blacklistedLabel => 'Blacklisted';
+
+  @override
+  String get notBlacklistedLabel => 'Not Blacklisted';
+
+  @override
+  String healthAlertsLabel(String alerts) {
+    return 'Health Alerts: $alerts';
+  }
+
+  @override
+  String get accessRestricted => 'Access Restricted';
+
+  @override
+  String get onlyDentistsImaging => 'Only dentists can view imaging records.';
+
+  @override
+  String imagingHistory(int count) {
+    return 'Imaging History ($count)';
+  }
+
+  @override
+  String get imagingStorage => 'Imaging Storage';
+
+  @override
+  String get defaultImagingPath => 'Default (Documents/DentalTid/Imaging)';
+
+  @override
+  String get imagingStorageSettings => 'Imaging Storage Settings';
+
+  @override
+  String get newXray => 'New X-Ray';
+
+  @override
+  String get gridView => 'Grid View';
+
+  @override
+  String get listView => 'List View';
+
+  @override
+  String columnsCount(int count) {
+    return '$count columns';
+  }
+
+  @override
+  String get sortBy => 'Sort by: ';
+
+  @override
+  String get noXraysFound => 'No X-Rays found for this patient';
+
+  @override
+  String get digitalSensor => 'Digital Sensor (TWAIN)';
+
+  @override
+  String get uploadFromFile => 'Upload from File';
+
+  @override
+  String get xrayLabel => 'X-Ray Label';
+
+  @override
+  String get renameXray => 'Rename X-Ray';
+
+  @override
+  String get deleteXrayConfirmTitle => 'Delete X-Ray?';
+
+  @override
+  String get deleteXrayWarning =>
+      'This cannot be undone. The file will be permanently removed.';
+
+  @override
+  String capturedDate(Object date) {
+    return 'Captured: $date';
+  }
+
+  @override
+  String get importSuccess => 'Imported successfully';
+
+  @override
+  String importError(String error) {
+    return 'Import failed: $error';
+  }
+
+  @override
+  String exportSuccess(String path) {
+    return 'Exported to $path';
+  }
+
+  @override
+  String exportError(String error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get noNotes => 'No notes';
+
+  @override
+  String notesLabel(String notes) {
+    return 'Notes: $notes';
+  }
 }

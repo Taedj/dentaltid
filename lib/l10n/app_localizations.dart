@@ -3675,6 +3675,210 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Undo'**
   String get undo;
+
+  /// No description provided for @tabInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Info'**
+  String get tabInfo;
+
+  /// No description provided for @tabVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Visits'**
+  String get tabVisits;
+
+  /// No description provided for @tabImaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Imaging'**
+  String get tabImaging;
+
+  /// No description provided for @blacklist.
+  ///
+  /// In en, this message translates to:
+  /// **'Blacklist'**
+  String get blacklist;
+
+  /// No description provided for @emergencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency'**
+  String get emergencyLabel;
+
+  /// No description provided for @notEmergencyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Emergency'**
+  String get notEmergencyLabel;
+
+  /// No description provided for @blacklistedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Blacklisted'**
+  String get blacklistedLabel;
+
+  /// No description provided for @notBlacklistedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Blacklisted'**
+  String get notBlacklistedLabel;
+
+  /// No description provided for @healthAlertsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Alerts: {alerts}'**
+  String healthAlertsLabel(String alerts);
+
+  /// No description provided for @accessRestricted.
+  ///
+  /// In en, this message translates to:
+  /// **'Access Restricted'**
+  String get accessRestricted;
+
+  /// No description provided for @onlyDentistsImaging.
+  ///
+  /// In en, this message translates to:
+  /// **'Only dentists can view imaging records.'**
+  String get onlyDentistsImaging;
+
+  /// No description provided for @imagingHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Imaging History ({count})'**
+  String imagingHistory(int count);
+
+  /// No description provided for @imagingStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Imaging Storage'**
+  String get imagingStorage;
+
+  /// No description provided for @defaultImagingPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Default (Documents/DentalTid/Imaging)'**
+  String get defaultImagingPath;
+
+  /// No description provided for @imagingStorageSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Imaging Storage Settings'**
+  String get imagingStorageSettings;
+
+  /// No description provided for @newXray.
+  ///
+  /// In en, this message translates to:
+  /// **'New X-Ray'**
+  String get newXray;
+
+  /// No description provided for @gridView.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid View'**
+  String get gridView;
+
+  /// No description provided for @listView.
+  ///
+  /// In en, this message translates to:
+  /// **'List View'**
+  String get listView;
+
+  /// No description provided for @columnsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} columns'**
+  String columnsCount(int count);
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by: '**
+  String get sortBy;
+
+  /// No description provided for @noXraysFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No X-Rays found for this patient'**
+  String get noXraysFound;
+
+  /// No description provided for @digitalSensor.
+  ///
+  /// In en, this message translates to:
+  /// **'Digital Sensor (TWAIN)'**
+  String get digitalSensor;
+
+  /// No description provided for @uploadFromFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload from File'**
+  String get uploadFromFile;
+
+  /// No description provided for @xrayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'X-Ray Label'**
+  String get xrayLabel;
+
+  /// No description provided for @renameXray.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename X-Ray'**
+  String get renameXray;
+
+  /// No description provided for @deleteXrayConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete X-Ray?'**
+  String get deleteXrayConfirmTitle;
+
+  /// No description provided for @deleteXrayWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'This cannot be undone. The file will be permanently removed.'**
+  String get deleteXrayWarning;
+
+  /// No description provided for @capturedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Captured: {date}'**
+  String capturedDate(Object date);
+
+  /// No description provided for @importSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported successfully'**
+  String get importSuccess;
+
+  /// No description provided for @importError.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed: {error}'**
+  String importError(String error);
+
+  /// No description provided for @exportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported to {path}'**
+  String exportSuccess(String path);
+
+  /// No description provided for @exportError.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String exportError(String error);
+
+  /// No description provided for @noNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No notes'**
+  String get noNotes;
+
+  /// No description provided for @notesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes: {notes}'**
+  String notesLabel(String notes);
 }
 
 class _AppLocalizationsDelegate

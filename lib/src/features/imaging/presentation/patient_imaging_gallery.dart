@@ -8,6 +8,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'dart:io';
 import 'package:dentaltid/src/features/imaging/presentation/sensor_capture_dialog.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:dentaltid/l10n/app_localizations.dart';
 
 class PatientImagingGallery extends ConsumerStatefulWidget {
   final Patient patient;
@@ -26,6 +27,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
   @override
   Widget build(BuildContext context) {
     final imagingService = ref.watch(imagingServiceProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return FutureBuilder<List<Xray>>(
       future: imagingService.getPatientXrays(widget.patient.id!),
@@ -34,7 +36,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return Center(child: Text('${l10n.error}${snapshot.error}'));
         }
 
         final xrays = snapshot.data ?? [];
@@ -54,13 +56,13 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Imaging History (${xrays.length})',
+                        l10n.imagingHistory(xrays.length),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       ElevatedButton.icon(
                         onPressed: () => _showCaptureOptions(context),
                         icon: const Icon(LucideIcons.camera),
-                        label: const Text('New X-Ray'),
+                        label: Text(l10n.newXray),
                       ),
                     ],
                   ),
@@ -78,12 +80,12 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                         IconButton(
                           icon: Icon(LucideIcons.layoutGrid, color: !_isListMode ? Theme.of(context).primaryColor : Colors.grey),
                           onPressed: () => setState(() => _isListMode = false),
-                          tooltip: 'Grid View',
+                          tooltip: l10n.gridView,
                         ),
                         IconButton(
                           icon: Icon(LucideIcons.list, color: _isListMode ? Theme.of(context).primaryColor : Colors.grey),
                           onPressed: () => setState(() => _isListMode = true),
-                          tooltip: 'List View',
+                          tooltip: l10n.listView,
                         ),
                         
                         const VerticalDivider(width: 24),
@@ -98,7 +100,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                               min: 2,
                               max: 6,
                               divisions: 4,
-                              label: '$_gridColumns columns',
+                              label: l10n.columnsCount(_gridColumns),
                               onChanged: (v) => setState(() => _gridColumns = v.toInt()),
                             ),
                           ),
@@ -107,12 +109,12 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                         const Spacer(),
 
                         // Sort Dropdown
-                        const Text('Sort by: ', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(l10n.sortBy, style: const TextStyle(fontSize: 12, color: Colors.grey)),
                         DropdownButton<bool>(
                           value: _sortNewestFirst,
-                          items: const [
-                            DropdownMenuItem(value: true, child: Text('Newest First')),
-                            DropdownMenuItem(value: false, child: Text('Oldest First')),
+                          items: [
+                            DropdownMenuItem(value: true, child: Text(l10n.timeLatestFirst)),
+                            DropdownMenuItem(value: false, child: Text(l10n.timeEarliestFirst)),
                           ],
                           onChanged: (v) => setState(() => _sortNewestFirst = v!),
                           underline: const SizedBox(),
@@ -125,14 +127,14 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
               ),
             ),
             if (xrays.isEmpty)
-              const Expanded(
+               Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(LucideIcons.image, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text('No X-Rays found for this patient', style: TextStyle(color: Colors.grey)),
+                      const Icon(LucideIcons.image, size: 64, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(l10n.noXraysFound, style: const TextStyle(color: Colors.grey)),
                     ],
                   ),
                 ),
@@ -178,6 +180,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
   }
 
   void _showCaptureOptions(BuildContext parentContext) {
+    final l10n = AppLocalizations.of(parentContext)!;
     showModalBottomSheet(
       context: parentContext,
       builder: (sheetContext) => SafeArea(
@@ -185,7 +188,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
           children: [
             ListTile(
               leading: const Icon(LucideIcons.hardDrive),
-              title: const Text('Digital Sensor (TWAIN)'),
+              title: Text(l10n.digitalSensor),
               onTap: () async {
                 Navigator.pop(sheetContext);
                 if (!mounted) return;
@@ -204,7 +207,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
             ),
             ListTile(
               leading: const Icon(LucideIcons.upload),
-              title: const Text('Upload from File'),
+              title: Text(l10n.uploadFromFile),
               onTap: () async {
                 Navigator.pop(sheetContext);
                 
@@ -228,7 +231,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                       
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Image imported successfully!')),
+                          SnackBar(content: Text(l10n.importSuccess)),
                         );
                         setState(() {});
                       }
@@ -236,7 +239,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Import failed: $e'),
+                            content: Text(l10n.importError(e.toString())),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -253,15 +256,16 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
   }
 
   Future<String?> _showLabelDialog(BuildContext context) async {
-    final controller = TextEditingController(text: 'Imported X-Ray');
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: l10n.intraoralXrayDefault);
     return showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('X-Ray Label'),
+        title: Text(l10n.xrayLabel),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('Import')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
+          ElevatedButton(onPressed: () => Navigator.pop(context, controller.text), child: Text(l10n.add)),
         ],
       ),
     );
@@ -283,8 +287,11 @@ class _XrayThumbnail extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Tooltip(
-      message: xray.notes != null && xray.notes!.isNotEmpty ? 'Notes: ${xray.notes}' : 'No notes',
+      message: xray.notes != null && xray.notes!.isNotEmpty 
+          ? l10n.notesLabel(xray.notes!) 
+          : l10n.noNotes,
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.all(8),
       showDuration: const Duration(seconds: 10),
@@ -380,17 +387,18 @@ class _XrayThumbnail extends ConsumerWidget {
   }
 
   Future<void> _rename(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: xray.label);
     final newLabel = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename X-Ray'),
+        title: Text(l10n.renameXray),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -403,6 +411,7 @@ class _XrayThumbnail extends ConsumerWidget {
   }
 
   Future<void> _export(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await FilePicker.platform.getDirectoryPath();
     if (result != null) {
       try {
@@ -413,13 +422,16 @@ class _XrayThumbnail extends ConsumerWidget {
         
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Exported to $targetPath')),
+            SnackBar(content: Text(l10n.exportSuccess(targetPath))),
           );
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(l10n.exportError(e.toString())),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -428,17 +440,18 @@ class _XrayThumbnail extends ConsumerWidget {
 
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete X-Ray?'),
-        content: const Text('This cannot be undone. The file will be permanently removed.'),
+        title: Text(l10n.deleteXrayConfirmTitle),
+        content: Text(l10n.deleteXrayWarning),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -464,9 +477,12 @@ class _XrayListItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Tooltip(
-        message: xray.notes != null && xray.notes!.isNotEmpty ? 'Notes: ${xray.notes}' : 'No notes',
+        message: xray.notes != null && xray.notes!.isNotEmpty 
+            ? l10n.notesLabel(xray.notes!) 
+            : l10n.noNotes,
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.all(8),
         showDuration: const Duration(seconds: 10),
@@ -492,14 +508,14 @@ class _XrayListItem extends ConsumerWidget {
                   const Icon(LucideIcons.fileText, size: 16, color: Colors.orangeAccent),
             ],
           ),
-          subtitle: Text('Captured: ${xray.capturedAt.day}/${xray.capturedAt.month}/${xray.capturedAt.year}'),
+          subtitle: Text(l10n.capturedDate('${xray.capturedAt.day}/${xray.capturedAt.month}/${xray.capturedAt.year}')),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(LucideIcons.pencil, size: 18, color: Colors.blueAccent),
                 onPressed: () => _rename(context, ref),
-                tooltip: 'Rename',
+                tooltip: l10n.edit,
               ),
               IconButton(
                 icon: const Icon(LucideIcons.download, size: 18, color: Colors.greenAccent),
@@ -509,7 +525,7 @@ class _XrayListItem extends ConsumerWidget {
               IconButton(
                 icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
                 onPressed: () => _delete(context, ref),
-                tooltip: 'Delete',
+                tooltip: l10n.delete,
               ),
             ],
           ),
@@ -532,17 +548,18 @@ class _XrayListItem extends ConsumerWidget {
   }
 
   Future<void> _rename(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: xray.label);
     final newLabel = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename X-Ray'),
+        title: Text(l10n.renameXray),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -555,6 +572,7 @@ class _XrayListItem extends ConsumerWidget {
   }
 
   Future<void> _export(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     final result = await FilePicker.platform.getDirectoryPath();
     if (result != null) {
       try {
@@ -565,13 +583,16 @@ class _XrayListItem extends ConsumerWidget {
         
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Exported to $targetPath')),
+            SnackBar(content: Text(l10n.exportSuccess(targetPath))),
           );
         }
       } catch (e) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export failed: $e'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text(l10n.exportError(e.toString())),
+              backgroundColor: Colors.red,
+            ),
           );
         }
       }
@@ -579,17 +600,18 @@ class _XrayListItem extends ConsumerWidget {
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete X-Ray?'),
-        content: const Text('This cannot be undone. The file will be permanently removed.'),
+        title: Text(l10n.deleteXrayConfirmTitle),
+        content: Text(l10n.deleteXrayWarning),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),

@@ -1914,4 +1914,124 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get undo => 'Annuler';
+
+  @override
+  String get tabInfo => 'Infos';
+
+  @override
+  String get tabVisits => 'Visites';
+
+  @override
+  String get tabImaging => 'Imagerie';
+
+  @override
+  String get blacklist => 'Liste noire';
+
+  @override
+  String get emergencyLabel => 'Urgence';
+
+  @override
+  String get notEmergencyLabel => 'Pas d\'urgence';
+
+  @override
+  String get blacklistedLabel => 'Sur liste noire';
+
+  @override
+  String get notBlacklistedLabel => 'Pas sur liste noire';
+
+  @override
+  String healthAlertsLabel(String alerts) {
+    return 'Alertes de santé : $alerts';
+  }
+
+  @override
+  String get accessRestricted => 'Accès restreint';
+
+  @override
+  String get onlyDentistsImaging =>
+      'Seuls les dentistes peuvent voir les dossiers d\'imagerie.';
+
+  @override
+  String imagingHistory(int count) {
+    return 'Historique d\'imagerie ($count)';
+  }
+
+  @override
+  String get imagingStorage => 'Stockage d\'imagerie';
+
+  @override
+  String get defaultImagingPath => 'Par défaut (Documents/DentalTid/Imaging)';
+
+  @override
+  String get imagingStorageSettings => 'Paramètres de stockage d\'imagerie';
+
+  @override
+  String get newXray => 'Nouvelle radiographie';
+
+  @override
+  String get gridView => 'Vue en grille';
+
+  @override
+  String get listView => 'Vue en liste';
+
+  @override
+  String columnsCount(int count) {
+    return '$count colonnes';
+  }
+
+  @override
+  String get sortBy => 'Trier par : ';
+
+  @override
+  String get noXraysFound => 'Aucune radiographie trouvée pour ce patient';
+
+  @override
+  String get digitalSensor => 'Capteur numérique (TWAIN)';
+
+  @override
+  String get uploadFromFile => 'Télécharger à partir d\'un fichier';
+
+  @override
+  String get xrayLabel => 'Étiquette de radiographie';
+
+  @override
+  String get renameXray => 'Renommer la radiographie';
+
+  @override
+  String get deleteXrayConfirmTitle => 'Supprimer la radiographie ?';
+
+  @override
+  String get deleteXrayWarning =>
+      'Ceci ne peut pas être annulé. Le fichier sera définitivement supprimé.';
+
+  @override
+  String capturedDate(Object date) {
+    return 'Capturé le : $date';
+  }
+
+  @override
+  String get importSuccess => 'Importé avec succès';
+
+  @override
+  String importError(String error) {
+    return 'Échec de l\'importation : $error';
+  }
+
+  @override
+  String exportSuccess(String path) {
+    return 'Exporté vers $path';
+  }
+
+  @override
+  String exportError(String error) {
+    return 'Échec de l\'exportation : $error';
+  }
+
+  @override
+  String get noNotes => 'Aucune note';
+
+  @override
+  String notesLabel(String notes) {
+    return 'Notes : $notes';
+  }
 }

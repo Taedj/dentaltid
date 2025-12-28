@@ -116,6 +116,7 @@ class _XRayViewerState extends State<XRayViewer> {
   }
   
   Future<void> _saveCopy(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       // 1. Capture Image
       final boundary = _repaintBoundaryKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
@@ -141,7 +142,7 @@ class _XRayViewerState extends State<XRayViewer> {
           notes: _currentNotes, // Preserve notes in copy
         );
          if (context.mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.saveCopySuccess)));
+           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveCopySuccess)));
          }
       }
     } catch (e) {
@@ -182,7 +183,7 @@ class _XRayViewerState extends State<XRayViewer> {
       setState(() {
         _currentNotes = newNotes;
       });
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Notes saved')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.saveButton)));
     }
   }
 
