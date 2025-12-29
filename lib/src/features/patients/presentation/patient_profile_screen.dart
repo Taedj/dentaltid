@@ -12,8 +12,9 @@ import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
-import 'package:dentaltid/src/features/imaging/presentation/patient_imaging_gallery.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/src/features/prescriptions/presentation/prescription_editor_screen.dart';
+import 'package:dentaltid/src/features/imaging/presentation/patient_imaging_gallery.dart';
 
 class PatientProfileScreen extends ConsumerWidget {
   const PatientProfileScreen({super.key, required this.patient});
@@ -40,65 +41,70 @@ class PatientProfileScreen extends ConsumerWidget {
             ],
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: Text(l10n.deletePatient),
-                    content: Text(
-                      l10n.confirmDeletePatient,
+            if (isDentist) ...[
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(l10n.deletePatient),
+                      content: Text(
+                        l10n.confirmDeletePatient,
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: Text(l10n.cancel),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          child: Text(l10n.delete),
+                        ),
+                      ],
                     ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: Text(l10n.cancel),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: Text(l10n.delete),
-                      ),
-                    ],
-                  ),
-                );
+                  );
 
-                if (confirmed == true && context.mounted) {
-                  try {
-                    await ref
-                        .read(patientServiceProvider)
-                        .deletePatient(patient.id!);
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Failed to delete patient: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                  if (confirmed == true && context.mounted) {
+                    try {
+                      await ref
+                          .read(patientServiceProvider)
+                          .deletePatient(patient.id!);
+                      if (context.mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Failed to delete patient: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   }
-                }
-              },
-            ),
-            Switch(
-              value: patient.isBlacklisted,
-              onChanged: (value) {
-                // Toggle blacklist
-                final patientService = ref.read(patientServiceProvider);
-                patientService.updatePatient(
-                  patient.copyWith(isBlacklisted: value),
-                );
-              },
-              activeThumbColor: Colors.red,
-            ),
-            Text(l10n.blacklist),
+                },
+              ),
+              Switch(
+                value: patient.isBlacklisted,
+                onChanged: (value) {
+                  // Toggle blacklist
+                  final patientService = ref.read(patientServiceProvider);
+                  patientService.updatePatient(
+                    patient.copyWith(isBlacklisted: value),
+                  );
+                },
+                activeThumbColor: Colors.red,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Text(l10n.blacklist),
+              ),
+            ],
           ],
         ),
         body: TabBarView(
@@ -180,7 +186,7 @@ class VisitsListWidget extends ConsumerWidget {
         itemCount: appointments.length,
         itemBuilder: (context, index) {
           final appointment = appointments[index];
-          return VisitCard(appointment: appointment);
+          return VisitCard(appointment: appointment, patient: patient);
         },
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -190,9 +196,10 @@ class VisitsListWidget extends ConsumerWidget {
 }
 
 class VisitCard extends ConsumerStatefulWidget {
-  const VisitCard({super.key, required this.appointment});
+  const VisitCard({super.key, required this.appointment, required this.patient});
 
   final Appointment appointment;
+  final Patient patient;
 
   @override
   ConsumerState<VisitCard> createState() => _VisitCardState();
@@ -631,6 +638,27 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                             child: ElevatedButton(
                               onPressed: _saveChanges,
                               child: Text(l10n.saveButton),
+                            ),
+                          ),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (userProfile != null) {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => PrescriptionEditorScreen(
+                                        patient: widget.patient,
+                                        userProfile: userProfile,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.secondaryContainer,
+                                foregroundColor: colorScheme.onSecondaryContainer,
+                              ),
+                              child: const Text('Prescription'),
                             ),
                           ),
                           const SizedBox(width: 16),

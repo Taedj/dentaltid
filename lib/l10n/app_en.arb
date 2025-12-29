@@ -4,6 +4,7 @@
   "appointments": "Appointments",
   "inventory": "Inventory",
   "finance": "Finance",
+  "advanced": "Advanced",
   "addAppointment": "Add Appointment",
   "editAppointment": "Edit Appointment",
   "patient": "Patient",

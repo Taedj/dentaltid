@@ -4,6 +4,7 @@
   "appointments": "المواعيد",
   "inventory": "المخزون",
   "finance": "المالية",
+  "advanced": "متقدم",
   "addAppointment": "إضافة موعد",
   "editAppointment": "تعديل الموعد",
   "patient": "المريض",

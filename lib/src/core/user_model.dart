@@ -19,6 +19,7 @@ class UserProfile {
   final String? fullName; // Full name of the user (e.g. for staff)
   final String? phoneNumber;
   final String? medicalLicenseNumber;
+  final int lastPrescriptionNumber;
   final String? province;
   final String? country;
   final String? clinicAddress;
@@ -74,6 +75,7 @@ class UserProfile {
     this.province,
     this.country,
     this.clinicAddress,
+    this.lastPrescriptionNumber = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -105,6 +107,7 @@ class UserProfile {
     'province': province,
     'country': country,
     'clinicAddress': clinicAddress,
+    'lastPrescriptionNumber': lastPrescriptionNumber,
   };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -149,6 +152,7 @@ class UserProfile {
     province: json['province'],
     country: json['country'],
     clinicAddress: json['clinicAddress'],
+    lastPrescriptionNumber: json['lastPrescriptionNumber'] ?? 0,
   );
 
   UserProfile copyWith({
@@ -180,6 +184,7 @@ class UserProfile {
     String? province,
     String? country,
     String? clinicAddress,
+    int? lastPrescriptionNumber,
   }) {
     return UserProfile(
       uid: uid ?? this.uid,
@@ -211,6 +216,8 @@ class UserProfile {
       province: province ?? this.province,
       country: country ?? this.country,
       clinicAddress: clinicAddress ?? this.clinicAddress,
+      lastPrescriptionNumber:
+          lastPrescriptionNumber ?? this.lastPrescriptionNumber,
     );
   }
 }

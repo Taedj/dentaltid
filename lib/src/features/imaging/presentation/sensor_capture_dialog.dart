@@ -100,6 +100,42 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
     }
   }
 
+  void _showTroubleshooting() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(LucideIcons.helpCircle, color: Colors.blue),
+            SizedBox(width: 12),
+            Text('Sensor Help'),
+          ],
+        ),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('If your sensor (Nanopix) is not listed:', style: TextStyle(fontWeight: FontWeight.bold)),
+            SizedBox(height: 12),
+            Text('1. Install TWAIN Drivers: Go to the application folder, open "drivers/XRay" and install the Nanopix driver.'),
+            SizedBox(height: 8),
+            Text('2. Re-plug Sensor: Unplug the USB, wait 5 seconds, and plug it back in.'),
+            SizedBox(height: 8),
+            Text('3. Close other apps: Ensure no other X-ray software is currently open or using the sensor.'),
+            SizedBox(height: 8),
+            Text('4. Restart App: Sometimes a fresh start is needed after installing new drivers.'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -119,7 +155,14 @@ class _SensorCaptureDialogState extends ConsumerState<SensorCaptureDialog> {
             if (_capturedImage == null) ...[
               DropdownButtonFormField<String>(
                 initialValue: _selectedSource,
-                decoration: InputDecoration(labelText: l10n.selectSensorLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.selectSensorLabel,
+                  suffixIcon: IconButton(
+                    icon: const Icon(LucideIcons.helpCircle, size: 20),
+                    tooltip: 'Troubleshoot',
+                    onPressed: _showTroubleshooting,
+                  ),
+                ),
                 items: _sources.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
                 onChanged: (v) => setState(() => _selectedSource = v),
               ),

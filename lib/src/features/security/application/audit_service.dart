@@ -15,17 +15,22 @@ class AuditService {
   static const String _tableName = 'audit_events';
 
   Future<void> logEvent(AuditAction action, {String? details}) async {
-    final userRole =
-        SettingsService.instance.getString('userRole') ?? 'unknown';
+    try {
+      final userRole =
+          SettingsService.instance.getString('userRole') ?? 'unknown';
 
-    final event = AuditEvent(
-      action: action,
-      userId: userRole,
-      timestamp: DateTime.now(),
-      details: details,
-    );
-    final db = await _databaseService.database;
-    await db.insert(_tableName, event.toJson());
+      final event = AuditEvent(
+        action: action,
+        userId: userRole,
+        timestamp: DateTime.now(),
+        details: details,
+      );
+      final db = await _databaseService.database;
+      await db.insert(_tableName, event.toJson());
+    } catch (e) {
+      // Don't crash the app if auditing fails
+      print('Failed to log audit event: $e');
+    }
   }
 
   Future<List<AuditEvent>> getAuditEvents() async {

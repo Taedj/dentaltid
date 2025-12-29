@@ -24,6 +24,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get finance => 'Finance';
 
   @override
+  String get advanced => 'Avancé';
+
+  @override
   String get addAppointment => 'Ajouter un rendez-vous';
 
   @override

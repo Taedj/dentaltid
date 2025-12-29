@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:dentaltid/src/features/prescriptions/presentation/prescription_editor_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -29,6 +30,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<String> _dismissedBroadcastIds = [];
+  bool _debugOpen = false;
 
   @override
   void initState() {
@@ -68,8 +70,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final todayPatientsAsyncValue = ref.watch(
       patientsProvider(const PatientListConfig(filter: PatientFilter.today)),
     );
+    final userProfileAsyncValue = ref.watch(userProfileProvider);
+
     final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
     final l10n = AppLocalizations.of(context)!;
+    final userProfile = userProfileAsyncValue.value;
+    final isReceptionist = userProfile?.role == UserRole.receptionist;
+    final canViewInventory = !isReceptionist;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -104,6 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: const _DashboardHeader(),
             ),
 
+
             Expanded(
               child: Center(
                 child: LayoutBuilder(
@@ -131,12 +139,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               l10n,
                             ),
                             const SizedBox(height: 16),
-                            _buildInventoryCard(
-                              cardWidth,
-                              inventoryItemsAsyncValue,
-                              l10n,
-                            ),
-                            const SizedBox(height: 16),
+                            if (canViewInventory) ...[
+                              _buildInventoryCard(
+                                cardWidth,
+                                inventoryItemsAsyncValue,
+                                l10n,
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                             _buildAppointmentsCard(cardWidth, l10n),
                           ],
                         ),
@@ -157,13 +167,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           l10n,
                           height: cardHeight,
                         ),
-                        SizedBox(width: spacing),
-                        _buildInventoryCard(
-                          cardWidth,
-                          inventoryItemsAsyncValue,
-                          l10n,
-                          height: cardHeight,
-                        ),
+                        if (canViewInventory) ...[
+                          SizedBox(width: spacing),
+                          _buildInventoryCard(
+                            cardWidth,
+                            inventoryItemsAsyncValue,
+                            l10n,
+                            height: cardHeight,
+                          ),
+                        ],
                         SizedBox(width: spacing),
                         _buildAppointmentsCard(
                           cardWidth,
@@ -643,6 +655,27 @@ class _DashboardHeader extends ConsumerWidget {
                           )
                           .animate(onPlay: (c) => c.repeat(reverse: true))
                           .shimmer(delay: 2000.ms, duration: 1000.ms),
+                          const SizedBox(width: 8),
+                          // Role Badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: theme.colorScheme.primary),
+                            ),
+                            child: Text(
+                              userProfile?.role.toString().split('.').last.toUpperCase() ?? 'UNKNOWN',
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),

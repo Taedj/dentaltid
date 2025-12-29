@@ -7,7 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 21; // Added xrays table
+  static const int _databaseVersion = 23; // Added medicine_presets table
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -16,6 +16,17 @@ class DatabaseService {
   static Completer<Database>? _dbInitCompleter;
 
   Future<Database> get database async {
+    // Check if database was deleted on disk
+    if (_database != null) {
+      final documentsDir = await getApplicationDocumentsDirectory();
+      final dbPath = join(documentsDir.path, 'DentalTid', 'databases', _databaseName);
+      if (!await File(dbPath).exists()) {
+        developer.log('Database file not found on disk, re-initializing...');
+        _database = null;
+        _dbInitCompleter = null;
+      }
+    }
+
     if (_database != null) return _database!;
     if (_dbInitCompleter != null) return _dbInitCompleter!.future;
 
@@ -433,17 +444,30 @@ class DatabaseService {
       }
     }
 
-    if (oldVersion < 21) {
+    if (oldVersion < 22) {
       await db.execute('''
-        CREATE TABLE xrays(
+        CREATE TABLE prescriptions(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
+          dentistId TEXT,
           patientId INTEGER,
-          visitId INTEGER,
-          filePath TEXT,
-          label TEXT,
-          capturedAt TEXT,
-          notes TEXT,
-          type TEXT DEFAULT 'intraoral'
+          orderNumber INTEGER,
+          date TEXT,
+          patientName TEXT,
+          patientFamilyName TEXT,
+          patientAge INTEGER,
+          medicines TEXT,
+          templateId TEXT
+        )
+      ''');
+    }
+
+    if (oldVersion < 23) {
+      await db.execute('''
+        CREATE TABLE medicine_presets(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          medicines TEXT,
+          createdAt TEXT
         )
       ''');
     }
@@ -617,6 +641,28 @@ class DatabaseService {
           capturedAt TEXT,
           notes TEXT,
           type TEXT DEFAULT 'intraoral'
+        )
+      ''');
+    await db.execute('''
+        CREATE TABLE prescriptions(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          dentistId TEXT,
+          patientId INTEGER,
+          orderNumber INTEGER,
+          date TEXT,
+          patientName TEXT,
+          patientFamilyName TEXT,
+          patientAge INTEGER,
+          medicines TEXT,
+          templateId TEXT
+        )
+      ''');
+    await db.execute('''
+        CREATE TABLE medicine_presets(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT,
+          medicines TEXT,
+          createdAt TEXT
         )
       ''');
   }

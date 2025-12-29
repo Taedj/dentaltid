@@ -9,8 +9,10 @@ import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:dentaltid/src/features/settings/presentation/network_config_dialog.dart';
 import 'package:dentaltid/src/core/network/sync_client.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:logging/logging.dart';
 import 'package:dentaltid/src/core/settings_service.dart'; // Import SettingsService
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
@@ -35,6 +37,7 @@ class AuthScreen extends ConsumerStatefulWidget {
 class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _keyboardFocusNode = FocusNode();
   final _autocompleteFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _clinicNameController = TextEditingController();
@@ -65,6 +68,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    // Future.delayed(const Duration(seconds: 1), _bypassAuth);
     _checkAutoLogin();
   }
 
@@ -72,6 +76,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void dispose() {
     _keyboardFocusNode.dispose();
     _autocompleteFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _clinicNameController.dispose();
@@ -146,9 +151,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   Future<void> _authenticate() async {
+    final log = Logger('AuthScreen');
     if (!_formKey.currentState!.validate()) return;
 
     if (_userType == UserType.staff) {
+      log.info('Starting staff authentication...');
       await _authenticateStaff();
       return;
     }
@@ -163,18 +170,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
+    log.info('Starting ${_authMode == AuthMode.login ? 'login' : 'registration'} process for ${_emailController.text}...');
     setState(() => _isLoading = true);
 
     try {
       UserProfile? userProfile;
 
       if (_authMode == AuthMode.register) {
+        log.info('Calling signUpWithEmailAndPassword...');
         final User? user = await _firebaseService.signUpWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
 
         if (user != null) {
+          log.info('Sign up successful, creating user profile...');
           final licenseKey = const Uuid().v4();
           userProfile = UserProfile(
             uid: user.uid,
@@ -198,22 +208,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
 
           await _firebaseService.createUserProfile(userProfile, licenseKey);
+          log.info('User profile created and saved to Firestore.');
           ref.invalidate(userProfileProvider);
         }
       } else {
         // Login
+        log.info('Calling signInWithEmailAndPassword...');
         await _firebaseService.signInWithEmailAndPassword(
           _emailController.text,
           _passwordController.text,
         );
+        log.info('Sign in successful.');
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
+          log.info('Fetching user profile from Firestore...');
           userProfile = await _firebaseService.getUserProfile(user.uid);
+          log.info('Profile fetched: ${userProfile?.email}');
         }
       }
 
       if (userProfile != null) {
+        log.info('Validating license...');
         if (!_isLicenseValid(userProfile)) {
+          log.warning('License invalid, signing out.');
           await FirebaseAuth.instance.signOut();
           if (mounted) _showActivationDialog(userProfile.uid);
           return;
@@ -248,8 +265,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       final settings = SettingsService.instance;
       UserRole userRole = userProfile?.role ?? UserRole.dentist;
       await settings.setString('userRole', userRole.toString());
+      log.info('Role set to $userRole, refreshing profile provider...');
       final _ = await ref.refresh(userProfileProvider.future);
 
+      log.info('Logging audit event...');
       ref
           .read(auditServiceProvider)
           .logEvent(
@@ -260,8 +279,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 '${_authMode == AuthMode.login ? 'Dentist logged in' : 'Dentist registered'}: ${_emailController.text}',
           );
 
+      log.info('Authentication complete, navigating to home...');
       if (mounted) context.go('/');
     } on FirebaseAuthException catch (e) {
+      log.severe('Firebase Auth Error: ${e.code} - ${e.message}');
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;
       String errorMessage = l10n.authError;
@@ -599,7 +620,49 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           builder: (context) => NetworkConfigDialog(userType: _userType),
         );
       }
+      // Backdoor for testing: Ctrl + Shift + L
+      if (kDebugMode && 
+          HardwareKeyboard.instance.isControlPressed &&
+          HardwareKeyboard.instance.isShiftPressed &&
+          event.logicalKey == LogicalKeyboardKey.keyL) {
+            _bypassAuth();
+      }
     }
+  }
+
+  Future<void> _bypassAuth() async {
+    await SettingsService.instance.init();
+    final mockProfile = UserProfile(
+      uid: 'mock_uid',
+      email: 'mock@dentaltid.com',
+      clinicName: 'Mock Clinic',
+      dentistName: 'Dr. Mock',
+      phoneNumber: '1234567890',
+      medicalLicenseNumber: 'MOCK-123',
+      province: 'Algiers',
+      country: 'Algeria',
+      clinicAddress: '123 Mock Street',
+      plan: SubscriptionPlan.professional,
+      licenseKey: 'MOCK-LICENSE',
+      status: SubscriptionStatus.active,
+      licenseExpiry: DateTime.now().add(const Duration(days: 365)),
+      createdAt: DateTime.now(),
+      lastLogin: DateTime.now(),
+      lastSync: DateTime.now(),
+      trialStartDate: DateTime.now(),
+      isPremium: true,
+    );
+
+    await SettingsService.instance.setString(
+      'cached_user_profile',
+      jsonEncode(mockProfile.toJson()),
+    );
+    await SettingsService.instance.setBool('remember_me', true);
+    
+    // Refresh provider if needed (but reload might catch it)
+    await ref.refresh(userProfileProvider.future).catchError((_) => mockProfile);
+
+    if (mounted) context.go('/');
   }
 
   @override
@@ -903,6 +966,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 ),
               ),
             ),
+            // DEBUG BUTTON
+            if (kDebugMode)
+              Positioned(
+                bottom: 20,
+                right: 20,
+                child: ElevatedButton(
+                  onPressed: _bypassAuth,
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  child: const Text("DEBUG LOGIN", style: TextStyle(color: Colors.white)),
+                ),
+              ),
           ],
         ),
       ),
@@ -1035,6 +1109,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           label: l10n.password,
           icon: Icons.lock_outline,
           obscureText: true,
+          focusNode: _passwordFocusNode,
         ),
         if (_authMode == AuthMode.register) ...[
           const SizedBox(height: 8),

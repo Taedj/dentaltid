@@ -44,3 +44,16 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 *.exe
+drivers/XRay/eighteeth.jpg
+drivers/XRay/Software Installation Guide.mp4
+drivers/XRay/calibration/calib.ini
+drivers/XRay/calibration/config.ini
+drivers/XRay/calibration/iDetectorConfig.ini
+drivers/XRay/calibration/ParamRange.ini
+drivers/XRay/calibration2/calib.ini
+drivers/XRay/calibration2/config.ini
+drivers/XRay/calibration2/iDetectorConfig.ini
+drivers/XRay/calibration2/ParamRange.ini
+drivers/XRay/calibration2/PF640001T1230200154.txt
+drivers/XRay/calibration2/Correct/Default/defect_1300x1800.dft
+drivers/XRay/calibration2/Correct/Default/gain_1300x1800.gn

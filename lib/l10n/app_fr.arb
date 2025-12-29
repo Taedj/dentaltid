@@ -4,6 +4,7 @@
   "appointments": "Rendez-vous",
   "inventory": "Inventaire",
   "finance": "Finance",
+  "advanced": "Avancé",
   "addAppointment": "Ajouter un rendez-vous",
   "editAppointment": "Modifier le rendez-vous",
   "patient": "Patient",

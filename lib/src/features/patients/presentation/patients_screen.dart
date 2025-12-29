@@ -15,6 +15,8 @@ import 'dart:ui' as ui;
 import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dentaltid/src/core/app_colors.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 // Helper for PatientFilter localization
 String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
@@ -116,6 +118,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     final patientService = ref.watch(patientServiceProvider);
     final l10n = AppLocalizations.of(context)!;
     final usage = ref.watch(clinicUsageProvider);
+    final userProfile = ref.watch(userProfileProvider).value;
+    final isDentist = userProfile?.role == UserRole.dentist;
 
     return Scaffold(
       appBar: AppBar(
@@ -190,10 +194,11 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                 }).toList(),
               ),
             ),
-            IconButton(
-              icon: const Icon(LucideIcons.download),
-              onPressed: _exportPatientsToCsv,
-            ),
+            if (isDentist)
+              IconButton(
+                icon: const Icon(LucideIcons.download),
+                onPressed: _exportPatientsToCsv,
+              ),
           ],
         ],
       ),
@@ -229,6 +234,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                       patient,
                       l10n,
                       patientService,
+                      isDentist,
                     );
                   },
                 );
@@ -436,30 +442,31 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                             extra: patient,
                                           ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            LucideIcons.trash2,
-                                            size: 18,
-                                            color: Colors.red,
-                                          ),
-                                          onPressed: () async {
-                                            final confirmed =
-                                                await showDeleteConfirmationDialog(
-                                                  context: context,
-                                                  title: l10n.deletePatient,
-                                                  content:
-                                                      l10n.confirmDeletePatient,
+                                        if (isDentist)
+                                          IconButton(
+                                            icon: const Icon(
+                                              LucideIcons.trash2,
+                                              size: 18,
+                                              color: Colors.red,
+                                            ),
+                                            onPressed: () async {
+                                              final confirmed =
+                                                  await showDeleteConfirmationDialog(
+                                                    context: context,
+                                                    title: l10n.deletePatient,
+                                                    content:
+                                                        l10n.confirmDeletePatient,
+                                                  );
+                                              if (confirmed == true &&
+                                                  patient.id != null) {
+                                                await patientService
+                                                    .deletePatient(patient.id!);
+                                                ref.invalidate(
+                                                  patientsProvider(config),
                                                 );
-                                            if (confirmed == true &&
-                                                patient.id != null) {
-                                              await patientService
-                                                  .deletePatient(patient.id!);
-                                              ref.invalidate(
-                                                patientsProvider(config),
-                                              );
-                                            }
-                                          },
-                                        ),
+                                              }
+                                            },
+                                          ),
                                       ],
                                     ),
                                   ),
@@ -493,6 +500,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     Patient patient,
     AppLocalizations l10n,
     PatientService patientService,
+    bool isDentist,
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -554,31 +562,32 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                       onPressed: () =>
                           context.go('/patients/edit', extra: patient),
                     ),
-                    IconButton(
-                      icon: const Icon(
-                        LucideIcons.trash2,
-                        size: 20,
-                        color: Colors.red,
-                      ),
-                      onPressed: () async {
-                        final confirmed = await showDeleteConfirmationDialog(
-                          context: context,
-                          title: l10n.deletePatient,
-                          content: l10n.confirmDeletePatient,
-                        );
-                        if (confirmed == true && patient.id != null) {
-                          await patientService.deletePatient(patient.id!);
-                          ref.invalidate(
-                            patientsProvider(
-                              PatientListConfig(
-                                filter: _selectedFilter,
-                                query: _searchController.text,
-                              ),
-                            ),
+                    if (isDentist)
+                      IconButton(
+                        icon: const Icon(
+                          LucideIcons.trash2,
+                          size: 20,
+                          color: Colors.red,
+                        ),
+                        onPressed: () async {
+                          final confirmed = await showDeleteConfirmationDialog(
+                            context: context,
+                            title: l10n.deletePatient,
+                            content: l10n.confirmDeletePatient,
                           );
-                        }
-                      },
-                    ),
+                          if (confirmed == true && patient.id != null) {
+                            await patientService.deletePatient(patient.id!);
+                            ref.invalidate(
+                              patientsProvider(
+                                PatientListConfig(
+                                  filter: _selectedFilter,
+                                  query: _searchController.text,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
                   ],
                 ),
               ],

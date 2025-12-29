@@ -1,42 +1,43 @@
 @echo off
-echo Building DentalTid Installer
-echo.
+setlocal enabledelayedexpansion
 
-if not exist "build\windows\x64\runner\Release\dentaltid.exe" (
-    echo Error: App not built yet. Run 'flutter build windows --release' first.
-    pause
-    exit /b 1
-)
+echo ========================================
+echo   DentalTid 64-bit Release Builder
+echo ========================================
 
-echo Compiling x64 installer...
-iscc installer_x64.iss
+set ISCC_PATH="C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
+:: 1. Clean previous builds
+echo [1/3] Cleaning project...
+call flutter clean
 if %errorlevel% neq 0 (
-    echo Error: Failed to compile x64 installer
+    echo Error during flutter clean
+    pause
+    exit /b 1
+)
+
+:: 2. Build x64 (64-bit)
+echo [2/3] Building Windows x64 Release...
+call flutter build windows --release
+if %errorlevel% neq 0 (
+    echo Error building x64 version
+    pause
+    exit /b 1
+)
+
+:: 3. Compile x64 Installer
+echo [3/3] Compiling x64 Installer...
+%ISCC_PATH% installer_x64.iss
+if %errorlevel% neq 0 (
+    echo Error compiling x64 installer
     pause
     exit /b 1
 )
 
 echo.
-echo x64 installer created: dist\dentaltid_x64_setup.exe
-echo.
-
-if exist "build\windows\x86\runner\Release\dentaltid.exe" (
-    echo Compiling x86 installer...
-    iscc installer_x86.iss
-
-    if %errorlevel% neq 0 (
-        echo Error: Failed to compile x86 installer
-        pause
-        exit /b 1
-    )
-
-    echo.
-    echo x86 installer created: dist\dentaltid_x86_setup.exe
-) else (
-    echo x86 build not found. Run on x86 machine or use x86 tools to build x86 version.
-)
-
-echo.
-echo Installation complete!
+echo ========================================
+echo   BUILD COMPLETE!
+echo   Check the 'dist' folder for:
+echo   - dentaltid_x64_setup.exe
+echo ========================================
 pause

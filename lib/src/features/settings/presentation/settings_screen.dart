@@ -152,101 +152,114 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                l10n.localBackup,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(l10n.localBackup),
-                            content: Text(l10n.localBackupConfirm),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text(l10n.cancel),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text(l10n.confirm),
-                              ),
-                            ],
-                          ),
-                        );
-
-                        if (confirmed != true) return;
-
-                        setState(() {
-                          _isLoading = true;
-                        });
-                        final filePath = await backupService.createBackup();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                filePath != null
-                                    ? '${l10n.backupCreatedAt} $filePath'
-                                    : l10n.backupFailedOrCancelled,
-                              ),
-                            ),
-                          );
-                        }
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      },
-                child: _isLoading
-                    ? const CircularProgressIndicator()
-                    : Text(l10n.createLocalBackup),
-              ),
-              const SizedBox(height: 10),
-              // Restore Backup - Restricted
+              // Backup & Restore - Restricted to Dentists
               userProfileAsync.when(
                 data: (userProfile) {
+                  final isDentist = userProfile?.role == UserRole.dentist;
+                  if (!isDentist) return const SizedBox.shrink();
+
                   final isPremium = userProfile?.isPremium ?? false;
-                  return ElevatedButton(
-                    onPressed: (_isLoading || !isPremium)
-                        ? null
-                        : () async {
-                            setState(() {
-                              _isLoading = true;
-                            });
-                            final success = await backupService.restoreBackup(
-                              ref: ref,
-                            );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    success
-                                        ? l10n.backupRestoredSuccessfully
-                                        : l10n.restoreFailedOrCancelled,
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.localBackup,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _isLoading
+                            ? null
+                            : () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(l10n.localBackup),
+                                    content: Text(l10n.localBackupConfirm),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, false),
+                                        child: Text(l10n.cancel),
+                                      ),
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, true),
+                                        child: Text(l10n.confirm),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                              );
-                            }
-                            setState(() {
-                              _isLoading = false;
-                            });
-                          },
-                    child: _isLoading
-                        ? const CircularProgressIndicator()
-                        : Text(
-                            isPremium
-                                ? l10n.restoreFromLocalBackup
-                                : "${l10n.restoreFromLocalBackup} (${l10n.premiumOnly})",
-                          ),
+                                );
+
+                                if (confirmed != true) return;
+
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                final filePath =
+                                    await backupService.createBackup();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        filePath != null
+                                            ? '${l10n.backupCreatedAt} $filePath'
+                                            : l10n.backupFailedOrCancelled,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              },
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : Text(l10n.createLocalBackup),
+                      ),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: (_isLoading || !isPremium)
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _isLoading = true;
+                                });
+                                final success =
+                                    await backupService.restoreBackup(
+                                  ref: ref,
+                                );
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? l10n.backupRestoredSuccessfully
+                                            : l10n.restoreFailedOrCancelled,
+                                      ),
+                                    ),
+                                  );
+                                }
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              },
+                        child: _isLoading
+                            ? const CircularProgressIndicator()
+                            : Text(
+                                isPremium
+                                    ? l10n.restoreFromLocalBackup
+                                    : "${l10n.restoreFromLocalBackup} (${l10n.premiumOnly})",
+                              ),
+                      ),
+                      const Divider(height: 40),
+                    ],
                   );
                 },
                 loading: () => const CircularProgressIndicator(),
                 error: (_, _) => const SizedBox(),
               ),
-              const Divider(height: 40),
 
               // Cloud Sync section - only for dentists
               userProfileAsync.when(

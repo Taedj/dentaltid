@@ -130,6 +130,12 @@ abstract class AppLocalizations {
   /// **'Finance'**
   String get finance;
 
+  /// No description provided for @advanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get advanced;
+
   /// No description provided for @addAppointment.
   ///
   /// In en, this message translates to:

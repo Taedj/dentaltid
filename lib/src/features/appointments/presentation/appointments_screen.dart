@@ -9,6 +9,8 @@ import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:intl/intl.dart';
+import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/user_profile_provider.dart';
 
 enum SortOption { dateTimeAsc, dateTimeDesc, patientId }
 
@@ -38,6 +40,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
     final appointmentService = ref.watch(appointmentServiceProvider);
     final l10n = AppLocalizations.of(context)!;
     final usage = ref.watch(clinicUsageProvider);
+    final userProfile = ref.watch(userProfileProvider).value;
+    final isDentist = userProfile?.role == UserRole.dentist;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -386,61 +390,62 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                                                   appointment.status ==
                                                       AppointmentStatus
                                                           .cancelled) ...[
-                                                IconButton(
-                                                  visualDensity:
-                                                      VisualDensity.compact,
-                                                  icon: const Icon(
-                                                    LucideIcons.trash2,
-                                                    color: Colors.grey,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () async {
-                                                    final confirmed = await showDialog<bool>(
-                                                      context: context,
-                                                      builder: (context) => AlertDialog(
-                                                        title: Text(
-                                                          l10n.deleteAppointment,
-                                                        ),
-                                                        content: Text(
-                                                          l10n.confirmDeleteAppointment,
-                                                        ),
-                                                        actions: [
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  false,
-                                                                ),
-                                                            child: Text(
-                                                              l10n.cancel,
-                                                            ),
+                                                if (isDentist)
+                                                  IconButton(
+                                                    visualDensity:
+                                                        VisualDensity.compact,
+                                                    icon: const Icon(
+                                                      LucideIcons.trash2,
+                                                      color: Colors.grey,
+                                                      size: 20,
+                                                    ),
+                                                    onPressed: () async {
+                                                      final confirmed = await showDialog<bool>(
+                                                        context: context,
+                                                        builder: (context) => AlertDialog(
+                                                          title: Text(
+                                                            l10n.deleteAppointment,
                                                           ),
-                                                          TextButton(
-                                                            onPressed: () =>
-                                                                Navigator.pop(
-                                                                  context,
-                                                                  true,
-                                                                ),
-                                                            child: Text(
-                                                              l10n.delete,
-                                                            ),
+                                                          content: Text(
+                                                            l10n.confirmDeleteAppointment,
                                                           ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                    if (confirmed == true &&
-                                                        appointment.id !=
-                                                            null) {
-                                                      await appointmentService
-                                                          .deleteAppointment(
-                                                            appointment.id!,
-                                                          );
-                                                      ref.invalidate(
-                                                        appointmentsProvider,
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    context,
+                                                                    false,
+                                                                  ),
+                                                              child: Text(
+                                                                l10n.cancel,
+                                                              ),
+                                                            ),
+                                                            TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.pop(
+                                                                    context,
+                                                                    true,
+                                                                  ),
+                                                              child: Text(
+                                                                l10n.delete,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       );
-                                                    }
-                                                  },
-                                                ),
+                                                      if (confirmed == true &&
+                                                          appointment.id !=
+                                                              null) {
+                                                        await appointmentService
+                                                            .deleteAppointment(
+                                                              appointment.id!,
+                                                            );
+                                                        ref.invalidate(
+                                                          appointmentsProvider,
+                                                        );
+                                                      }
+                                                    },
+                                                  ),
                                               ],
                                             ],
                                           ),

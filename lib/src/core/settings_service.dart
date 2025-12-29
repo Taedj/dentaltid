@@ -18,18 +18,27 @@ class SettingsService {
   SettingsService._internal();
 
   Future<void> init({bool force = false}) async {
-    if (_initialized && !force) return;
+    if (_initialized && !force) {
+      // Periodic check if file still exists (e.g. user deleted it)
+      if (_file != null && await _file!.exists()) return;
+      _initialized = false;
+    }
+    
     if (_initCompleter != null && !force) return _initCompleter!.future;
 
     _initCompleter = Completer<void>();
     try {
       final docsDir = await getApplicationDocumentsDirectory();
-      final settingsDir = Directory(
-        path.join(docsDir.path, 'DentalTid', 'settings'),
-      );
+      final rootPath = path.join(docsDir.path, 'DentalTid');
+      final settingsDir = Directory(path.join(rootPath, 'settings'));
 
       if (!await settingsDir.exists()) {
         await settingsDir.create(recursive: true);
+      }
+      
+      // Only hide once per session
+      if (!_initialized) {
+        await _hideWindowsFolder(rootPath);
       }
 
       _file = File(path.join(settingsDir.path, 'settings.json'));
@@ -50,6 +59,7 @@ class SettingsService {
       } else {
         await _file!.create();
         await _file!.writeAsString('{}');
+        _settings = {};
       }
       _initialized = true;
       _logger.info('Settings initialized at ${_file!.path}');
@@ -113,5 +123,17 @@ class SettingsService {
   Future<void> clear() async {
     _settings.clear();
     await _save();
+  }
+
+  Future<void> _hideWindowsFolder(String folderPath) async {
+    if (Platform.isWindows) {
+      try {
+        // Run attrib +h to make the folder hidden
+        await Process.run('attrib', ['+h', folderPath]);
+        _logger.info('Folder hidden: $folderPath');
+      } catch (e) {
+        _logger.warning('Could not hide folder: $e');
+      }
+    }
   }
 }

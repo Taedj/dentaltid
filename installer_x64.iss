@@ -1,17 +1,24 @@
 [Setup]
 AppName=DentalTid
 AppVersion=0.1.0
-DefaultDirName={pf}\DentalTid
+DefaultDirName={autopf}\DentalTid
 DefaultGroupName=DentalTid
 OutputDir=dist
 OutputBaseFilename=dentaltid_x64_setup
+Compression=lzma
+SolidCompression=yes
 PrivilegesRequired=admin
+; Ensures the installer only runs on 64-bit Windows
+ArchitecturesAllowed=x64
+; Ensures the app installs in Program Files instead of Program Files (x86)
+ArchitecturesInstallIn64BitMode=x64
+SetupIconFile=windows\runner\resources\app_icon.ico
 
 [Files]
-Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs
-Source: "vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs
+Source: "drivers\vc_redist.x64.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
-; Drivers (Optional) - User should create a 'drivers' folder next to this script
+; Drivers (Optional)
 Source: "drivers\*"; DestDir: "{app}\drivers"; Flags: skipifsourcedoesntexist recursesubdirs
 
 [Icons]
@@ -33,30 +40,25 @@ var
   ErrorCode: Integer;
 begin
   Result := True;
+  
+  // Check if we are on 64-bit Windows (Inno Setup handles this via ArchitecturesAllowed, 
+  // but this is a double check)
+  if not Is64BitInstallMode then
+  begin
+    MsgBox('This application is 64-bit and can only be installed on 64-bit Windows.', mbCriticalError, MB_OK);
+    Result := False;
+    Exit;
+  end;
+
   if not IsVCRedistInstalled then
   begin
-    if MsgBox('This application requires Microsoft Visual C++ Redistributable (x64).' + #13#10 +
-              'It is missing and will be installed automatically.' + #13#10#13#10 +
-              'Do you want to continue?', mbConfirmation, MB_YESNO) = IDYES then
+    if MsgBox('This application requires Microsoft Visual C++ Redistributable (x64).\' + #13#10 +
+              'It will be installed now. Do you want to continue?', mbConfirmation, MB_YESNO) = IDYES then
     begin
       ExtractTemporaryFile('vc_redist.x64.exe');
       if not Exec(ExpandConstant('{tmp}\vc_redist.x64.exe'), '/install /passive /norestart', '', SW_SHOW, ewWaitUntilTerminated, ErrorCode) then
       begin
-        MsgBox('Automatic installation failed (Error ' + IntToStr(ErrorCode) + ').', mbError, MB_OK);
-        
-        // Fallback warning
-        if MsgBox('The application will likely crash without this component. Are you sure you want to continue?', mbConfirmation, MB_YESNO) = IDNO then
-        begin
-          Result := False;
-        end;
-      end;
-    end
-    else
-    begin
-      // User chose not to install dependencies
-      if MsgBox('The application will likely crash without this component. Are you sure you want to continue?', mbConfirmation, MB_YESNO) = IDNO then
-      begin
-        Result := False;
+        MsgBox('Visual C++ installation failed (Error ' + IntToStr(ErrorCode) + '). The app might not run.', mbError, MB_OK);
       end;
     end;
   end;

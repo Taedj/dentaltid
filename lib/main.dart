@@ -7,6 +7,7 @@ import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/language_provider.dart';
 import 'package:logging/logging.dart';
+import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:dentaltid/firebase_options.dart';
@@ -19,28 +20,53 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Setup logging
-  LogService.instance.init();
-
-  Logger.root.level = Level.ALL;
-  Logger.root.onRecord.listen((record) {
-    // ignore: avoid_print
-    print('${record.level.name}: ${record.time}: ${record.message}');
-  });
+  final logService = LogService.instance;
+  await logService.init();
 
   final log = Logger('Main');
+  
+  // Catch Flutter Errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    log.severe('FLUTTER ERROR: ${details.exception}', details.exception, details.stack);
+  };
+
+  // Catch Platform/Dart Errors
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    log.severe('PLATFORM ERROR: $error', error, stack);
+    return true;
+  };
+
+  Logger.root.level = Level.ALL;
+
   log.info('Application starting...');
 
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     log.info('Initializing native database factory...');
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi; 
+    try {
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      log.info('Native database factory initialized successfully.');
+    } catch (e, s) {
+      log.severe('Failed to initialize native database factory', e, s);
+    }
   }
 
   log.info('Initializing Firebase...');
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    log.info('Firebase initialized successfully.');
+  } catch (e, s) {
+    log.severe('Failed to initialize Firebase', e, s);
+  }
   
   log.info('Initializing Settings...');
-  await SettingsService.instance.init(); 
+  try {
+    await SettingsService.instance.init(); 
+    log.info('Settings initialized successfully.');
+  } catch (e, s) {
+    log.severe('Failed to initialize Settings', e, s);
+  } 
   
   log.info('Ready to runApp...');
   runApp(const ProviderScope(child: MyApp()));

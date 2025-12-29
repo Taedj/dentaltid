@@ -1,4 +1,5 @@
 import 'package:dentaltid/src/core/settings_service.dart';
+import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/settings/presentation/profile_settings_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_overview_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_users_screen.dart';
@@ -23,6 +24,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/features/dashboard/presentation/home_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/appointments_screen.dart';
 import 'package:dentaltid/src/features/appointments/presentation/add_edit_appointment_screen.dart';
+import 'package:dentaltid/src/features/prescriptions/presentation/advanced_screen.dart';
 import 'package:dentaltid/src/shared/widgets/main_layout.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -54,23 +56,42 @@ final router = GoRouter(
       return '/login';
     }
 
-    // --- DEVELOPER REDIRECT ---
+    // --- DEVELOPER & ROLE REDIRECT ---
     if (effectiveLoggedIn) {
       try {
         final settings = SettingsService.instance;
         final roleString = settings.getString('userRole');
+        final location = state.matchedLocation;
 
         if (roleString == 'UserRole.developer') {
           // If developer is active and trying to go to root (dashboard), send to /developer
-          if (state.matchedLocation == '/') {
+          if (location == '/') {
             return '/developer';
           }
-          // Allow access to /developer/* and /settings/* but maybe block others?
-          // For now, soft redirect is enough.
+        } else {
+          // Role-based Access Control (RBAC) for Staff
+          final isDentist = roleString == 'UserRole.dentist';
+          final isAssistant = roleString == 'UserRole.assistant';
+          final isReceptionist = roleString == 'UserRole.receptionist';
+
+          // Block /advanced and /finance for anyone NOT a Dentist
+          if (!isDentist) {
+            if (location.startsWith('/advanced') ||
+                location.startsWith('/finance')) {
+              return '/';
+            }
+          }
+
+          // Block /inventory for RECEPTIONIST only
+          if (isReceptionist) {
+            if (location.startsWith('/inventory')) {
+              return '/';
+            }
+          }
         }
       } catch (_) {}
     }
-    // --------------------------
+    // ----------------------------------------
 
     if (effectiveLoggedIn && isLoggingIn) {
       return '/';
@@ -186,6 +207,10 @@ final router = GoRouter(
         GoRoute(
           path: '/inventory',
           builder: (context, state) => const InventoryScreen(),
+        ),
+        GoRoute(
+          path: '/advanced',
+          builder: (context, state) => const AdvancedScreen(),
         ),
         GoRoute(
           path: '/settings',

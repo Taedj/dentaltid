@@ -24,6 +24,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get finance => 'المالية';
 
   @override
+  String get advanced => 'متقدم';
+
+  @override
   String get addAppointment => 'إضافة موعد';
 
   @override

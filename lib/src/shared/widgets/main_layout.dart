@@ -73,6 +73,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
       return destinations.indexWhere(
         (destination) => (destination.label as Text).data == l10n.finance,
       );
+    } else if (location.startsWith('/advanced')) {
+      return destinations.indexWhere(
+        (destination) => (destination.label as Text).data == l10n.advanced,
+      );
     } else if (location.startsWith('/settings')) {
       return destinations.indexWhere(
         (destination) => (destination.label as Text).data == l10n.settings,
@@ -195,6 +199,13 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
             icon: const Icon(Icons.assessment_outlined),
             selectedIcon: const Icon(Icons.assessment),
             label: Text(l10n.finance),
+          ),
+        );
+        destinations.add(
+          NavigationRailDestination(
+            icon: const Icon(Icons.auto_awesome_outlined),
+            selectedIcon: const Icon(Icons.auto_awesome),
+            label: Text(l10n.advanced),
           ),
         );
       }
@@ -337,6 +348,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         route = '/inventory';
                       } else if (destinationLabel == l10n.finance) {
                         route = '/finance';
+                      } else if (destinationLabel == l10n.advanced) {
+                        route = '/advanced';
                       } else if (destinationLabel == l10n.settings) {
                         if (_currentUserRole != UserRole.dentist) {
                           route = '/staff-settings';
