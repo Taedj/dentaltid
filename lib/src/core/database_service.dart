@@ -7,7 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 23; // Added medicine_presets table
+  static const int _databaseVersion = 27; // Added visitId to prescriptions table
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -19,7 +19,12 @@ class DatabaseService {
     // Check if database was deleted on disk
     if (_database != null) {
       final documentsDir = await getApplicationDocumentsDirectory();
-      final dbPath = join(documentsDir.path, 'DentalTid', 'databases', _databaseName);
+      final dbPath = join(
+        documentsDir.path,
+        'DentalTid',
+        'databases',
+        _databaseName,
+      );
       if (!await File(dbPath).exists()) {
         developer.log('Database file not found on disk, re-initializing...');
         _database = null;
@@ -434,7 +439,9 @@ class DatabaseService {
 
     if (oldVersion < 20) {
       try {
-        await db.execute('ALTER TABLE inventory ADD COLUMN supplierContact TEXT');
+        await db.execute(
+          'ALTER TABLE inventory ADD COLUMN supplierContact TEXT',
+        );
       } catch (e, s) {
         developer.log(
           'Error altering table (supplierContact column): $e',
@@ -470,6 +477,66 @@ class DatabaseService {
           createdAt TEXT
         )
       ''');
+    }
+
+    if (oldVersion < 24) {
+      try {
+        await db.execute('ALTER TABLE xrays ADD COLUMN sourceTag TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (sourceTag column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+    }
+
+    if (oldVersion < 25) {
+      try {
+        await db.execute(
+          "ALTER TABLE patients ADD COLUMN source TEXT DEFAULT 'internal'",
+        );
+        await db.execute('ALTER TABLE patients ADD COLUMN external_id TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (source/external_id columns): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+    }
+
+    if (oldVersion < 26) {
+      try {
+        await db.execute('ALTER TABLE prescriptions ADD COLUMN logoPath TEXT');
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN backgroundImagePath TEXT',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN backgroundOpacity REAL DEFAULT 0.2',
+        );
+        await db.execute('ALTER TABLE prescriptions ADD COLUMN notes TEXT');
+        await db.execute('ALTER TABLE prescriptions ADD COLUMN advice TEXT');
+        await db.execute('ALTER TABLE prescriptions ADD COLUMN qrContent TEXT');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (prescription visual columns): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
+    }
+
+    if (oldVersion < 27) {
+      try {
+        await db.execute('ALTER TABLE prescriptions ADD COLUMN visitId INTEGER');
+      } catch (e, s) {
+        developer.log(
+          'Error altering table (prescription visitId column): $e',
+          error: e,
+          stackTrace: s,
+        );
+      }
     }
   }
 
@@ -511,7 +578,9 @@ class DatabaseService {
         severity TEXT,
         healthAlerts TEXT,
         phoneNumber TEXT,
-        isBlacklisted INTEGER DEFAULT 0
+        isBlacklisted INTEGER DEFAULT 0,
+        source TEXT DEFAULT 'internal',
+        external_id TEXT
       )
       ''');
     await db.execute('''
@@ -640,7 +709,8 @@ class DatabaseService {
           label TEXT,
           capturedAt TEXT,
           notes TEXT,
-          type TEXT DEFAULT 'intraoral'
+          type TEXT DEFAULT 'intraoral',
+          sourceTag TEXT
         )
       ''');
     await db.execute('''
@@ -648,13 +718,20 @@ class DatabaseService {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           dentistId TEXT,
           patientId INTEGER,
+          visitId INTEGER,
           orderNumber INTEGER,
           date TEXT,
           patientName TEXT,
           patientFamilyName TEXT,
           patientAge INTEGER,
           medicines TEXT,
-          templateId TEXT
+          templateId TEXT,
+          logoPath TEXT,
+          backgroundImagePath TEXT,
+          backgroundOpacity REAL DEFAULT 0.2,
+          notes TEXT,
+          advice TEXT,
+          qrContent TEXT
         )
       ''');
     await db.execute('''

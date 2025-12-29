@@ -4,10 +4,14 @@ import '../data/medicine_preset_repository.dart';
 import '../domain/medicine_preset.dart';
 
 final medicinePresetServiceProvider = Provider<MedicinePresetService>((ref) {
-  return MedicinePresetService(MedicinePresetRepository(DatabaseService.instance));
+  return MedicinePresetService(
+    MedicinePresetRepository(DatabaseService.instance),
+  );
 });
 
-final medicinePresetsProvider = FutureProvider<List<MedicinePreset>>((ref) async {
+final medicinePresetsProvider = FutureProvider<List<MedicinePreset>>((
+  ref,
+) async {
   final service = ref.watch(medicinePresetServiceProvider);
   return await service.getAllPresets();
 });

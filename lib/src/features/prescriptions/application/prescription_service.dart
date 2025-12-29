@@ -9,16 +9,14 @@ final prescriptionRepositoryProvider = Provider<PrescriptionRepository>((ref) {
 });
 
 final prescriptionServiceProvider = Provider<PrescriptionService>((ref) {
-  return PrescriptionService(
-    ref,
-    ref.watch(prescriptionRepositoryProvider),
-  );
+  return PrescriptionService(ref, ref.watch(prescriptionRepositoryProvider));
 });
 
-final patientPrescriptionsProvider = FutureProvider.family<List<Prescription>, int>((ref, patientId) async {
-  final service = ref.read(prescriptionServiceProvider);
-  return service.getPrescriptionsByPatient(patientId);
-});
+final patientPrescriptionsProvider =
+    FutureProvider.family<List<Prescription>, int>((ref, patientId) async {
+      final service = ref.read(prescriptionServiceProvider);
+      return service.getPrescriptionsByPatient(patientId);
+    });
 
 class PrescriptionService {
   final PrescriptionRepository _repository;
@@ -29,7 +27,9 @@ class PrescriptionService {
 
   Future<Prescription> createPrescription(Prescription prescription) async {
     // 1. Get the last order number for this dentist
-    final lastNumber = await _repository.getLastOrderNumber(prescription.dentistId);
+    final lastNumber = await _repository.getLastOrderNumber(
+      prescription.dentistId,
+    );
     final nextNumber = lastNumber + 1;
 
     // 2. Create the prescription with the next number
@@ -40,6 +40,14 @@ class PrescriptionService {
     // This is handled by the repository being the source of truth for the local DB.
 
     return created;
+  }
+
+  Future<void> updatePrescription(Prescription prescription) async {
+    await _repository.updatePrescription(prescription);
+  }
+
+  Future<Prescription?> getPrescriptionByVisit(int visitId) async {
+    return await _repository.getPrescriptionByVisit(visitId);
   }
 
   Future<List<Prescription>> getPrescriptionsByPatient(int patientId) async {

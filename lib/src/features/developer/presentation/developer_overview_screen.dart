@@ -3,7 +3,6 @@ import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
-
 class DeveloperOverviewScreen extends StatelessWidget {
   const DeveloperOverviewScreen({super.key});
 
@@ -14,9 +13,7 @@ class DeveloperOverviewScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.developerOverview),
-      ),
+      appBar: AppBar(title: Text(l10n.developerOverview)),
       body: StreamBuilder<List<UserProfile>>(
         stream: developerService.getAllUsers(),
         builder: (context, snapshot) {

@@ -21,13 +21,14 @@ class PrescriptionMedicine {
     'time': time,
   };
 
-  factory PrescriptionMedicine.fromJson(Map<String, dynamic> json) => PrescriptionMedicine(
-    medicineName: json['medicineName'],
-    quantity: json['quantity'],
-    frequency: json['frequency'],
-    route: json['route'],
-    time: json['time'],
-  );
+  factory PrescriptionMedicine.fromJson(Map<String, dynamic> json) =>
+      PrescriptionMedicine(
+        medicineName: json['medicineName'],
+        quantity: json['quantity'],
+        frequency: json['frequency'],
+        route: json['route'],
+        time: json['time'],
+      );
 
   PrescriptionMedicine copyWith({
     String? medicineName,

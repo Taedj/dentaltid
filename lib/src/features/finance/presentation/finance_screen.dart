@@ -132,9 +132,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
       final financeService = ref.read(financeServiceProvider);
       await financeService.deleteTransaction(transaction.id!);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.transactionDeletedSuccess)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.transactionDeletedSuccess)));
       }
     }
   }

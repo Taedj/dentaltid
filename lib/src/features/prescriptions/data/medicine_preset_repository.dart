@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:dentaltid/src/core/database_service.dart';
 import '../domain/medicine_preset.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -17,7 +16,10 @@ class MedicinePresetRepository {
 
   Future<List<MedicinePreset>> getAll() async {
     final db = await _db;
-    final List<Map<String, dynamic>> maps = await db.query('medicine_presets', orderBy: 'name ASC');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'medicine_presets',
+      orderBy: 'name ASC',
+    );
     return List.generate(maps.length, (i) {
       return MedicinePreset.fromJson(maps[i]);
     });
@@ -25,7 +27,11 @@ class MedicinePresetRepository {
 
   Future<int> delete(int id) async {
     final db = await _db;
-    return await db.delete('medicine_presets', where: 'id = ?', whereArgs: [id]);
+    return await db.delete(
+      'medicine_presets',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<int> update(MedicinePreset preset) async {

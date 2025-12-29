@@ -3885,6 +3885,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notes: {notes}'**
   String notesLabel(String notes);
+
+  /// No description provided for @nanopixSyncTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NanoPix Sync'**
+  String get nanopixSyncTitle;
+
+  /// No description provided for @nanopixSyncPathLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'NanoPix Data Path'**
+  String get nanopixSyncPathLabel;
+
+  /// No description provided for @nanopixSyncPathNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get nanopixSyncPathNotSet;
+
+  /// No description provided for @nanopixSyncNowButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Now'**
+  String get nanopixSyncNowButton;
+
+  /// No description provided for @nanopixSyncStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync started...'**
+  String get nanopixSyncStarted;
 }
 
 class _AppLocalizationsDelegate

@@ -10,10 +10,12 @@ class PrescriptionHistoryView extends ConsumerStatefulWidget {
   const PrescriptionHistoryView({super.key});
 
   @override
-  ConsumerState<PrescriptionHistoryView> createState() => _PrescriptionHistoryViewState();
+  ConsumerState<PrescriptionHistoryView> createState() =>
+      _PrescriptionHistoryViewState();
 }
 
-class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryView> {
+class _PrescriptionHistoryViewState
+    extends ConsumerState<PrescriptionHistoryView> {
   String _searchQuery = '';
 
   @override
@@ -23,16 +25,14 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Since we don't have a dentist-wide prescription history provider yet, 
+    // Since we don't have a dentist-wide prescription history provider yet,
     // we can use a FutureBuilder or define a new provider.
     // Let's use a FutureProvider for cleaner code (defined in service usually).
-    
+
     return Column(
       children: [
         _buildHeader(context),
-        Expanded(
-          child: _buildPrescriptionList(userProfile.uid),
-        ),
+        Expanded(child: _buildPrescriptionList(userProfile.uid)),
       ],
     );
   }
@@ -59,7 +59,9 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
 
   Widget _buildPrescriptionList(String dentistId) {
     // We'll define a quick future for this view
-    final prescriptionsFuture = ref.read(prescriptionServiceProvider).getPrescriptionsByDentist(dentistId);
+    final prescriptionsFuture = ref
+        .read(prescriptionServiceProvider)
+        .getPrescriptionsByDentist(dentistId);
 
     return FutureBuilder<List<Prescription>>(
       future: prescriptionsFuture,
@@ -75,8 +77,8 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
         final filtered = prescriptions.where((p) {
           final query = _searchQuery.toLowerCase();
           return p.patientName.toLowerCase().contains(query) ||
-                 p.patientFamilyName.toLowerCase().contains(query) ||
-                 p.orderNumber.toString().contains(query);
+              p.patientFamilyName.toLowerCase().contains(query) ||
+              p.orderNumber.toString().contains(query);
         }).toList();
 
         if (filtered.isEmpty) {
@@ -102,7 +104,7 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
                 ),
               ),
             );
-          }
+          },
         );
       },
     );
@@ -133,7 +135,11 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
                   // Edit logic would typically open the editor
                   // For now, let's notify the user
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit feature coming soon (navigating to editor)...')),
+                    const SnackBar(
+                      content: Text(
+                        'Edit feature coming soon (navigating to editor)...',
+                      ),
+                    ),
                   );
                 },
               ),
@@ -163,10 +169,7 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
               AppBar(
                 title: Text('Prescription #${p.orderNumber} Preview'),
                 actions: [
-                  IconButton(
-                    icon: const Icon(Icons.print),
-                    onPressed: () {},
-                  ),
+                  IconButton(icon: const Icon(Icons.print), onPressed: () {}),
                 ],
               ),
               Expanded(
@@ -199,9 +202,14 @@ class _PrescriptionHistoryViewState extends ConsumerState<PrescriptionHistoryVie
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Prescription'),
-        content: Text('Are you sure you want to delete prescription #${p.orderNumber} for ${p.patientName}?'),
+        content: Text(
+          'Are you sure you want to delete prescription #${p.orderNumber} for ${p.patientName}?',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),

@@ -2037,4 +2037,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String notesLabel(String notes) {
     return 'Notes : $notes';
   }
+
+  @override
+  String get nanopixSyncTitle => 'Synchro NanoPix';
+
+  @override
+  String get nanopixSyncPathLabel => 'Chemin des données NanoPix';
+
+  @override
+  String get nanopixSyncPathNotSet => 'Non défini';
+
+  @override
+  String get nanopixSyncNowButton => 'Synchroniser maintenant';
+
+  @override
+  String get nanopixSyncStarted => 'Synchronisation démarrée...';
 }

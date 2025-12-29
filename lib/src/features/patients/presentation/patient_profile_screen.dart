@@ -27,7 +27,6 @@ class PatientProfileScreen extends ConsumerWidget {
     final userProfile = ref.watch(userProfileProvider).value;
     final isDentist = userProfile?.role == UserRole.dentist;
 
-
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -49,9 +48,7 @@ class PatientProfileScreen extends ConsumerWidget {
                     context: context,
                     builder: (context) => AlertDialog(
                       title: Text(l10n.deletePatient),
-                      content: Text(
-                        l10n.confirmDeletePatient,
-                      ),
+                      content: Text(l10n.confirmDeletePatient),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(false),
@@ -196,7 +193,11 @@ class VisitsListWidget extends ConsumerWidget {
 }
 
 class VisitCard extends ConsumerStatefulWidget {
-  const VisitCard({super.key, required this.appointment, required this.patient});
+  const VisitCard({
+    super.key,
+    required this.appointment,
+    required this.patient,
+  });
 
   final Appointment appointment;
   final Patient patient;
@@ -646,17 +647,20 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 if (userProfile != null) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) => PrescriptionEditorScreen(
-                                        patient: widget.patient,
-                                        userProfile: userProfile,
-                                      ),
+                                      builder: (context) =>
+                                          PrescriptionEditorScreen(
+                                            patient: widget.patient,
+                                            userProfile: userProfile,
+                                            visitId: widget.appointment.id,
+                                          ),
                                     ),
                                   );
                                 }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: colorScheme.secondaryContainer,
-                                foregroundColor: colorScheme.onSecondaryContainer,
+                                foregroundColor:
+                                    colorScheme.onSecondaryContainer,
                               ),
                               child: const Text('Prescription'),
                             ),

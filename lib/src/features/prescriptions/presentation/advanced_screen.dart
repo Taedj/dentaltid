@@ -1,6 +1,6 @@
 import 'package:dentaltid/src/features/prescriptions/presentation/prescription_history_view.dart';
 import 'package:dentaltid/src/features/prescriptions/application/medicine_preset_service.dart';
-import 'package:dentaltid/src/features/prescriptions/domain/medicine_preset.dart';
+import 'package:dentaltid/src/features/prescriptions/presentation/widgets/edit_medicine_preset_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
@@ -12,7 +12,8 @@ class AdvancedScreen extends StatefulWidget {
   State<AdvancedScreen> createState() => _AdvancedScreenState();
 }
 
-class _AdvancedScreenState extends State<AdvancedScreen> with SingleTickerProviderStateMixin {
+class _AdvancedScreenState extends State<AdvancedScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -38,14 +39,8 @@ class _AdvancedScreenState extends State<AdvancedScreen> with SingleTickerProvid
           controller: _tabController,
           isScrollable: true,
           tabs: const [
-            Tab(
-              icon: Icon(Icons.description_outlined),
-              text: 'Prescriptions',
-            ),
-            Tab(
-              icon: Icon(Icons.bookmark_outline),
-              text: 'Medicine Presets',
-            ),
+            Tab(icon: Icon(Icons.description_outlined), text: 'Prescriptions'),
+            Tab(icon: Icon(Icons.bookmark_outline), text: 'Medicine Presets'),
           ],
         ),
       ),
@@ -70,9 +65,7 @@ class MedicinePresetsManagementView extends ConsumerWidget {
     return presetsAsync.when(
       data: (presets) {
         if (presets.isEmpty) {
-          return const Center(
-            child: Text('No presets saved yet.'),
-          );
+          return const Center(child: Text('No presets saved yet.'));
         }
         return ListView.builder(
           itemCount: presets.length,
@@ -81,37 +74,60 @@ class MedicinePresetsManagementView extends ConsumerWidget {
             return Card(
               margin: const EdgeInsets.all(8.0),
               child: ExpansionTile(
-                title: Text(preset.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(
+                  preset.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Text('${preset.medicines.length} medicines'),
-                trailing: IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Preset'),
-                        content: Text('Are you sure you want to delete "${preset.name}"?'),
-                        actions: [
-                          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                          ElevatedButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                            child: const Text('Delete'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit_note, color: Colors.blue),
+                      onPressed: () => showEditMedicinePresetDialog(context, preset),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Preset'),
+                            content: Text(
+                              'Are you sure you want to delete "${preset.name}"?',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                ),
+                                child: const Text('Delete'),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await ref.read(medicinePresetServiceProvider).deletePreset(preset.id!);
-                      ref.invalidate(medicinePresetsProvider);
-                    }
-                  },
+                        );
+                        if (confirm == true) {
+                          await ref
+                              .read(medicinePresetServiceProvider)
+                              .deletePreset(preset.id!);
+                          ref.invalidate(medicinePresetsProvider);
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 children: [
-                  ...preset.medicines.map((m) => ListTile(
-                    title: Text('${m.medicineName} (${m.quantity})'),
-                    subtitle: Text('${m.frequency} - ${m.route} - ${m.time}'),
-                  )),
+                  ...preset.medicines.map(
+                    (m) => ListTile(
+                      title: Text('${m.medicineName} (${m.quantity})'),
+                      subtitle: Text('${m.frequency} - ${m.route} - ${m.time}'),
+                    ),
+                  ),
                 ],
               ),
             );

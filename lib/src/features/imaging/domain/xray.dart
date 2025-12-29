@@ -1,11 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum XrayType {
-  intraoral,
-  panoramic,
-  cephalometric,
-  other
-}
+enum XrayType { intraoral, panoramic, cephalometric, other }
 
 class Xray extends Equatable {
   final int? id;
@@ -16,6 +11,8 @@ class Xray extends Equatable {
   final DateTime capturedAt;
   final String? notes;
   final XrayType type;
+  final String?
+  sourceTag; // Unique identifier for the source image to prevent re-imports
 
   const Xray({
     this.id,
@@ -26,6 +23,7 @@ class Xray extends Equatable {
     required this.capturedAt,
     this.notes,
     this.type = XrayType.intraoral,
+    this.sourceTag,
   });
 
   Xray copyWith({
@@ -37,6 +35,7 @@ class Xray extends Equatable {
     DateTime? capturedAt,
     String? notes,
     XrayType? type,
+    String? sourceTag,
   }) {
     return Xray(
       id: id ?? this.id,
@@ -47,6 +46,7 @@ class Xray extends Equatable {
       capturedAt: capturedAt ?? this.capturedAt,
       notes: notes ?? this.notes,
       type: type ?? this.type,
+      sourceTag: sourceTag ?? this.sourceTag,
     );
   }
 
@@ -60,6 +60,7 @@ class Xray extends Equatable {
       'capturedAt': capturedAt.toIso8601String(),
       'notes': notes,
       'type': type.name,
+      'sourceTag': sourceTag,
     };
   }
 
@@ -73,18 +74,20 @@ class Xray extends Equatable {
       capturedAt: DateTime.parse(map['capturedAt'] as String),
       notes: map['notes'] as String?,
       type: XrayType.values.byName(map['type'] as String? ?? 'intraoral'),
+      sourceTag: map['sourceTag'] as String?,
     );
   }
 
   @override
   List<Object?> get props => [
-        id,
-        patientId,
-        visitId,
-        filePath,
-        label,
-        capturedAt,
-        notes,
-        type,
-      ];
+    id,
+    patientId,
+    visitId,
+    filePath,
+    label,
+    capturedAt,
+    notes,
+    type,
+    sourceTag,
+  ];
 }

@@ -17,6 +17,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/src/features/imaging/application/nanopix_sync_service.dart';
 
 // Helper for PatientFilter localization
 String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
@@ -31,6 +32,10 @@ String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
       return l10n.filterThisMonth;
     case PatientFilter.emergency:
       return l10n.filterEmergency;
+    case PatientFilter.todayByExternal:
+      return 'Today By NanoPix'; // Temporary string until ARB is updated
+    case PatientFilter.allByExternal:
+      return 'All By NanoPix';
   }
 }
 
@@ -128,7 +133,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
-                  hintText: '${l10n.name}, ${l10n.familyName} ${l10n.searchHintSeparator}',
+                  hintText:
+                      '${l10n.name}, ${l10n.familyName} ${l10n.searchHintSeparator}',
                   border: InputBorder.none,
                   hintStyle: TextStyle(
                     color: Theme.of(
@@ -340,12 +346,19 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                             rows: patients.asMap().entries.map((entry) {
                               final index = entry.key;
                               final patient = entry.value;
+                              final isNanoPix = patient.source == 'nanopix';
                               final config = PatientListConfig(
                                 filter: _selectedFilter,
                                 query: _searchController.text,
                               );
 
                               return DataRow(
+                                color: WidgetStateProperty.resolveWith((states) {
+                                  if (isNanoPix) {
+                                    return Colors.purple.withValues(alpha: 0.08);
+                                  }
+                                  return null; // Use default
+                                }),
                                 cells: <DataCell>[
                                   DataCell(Text((index + 1).toString())),
                                   DataCell(
@@ -442,6 +455,18 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                             extra: patient,
                                           ),
                                         ),
+                                        if (isNanoPix)
+                                          Tooltip(
+                                            message: 'Imported from NanoPix',
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                              child: Icon(
+                                                LucideIcons.fileText,
+                                                size: 16,
+                                                color: Colors.purple.shade300,
+                                              ),
+                                            ),
+                                          ),
                                         if (isDentist)
                                           IconButton(
                                             icon: const Icon(
@@ -450,17 +475,67 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                               color: Colors.red,
                                             ),
                                             onPressed: () async {
+                                              final localContext = context;
                                               final confirmed =
                                                   await showDeleteConfirmationDialog(
-                                                    context: context,
+                                                    context: localContext,
                                                     title: l10n.deletePatient,
-                                                    content:
-                                                        l10n.confirmDeletePatient,
+                                                    content: l10n
+                                                        .confirmDeletePatient,
                                                   );
+                                              if (!localContext.mounted) return;
                                               if (confirmed == true &&
                                                   patient.id != null) {
+                                                // Ask if delete from NanoPix too
+                                                if (patient.externalId !=
+                                                    null) {
+                                                  if (!localContext.mounted) return;
+                                                  final deleteNanoPix =
+                                                      await showDialog<bool>(
+                                                    context: localContext,
+                                                    builder: (ctx) =>
+                                                        AlertDialog(
+                                                      title: const Text(
+                                                          'Delete from NanoPix?'),
+                                                      content: const Text(
+                                                          'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  ctx, false),
+                                                          child: const Text(
+                                                              'Keep in NanoPix'),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.pop(
+                                                                  ctx, true),
+                                                          child: const Text(
+                                                            'Delete Both',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.red),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+
+                                                  if (!localContext.mounted) return;
+                                                  if (deleteNanoPix == true) {
+                                                    await ref
+                                                        .read(
+                                                            nanoPixSyncServiceProvider)
+                                                        .deletePatientFromNanoPix(
+                                                            patient.externalId!);
+                                                  }
+                                                }
+
+                                                if (!localContext.mounted) return;
                                                 await patientService
                                                     .deletePatient(patient.id!);
+                                                if (!localContext.mounted) return;
                                                 ref.invalidate(
                                                   patientsProvider(config),
                                                 );
@@ -502,10 +577,13 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     PatientService patientService,
     bool isDentist,
   ) {
+    final isNanoPix = patient.source == 'nanopix';
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
+        color: isNanoPix
+            ? Colors.purple.withValues(alpha: 0.08)
+            : Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -518,18 +596,32 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       child: ExpansionTile(
         shape: Border.all(color: Colors.transparent),
         leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+          backgroundColor: isNanoPix
+              ? Colors.purple.withValues(alpha: 0.2)
+              : AppColors.primary.withValues(alpha: 0.2),
           child: Text(
             patient.name.isNotEmpty ? patient.name[0].toUpperCase() : 'P',
-            style: const TextStyle(
-              color: AppColors.primary,
+            style: TextStyle(
+              color: isNanoPix ? Colors.purple : AppColors.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
         ),
-        title: Text(
-          '${patient.name} ${patient.familyName}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${patient.name} ${patient.familyName}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            if (isNanoPix)
+              Icon(
+                LucideIcons.info,
+                size: 14,
+                color: Colors.purple.shade300,
+              ),
+          ],
         ),
         subtitle: Text('${l10n.age} ${patient.age} • ${patient.phoneNumber}'),
         trailing: _buildFinancialStatus(patient.totalDue, compact: true),
@@ -570,13 +662,52 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                           color: Colors.red,
                         ),
                         onPressed: () async {
+                          final localContext = context;
                           final confirmed = await showDeleteConfirmationDialog(
-                            context: context,
+                            context: localContext,
                             title: l10n.deletePatient,
                             content: l10n.confirmDeletePatient,
                           );
+                          if (!localContext.mounted) return;
                           if (confirmed == true && patient.id != null) {
+                            // Ask if delete from NanoPix too
+                            if (patient.externalId != null) {
+                              if (!localContext.mounted) return;
+                              final deleteNanoPix = await showDialog<bool>(
+                                context: localContext,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete from NanoPix?'),
+                                  content: const Text(
+                                      'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(ctx, false),
+                                      child: const Text('Keep in NanoPix'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text(
+                                        'Delete Both',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (!localContext.mounted) return;
+                              if (deleteNanoPix == true) {
+                                await ref
+                                    .read(nanoPixSyncServiceProvider)
+                                    .deletePatientFromNanoPix(
+                                        patient.externalId!);
+                              }
+                            }
+
+                            if (!localContext.mounted) return;
                             await patientService.deletePatient(patient.id!);
+                            if (!localContext.mounted) return;
                             ref.invalidate(
                               patientsProvider(
                                 PatientListConfig(

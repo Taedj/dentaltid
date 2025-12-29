@@ -2011,4 +2011,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String notesLabel(String notes) {
     return 'الملاحظات: $notes';
   }
+
+  @override
+  String get nanopixSyncTitle => 'مزامنة NanoPix';
+
+  @override
+  String get nanopixSyncPathLabel => 'مسار بيانات NanoPix';
+
+  @override
+  String get nanopixSyncPathNotSet => 'غير محدد';
+
+  @override
+  String get nanopixSyncNowButton => 'مزامنة الآن';
+
+  @override
+  String get nanopixSyncStarted => 'بدأت المزامنة...';
 }

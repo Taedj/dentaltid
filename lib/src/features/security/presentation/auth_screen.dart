@@ -61,7 +61,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _isLoading = false;
   bool _acceptTerms = false;
 
-
   bool _rememberMe = false;
   List<String> _savedEmails = [];
 
@@ -170,7 +169,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       return;
     }
 
-    log.info('Starting ${_authMode == AuthMode.login ? 'login' : 'registration'} process for ${_emailController.text}...');
+    log.info(
+      'Starting ${_authMode == AuthMode.login ? 'login' : 'registration'} process for ${_emailController.text}...',
+    );
     setState(() => _isLoading = true);
 
     try {
@@ -401,7 +402,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context)!.invalidStaffCredentials),
+              content: Text(
+                AppLocalizations.of(context)!.invalidStaffCredentials,
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -621,11 +624,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         );
       }
       // Backdoor for testing: Ctrl + Shift + L
-      if (kDebugMode && 
+      if (kDebugMode &&
           HardwareKeyboard.instance.isControlPressed &&
           HardwareKeyboard.instance.isShiftPressed &&
           event.logicalKey == LogicalKeyboardKey.keyL) {
-            _bypassAuth();
+        _bypassAuth();
       }
     }
   }
@@ -658,9 +661,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       jsonEncode(mockProfile.toJson()),
     );
     await SettingsService.instance.setBool('remember_me', true);
-    
+
     // Refresh provider if needed (but reload might catch it)
-    await ref.refresh(userProfileProvider.future).catchError((_) => mockProfile);
+    await ref
+        .refresh(userProfileProvider.future)
+        .catchError((_) => mockProfile);
 
     if (mounted) context.go('/');
   }
@@ -722,12 +727,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             Expanded(
                               flex: 5,
                               child: Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    40,
-                                    125, // Increased to clear branding
-                                    40,
-                                    25,  // Slightly reduced bottom padding
-                                  ),
+                                padding: const EdgeInsets.fromLTRB(
+                                  40,
+                                  125, // Increased to clear branding
+                                  40,
+                                  25, // Slightly reduced bottom padding
+                                ),
                                 child: Form(
                                   key: _formKey,
                                   child: Column(
@@ -785,9 +790,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       // Sign In Button
                                       _buildActionButton(colorScheme),
 
-                                    const SizedBox(
-                                      height: 8,
-                                    ), // Tightened gap
+                                      const SizedBox(
+                                        height: 8,
+                                      ), // Tightened gap
                                       // Remember Me & Forgot Password
                                       Row(
                                         mainAxisAlignment:
@@ -803,7 +808,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                                   ? null
                                                   : _resetPassword,
                                               child: Text(
-                                                AppLocalizations.of(context)!.forgotPassword,
+                                                AppLocalizations.of(
+                                                  context,
+                                                )!.forgotPassword,
                                                 style: GoogleFonts.poppins(
                                                   color: const Color(
                                                     0xFFA78BFA,
@@ -871,12 +878,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   ),
                                 ],
                               ),
-                                child: Image.asset(
-                                  'assets/images/DT!d.png',
-                                  width: 120, // Reduced from 140
-                                  height: 120, // Reduced from 140
-                                  fit: BoxFit.contain,
-                                ),
+                              child: Image.asset(
+                                'assets/images/DT!d.png',
+                                width: 120, // Reduced from 140
+                                height: 120, // Reduced from 140
+                                fit: BoxFit.contain,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Padding(
@@ -974,7 +981,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 child: ElevatedButton(
                   onPressed: _bypassAuth,
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text("DEBUG LOGIN", style: TextStyle(color: Colors.white)),
+                  child: const Text(
+                    "DEBUG LOGIN",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
           ],
@@ -1040,68 +1050,80 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               return _savedEmails;
             }
             return _savedEmails.where((String option) {
-              return option
-                  .toLowerCase()
-                  .contains(textEditingValue.text.toLowerCase());
+              return option.toLowerCase().contains(
+                textEditingValue.text.toLowerCase(),
+              );
             }).toList();
           },
-          fieldViewBuilder: (
-            BuildContext context,
-            TextEditingController textEditingController,
-            FocusNode fieldFocusNode,
-            VoidCallback onFieldSubmitted,
-          ) {
-            return _buildTextField(
-              controller: textEditingController,
-              label: l10n.emailAddress,
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              focusNode: fieldFocusNode,
-            );
-          },
-          optionsViewBuilder: (
-            BuildContext context,
-            AutocompleteOnSelected<String> onSelected,
-            Iterable<String> options,
-          ) {
-            return Align(
-              alignment: Alignment.topLeft,
-              child: Material(
-                elevation: 4.0,
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(12),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200, maxWidth: 300),
-                  child: ListView.builder(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: options.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final String option = options.elementAt(index);
-                      return ListTile(
-                        title: Text(
-                          option,
-                          style: GoogleFonts.poppins(color: Colors.white),
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline, color: Colors.redAccent, size: 20),
-                          onPressed: () async {
-                            setState(() {
-                              _savedEmails.remove(option);
-                            });
-                             await SettingsService.instance.setStringList('saved_emails', _savedEmails);
-                          },
-                        ),
-                        onTap: () {
-                          onSelected(option);
+          fieldViewBuilder:
+              (
+                BuildContext context,
+                TextEditingController textEditingController,
+                FocusNode fieldFocusNode,
+                VoidCallback onFieldSubmitted,
+              ) {
+                return _buildTextField(
+                  controller: textEditingController,
+                  label: l10n.emailAddress,
+                  icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  focusNode: fieldFocusNode,
+                );
+              },
+          optionsViewBuilder:
+              (
+                BuildContext context,
+                AutocompleteOnSelected<String> onSelected,
+                Iterable<String> options,
+              ) {
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        maxHeight: 200,
+                        maxWidth: 300,
+                      ),
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: options.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final String option = options.elementAt(index);
+                          return ListTile(
+                            title: Text(
+                              option,
+                              style: GoogleFonts.poppins(color: Colors.white),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(
+                                Icons.remove_circle_outline,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                              onPressed: () async {
+                                setState(() {
+                                  _savedEmails.remove(option);
+                                });
+                                await SettingsService.instance.setStringList(
+                                  'saved_emails',
+                                  _savedEmails,
+                                );
+                              },
+                            ),
+                            onTap: () {
+                              onSelected(option);
+                            },
+                          );
                         },
-                      );
-                    },
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            );
-          },
+                );
+              },
         ),
         const SizedBox(height: 12), // Reduced from 16
         _buildTextField(
@@ -1305,8 +1327,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             : Text(
                 _userType == UserType.dentist
                     ? (_authMode == AuthMode.login
-                        ? AppLocalizations.of(context)!.signIn
-                        : AppLocalizations.of(context)!.register)
+                          ? AppLocalizations.of(context)!.signIn
+                          : AppLocalizations.of(context)!.register)
                     : AppLocalizations.of(context)!.loginLabel,
                 style: GoogleFonts.poppins(
                   fontSize: 15,

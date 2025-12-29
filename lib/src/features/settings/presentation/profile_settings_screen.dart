@@ -132,7 +132,9 @@ class _ProfileSettingsScreenState extends ConsumerState<ProfileSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context)!.profileUpdateError(e.toString())),
+            content: Text(
+              AppLocalizations.of(context)!.profileUpdateError(e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );

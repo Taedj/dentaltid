@@ -49,17 +49,21 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
           Navigator.of(context).pop(); // Close dialog
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                AppLocalizations.of(context)!.activationSuccess,
-              ),
+              content: Text(AppLocalizations.of(context)!.activationSuccess),
             ),
           );
         }
       } else {
-        setState(() => _error = AppLocalizations.of(context)!.invalidActivationCode);
+        setState(
+          () => _error = AppLocalizations.of(context)!.invalidActivationCode,
+        );
       }
     } catch (e) {
-      setState(() => _error = AppLocalizations.of(context)!.activationError(e.toString()));
+      setState(
+        () => _error = AppLocalizations.of(
+          context,
+        )!.activationError(e.toString()),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -146,7 +150,10 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
             },
             child: Text(AppLocalizations.of(context)!.cancel),
           ),
-          ElevatedButton(onPressed: _activate, child: Text(AppLocalizations.of(context)!.activatePremium)),
+          ElevatedButton(
+            onPressed: _activate,
+            child: Text(AppLocalizations.of(context)!.activatePremium),
+          ),
         ],
       ],
     );

@@ -23,7 +23,7 @@ class SettingsService {
       if (_file != null && await _file!.exists()) return;
       _initialized = false;
     }
-    
+
     if (_initCompleter != null && !force) return _initCompleter!.future;
 
     _initCompleter = Completer<void>();
@@ -35,7 +35,7 @@ class SettingsService {
       if (!await settingsDir.exists()) {
         await settingsDir.create(recursive: true);
       }
-      
+
       // Only hide once per session
       if (!_initialized) {
         await _hideWindowsFolder(rootPath);

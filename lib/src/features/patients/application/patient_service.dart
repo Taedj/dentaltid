@@ -10,6 +10,7 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
+import 'package:dentaltid/src/features/imaging/application/nanopix_sync_service.dart';
 
 import 'package:equatable/equatable.dart';
 
@@ -145,6 +146,9 @@ class PatientService {
 
       notifyDataChanged();
       _broadcastChange(SyncAction.create, newPatient);
+
+      // Trigger NanoPix export if live sync is on
+      _ref.read(nanoPixSyncServiceProvider).exportPatientToNanoPix(newPatient);
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException || e is DuplicateEntryException) rethrow;
@@ -224,6 +228,9 @@ class PatientService {
 
       notifyDataChanged();
       _broadcastChange(SyncAction.update, patient);
+
+      // Trigger NanoPix export if live sync is on
+      _ref.read(nanoPixSyncServiceProvider).exportPatientToNanoPix(patient);
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) rethrow;

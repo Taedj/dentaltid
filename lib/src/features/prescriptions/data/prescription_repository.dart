@@ -10,21 +10,92 @@ class PrescriptionRepository {
 
   Future<Prescription> createPrescription(Prescription prescription) async {
     final db = await _dbService.database;
-    final id = await db.insert(
+    final id = await db.insert('prescriptions', {
+      'dentistId': prescription.dentistId,
+      'patientId': prescription.patientId,
+      'visitId': prescription.visitId,
+      'orderNumber': prescription.orderNumber,
+      'date': prescription.date.toIso8601String(),
+      'patientName': prescription.patientName,
+      'patientFamilyName': prescription.patientFamilyName,
+      'patientAge': prescription.patientAge,
+      'medicines': jsonEncode(
+        prescription.medicines.map((m) => m.toJson()).toList(),
+      ),
+      'templateId': prescription.templateId,
+      'logoPath': prescription.logoPath,
+      'backgroundImagePath': prescription.backgroundImagePath,
+      'backgroundOpacity': prescription.backgroundOpacity,
+      'notes': prescription.notes,
+      'advice': prescription.advice,
+      'qrContent': prescription.qrContent,
+    });
+    return prescription.copyWith(id: id);
+  }
+
+  Future<void> updatePrescription(Prescription prescription) async {
+    final db = await _dbService.database;
+    await db.update(
       'prescriptions',
       {
         'dentistId': prescription.dentistId,
         'patientId': prescription.patientId,
+        'visitId': prescription.visitId,
         'orderNumber': prescription.orderNumber,
         'date': prescription.date.toIso8601String(),
         'patientName': prescription.patientName,
         'patientFamilyName': prescription.patientFamilyName,
         'patientAge': prescription.patientAge,
-        'medicines': jsonEncode(prescription.medicines.map((m) => m.toJson()).toList()),
+        'medicines': jsonEncode(
+          prescription.medicines.map((m) => m.toJson()).toList(),
+        ),
         'templateId': prescription.templateId,
+        'logoPath': prescription.logoPath,
+        'backgroundImagePath': prescription.backgroundImagePath,
+        'backgroundOpacity': prescription.backgroundOpacity,
+        'notes': prescription.notes,
+        'advice': prescription.advice,
+        'qrContent': prescription.qrContent,
       },
+      where: 'id = ?',
+      whereArgs: [prescription.id],
     );
-    return prescription.copyWith(id: id);
+  }
+
+  Future<Prescription?> getPrescriptionByVisit(int visitId) async {
+    final db = await _dbService.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'prescriptions',
+      where: 'visitId = ?',
+      whereArgs: [visitId],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) return null;
+    final map = maps.first;
+    return Prescription(
+      id: map['id'] as int,
+      dentistId: map['dentistId'] as String,
+      patientId: map['patientId'] as int,
+      visitId: map['visitId'] as int?,
+      orderNumber: map['orderNumber'] as int,
+      date: DateTime.parse(map['date'] as String),
+      patientName: map['patientName'] as String,
+      patientFamilyName: map['patientFamilyName'] as String,
+      patientAge: map['patientAge'] as int,
+      medicines: (jsonDecode(map['medicines'] as String) as List)
+          .map(
+            (m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>),
+          )
+          .toList(),
+      templateId: map['templateId'] as String,
+      logoPath: map['logoPath'] as String?,
+      backgroundImagePath: map['backgroundImagePath'] as String?,
+      backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+      notes: map['notes'] as String?,
+      advice: map['advice'] as String?,
+      qrContent: map['qrContent'] as String?,
+    );
   }
 
   Future<List<Prescription>> getPrescriptionsByDentist(String dentistId) async {
@@ -37,19 +108,29 @@ class PrescriptionRepository {
     );
 
     return List.generate(maps.length, (i) {
+      final map = maps[i];
       return Prescription(
-        id: maps[i]['id'] as int,
-        dentistId: maps[i]['dentistId'] as String,
-        patientId: maps[i]['patientId'] as int,
-        orderNumber: maps[i]['orderNumber'] as int,
-        date: DateTime.parse(maps[i]['date'] as String),
-        patientName: maps[i]['patientName'] as String,
-        patientFamilyName: maps[i]['patientFamilyName'] as String,
-        patientAge: maps[i]['patientAge'] as int,
-        medicines: (jsonDecode(maps[i]['medicines'] as String) as List)
-            .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
+        id: map['id'] as int,
+        dentistId: map['dentistId'] as String,
+        patientId: map['patientId'] as int,
+        visitId: map['visitId'] as int?,
+        orderNumber: map['orderNumber'] as int,
+        date: DateTime.parse(map['date'] as String),
+        patientName: map['patientName'] as String,
+        patientFamilyName: map['patientFamilyName'] as String,
+        patientAge: map['patientAge'] as int,
+        medicines: (jsonDecode(map['medicines'] as String) as List)
+            .map(
+              (m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>),
+            )
             .toList(),
-        templateId: maps[i]['templateId'] as String,
+        templateId: map['templateId'] as String,
+        logoPath: map['logoPath'] as String?,
+        backgroundImagePath: map['backgroundImagePath'] as String?,
+        backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+        notes: map['notes'] as String?,
+        advice: map['advice'] as String?,
+        qrContent: map['qrContent'] as String?,
       );
     });
   }
@@ -64,19 +145,29 @@ class PrescriptionRepository {
     );
 
     return List.generate(maps.length, (i) {
+      final map = maps[i];
       return Prescription(
-        id: maps[i]['id'] as int,
-        dentistId: maps[i]['dentistId'] as String,
-        patientId: maps[i]['patientId'] as int,
-        orderNumber: maps[i]['orderNumber'] as int,
-        date: DateTime.parse(maps[i]['date'] as String),
-        patientName: maps[i]['patientName'] as String,
-        patientFamilyName: maps[i]['patientFamilyName'] as String,
-        patientAge: maps[i]['patientAge'] as int,
-        medicines: (jsonDecode(maps[i]['medicines'] as String) as List)
-            .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
+        id: map['id'] as int,
+        dentistId: map['dentistId'] as String,
+        patientId: map['patientId'] as int,
+        visitId: map['visitId'] as int?,
+        orderNumber: map['orderNumber'] as int,
+        date: DateTime.parse(map['date'] as String),
+        patientName: map['patientName'] as String,
+        patientFamilyName: map['patientFamilyName'] as String,
+        patientAge: map['patientAge'] as int,
+        medicines: (jsonDecode(map['medicines'] as String) as List)
+            .map(
+              (m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>),
+            )
             .toList(),
-        templateId: maps[i]['templateId'] as String,
+        templateId: map['templateId'] as String,
+        logoPath: map['logoPath'] as String?,
+        backgroundImagePath: map['backgroundImagePath'] as String?,
+        backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+        notes: map['notes'] as String?,
+        advice: map['advice'] as String?,
+        qrContent: map['qrContent'] as String?,
       );
     });
   }

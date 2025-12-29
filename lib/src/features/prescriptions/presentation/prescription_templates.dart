@@ -14,7 +14,7 @@ class PrescriptionTemplate extends StatelessWidget {
   final String templateId;
   final PrescriptionPrintOptions printOptions;
   final String language; // 'en', 'fr', 'ar'
-  
+
   // Interactive Callbacks
   final VoidCallback? onUploadLogo;
   final VoidCallback? onEditNotes;
@@ -113,14 +113,21 @@ class PrescriptionTemplate extends StatelessWidget {
 
     final t = labels[language] ?? labels['fr']!;
     final isRtl = language == 'ar';
-    final txtDir = isRtl ? flutter_material.TextDirection.rtl : flutter_material.TextDirection.ltr;
+    final txtDir = isRtl
+        ? flutter_material.TextDirection.rtl
+        : flutter_material.TextDirection.ltr;
 
     // Helper for directional alignment
-    final Alignment headerAlignEnd = isRtl ? Alignment.centerLeft : Alignment.centerRight;
-    final CrossAxisAlignment colAlignEnd = isRtl ? CrossAxisAlignment.start : CrossAxisAlignment.end;
+    final Alignment headerAlignEnd = isRtl
+        ? Alignment.centerLeft
+        : Alignment.centerRight;
+    final CrossAxisAlignment colAlignEnd = isRtl
+        ? CrossAxisAlignment.start
+        : CrossAxisAlignment.end;
 
     final city = userProfile.province ?? t['city'];
-    final dateStr = '$city ${t['on']} : ${DateFormat('dd / MM / yyyy').format(prescription.date)}';
+    final dateStr =
+        '$city ${t['on']} : ${DateFormat('dd / MM / yyyy').format(prescription.date)}';
 
     return Directionality(
       textDirection: txtDir,
@@ -155,33 +162,57 @@ class PrescriptionTemplate extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             if (printOptions.showLogo) ...[
-                               // Interactive Logo Area
-                               InkWell(
-                                 onTap: onUploadLogo,
-                                 child: logoPath != null 
-                                     ? Image.file(
-                                         File(logoPath!),
-                                         height: 60,
-                                         width: 150,
-                                         fit: BoxFit.contain,
-                                         alignment: isRtl ? Alignment.centerRight : Alignment.centerLeft,
-                                       )
-                                     : const Tooltip(message: 'Click to upload logo', child: Icon(Icons.add_photo_alternate_outlined, size: 24, color: Colors.grey)),
-                               ),
-                               const SizedBox(height: 8),
+                              // Interactive Logo Area
+                              InkWell(
+                                onTap: onUploadLogo,
+                                child: logoPath != null
+                                    ? Image.file(
+                                        File(logoPath!),
+                                        height: 60,
+                                        width: 150,
+                                        fit: BoxFit.contain,
+                                        alignment: isRtl
+                                            ? Alignment.centerRight
+                                            : Alignment.centerLeft,
+                                      )
+                                    : const Tooltip(
+                                        message: 'Click to upload logo',
+                                        child: Icon(
+                                          Icons.add_photo_alternate_outlined,
+                                          size: 24,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(height: 8),
                             ],
                             Text(
-                              (userProfile.clinicName ?? userProfile.dentistName ?? 'Cabinet Dentaire').toUpperCase(),
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black, letterSpacing: 0.5),
+                              (userProfile.clinicName ??
+                                      userProfile.dentistName ??
+                                      'Cabinet Dentaire')
+                                  .toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.5,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               userProfile.dentistName ?? '${t['dr']} Dentist',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
                             Text(
-                              t['surgeon']!, 
-                              style: const TextStyle(fontSize: 9, color: Colors.black87),
+                              t['surgeon']!,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                color: Colors.black87,
+                              ),
                             ),
                           ],
                         ),
@@ -190,48 +221,104 @@ class PrescriptionTemplate extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: colAlignEnd,
                           children: [
-                             // Interactive QR Code Area
-                             if (printOptions.showQrCode) 
-                                InkWell(
-                                  onTap: onEditQr,
-                                  child: Container(
-                                    width: 50, 
-                                    height: 50, 
-                                    decoration: BoxDecoration(border: Border.all(color: Colors.black12)),
-                                    child: prescription.qrContent != null && prescription.qrContent!.isNotEmpty
-                                        ? QrImageView(data: prescription.qrContent!, size: 50, padding: EdgeInsets.zero)
-                                        : const Center(child: Icon(Icons.qr_code_2, size: 30, color: Colors.black26)),
+                            // Interactive QR Code Area
+                            if (printOptions.showQrCode)
+                              InkWell(
+                                onTap: onEditQr,
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.black12),
                                   ),
+                                  child:
+                                      prescription.qrContent != null &&
+                                          prescription.qrContent!.isNotEmpty
+                                      ? QrImageView(
+                                          data: prescription.qrContent!,
+                                          size: 50,
+                                          padding: EdgeInsets.zero,
+                                        )
+                                      : const Center(
+                                          child: Icon(
+                                            Icons.qr_code_2,
+                                            size: 30,
+                                            color: Colors.black26,
+                                          ),
+                                        ),
                                 ),
-                             if (printOptions.showQrCode) const SizedBox(height: 4),
+                              ),
+                            if (printOptions.showQrCode)
+                              const SizedBox(height: 4),
 
-                             // Order Number
-                             Text('${t['order_no']}: ${prescription.orderNumber}', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.black)),
-                             
-                             if (userProfile.phoneNumber != null)
-                              Text('${t['tel']}: ${userProfile.phoneNumber}', style: const TextStyle(fontSize: 9, color: Colors.black87), textDirection: flutter_material.TextDirection.ltr), // Phone usually LTR
-                             if (printOptions.showEmail && userProfile.email.isNotEmpty)
-                              Text(userProfile.email, style: const TextStyle(fontSize: 9, color: Colors.black87)),
+                            // Order Number
+                            Text(
+                              '${t['order_no']}: ${prescription.orderNumber}',
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+
+                            if (userProfile.phoneNumber != null)
+                              Text(
+                                '${t['tel']}: ${userProfile.phoneNumber}',
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.black87,
+                                ),
+                                textDirection:
+                                    flutter_material.TextDirection.ltr,
+                              ), // Phone usually LTR
+                            if (printOptions.showEmail &&
+                                userProfile.email.isNotEmpty)
+                              Text(
+                                userProfile.email,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.black87,
+                                ),
+                              ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 12),
                   const Divider(thickness: 0.5, color: Colors.black),
                   const SizedBox(height: 8),
-                  
+
                   // 2. Patient Info (Inline)
                   Row(
                     children: [
-                      Text('${t['patient']}: ', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
                       Text(
-                        '${prescription.patientName} ${prescription.patientFamilyName}'.toUpperCase(),
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                        '${t['patient']}: ',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      Text(
+                        '${prescription.patientName} ${prescription.patientFamilyName}'
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
                       const Spacer(),
-                      Text('${t['age']}: ${prescription.patientAge} ${t['years']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
+                      Text(
+                        '${t['age']}: ${prescription.patientAge} ${t['years']}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
                     ],
                   ),
 
@@ -245,50 +332,88 @@ class PrescriptionTemplate extends StatelessWidget {
                       style: const TextStyle(fontSize: 10, color: Colors.black),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
-                  
+
                   // 4. Title
                   Center(
                     child: Text(
                       t['prescription_title']!,
                       style: const TextStyle(
-                        fontSize: 14, 
+                        fontSize: 14,
                         fontWeight: FontWeight.w400,
                         letterSpacing: 3.0,
                         color: Colors.black,
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 10),
-                  
+
                   // 5. Prescription Area
                   Expanded(
                     child: prescription.medicines.isEmpty
-                        ? Center(child: Text('', style: TextStyle(color: Colors.grey.shade300)))
+                        ? Center(
+                            child: Text(
+                              '',
+                              style: TextStyle(color: Colors.grey.shade300),
+                            ),
+                          )
                         : ListView.builder(
                             itemCount: prescription.medicines.length,
                             itemBuilder: (context, index) {
                               final m = prescription.medicines[index];
+
+                              // Translation logic
+                              String route = m.route;
+                              if (language == 'fr' &&
+                                  route.toLowerCase() == 'orally') {
+                                route = 'voie orale';
+                              }
+
+                              // Template: [Qty] [Freq] par [Route] pendant [Duration]
+                              // m.time is used for Duration
+                              final posology =
+                                  '${m.quantity} ${m.frequency} par $route pendant ${m.time}';
+
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: Row(
+                                padding: const EdgeInsets.only(bottom: 12.0),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('• ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.black)),
-                                    Expanded(
-                                      child: RichText(
-                                        textDirection: txtDir,
-                                        text: TextSpan(
-                                          style: const TextStyle(color: Colors.black, fontSize: 10, height: 1.4),
-                                          children: [
-                                            TextSpan(text: '${m.medicineName} ${m.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            const TextSpan(text: '  —  '),
-                                            TextSpan(text: m.frequency),
-                                            const TextSpan(text: '  —  '),
-                                            TextSpan(text: m.time),
-                                          ],
+                                    // Level 1: Name and Strength
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          '• ',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        Text(
+                                          m.medicineName.toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    // Level 2: Posology (Indented)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12.0,
+                                        top: 2.0,
+                                      ),
+                                      child: Text(
+                                        posology,
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          color: Colors.black87,
+                                          fontStyle: FontStyle.italic,
                                         ),
                                       ),
                                     ),
@@ -302,76 +427,147 @@ class PrescriptionTemplate extends StatelessWidget {
                   // Optional Sections
                   if (printOptions.showNotes) ...[
                     const SizedBox(height: 10),
-                    Text('${t['notes']}:', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.red)),
+                    Text(
+                      '${t['notes']}:',
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
                     InkWell(
                       onTap: onEditNotes,
                       child: Container(
-                        constraints: const BoxConstraints(minHeight: 40), 
+                        constraints: const BoxConstraints(minHeight: 40),
                         width: double.infinity,
                         padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.black12, width: 0.5), borderRadius: BorderRadius.circular(4)),
-                        child: Text(prescription.notes ?? t['notes_placeholder']!, style: TextStyle(fontSize: 9, color: prescription.notes == null ? Colors.grey : Colors.black87)),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black12, width: 0.5),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          prescription.notes ?? t['notes_placeholder']!,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: prescription.notes == null
+                                ? Colors.grey
+                                : Colors.black87,
+                          ),
+                        ),
                       ),
-                    )
+                    ),
                   ],
-                  
+
                   if (printOptions.showAllergies) ...[
-                     const SizedBox(height: 8),
-                     Text('${t['allergies']}:', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.redAccent)),
-                     Container(
-                       width: double.infinity,
-                       padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.red.shade100, width: 0.5), borderRadius: BorderRadius.circular(4)),
-                       child: Text(t['none_reported']!, style: const TextStyle(fontSize: 9, color: Colors.black87)),
-                     ),
-                   ],
-                  
-                   if (printOptions.showAdvice) ...[
-                     const SizedBox(height: 8),
-                     InkWell(
-                       onTap: onEditAdvice,
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                            Text('${t['advice']}:', style: const TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: Colors.black54)),
-                            Text(
-                              prescription.advice ?? t['advice_placeholder']!, 
-                              style: TextStyle(fontSize: 8, fontStyle: FontStyle.italic, color: prescription.advice == null ? Colors.grey : Colors.black87)
+                    const SizedBox(height: 8),
+                    Text(
+                      '${t['allergies']}:',
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Colors.red.shade100,
+                          width: 0.5,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        t['none_reported']!,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  if (printOptions.showAdvice) ...[
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: onEditAdvice,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${t['advice']}:',
+                            style: const TextStyle(
+                              fontSize: 8,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black54,
                             ),
-                         ],
-                       ),
-                     ),
-                   ],
+                          ),
+                          Text(
+                            prescription.advice ?? t['advice_placeholder']!,
+                            style: TextStyle(
+                              fontSize: 8,
+                              fontStyle: FontStyle.italic,
+                              color: prescription.advice == null
+                                  ? Colors.grey
+                                  : Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 30),
-                  
+
                   // 6. Footer
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Expanded(
-                         child: Text(
-                            userProfile.clinicAddress ?? '',
-                            style: const TextStyle(fontSize: 8, color: Colors.black54),
-                         ),
+                        child: Text(
+                          userProfile.clinicAddress ?? '',
+                          style: const TextStyle(
+                            fontSize: 8,
+                            color: Colors.black54,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 20),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(t['signature']!, style: const TextStyle(fontSize: 8, color: Colors.black45)),
+                          Text(
+                            t['signature']!,
+                            style: const TextStyle(
+                              fontSize: 8,
+                              color: Colors.black45,
+                            ),
+                          ),
                           const SizedBox(height: 40),
-                          Container(width: 120, height: 0.5, color: Colors.black87),
+                          Container(
+                            width: 120,
+                            height: 0.5,
+                            color: Colors.black87,
+                          ),
                         ],
-                      )
+                      ),
                     ],
                   ),
-                  
+
                   if (printOptions.showBranding) ...[
                     const SizedBox(height: 4),
-                    Center(child: Text(t['generated_by']!, style: TextStyle(fontSize: 6, color: Colors.grey.shade400))),
-                  ]
+                    Center(
+                      child: Text(
+                        t['generated_by']!,
+                        style: TextStyle(
+                          fontSize: 6,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

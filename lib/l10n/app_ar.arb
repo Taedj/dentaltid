@@ -689,5 +689,10 @@
   "exportSuccess": "تم التصدير إلى {path}",
   "exportError": "فشل التصدير: {error}",
   "noNotes": "لا توجد ملاحظات",
-  "notesLabel": "الملاحظات: {notes}"
+  "notesLabel": "الملاحظات: {notes}",
+    "nanopixSyncTitle": "مزامنة NanoPix",
+    "nanopixSyncPathLabel": "مسار بيانات NanoPix",
+    "nanopixSyncPathNotSet": "غير محدد",
+    "nanopixSyncNowButton": "مزامنة الآن",
+    "nanopixSyncStarted": "بدأت المزامنة..."
 }

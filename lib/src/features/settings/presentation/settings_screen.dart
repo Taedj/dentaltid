@@ -16,6 +16,7 @@ import 'package:dentaltid/src/features/settings/presentation/network_config_dial
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
 import 'package:dentaltid/src/features/settings/presentation/staff_list_screen.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:dentaltid/src/features/imaging/application/nanopix_sync_service.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -197,8 +198,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                final filePath =
-                                    await backupService.createBackup();
+                                final filePath = await backupService
+                                    .createBackup();
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -226,10 +227,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 setState(() {
                                   _isLoading = true;
                                 });
-                                final success =
-                                    await backupService.restoreBackup(
-                                  ref: ref,
-                                );
+                                final success = await backupService
+                                    .restoreBackup(ref: ref);
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -459,20 +458,113 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ListTile(
                           title: Text(l10n.imagingStorageSettings),
                           subtitle: FutureBuilder<String?>(
-                            future: Future.value(SettingsService.instance.getString('imaging_storage_path')),
+                            future: Future.value(
+                              SettingsService.instance.getString(
+                                'imaging_storage_path',
+                              ),
+                            ),
                             builder: (context, snapshot) {
-                              return Text(snapshot.data ?? l10n.defaultImagingPath);
+                              return Text(
+                                snapshot.data ?? l10n.defaultImagingPath,
+                              );
                             },
                           ),
                           leading: const Icon(Icons.folder_shared),
                           trailing: const Icon(Icons.edit),
                           onTap: () async {
-                            final String? result = await FilePicker.platform.getDirectoryPath();
+                            final String? result = await FilePicker.platform
+                                .getDirectoryPath();
                             if (result != null) {
-                              await SettingsService.instance.setString('imaging_storage_path', result);
+                              await SettingsService.instance.setString(
+                                'imaging_storage_path',
+                                result,
+                              );
                               setState(() {}); // Rebuild to show new path
                             }
                           },
+                        ),
+                        const Divider(height: 40),
+
+                        // NanoPix Sync Settings
+                        Text(
+                          l10n.nanopixSyncTitle,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 10),
+                        ListTile(
+                          title: Text(l10n.nanopixSyncPathLabel),
+                          subtitle: FutureBuilder<String?>(
+                            future: Future.value(
+                              SettingsService.instance.getString(
+                                'nanopix_sync_path',
+                              ),
+                            ),
+                            builder: (context, snapshot) {
+                              return Text(
+                                snapshot.data ?? l10n.nanopixSyncPathNotSet,
+                              );
+                            },
+                          ),
+                          leading: const Icon(Icons.sync_alt),
+                          trailing: const Icon(Icons.edit),
+                          onTap: () async {
+                            final String? result = await FilePicker.platform
+                                .getDirectoryPath();
+                            if (result != null) {
+                              await SettingsService.instance.setString(
+                                'nanopix_sync_path',
+                                result,
+                              );
+                              setState(() {}); // Rebuild to show new path
+                            }
+                          },
+                        ),
+                        SwitchListTile(
+                          title: const Text('Live Bidirectional Sync'),
+                          subtitle: const Text(
+                            'Instantly sync patients and images between DentalTID and NanoPix',
+                          ),
+                          value: SettingsService.instance.getBool(
+                                'nanopix_live_sync',
+                              ) ??
+                              false,
+                          onChanged: (value) async {
+                            await SettingsService.instance.setBool(
+                              'nanopix_live_sync',
+                              value,
+                            );
+                            if (value) {
+                              ref.read(nanoPixSyncServiceProvider).startLiveSync();
+                            } else {
+                              ref.read(nanoPixSyncServiceProvider).stopLiveSync();
+                            }
+                            setState(() {});
+                          },
+                          secondary: const Icon(Icons.bolt),
+                        ),
+                        const SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () async {
+                            final scaffoldMessenger = ScaffoldMessenger.of(
+                              context,
+                            );
+                            try {
+                              await ref.read(nanoPixSyncServiceProvider).sync();
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(l10n.nanopixSyncStarted),
+                                ),
+                              );
+                            } catch (e) {
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text('Sync failed: $e'),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                          child: Text(l10n.nanopixSyncNowButton),
                         ),
                         const Divider(height: 40),
                       ],
@@ -736,8 +828,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) =>
-                    Center(child: Text(l10n.errorLoadingProfile(error.toString()))),
+                error: (error, stack) => Center(
+                  child: Text(l10n.errorLoadingProfile(error.toString())),
+                ),
               ),
             ],
           ),

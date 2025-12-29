@@ -19,7 +19,6 @@ import 'dart:convert';
 import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:dentaltid/src/features/prescriptions/presentation/prescription_editor_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -30,7 +29,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   List<String> _dismissedBroadcastIds = [];
-  bool _debugOpen = false;
 
   @override
   void initState() {
@@ -110,7 +108,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               child: const _DashboardHeader(),
             ),
-
 
             Expanded(
               child: Center(
@@ -534,9 +531,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      _buildMiniStatusDot(Colors.white, l10n.activeStatus(inProgress)),
+                      _buildMiniStatusDot(
+                        Colors.white,
+                        l10n.activeStatus(inProgress),
+                      ),
                       const SizedBox(width: 8),
-                      _buildMiniStatusDot(Colors.white70, l10n.doneStatus(completed)),
+                      _buildMiniStatusDot(
+                        Colors.white70,
+                        l10n.doneStatus(completed),
+                      ),
                     ],
                   ),
                 ],
@@ -581,15 +584,20 @@ class _DashboardHeader extends ConsumerWidget {
     return userProfileAsyncValue.when(
       data: (userProfile) {
         final isDentist = userProfile?.role == UserRole.dentist;
-        final displayName = (isDentist ? userProfile?.dentistName : userProfile?.fullName) ?? userProfile?.dentistName ?? 'User';
-        final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : '?';
+        final displayName =
+            (isDentist ? userProfile?.dentistName : userProfile?.fullName) ??
+            userProfile?.dentistName ??
+            'User';
+        final initials = displayName.isNotEmpty
+            ? displayName[0].toUpperCase()
+            : '?';
         final greetingPrefix = isDentist ? 'Dr. ' : '';
-        
+
         // Subscription Status Logic
         final isPremium = usage.isPremium;
         final daysLeft = usage.daysLeft;
-        final statusText = isPremium 
-            ? l10n.premiumDaysLeft(daysLeft) 
+        final statusText = isPremium
+            ? l10n.premiumDaysLeft(daysLeft)
             : l10n.trialVersionDaysLeft(daysLeft);
         final statusColor = isPremium ? AppColors.success : AppColors.warning;
 
@@ -635,26 +643,26 @@ class _DashboardHeader extends ConsumerWidget {
                           ),
                           const SizedBox(width: 12),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: statusColor.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: statusColor),
-                            ),
-                            child: Text(
-                              statusText,
-                              style: TextStyle(
-                                color: statusColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          )
-                          .animate(onPlay: (c) => c.repeat(reverse: true))
-                          .shimmer(delay: 2000.ms, duration: 1000.ms),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: statusColor),
+                                ),
+                                child: Text(
+                                  statusText,
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              )
+                              .animate(onPlay: (c) => c.repeat(reverse: true))
+                              .shimmer(delay: 2000.ms, duration: 1000.ms),
                           const SizedBox(width: 8),
                           // Role Badge
                           Container(
@@ -663,12 +671,20 @@ class _DashboardHeader extends ConsumerWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                              color: theme.colorScheme.primaryContainer
+                                  .withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: theme.colorScheme.primary),
+                              border: Border.all(
+                                color: theme.colorScheme.primary,
+                              ),
                             ),
                             child: Text(
-                              userProfile?.role.toString().split('.').last.toUpperCase() ?? 'UNKNOWN',
+                              userProfile?.role
+                                      .toString()
+                                      .split('.')
+                                      .last
+                                      .toUpperCase() ??
+                                  'UNKNOWN',
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontSize: 12,

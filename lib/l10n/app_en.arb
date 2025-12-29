@@ -887,12 +887,17 @@
     }
   },
   "noNotes": "No notes",
-  "notesLabel": "Notes: {notes}",
-  "@notesLabel": {
-    "placeholders": {
-      "notes": {
-        "type": "String"
-      }
-    }
+      "notesLabel": "Notes: {notes}",
+      "@notesLabel": {
+          "placeholders": {
+              "notes": {
+                  "type": "String"
+              }
+          }
+      },
+      "nanopixSyncTitle": "NanoPix Sync",
+      "nanopixSyncPathLabel": "NanoPix Data Path",
+      "nanopixSyncPathNotSet": "Not set",
+      "nanopixSyncNowButton": "Sync Now",
+      "nanopixSyncStarted": "Sync started..."
   }
-}

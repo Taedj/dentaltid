@@ -95,14 +95,14 @@ class BackupService {
           // If not in memory, try to init, but usually it is.
           // In a deep service method, safe to assume app is running and settings loaded.
         }
-        
+
         String imagingPath;
         final customPath = settings.getString('imaging_storage_path');
         if (customPath != null && customPath.isNotEmpty) {
-           imagingPath = customPath;
+          imagingPath = customPath;
         } else {
-           final docsDir = await getApplicationDocumentsDirectory();
-           imagingPath = join(docsDir.path, 'DentalTid', 'Imaging');
+          final docsDir = await getApplicationDocumentsDirectory();
+          imagingPath = join(docsDir.path, 'DentalTid', 'Imaging');
         }
 
         final imagingDir = Directory(imagingPath);
@@ -111,7 +111,8 @@ class BackupService {
           int imageCount = 0;
           for (final file in files) {
             if (file is File) {
-              final relativePath = 'imaging/${relative(file.path, from: imagingPath)}';
+              final relativePath =
+                  'imaging/${relative(file.path, from: imagingPath)}';
               archive.addFile(
                 ArchiveFile(
                   relativePath,
@@ -122,7 +123,7 @@ class BackupService {
               imageCount++;
             }
           }
-           _logger.info('Included $imageCount images in local backup.');
+          _logger.info('Included $imageCount images in local backup.');
         }
       }
 
@@ -310,39 +311,42 @@ class BackupService {
       // Restore Imaging Files (if any)
       final imagingRestoreDir = Directory(join(validationDir.path, 'imaging'));
       if (await imagingRestoreDir.exists()) {
-         _logger.info('Found imaging data in backup. Restoring...');
-         final settings = SettingsService.instance;
-         // Ensure settings are fresh after potential restore
-         await settings.init();
-         
-         String targetPath;
-         final customPath = settings.getString('imaging_storage_path');
-         if (customPath != null && customPath.isNotEmpty) {
-           targetPath = customPath;
-         } else {
-           final docsDir = await getApplicationDocumentsDirectory();
-           targetPath = join(docsDir.path, 'DentalTid', 'Imaging');
-         }
+        _logger.info('Found imaging data in backup. Restoring...');
+        final settings = SettingsService.instance;
+        // Ensure settings are fresh after potential restore
+        await settings.init();
 
-         final targetDir = Directory(targetPath);
-         if (!await targetDir.exists()) {
-           await targetDir.create(recursive: true);
-         }
+        String targetPath;
+        final customPath = settings.getString('imaging_storage_path');
+        if (customPath != null && customPath.isNotEmpty) {
+          targetPath = customPath;
+        } else {
+          final docsDir = await getApplicationDocumentsDirectory();
+          targetPath = join(docsDir.path, 'DentalTid', 'Imaging');
+        }
 
-         // Copy files (recursive)
-         final files = imagingRestoreDir.listSync(recursive: true);
-         for (final entity in files) {
-           if (entity is File) {
-             final relativePath = relative(entity.path, from: imagingRestoreDir.path);
-             final destPath = join(targetDir.path, relativePath);
-             final destFile = File(destPath);
-             
-             // Ensure parent dir exists
-             await destFile.parent.create(recursive: true);
-             await entity.copy(destPath);
-           }
-         }
-         _logger.info('Imaging data restored to: $targetPath');
+        final targetDir = Directory(targetPath);
+        if (!await targetDir.exists()) {
+          await targetDir.create(recursive: true);
+        }
+
+        // Copy files (recursive)
+        final files = imagingRestoreDir.listSync(recursive: true);
+        for (final entity in files) {
+          if (entity is File) {
+            final relativePath = relative(
+              entity.path,
+              from: imagingRestoreDir.path,
+            );
+            final destPath = join(targetDir.path, relativePath);
+            final destFile = File(destPath);
+
+            // Ensure parent dir exists
+            await destFile.parent.create(recursive: true);
+            await entity.copy(destPath);
+          }
+        }
+        _logger.info('Imaging data restored to: $targetPath');
       }
 
       // TRICK: Refresh all providers if ref is provided

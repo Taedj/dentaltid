@@ -157,9 +157,7 @@ class _AddEditAppointmentScreenState
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.1),
-              ),
+              child: Container(color: Colors.black.withValues(alpha: 0.1)),
             ),
           ),
           LayoutBuilder(
@@ -213,7 +211,10 @@ class _AddEditAppointmentScreenState
                                   flex: 2,
                                   child: Padding(
                                     padding: const EdgeInsets.only(right: 8.0),
-                                    child: _buildPaymentStatusCard(l10n, currency),
+                                    child: _buildPaymentStatusCard(
+                                      l10n,
+                                      currency,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -1153,7 +1154,9 @@ class _AddEditAppointmentScreenState
                 filled: true,
                 fillColor: _unpaid == 0
                     ? Colors.white.withValues(alpha: 0.05)
-                    : colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.2,
+                      ),
               ),
               style: TextStyle(
                 fontWeight: FontWeight.bold,
@@ -1329,10 +1332,7 @@ class _AddEditAppointmentScreenState
     return BoxDecoration(
       color: Colors.white.withValues(alpha: 0.05),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(
-        color: primaryColor.withValues(alpha: 0.3),
-        width: 1,
-      ),
+      border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 1),
     );
   }
 }

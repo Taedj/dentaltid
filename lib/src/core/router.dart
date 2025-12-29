@@ -1,5 +1,4 @@
 import 'package:dentaltid/src/core/settings_service.dart';
-import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/settings/presentation/profile_settings_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_overview_screen.dart';
 import 'package:dentaltid/src/features/developer/presentation/developer_users_screen.dart';
@@ -71,7 +70,6 @@ final router = GoRouter(
         } else {
           // Role-based Access Control (RBAC) for Staff
           final isDentist = roleString == 'UserRole.dentist';
-          final isAssistant = roleString == 'UserRole.assistant';
           final isReceptionist = roleString == 'UserRole.receptionist';
 
           // Block /advanced and /finance for anyone NOT a Dentist
@@ -124,9 +122,10 @@ final router = GoRouter(
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
                 child: const AddEditAppointmentScreen(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
                 opaque: false,
                 barrierColor: Colors.black.withValues(alpha: 0.1),
               ),
@@ -135,10 +134,13 @@ final router = GoRouter(
               path: 'edit',
               pageBuilder: (context, state) => CustomTransitionPage(
                 key: state.pageKey,
-                child: AddEditAppointmentScreen(appointment: state.extra as dynamic),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
+                child: AddEditAppointmentScreen(
+                  appointment: state.extra as dynamic,
+                ),
+                transitionsBuilder:
+                    (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
                 opaque: false,
                 barrierColor: Colors.black.withValues(alpha: 0.1),
               ),

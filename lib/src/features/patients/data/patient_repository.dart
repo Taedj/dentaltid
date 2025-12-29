@@ -61,6 +61,17 @@ class PatientRepository {
         where = 'isEmergency = ?';
         whereArgs = [1];
         break;
+      case PatientFilter.todayByExternal:
+        final startOfDay = DateTime(now.year, now.month, now.day);
+        final endOfDay = startOfDay.add(const Duration(days: 1));
+        where =
+            "source = 'nanopix' AND createdAt >= ? AND createdAt < ?";
+        whereArgs = [startOfDay.toIso8601String(), endOfDay.toIso8601String()];
+        break;
+      case PatientFilter.allByExternal:
+        where = "source = 'nanopix'";
+        whereArgs = [];
+        break;
     }
 
     final List<Map<String, dynamic>> maps = await db.query(

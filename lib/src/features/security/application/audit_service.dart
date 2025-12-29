@@ -2,6 +2,9 @@ import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
+
+final _log = Logger('AuditService');
 
 final auditServiceProvider = Provider<AuditService>((ref) {
   return AuditService(DatabaseService.instance);
@@ -29,7 +32,7 @@ class AuditService {
       await db.insert(_tableName, event.toJson());
     } catch (e) {
       // Don't crash the app if auditing fails
-      print('Failed to log audit event: $e');
+      _log.severe('Failed to log audit event', e);
     }
   }
 

@@ -2013,4 +2013,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String notesLabel(String notes) {
     return 'Notes: $notes';
   }
+
+  @override
+  String get nanopixSyncTitle => 'NanoPix Sync';
+
+  @override
+  String get nanopixSyncPathLabel => 'NanoPix Data Path';
+
+  @override
+  String get nanopixSyncPathNotSet => 'Not set';
+
+  @override
+  String get nanopixSyncNowButton => 'Sync Now';
+
+  @override
+  String get nanopixSyncStarted => 'Sync started...';
 }

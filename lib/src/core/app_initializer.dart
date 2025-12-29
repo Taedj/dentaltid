@@ -7,6 +7,7 @@ import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/features/imaging/application/nanopix_sync_service.dart';
 
 final appInitializerProvider = Provider((ref) => AppInitializer(ref));
 
@@ -105,6 +106,9 @@ class AppInitializer {
           );
         }
       }
+
+      // Initialize NanoPix Live Sync
+      _ref.read(nanoPixSyncServiceProvider).startLiveSync();
 
       _isInitialized = true;
     } catch (e) {

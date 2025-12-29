@@ -24,11 +24,15 @@ void main() async {
   await logService.init();
 
   final log = Logger('Main');
-  
+
   // Catch Flutter Errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    log.severe('FLUTTER ERROR: ${details.exception}', details.exception, details.stack);
+    log.severe(
+      'FLUTTER ERROR: ${details.exception}',
+      details.exception,
+      details.stack,
+    );
   };
 
   // Catch Platform/Dart Errors
@@ -54,20 +58,22 @@ void main() async {
 
   log.info('Initializing Firebase...');
   try {
-    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     log.info('Firebase initialized successfully.');
   } catch (e, s) {
     log.severe('Failed to initialize Firebase', e, s);
   }
-  
+
   log.info('Initializing Settings...');
   try {
-    await SettingsService.instance.init(); 
+    await SettingsService.instance.init();
     log.info('Settings initialized successfully.');
   } catch (e, s) {
     log.severe('Failed to initialize Settings', e, s);
-  } 
-  
+  }
+
   log.info('Ready to runApp...');
   runApp(const ProviderScope(child: MyApp()));
 }

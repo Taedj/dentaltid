@@ -16,7 +16,8 @@ class PatientImagingGallery extends ConsumerStatefulWidget {
   const PatientImagingGallery({super.key, required this.patient});
 
   @override
-  ConsumerState<PatientImagingGallery> createState() => _PatientImagingGalleryState();
+  ConsumerState<PatientImagingGallery> createState() =>
+      _PatientImagingGalleryState();
 }
 
 class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
@@ -26,20 +27,14 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
 
   @override
   Widget build(BuildContext context) {
-    final imagingService = ref.watch(imagingServiceProvider);
+    final xraysAsync = ref.watch(patientXraysProvider(widget.patient.id!));
     final l10n = AppLocalizations.of(context)!;
 
-    return FutureBuilder<List<Xray>>(
-      future: imagingService.getPatientXrays(widget.patient.id!),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        if (snapshot.hasError) {
-          return Center(child: Text('${l10n.error}${snapshot.error}'));
-        }
-
-        final xrays = snapshot.data ?? [];
+    return xraysAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stack) => Center(child: Text('${l10n.error}$error')),
+      data: (xraysList) {
+        final xrays = List<Xray>.from(xraysList);
         if (_sortNewestFirst) {
           xrays.sort((a, b) => b.capturedAt.compareTo(a.capturedAt));
         } else {
@@ -52,7 +47,7 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                   Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
@@ -69,30 +64,50 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                   const SizedBox(height: 12),
                   // Visualization Toolbar
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
                         // View Toggle
                         IconButton(
-                          icon: Icon(LucideIcons.layoutGrid, color: !_isListMode ? Theme.of(context).primaryColor : Colors.grey),
+                          icon: Icon(
+                            LucideIcons.layoutGrid,
+                            color: !_isListMode
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey,
+                          ),
                           onPressed: () => setState(() => _isListMode = false),
                           tooltip: l10n.gridView,
                         ),
                         IconButton(
-                          icon: Icon(LucideIcons.list, color: _isListMode ? Theme.of(context).primaryColor : Colors.grey),
+                          icon: Icon(
+                            LucideIcons.list,
+                            color: _isListMode
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey,
+                          ),
                           onPressed: () => setState(() => _isListMode = true),
                           tooltip: l10n.listView,
                         ),
-                        
+
                         const VerticalDivider(width: 24),
-                        
+
                         // Size Slider (Grid Only)
                         if (!_isListMode) ...[
-                          const Icon(LucideIcons.zoomIn, size: 16, color: Colors.grey),
+                          const Icon(
+                            LucideIcons.zoomIn,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
                           SizedBox(
                             width: 150,
                             child: Slider(
@@ -101,7 +116,8 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                               max: 6,
                               divisions: 4,
                               label: l10n.columnsCount(_gridColumns),
-                              onChanged: (v) => setState(() => _gridColumns = v.toInt()),
+                              onChanged: (v) =>
+                                  setState(() => _gridColumns = v.toInt()),
                             ),
                           ),
                         ],
@@ -109,14 +125,27 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                         const Spacer(),
 
                         // Sort Dropdown
-                        Text(l10n.sortBy, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                          l10n.sortBy,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
                         DropdownButton<bool>(
                           value: _sortNewestFirst,
                           items: [
-                            DropdownMenuItem(value: true, child: Text(l10n.timeLatestFirst)),
-                            DropdownMenuItem(value: false, child: Text(l10n.timeEarliestFirst)),
+                            DropdownMenuItem(
+                              value: true,
+                              child: Text(l10n.timeLatestFirst),
+                            ),
+                            DropdownMenuItem(
+                              value: false,
+                              child: Text(l10n.timeEarliestFirst),
+                            ),
                           ],
-                          onChanged: (v) => setState(() => _sortNewestFirst = v!),
+                          onChanged: (v) =>
+                              setState(() => _sortNewestFirst = v!),
                           underline: const SizedBox(),
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -127,14 +156,21 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
               ),
             ),
             if (xrays.isEmpty)
-               Expanded(
+              Expanded(
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(LucideIcons.image, size: 64, color: Colors.grey),
+                      const Icon(
+                        LucideIcons.image,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(height: 16),
-                      Text(l10n.noXraysFound, style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        l10n.noXraysFound,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ),
@@ -150,8 +186,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                           final xray = xrays[index];
                           return _XrayListItem(
                             xray: xray,
-                            patientName: '${widget.patient.name} ${widget.patient.familyName}',
-                            onRefresh: () => setState(() {}),
+                            patientName:
+                                '${widget.patient.name} ${widget.patient.familyName}',
+                            onRefresh: () => ref.invalidate(patientXraysProvider(widget.patient.id!)),
                           );
                         },
                       )
@@ -167,8 +204,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                           final xray = xrays[index];
                           return _XrayThumbnail(
                             xray: xray,
-                            patientName: '${widget.patient.name} ${widget.patient.familyName}',
-                            onRefresh: () => setState(() {}),
+                            patientName:
+                                '${widget.patient.name} ${widget.patient.familyName}',
+                            onRefresh: () => ref.invalidate(patientXraysProvider(widget.patient.id!)),
                           );
                         },
                       ),
@@ -196,12 +234,13 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                   context: context,
                   builder: (context) => SensorCaptureDialog(
                     patientId: widget.patient.id!,
-                    patientName: '${widget.patient.name} ${widget.patient.familyName}',
+                    patientName:
+                        '${widget.patient.name} ${widget.patient.familyName}',
                   ),
                 );
                 if (result == true) {
                   // Trigger refresh
-                   if (mounted) setState(() {});
+                  ref.invalidate(patientXraysProvider(widget.patient.id!));
                 }
               },
             ),
@@ -210,30 +249,33 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
               title: Text(l10n.uploadFromFile),
               onTap: () async {
                 Navigator.pop(sheetContext);
-                
+
                 final result = await FilePicker.platform.pickFiles(
                   type: FileType.image,
                 );
-                
+
                 if (result != null && result.files.single.path != null) {
                   if (!mounted) return;
                   final label = await _showLabelDialog(context);
-                  
+
                   if (label != null && mounted) {
-                    final patientName = '${widget.patient.name} ${widget.patient.familyName}';
+                    final patientName =
+                        '${widget.patient.name} ${widget.patient.familyName}';
                     try {
-                      await ref.read(imagingServiceProvider).saveXray(
-                        patientId: widget.patient.id!,
-                        patientName: patientName,
-                        imageFile: File(result.files.single.path!),
-                        label: label,
-                      );
-                      
+                      await ref
+                          .read(imagingServiceProvider)
+                          .saveXray(
+                            patientId: widget.patient.id!,
+                            patientName: patientName,
+                            imageFile: File(result.files.single.path!),
+                            label: label,
+                          );
+
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(l10n.importSuccess)),
                         );
-                        setState(() {});
+                        ref.invalidate(patientXraysProvider(widget.patient.id!));
                       }
                     } catch (e) {
                       if (mounted) {
@@ -264,15 +306,19 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
         title: Text(l10n.xrayLabel),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
-          ElevatedButton(onPressed: () => Navigator.pop(context, controller.text), child: Text(l10n.add)),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text(l10n.add),
+          ),
         ],
       ),
     );
   }
-
-  }
-
+}
 
 class _XrayThumbnail extends ConsumerWidget {
   final Xray xray;
@@ -289,8 +335,8 @@ class _XrayThumbnail extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     return Tooltip(
-      message: xray.notes != null && xray.notes!.isNotEmpty 
-          ? l10n.notesLabel(xray.notes!) 
+      message: xray.notes != null && xray.notes!.isNotEmpty
+          ? l10n.notesLabel(xray.notes!)
           : l10n.noNotes,
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.all(8),
@@ -303,17 +349,18 @@ class _XrayThumbnail extends ConsumerWidget {
       ),
       child: InkWell(
         onTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => Scaffold(
-                appBar: AppBar(title: Text(xray.label)),
-                body: XRayViewer(
-                  xray: xray,
-                  patientName: patientName,
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute(
+                  builder: (context) => Scaffold(
+                    appBar: AppBar(title: Text(xray.label)),
+                    body: XRayViewer(xray: xray, patientName: patientName),
+                  ),
                 ),
-              ),
-            ),
-          ).then((_) => onRefresh()); // Refresh on return to show updated notes
+              )
+              .then(
+                (_) => onRefresh(),
+              ); // Refresh on return to show updated notes
         },
         child: Container(
           decoration: BoxDecoration(
@@ -331,21 +378,31 @@ class _XrayThumbnail extends ConsumerWidget {
                 const Positioned(
                   top: 4,
                   right: 4,
-                  child: Icon(LucideIcons.fileText, color: Colors.yellowAccent, size: 16),
+                  child: Icon(
+                    LucideIcons.fileText,
+                    color: Colors.yellowAccent,
+                    size: 16,
+                  ),
                 ),
               Positioned(
                 bottom: 0,
                 left: 0,
                 right: 0,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   color: Colors.black54,
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           xray.label,
-                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -376,7 +433,11 @@ class _XrayThumbnail extends ConsumerWidget {
     );
   }
 
-  Widget _buildActionButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Padding(
@@ -395,7 +456,10 @@ class _XrayThumbnail extends ConsumerWidget {
         title: Text(l10n.renameXray),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
             child: Text(l10n.save),
@@ -405,7 +469,9 @@ class _XrayThumbnail extends ConsumerWidget {
     );
 
     if (newLabel != null && newLabel.isNotEmpty && newLabel != xray.label) {
-      await ref.read(imagingServiceProvider).updateXray(xray.copyWith(label: newLabel));
+      await ref
+          .read(imagingServiceProvider)
+          .updateXray(xray.copyWith(label: newLabel));
       onRefresh();
     }
   }
@@ -419,7 +485,7 @@ class _XrayThumbnail extends ConsumerWidget {
         final fileName = sourceFile.uri.pathSegments.last;
         final targetPath = '$result/$fileName';
         await sourceFile.copy(targetPath);
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.exportSuccess(targetPath))),
@@ -438,7 +504,6 @@ class _XrayThumbnail extends ConsumerWidget {
     }
   }
 
-
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
@@ -447,7 +512,10 @@ class _XrayThumbnail extends ConsumerWidget {
         title: Text(l10n.deleteXrayConfirmTitle),
         content: Text(l10n.deleteXrayWarning),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),
@@ -480,14 +548,14 @@ class _XrayListItem extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return Card(
       child: Tooltip(
-        message: xray.notes != null && xray.notes!.isNotEmpty 
-            ? l10n.notesLabel(xray.notes!) 
+        message: xray.notes != null && xray.notes!.isNotEmpty
+            ? l10n.notesLabel(xray.notes!)
             : l10n.noNotes,
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.all(8),
         showDuration: const Duration(seconds: 10),
         textStyle: const TextStyle(fontSize: 14, color: Colors.white),
-         decoration: BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(8),
         ),
@@ -503,44 +571,68 @@ class _XrayListItem extends ConsumerWidget {
           ),
           title: Row(
             children: [
-              Expanded(child: Text(xray.label, style: const TextStyle(fontWeight: FontWeight.bold))),
+              Expanded(
+                child: Text(
+                  xray.label,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
               if (xray.notes != null && xray.notes!.isNotEmpty)
-                  const Icon(LucideIcons.fileText, size: 16, color: Colors.orangeAccent),
+                const Icon(
+                  LucideIcons.fileText,
+                  size: 16,
+                  color: Colors.orangeAccent,
+                ),
             ],
           ),
-          subtitle: Text(l10n.capturedDate('${xray.capturedAt.day}/${xray.capturedAt.month}/${xray.capturedAt.year}')),
+          subtitle: Text(
+            l10n.capturedDate(
+              '${xray.capturedAt.day}/${xray.capturedAt.month}/${xray.capturedAt.year}',
+            ),
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(LucideIcons.pencil, size: 18, color: Colors.blueAccent),
+                icon: const Icon(
+                  LucideIcons.pencil,
+                  size: 18,
+                  color: Colors.blueAccent,
+                ),
                 onPressed: () => _rename(context, ref),
                 tooltip: l10n.edit,
               ),
               IconButton(
-                icon: const Icon(LucideIcons.download, size: 18, color: Colors.greenAccent),
+                icon: const Icon(
+                  LucideIcons.download,
+                  size: 18,
+                  color: Colors.greenAccent,
+                ),
                 onPressed: () => _export(context),
                 tooltip: 'Export',
               ),
               IconButton(
-                icon: const Icon(LucideIcons.trash2, size: 18, color: Colors.redAccent),
+                icon: const Icon(
+                  LucideIcons.trash2,
+                  size: 18,
+                  color: Colors.redAccent,
+                ),
                 onPressed: () => _delete(context, ref),
                 tooltip: l10n.delete,
               ),
             ],
           ),
           onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => Scaffold(
-                  appBar: AppBar(title: Text(xray.label)),
-                  body: XRayViewer(
-                    xray: xray,
-                    patientName: patientName,
+            Navigator.of(context)
+                .push(
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(title: Text(xray.label)),
+                      body: XRayViewer(xray: xray, patientName: patientName),
+                    ),
                   ),
-                ),
-              ),
-            ).then((_) => onRefresh());
+                )
+                .then((_) => onRefresh());
           },
         ),
       ),
@@ -556,7 +648,10 @@ class _XrayListItem extends ConsumerWidget {
         title: Text(l10n.renameXray),
         content: TextField(controller: controller, autofocus: true),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.cancel),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, controller.text),
             child: Text(l10n.save),
@@ -566,7 +661,9 @@ class _XrayListItem extends ConsumerWidget {
     );
 
     if (newLabel != null && newLabel.isNotEmpty && newLabel != xray.label) {
-      await ref.read(imagingServiceProvider).updateXray(xray.copyWith(label: newLabel));
+      await ref
+          .read(imagingServiceProvider)
+          .updateXray(xray.copyWith(label: newLabel));
       onRefresh();
     }
   }
@@ -580,7 +677,7 @@ class _XrayListItem extends ConsumerWidget {
         final fileName = sourceFile.uri.pathSegments.last;
         final targetPath = '$result/$fileName';
         await sourceFile.copy(targetPath);
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l10n.exportSuccess(targetPath))),
@@ -607,7 +704,10 @@ class _XrayListItem extends ConsumerWidget {
         title: Text(l10n.deleteXrayConfirmTitle),
         content: Text(l10n.deleteXrayWarning),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.pop(context, true),

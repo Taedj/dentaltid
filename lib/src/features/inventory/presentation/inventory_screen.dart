@@ -158,7 +158,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     border: Border.all(color: Colors.orange),
                   ),
                   child: Text(
-                    l10n.usageLimitDisplay(usage.inventoryCount.toString(), '100'),
+                    l10n.usageLimitDisplay(
+                      usage.inventoryCount.toString(),
+                      '100',
+                    ),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.orange,

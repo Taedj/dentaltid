@@ -629,5 +629,10 @@
   "exportSuccess": "Exporté vers {path}",
   "exportError": "Échec de l'exportation : {error}",
   "noNotes": "Aucune note",
-  "notesLabel": "Notes : {notes}"
+  "notesLabel": "Notes : {notes}",
+    "nanopixSyncTitle": "Synchro NanoPix",
+    "nanopixSyncPathLabel": "Chemin des données NanoPix",
+    "nanopixSyncPathNotSet": "Non défini",
+    "nanopixSyncNowButton": "Synchroniser maintenant",
+    "nanopixSyncStarted": "Synchronisation démarrée..."
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'prescription_medicine.dart';
 
 class MedicinePreset {
@@ -14,20 +15,34 @@ class MedicinePreset {
   });
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'medicines': medicines.map((m) => m.toJson()).toList(),
-    'createdAt': createdAt.toIso8601String(),
-  };
+        'id': id,
+        'name': name,
+        'medicines': jsonEncode(medicines.map((m) => m.toJson()).toList()),
+        'createdAt': createdAt.toIso8601String(),
+      };
 
-  factory MedicinePreset.fromJson(Map<String, dynamic> json) => MedicinePreset(
-    id: json['id'],
-    name: json['name'],
-    medicines: (json['medicines'] as List)
-        .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
-        .toList(),
-    createdAt: DateTime.parse(json['createdAt']),
-  );
+  factory MedicinePreset.fromJson(Map<String, dynamic> json) {
+    final medicinesData = json['medicines'];
+    List<PrescriptionMedicine> parsedMedicines = [];
+
+    if (medicinesData is String) {
+      final List<dynamic> decoded = jsonDecode(medicinesData);
+      parsedMedicines = decoded
+          .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
+          .toList();
+    } else if (medicinesData is List) {
+      parsedMedicines = medicinesData
+          .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
+          .toList();
+    }
+
+    return MedicinePreset(
+      id: json['id'],
+      name: json['name'],
+      medicines: parsedMedicines,
+      createdAt: DateTime.parse(json['createdAt']),
+    );
+  }
 
   MedicinePreset copyWith({
     int? id,

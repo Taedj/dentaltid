@@ -9,6 +9,11 @@ import 'package:dentaltid/src/core/settings_service.dart';
 
 final imagingServiceProvider = Provider((ref) => ImagingService());
 
+final patientXraysProvider = FutureProvider.family<List<Xray>, int>((ref, patientId) async {
+  final service = ref.watch(imagingServiceProvider);
+  return service.getPatientXrays(patientId);
+});
+
 class ImagingService {
   final _log = Logger('ImagingService');
   static const String _defaultFolderName = 'DentalTid/Imaging';
@@ -17,7 +22,7 @@ class ImagingService {
     final settings = SettingsService.instance;
     await settings.init();
     final customPath = settings.getString('imaging_storage_path');
-    
+
     if (customPath != null && customPath.isNotEmpty) {
       final dir = Directory(customPath);
       if (!await dir.exists()) {
@@ -43,6 +48,7 @@ class ImagingService {
     int? visitId,
     String? notes,
     XrayType type = XrayType.intraoral,
+    String? sourceTag,
   }) async {
     final baseDir = await _getImagingPath();
     final db = await DatabaseService.instance.database;
@@ -58,11 +64,15 @@ class ImagingService {
     // Windows/Linux/Mac unsafe: < > : " / \ | ? * and control chars.
     // Arabic characters are perfectly valid path components in modern OSs.
     final invalidChars = RegExp(r'[<>:"/\\|?*]');
-    final cleanName = patientName.replaceAll(invalidChars, '').replaceAll(' ', '_');
-    
-    final extension = p.extension(imageFile.path).isEmpty ? '.png' : p.extension(imageFile.path);
+    final cleanName = patientName
+        .replaceAll(invalidChars, '')
+        .replaceAll(' ', '_');
+
+    final extension = p.extension(imageFile.path).isEmpty
+        ? '.png'
+        : p.extension(imageFile.path);
     final fileName = '${cleanName}_$n$extension';
-    
+
     _log.info('Saving xray as $fileName for patient $patientId');
     final savedFile = await imageFile.copy(p.join(baseDir, fileName));
 
@@ -74,10 +84,11 @@ class ImagingService {
       capturedAt: DateTime.now(),
       notes: notes,
       type: type,
+      sourceTag: sourceTag,
     );
 
     final id = await db.insert('xrays', xray.toMap());
-    
+
     _log.info('Saved xray $id for patient $patientId at ${savedFile.path}');
     return xray.copyWith(id: id);
   }
@@ -98,7 +109,7 @@ class ImagingService {
     if (xray.id != null) {
       await db.delete('xrays', where: 'id = ?', whereArgs: [xray.id]);
     }
-    
+
     final file = File(xray.filePath);
     if (await file.exists()) {
       await file.delete();
@@ -117,5 +128,15 @@ class ImagingService {
       );
       _log.info('Updated xray ${xray.id}');
     }
+  }
+
+  Future<bool> existsBySourceTag(String sourceTag) async {
+    final db = await DatabaseService.instance.database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM xrays WHERE sourceTag = ?',
+      [sourceTag],
+    );
+    final count = result.first['count'] as int;
+    return count > 0;
   }
 }
