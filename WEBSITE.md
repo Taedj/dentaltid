@@ -48,7 +48,7 @@
 **Button Link:** https://taedj.dev/dentaltid/buy
 
 ## UI & Styling
-**Hero Title Size:** 144
+**Hero Title Size:** 96
 **Button Padding X:** 64
 **Button Padding Y:** 32
 **Button Text Size:** 35

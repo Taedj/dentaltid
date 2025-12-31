@@ -18,8 +18,8 @@ git commit -m "Auto-sync: Updated project configuration and content"
 :: git push origin main
 
 echo [3/3] Committing Website Changes (Hub)...
-pushd "D:\work\Dev\Websites\My Website"
-git add "Frontend\data\projects.json" "Frontend\app\projects\*" "Frontend\public\assets\projects\*"
+pushd "D:\work\Dev\Websites\My Website\Frontend"
+git add "data\projects.json" "app\projects\*" "public\assets\projects\*"
 git commit -m "Auto-sync: Updated projects registry and content from dentaltid"
 :: Uncomment the next line to enable automatic push
 :: git push origin main

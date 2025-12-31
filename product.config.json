@@ -1,1 +1,7 @@
-{"name":"DentalTid","slug":"DentalTid","category":"Management","brand":"Taedj Dev","status":"active"}
+{
+    "name": "DentalTid",
+    "slug": "dentaltid",
+    "category": "Management",
+    "brand": "Taedj Dev",
+    "status": "active"
+}
