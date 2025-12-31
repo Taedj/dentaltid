@@ -18,6 +18,7 @@ import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/imaging/application/nanopix_sync_service.dart';
+import 'package:dentaltid/src/shared/widgets/pagination_controls.dart';
 
 // Helper for PatientFilter localization
 String _getLocalizedFilterName(AppLocalizations l10n, PatientFilter filter) {
@@ -47,11 +48,12 @@ class PatientsScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<PatientsScreen> createState() => _PatientsScreenState();
 }
-
 class _PatientsScreenState extends ConsumerState<PatientsScreen> {
-  late PatientFilter _selectedFilter;
+  PatientFilter _selectedFilter = PatientFilter.all;
   bool _isSearching = false;
-  final TextEditingController _searchController = TextEditingController();
+  final _searchController = TextEditingController();
+  int _currentPage = 1;
+  static const int _pageSize = 20;
 
   @override
   void initState() {
@@ -68,7 +70,12 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   Future<void> _exportPatientsToCsv() async {
     final l10n = AppLocalizations.of(context)!;
     final patientService = ref.read(patientServiceProvider);
-    final patients = await patientService.getPatients(PatientFilter.all);
+    // Export ALL patients, not just the current page
+    final paginatedResult = await patientService.getPatients(
+      filter: PatientFilter.all,
+      pageSize: 100000, // Large limit for export
+    );
+    final patients = paginatedResult.patients;
 
     List<List<dynamic>> rows = [];
     rows.add([
@@ -117,6 +124,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
         PatientListConfig(
           filter: _selectedFilter,
           query: _searchController.text,
+          page: _currentPage,
+          pageSize: _pageSize,
         ),
       ),
     );
@@ -145,7 +154,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                 style: TextStyle(
                   color: Theme.of(context).appBarTheme.titleTextStyle?.color,
                 ),
-                onChanged: (value) => setState(() {}),
+                onChanged: (value) {
+                  // Reset to page 1 when searching
+                  setState(() => _currentPage = 1);
+                },
               )
             : Row(
                 children: [
@@ -180,7 +192,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
             icon: Icon(_isSearching ? LucideIcons.x : LucideIcons.search),
             onPressed: () {
               setState(() {
-                if (_isSearching) _searchController.clear();
+                if (_isSearching) {
+                  _searchController.clear();
+                  _currentPage = 1;
+                }
                 _isSearching = !_isSearching;
               });
             },
@@ -190,8 +205,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               child: DropdownButton<PatientFilter>(
                 value: _selectedFilter,
                 icon: const Icon(LucideIcons.filter),
-                onChanged: (newValue) =>
-                    setState(() => _selectedFilter = newValue!),
+                onChanged: (newValue) => setState(() {
+                  _selectedFilter = newValue!;
+                  _currentPage = 1;
+                }),
                 items: PatientFilter.values.map((value) {
                   return DropdownMenuItem(
                     value: value,
@@ -209,8 +226,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
         ],
       ),
       body: patientsAsyncValue.when(
-        data: (patients) {
-          if (patients.isEmpty) {
+        data: (paginatedPatients) {
+          final patients = paginatedPatients.patients;
+          if (patients.isEmpty && _currentPage == 1) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -227,335 +245,74 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               ),
             );
           }
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              if (constraints.maxWidth < 800) {
-                // Mobile/Tablet: ListView of Modern Cards
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: patients.length,
-                  itemBuilder: (context, index) {
-                    final patient = patients[index];
-                    return _buildModernPatientCard(
-                      patient,
-                      l10n,
-                      patientService,
-                      isDentist,
-                    );
-                  },
-                );
-              } else {
-                // Desktop: DataTable
-                final isRTL = l10n.localeName == 'ar';
-                return Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Directionality(
-                    textDirection: isRTL
-                        ? ui.TextDirection.rtl
-                        : ui.TextDirection.ltr,
-                    child: Align(
-                      alignment: isRTL ? Alignment.topRight : Alignment.topLeft,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
-                            headingRowColor: WidgetStateProperty.all(
-                              Theme.of(context)
-                                  .colorScheme
-                                  .surfaceContainerHighest
-                                  .withValues(alpha: 0.3),
-                            ),
-                            dataRowColor: WidgetStateProperty.all(
-                              Theme.of(context).cardTheme.color,
-                            ),
-                            border: TableBorder(
-                              horizontalInside: BorderSide(
-                                color: Theme.of(
+          return Column(
+            children: [
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 800) {
+                      // Mobile/Tablet: ListView of Modern Cards
+                      return ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: patients.length,
+                        itemBuilder: (context, index) {
+                          final patient = patients[index];
+                          return _buildModernPatientCard(
+                            patient,
+                            l10n,
+                            patientService,
+                            isDentist,
+                          );
+                        },
+                      );
+                    } else {
+                      // Desktop: DataTable
+                      // ... (Rest of DataTable implementation stays similar but accepts 'patients' list)
+                      // Since we are replacing a chunk, I need to make sure I don't break the structure.
+                      // The previous logic for Table is complex, I will construct it properly.
+                      final isRTL = l10n.localeName == 'ar';
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Directionality(
+                          textDirection: isRTL
+                              ? ui.TextDirection.rtl
+                              : ui.TextDirection.ltr,
+                          child: Align(
+                            alignment: isRTL
+                                ? Alignment.topRight
+                                : Alignment.topLeft,
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.only(bottom: 80),
+                                scrollDirection: Axis.horizontal,
+                                child: _buildDataTable(
                                   context,
-                                ).dividerColor.withValues(alpha: 0.5),
+                                  patients,
+                                  l10n,
+                                  patientService,
+                                  isDentist,
+                                ),
                               ),
                             ),
-                            columns: <DataColumn>[
-                              DataColumn(
-                                label: Text(
-                                  l10n.patientIdHeader,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.familyName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.age,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.healthState,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.phoneNumber,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.dueHeader,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              DataColumn(
-                                label: Text(
-                                  l10n.actions,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            rows: patients.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final patient = entry.value;
-                              final isNanoPix = patient.source == 'nanopix';
-                              final config = PatientListConfig(
-                                filter: _selectedFilter,
-                                query: _searchController.text,
-                              );
-
-                              return DataRow(
-                                color: WidgetStateProperty.resolveWith((states) {
-                                  if (isNanoPix) {
-                                    return Colors.purple.withValues(alpha: 0.08);
-                                  }
-                                  return null; // Use default
-                                }),
-                                cells: <DataCell>[
-                                  DataCell(Text((index + 1).toString())),
-                                  DataCell(
-                                    EditablePatientField(
-                                      patient: patient,
-                                      field: 'name',
-                                      currentValue: patient.name,
-                                      onUpdate: (p, v) async =>
-                                          await patientService.updatePatient(
-                                            p.copyWith(name: v),
-                                          ),
-                                      patientsProvider: patientsProvider,
-                                      config: config,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    EditablePatientField(
-                                      patient: patient,
-                                      field: 'familyName',
-                                      currentValue: patient.familyName,
-                                      onUpdate: (p, v) async =>
-                                          await patientService.updatePatient(
-                                            p.copyWith(familyName: v),
-                                          ),
-                                      patientsProvider: patientsProvider,
-                                      config: config,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    EditablePatientField(
-                                      patient: patient,
-                                      field: 'age',
-                                      currentValue: patient.age.toString(),
-                                      onUpdate: (p, v) async =>
-                                          await patientService.updatePatient(
-                                            p.copyWith(
-                                              age: int.tryParse(v) ?? p.age,
-                                            ),
-                                          ),
-                                      patientsProvider: patientsProvider,
-                                      config: config,
-                                      isNumeric: true,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    EditablePatientField(
-                                      patient: patient,
-                                      field: 'healthState',
-                                      currentValue: patient.healthState,
-                                      onUpdate: (p, v) async =>
-                                          await patientService.updatePatient(
-                                            p.copyWith(healthState: v),
-                                          ),
-                                      patientsProvider: patientsProvider,
-                                      config: config,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    EditablePatientField(
-                                      patient: patient,
-                                      field: 'phoneNumber',
-                                      currentValue: patient.phoneNumber,
-                                      onUpdate: (p, v) async =>
-                                          await patientService.updatePatient(
-                                            p.copyWith(phoneNumber: v),
-                                          ),
-                                      patientsProvider: patientsProvider,
-                                      config: config,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    _buildFinancialStatus(patient.totalDue),
-                                  ),
-                                  DataCell(
-                                    Row(
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(
-                                            LucideIcons.eye,
-                                            size: 18,
-                                          ),
-                                          onPressed: () => context.go(
-                                            '/patients/profile',
-                                            extra: patient,
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(
-                                            LucideIcons.edit,
-                                            size: 18,
-                                          ),
-                                          onPressed: () => context.go(
-                                            '/patients/edit',
-                                            extra: patient,
-                                          ),
-                                        ),
-                                        if (isNanoPix)
-                                          Tooltip(
-                                            message: 'Imported from NanoPix',
-                                            child: Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                                              child: Icon(
-                                                LucideIcons.fileText,
-                                                size: 16,
-                                                color: Colors.purple.shade300,
-                                              ),
-                                            ),
-                                          ),
-                                        if (isDentist)
-                                          IconButton(
-                                            icon: const Icon(
-                                              LucideIcons.trash2,
-                                              size: 18,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () async {
-                                              final localContext = context;
-                                              final confirmed =
-                                                  await showDeleteConfirmationDialog(
-                                                    context: localContext,
-                                                    title: l10n.deletePatient,
-                                                    content: l10n
-                                                        .confirmDeletePatient,
-                                                  );
-                                              if (!localContext.mounted) return;
-                                              if (confirmed == true &&
-                                                  patient.id != null) {
-                                                // Ask if delete from NanoPix too
-                                                if (patient.externalId !=
-                                                    null) {
-                                                  if (!localContext.mounted) return;
-                                                  final deleteNanoPix =
-                                                      await showDialog<bool>(
-                                                    context: localContext,
-                                                    builder: (ctx) =>
-                                                        AlertDialog(
-                                                      title: const Text(
-                                                          'Delete from NanoPix?'),
-                                                      content: const Text(
-                                                          'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?'),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                  ctx, false),
-                                                          child: const Text(
-                                                              'Keep in NanoPix'),
-                                                        ),
-                                                        TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                  ctx, true),
-                                                          child: const Text(
-                                                            'Delete Both',
-                                                            style: TextStyle(
-                                                                color:
-                                                                    Colors.red),
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  );
-
-                                                  if (!localContext.mounted) return;
-                                                  if (deleteNanoPix == true) {
-                                                    await ref
-                                                        .read(
-                                                            nanoPixSyncServiceProvider)
-                                                        .deletePatientFromNanoPix(
-                                                            patient.externalId!);
-                                                  }
-                                                }
-
-                                                if (!localContext.mounted) return;
-                                                await patientService
-                                                    .deletePatient(patient.id!);
-                                                if (!localContext.mounted) return;
-                                                ref.invalidate(
-                                                  patientsProvider(config),
-                                                );
-                                              }
-                                            },
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                );
-              }
-            },
+                      );
+                    }
+                  },
+                ),
+              ),
+              PaginationControls(
+                currentPage: paginatedPatients.currentPage,
+                totalPages: paginatedPatients.totalPages,
+                totalItems: paginatedPatients.totalCount,
+                onPageChanged: (newPage) {
+                  setState(() {
+                    _currentPage = newPage;
+                  });
+                },
+              ),
+            ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -568,6 +325,254 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               onPressed: () => context.go('/patients/add'),
               child: const Icon(LucideIcons.plus, color: Colors.white),
             ),
+    );
+  }
+
+  Widget _buildDataTable(
+    BuildContext context,
+    List<Patient> patients,
+    AppLocalizations l10n,
+    PatientService patientService,
+    bool isDentist,
+  ) {
+    return DataTable(
+      headingRowColor: WidgetStateProperty.all(
+        Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(alpha: 0.3),
+      ),
+      dataRowColor: WidgetStateProperty.all(
+        Theme.of(context).cardTheme.color,
+      ),
+      border: TableBorder(
+        horizontalInside: BorderSide(
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.5),
+        ),
+      ),
+      columns: <DataColumn>[
+        DataColumn(
+          label: Text(
+            l10n.patientIdHeader,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.name,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.familyName,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.age,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.healthState,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.phoneNumber,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.dueHeader,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+        DataColumn(
+          label: Text(
+            l10n.actions,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+      rows: patients.asMap().entries.map((entry) {
+        final patient = entry.value;
+        final isNanoPix = patient.source == 'nanopix';
+        final config = PatientListConfig(
+          filter: _selectedFilter,
+          query: _searchController.text,
+          page: _currentPage,
+          pageSize: _pageSize,
+        );
+
+        return DataRow(
+          color: WidgetStateProperty.resolveWith((states) {
+            if (isNanoPix) {
+              return Colors.purple.withValues(alpha: 0.08);
+            }
+            return null;
+          }),
+          cells: <DataCell>[
+            DataCell(Text(patient.id.toString())),
+            DataCell(
+              EditablePatientField(
+                patient: patient,
+                field: 'name',
+                currentValue: patient.name,
+                onUpdate: (p, v) async => await patientService.updatePatient(
+                  p.copyWith(name: v),
+                ),
+                patientsProvider: patientsProvider,
+                config: config,
+              ),
+            ),
+            DataCell(
+              EditablePatientField(
+                patient: patient,
+                field: 'familyName',
+                currentValue: patient.familyName,
+                onUpdate: (p, v) async => await patientService.updatePatient(
+                  p.copyWith(familyName: v),
+                ),
+                patientsProvider: patientsProvider,
+                config: config,
+              ),
+            ),
+            DataCell(
+              EditablePatientField(
+                patient: patient,
+                field: 'age',
+                currentValue: patient.age.toString(),
+                onUpdate: (p, v) async => await patientService.updatePatient(
+                  p.copyWith(
+                    age: int.tryParse(v) ?? p.age,
+                  ),
+                ),
+                patientsProvider: patientsProvider,
+                config: config,
+                isNumeric: true,
+              ),
+            ),
+            DataCell(
+              EditablePatientField(
+                patient: patient,
+                field: 'healthState',
+                currentValue: patient.healthState,
+                onUpdate: (p, v) async => await patientService.updatePatient(
+                  p.copyWith(healthState: v),
+                ),
+                patientsProvider: patientsProvider,
+                config: config,
+              ),
+            ),
+            DataCell(
+              EditablePatientField(
+                patient: patient,
+                field: 'phoneNumber',
+                currentValue: patient.phoneNumber,
+                onUpdate: (p, v) async => await patientService.updatePatient(
+                  p.copyWith(phoneNumber: v),
+                ),
+                patientsProvider: patientsProvider,
+                config: config,
+              ),
+            ),
+            DataCell(
+              _buildFinancialStatus(patient.totalDue),
+            ),
+            DataCell(
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(LucideIcons.eye, size: 18),
+                    onPressed: () => context.go(
+                      '/patients/profile',
+                      extra: patient,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.edit, size: 18),
+                    onPressed: () => context.go(
+                      '/patients/edit',
+                      extra: patient,
+                    ),
+                  ),
+                  if (isNanoPix)
+                    Tooltip(
+                      message: 'Imported from NanoPix',
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: Icon(
+                          LucideIcons.fileText,
+                          size: 16,
+                          color: Colors.purple.shade300,
+                        ),
+                      ),
+                    ),
+                  if (isDentist)
+                    IconButton(
+                      icon: const Icon(
+                        LucideIcons.trash2,
+                        size: 18,
+                        color: Colors.red,
+                      ),
+                      onPressed: () async {
+                        final localContext = context;
+                        final confirmed = await showDeleteConfirmationDialog(
+                          context: localContext,
+                          title: l10n.deletePatient,
+                          content: l10n.confirmDeletePatient,
+                        );
+                        if (!localContext.mounted) return;
+                        if (confirmed == true && patient.id != null) {
+                          if (patient.externalId != null) {
+                            if (!localContext.mounted) return;
+                            final deleteNanoPix = await showDialog<bool>(
+                              context: localContext,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text('Delete from NanoPix?'),
+                                content: const Text(
+                                    'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, false),
+                                    child: const Text('Keep in NanoPix'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx, true),
+                                    child: const Text(
+                                      'Delete Both',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (!localContext.mounted) return;
+                            if (deleteNanoPix == true) {
+                              await ref
+                                  .read(nanoPixSyncServiceProvider)
+                                  .deletePatientFromNanoPix(patient.externalId!);
+                            }
+                          }
+                          if (!localContext.mounted) return;
+                          await patientService.deletePatient(patient.id!);
+                          if (!localContext.mounted) return;
+                          ref.invalidate(patientsProvider(config));
+                        }
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        );
+      }).toList(),
     );
   }
 

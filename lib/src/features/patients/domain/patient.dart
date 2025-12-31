@@ -152,3 +152,17 @@ class Patient {
         externalId: json['external_id'],
       );
 }
+
+class PaginatedPatients {
+  final List<Patient> patients;
+  final int totalCount;
+  final int currentPage;
+  final int totalPages;
+
+  const PaginatedPatients({
+    required this.patients,
+    required this.totalCount,
+    required this.currentPage,
+    required this.totalPages,
+  });
+}

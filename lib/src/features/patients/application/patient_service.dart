@@ -29,15 +29,22 @@ final patientServiceProvider = Provider<PatientService>((ref) {
 class PatientListConfig extends Equatable {
   final PatientFilter filter;
   final String query;
+  final int page;
+  final int pageSize;
 
-  const PatientListConfig({this.filter = PatientFilter.all, this.query = ''});
+  const PatientListConfig({
+    this.filter = PatientFilter.all,
+    this.query = '',
+    this.page = 1,
+    this.pageSize = 20,
+  });
 
   @override
-  List<Object> get props => [filter, query];
+  List<Object> get props => [filter, query, page, pageSize];
 }
 
 final patientsProvider =
-    AutoDisposeFutureProvider.family<List<Patient>, PatientListConfig>((
+    AutoDisposeFutureProvider.family<PaginatedPatients, PatientListConfig>((
       ref,
       config,
     ) async {
@@ -65,10 +72,12 @@ final patientsProvider =
         appointmentSub.cancel();
       });
 
-      if (config.query.isNotEmpty) {
-        return service.searchPatients(config.query);
-      }
-      return service.getPatients(config.filter);
+      return service.getPatients(
+        filter: config.filter,
+        searchQuery: config.query,
+        page: config.page,
+        pageSize: config.pageSize,
+      );
     });
 
 final patientProvider = FutureProvider.family<Patient?, int>((ref, id) async {
@@ -124,20 +133,28 @@ class PatientService {
         );
       }
 
+      final trimmedName = patient.name.trim();
+      final trimmedFamilyName = patient.familyName.trim();
+
       final existingPatient = await _repository.getPatientByNameAndFamilyName(
-        patient.name.trim(),
-        patient.familyName.trim(),
+        trimmedName,
+        trimmedFamilyName,
       );
       if (existingPatient != null) {
         throw DuplicateEntryException(
           'A patient with this name and family name already exists',
           entity: 'Patient',
-          duplicateValue: '${patient.name} ${patient.familyName}',
+          duplicateValue: '$trimmedName $trimmedFamilyName',
         );
       }
 
-      final newId = await _repository.createPatient(patient);
-      final newPatient = patient.copyWith(id: newId);
+      final patientToSave = patient.copyWith(
+        name: trimmedName,
+        familyName: trimmedFamilyName,
+      );
+
+      final newId = await _repository.createPatient(patientToSave);
+      final newPatient = patientToSave.copyWith(id: newId);
 
       _auditService.logEvent(
         AuditAction.createPatient,
@@ -160,11 +177,19 @@ class PatientService {
     }
   }
 
-  Future<List<Patient>> getPatients([
+  Future<PaginatedPatients> getPatients({
     PatientFilter filter = PatientFilter.all,
-  ]) async {
+    String? searchQuery,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     try {
-      return await _repository.getPatients(filter);
+      return await _repository.getPatients(
+        filter: filter,
+        searchQuery: searchQuery,
+        page: page,
+        pageSize: pageSize,
+      );
     } catch (e) {
       ErrorHandler.logError(e);
       throw ServiceException(
@@ -220,17 +245,25 @@ class PatientService {
         );
       }
 
-      await _repository.updatePatient(patient);
+      final trimmedName = patient.name.trim();
+      final trimmedFamilyName = patient.familyName.trim();
+      
+      final patientToUpdate = patient.copyWith(
+        name: trimmedName,
+        familyName: trimmedFamilyName,
+      );
+
+      await _repository.updatePatient(patientToUpdate);
       _auditService.logEvent(
         AuditAction.updatePatient,
-        details: 'Patient ${patient.name} ${patient.familyName} updated.',
+        details: 'Patient $trimmedName $trimmedFamilyName updated.',
       );
 
       notifyDataChanged();
-      _broadcastChange(SyncAction.update, patient);
+      _broadcastChange(SyncAction.update, patientToUpdate);
 
       // Trigger NanoPix export if live sync is on
-      _ref.read(nanoPixSyncServiceProvider).exportPatientToNanoPix(patient);
+      _ref.read(nanoPixSyncServiceProvider).exportPatientToNanoPix(patientToUpdate);
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) rethrow;

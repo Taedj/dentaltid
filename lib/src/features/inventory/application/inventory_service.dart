@@ -9,6 +9,7 @@ import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/finance/domain/transaction.dart';
+import 'package:equatable/equatable.dart';
 
 final inventoryRepositoryProvider = Provider<InventoryRepository>((ref) {
   return InventoryRepository(DatabaseService.instance);
@@ -23,15 +24,47 @@ final inventoryServiceProvider = Provider<InventoryService>((ref) {
   );
 });
 
-final inventoryItemsProvider = FutureProvider<List<InventoryItem>>((ref) async {
+class InventoryListConfig extends Equatable {
+  final String query;
+  final InventorySortOption sortOption;
+  final bool showExpiredOnly;
+  final bool showLowStockOnly;
+  final int page;
+  final int pageSize;
+
+  const InventoryListConfig({
+    this.query = '',
+    this.sortOption = InventorySortOption.nameAsc,
+    this.showExpiredOnly = false,
+    this.showLowStockOnly = false,
+    this.page = 1,
+    this.pageSize = 20,
+  });
+
+  @override
+  List<Object?> get props =>
+      [query, sortOption, showExpiredOnly, showLowStockOnly, page, pageSize];
+}
+
+final inventoryItemsProvider =
+    FutureProvider.family<PaginatedInventoryItems, InventoryListConfig>(
+        (ref, config) async {
   final service = ref.read(inventoryServiceProvider);
 
+  // Still react to generic changes but config-specific
   final subscription = service.onDataChanged.listen((_) {
     ref.invalidateSelf();
   });
   ref.onDispose(() => subscription.cancel());
 
-  return service.getInventoryItems();
+  return service.getInventoryItems(
+    searchQuery: config.query,
+    sortOption: config.sortOption,
+    showExpiredOnly: config.showExpiredOnly,
+    showLowStockOnly: config.showLowStockOnly,
+    page: config.page,
+    pageSize: config.pageSize,
+  );
 });
 
 class InventoryService {
@@ -85,8 +118,22 @@ class InventoryService {
     return newItem;
   }
 
-  Future<List<InventoryItem>> getInventoryItems() async {
-    return await _repository.getInventoryItems();
+  Future<PaginatedInventoryItems> getInventoryItems({
+    String? searchQuery,
+    InventorySortOption? sortOption,
+    bool showExpiredOnly = false,
+    bool showLowStockOnly = false,
+    int? page,
+    int? pageSize,
+  }) async {
+    return await _repository.getInventoryItems(
+      searchQuery: searchQuery,
+      sortOption: sortOption,
+      showExpiredOnly: showExpiredOnly,
+      showLowStockOnly: showLowStockOnly,
+      page: page ?? 1,
+      pageSize: pageSize ?? 20,
+    );
   }
 
   Future<InventoryItem?> getInventoryItem(int id) async {

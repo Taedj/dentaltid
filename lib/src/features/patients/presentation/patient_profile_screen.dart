@@ -659,7 +659,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                             TextButton(
                                               onPressed:
                                                   () => Navigator.pop(context),
-                                              child: Text(l10n.ok),
+                                              child: Text(l10n.okButton),
                                             ),
                                           ],
                                         ),

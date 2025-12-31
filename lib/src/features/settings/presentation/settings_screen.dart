@@ -320,6 +320,47 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       return;
                                     }
 
+                                    // Check backup limit (Max 3)
+                                    final backups = await _firebaseService
+                                        .getUserBackups(user.uid);
+                                    if (backups.length >= 3) {
+                                      if (context.mounted) {
+                                        await showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text(
+                                              'Backup Limit Reached',
+                                            ),
+                                            content: const Text(
+                                              'You have reached the maximum of 3 cloud backups.\n\nPlease delete an old backup to create a new one.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: Text(l10n.cancel),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  context.go(
+                                                    '/settings/cloud-backups',
+                                                  );
+                                                },
+                                                child: Text(
+                                                  l10n.manageCloudBackups,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      setState(() {
+                                        _isLoading = false;
+                                      });
+                                      return;
+                                    }
+
                                     final backupId = await backupService
                                         .createBackup(
                                           uploadToFirebase: true,

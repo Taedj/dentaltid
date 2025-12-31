@@ -11,8 +11,8 @@ import 'package:dentaltid/src/core/app_colors.dart';
 import 'package:intl/intl.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
-
-enum SortOption { dateTimeAsc, dateTimeDesc, patientId }
+import 'package:dentaltid/src/shared/widgets/pagination_controls.dart';
+import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 
 class AppointmentsScreen extends ConsumerStatefulWidget {
   final AppointmentStatus? status;
@@ -27,6 +27,8 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
   String _searchQuery = '';
   bool _showUpcomingOnly = false;
   AppointmentStatus? _statusFilter;
+  int _currentPage = 1;
+  static const int _pageSize = 20;
 
   @override
   void initState() {
@@ -36,7 +38,15 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final appointmentsAsyncValue = ref.watch(appointmentsProvider);
+    final config = AppointmentListConfig(
+      query: _searchQuery,
+      status: _statusFilter,
+      upcomingOnly: _showUpcomingOnly,
+      sortOption: _sortOption,
+      page: _currentPage,
+      pageSize: _pageSize,
+    );
+    final appointmentsAsyncValue = ref.watch(appointmentsProvider(config));
     final appointmentService = ref.watch(appointmentServiceProvider);
     final l10n = AppLocalizations.of(context)!;
     final usage = ref.watch(clinicUsageProvider);
@@ -63,12 +73,19 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   : LucideIcons.calendarDays,
               color: AppColors.primary,
             ),
-            onPressed: () =>
-                setState(() => _showUpcomingOnly = !_showUpcomingOnly),
+            onPressed: () => setState(() {
+              _showUpcomingOnly = !_showUpcomingOnly;
+              _currentPage = 1;
+            }),
           ),
           PopupMenuButton<SortOption>(
             icon: const Icon(LucideIcons.arrowUpDown, color: AppColors.primary),
-            onSelected: (option) => setState(() => _sortOption = option),
+            onSelected: (option) {
+              setState(() {
+                _sortOption = option;
+                _currentPage = 1;
+              });
+            },
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: SortOption.dateTimeAsc,
@@ -101,31 +118,20 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   horizontal: 20,
                 ),
               ),
-              onChanged: (value) =>
-                  setState(() => _searchQuery = value.toLowerCase()),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                  _currentPage = 1;
+                });
+              },
             ),
           ),
           Expanded(
             child: appointmentsAsyncValue.when(
-              data: (appointments) {
-                var filtered = appointments.where((a) {
-                  final matchesSearch = a.patientId.toString().contains(
-                    _searchQuery,
-                  );
-                  final isUpcoming =
-                      !_showUpcomingOnly || a.dateTime.isAfter(DateTime.now());
-                  final statusMatch =
-                      _statusFilter == null || a.status == _statusFilter;
-                  return matchesSearch && isUpcoming && statusMatch;
-                }).toList();
+              data: (paginated) {
+                final appointments = paginated.appointments;
 
-                if (_sortOption == SortOption.dateTimeAsc) {
-                  filtered.sort((a, b) => a.dateTime.compareTo(b.dateTime));
-                } else if (_sortOption == SortOption.dateTimeDesc) {
-                  filtered.sort((a, b) => b.dateTime.compareTo(a.dateTime));
-                }
-
-                if (filtered.isEmpty) {
+                if (appointments.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -145,322 +151,237 @@ class _AppointmentsScreenState extends ConsumerState<AppointmentsScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final appointment = filtered[index];
-                    final patientFuture = ref.watch(
-                      patientProvider(appointment.patientId),
-                    );
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: appointments.length,
+                        itemBuilder: (context, index) {
+                          final appointment = appointments[index];
+                          final patientFuture = ref.watch(
+                            patientProvider(appointment.patientId),
+                          );
 
-                    return IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(
-                            width: 60,
-                            child: Column(
+                          return IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Text(
-                                  DateFormat(
-                                    'HH:mm',
-                                  ).format(appointment.dateTime),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                SizedBox(
+                                  width: 60,
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        DateFormat('HH:mm').format(appointment.dateTime),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                      Text(
+                                        DateFormat('a').format(appointment.dateTime),
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  DateFormat('a').format(appointment.dateTime),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
+                                Column(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(appointment.status),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Theme.of(context).scaffoldBackgroundColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Container(
+                                        width: 2,
+                                        color: Theme.of(context).dividerColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 16.0),
+                                    child: InkWell(
+                                      onTap: () => context.go(
+                                        '/appointments/edit',
+                                        extra: appointment,
+                                      ),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).cardTheme.color,
+                                          borderRadius: BorderRadius.circular(12),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.05),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                          border: Border(
+                                            left: BorderSide(
+                                              color: _getStatusColor(appointment.status),
+                                              width: 4,
+                                            ),
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.all(12),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      patientFuture.when(
+                                                        data: (p) => Text(
+                                                          "${p?.name} ${p?.familyName}",
+                                                          style: const TextStyle(
+                                                            fontWeight: FontWeight.bold,
+                                                            fontSize: 16,
+                                                          ),
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                        loading: () => const Text('...'),
+                                                        error: (_, _) => const Text('Error'),
+                                                      ),
+                                                      const SizedBox(height: 2),
+                                                      Text(
+                                                        appointment.createdBy ?? '...',
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    _buildStatusBadge(context, appointment.status),
+                                                    const SizedBox(width: 4),
+                                                    if (appointment.status == AppointmentStatus.waiting) ...[
+                                                      IconButton(
+                                                        visualDensity: VisualDensity.compact,
+                                                        icon: const Icon(LucideIcons.playCircle, color: AppColors.primary, size: 20),
+                                                        onPressed: () async {
+                                                          if (appointment.id != null) {
+                                                            await appointmentService.updateAppointmentStatus(
+                                                              appointment.id!,
+                                                              AppointmentStatus.inProgress,
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                                      IconButton(
+                                                        visualDensity: VisualDensity.compact,
+                                                        icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                        onPressed: () async {
+                                                          if (appointment.id != null) {
+                                                            await appointmentService.updateAppointmentStatus(
+                                                              appointment.id!,
+                                                              AppointmentStatus.cancelled,
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                                    ] else if (appointment.status == AppointmentStatus.inProgress) ...[
+                                                      IconButton(
+                                                        visualDensity: VisualDensity.compact,
+                                                        icon: const Icon(LucideIcons.checkCircle, color: AppColors.success, size: 20),
+                                                        onPressed: () async {
+                                                          if (appointment.id != null) {
+                                                            await appointmentService.updateAppointmentStatus(
+                                                              appointment.id!,
+                                                              AppointmentStatus.completed,
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                                      IconButton(
+                                                        visualDensity: VisualDensity.compact,
+                                                        icon: const Icon(LucideIcons.xCircle, color: AppColors.error, size: 20),
+                                                        onPressed: () async {
+                                                          if (appointment.id != null) {
+                                                            await appointmentService.updateAppointmentStatus(
+                                                              appointment.id!,
+                                                              AppointmentStatus.cancelled,
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                                    ] else if (appointment.status == AppointmentStatus.completed || appointment.status == AppointmentStatus.cancelled) ...[
+                                                      if (isDentist)
+                                                        IconButton(
+                                                          visualDensity: VisualDensity.compact,
+                                                          icon: const Icon(LucideIcons.trash2, color: Colors.grey, size: 20),
+                                                          onPressed: () async {
+                                                            final confirmed = await showDialog<bool>(
+                                                              context: context,
+                                                              builder: (context) => AlertDialog(
+                                                                title: Text(l10n.deleteAppointment),
+                                                                content: Text(l10n.confirmDeleteAppointment),
+                                                                actions: [
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.pop(context, false),
+                                                                    child: Text(l10n.cancel),
+                                                                  ),
+                                                                  TextButton(
+                                                                    onPressed: () => Navigator.pop(context, true),
+                                                                    child: Text(l10n.delete),
+                                                                  ),
+                                                                ],
+                                                              ),
+                                                            );
+                                                            if (confirmed == true && appointment.id != null) {
+                                                              await appointmentService.deleteAppointment(appointment.id!);
+                                                            }
+                                                          },
+                                                        ),
+                                                    ],
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Column(
-                            children: [
-                              Container(
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  color: _getStatusColor(appointment.status),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).scaffoldBackgroundColor,
-                                    width: 2,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  width: 2,
-                                  color: Theme.of(context).dividerColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 16.0),
-                              child: InkWell(
-                                onTap: () => context.go(
-                                  '/appointments/edit',
-                                  extra: appointment,
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardTheme.color,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                    border: Border(
-                                      left: BorderSide(
-                                        color: _getStatusColor(
-                                          appointment.status,
-                                        ),
-                                        width: 4,
-                                      ),
-                                    ),
-                                  ),
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                patientFuture.when(
-                                                  data: (p) => Text(
-                                                    "${p?.name} ${p?.familyName}",
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  loading: () =>
-                                                      const Text('...'),
-                                                  error: (_, _) =>
-                                                      const Text('Error'),
-                                                ),
-                                                const SizedBox(height: 2),
-                                                Text(
-                                                  appointment.createdBy ??
-                                                      '...',
-                                                  style: const TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              _buildStatusBadge(
-                                                context,
-                                                appointment.status,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              if (appointment.status ==
-                                                  AppointmentStatus
-                                                      .waiting) ...[
-                                                IconButton(
-                                                  visualDensity:
-                                                      VisualDensity.compact,
-                                                  icon: const Icon(
-                                                    LucideIcons.playCircle,
-                                                    color: AppColors.primary,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () async {
-                                                    if (appointment.id !=
-                                                        null) {
-                                                      await appointmentService
-                                                          .updateAppointmentStatus(
-                                                            appointment.id!,
-                                                            AppointmentStatus
-                                                                .inProgress,
-                                                          );
-                                                      ref.invalidate(
-                                                        appointmentsProvider,
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  visualDensity:
-                                                      VisualDensity.compact,
-                                                  icon: const Icon(
-                                                    LucideIcons.xCircle,
-                                                    color: AppColors.error,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () async {
-                                                    if (appointment.id !=
-                                                        null) {
-                                                      await appointmentService
-                                                          .updateAppointmentStatus(
-                                                            appointment.id!,
-                                                            AppointmentStatus
-                                                                .cancelled,
-                                                          );
-                                                      ref.invalidate(
-                                                        appointmentsProvider,
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                              ] else if (appointment.status ==
-                                                  AppointmentStatus
-                                                      .inProgress) ...[
-                                                IconButton(
-                                                  visualDensity:
-                                                      VisualDensity.compact,
-                                                  icon: const Icon(
-                                                    LucideIcons.checkCircle,
-                                                    color: AppColors.success,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () async {
-                                                    if (appointment.id !=
-                                                        null) {
-                                                      await appointmentService
-                                                          .updateAppointmentStatus(
-                                                            appointment.id!,
-                                                            AppointmentStatus
-                                                                .completed,
-                                                          );
-                                                      ref.invalidate(
-                                                        appointmentsProvider,
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  visualDensity:
-                                                      VisualDensity.compact,
-                                                  icon: const Icon(
-                                                    LucideIcons.xCircle,
-                                                    color: AppColors.error,
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () async {
-                                                    if (appointment.id !=
-                                                        null) {
-                                                      await appointmentService
-                                                          .updateAppointmentStatus(
-                                                            appointment.id!,
-                                                            AppointmentStatus
-                                                                .cancelled,
-                                                          );
-                                                      ref.invalidate(
-                                                        appointmentsProvider,
-                                                      );
-                                                    }
-                                                  },
-                                                ),
-                                              ] else if (appointment.status ==
-                                                      AppointmentStatus
-                                                          .completed ||
-                                                  appointment.status ==
-                                                      AppointmentStatus
-                                                          .cancelled) ...[
-                                                if (isDentist)
-                                                  IconButton(
-                                                    visualDensity:
-                                                        VisualDensity.compact,
-                                                    icon: const Icon(
-                                                      LucideIcons.trash2,
-                                                      color: Colors.grey,
-                                                      size: 20,
-                                                    ),
-                                                    onPressed: () async {
-                                                      final confirmed = await showDialog<bool>(
-                                                        context: context,
-                                                        builder: (context) => AlertDialog(
-                                                          title: Text(
-                                                            l10n.deleteAppointment,
-                                                          ),
-                                                          content: Text(
-                                                            l10n.confirmDeleteAppointment,
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    context,
-                                                                    false,
-                                                                  ),
-                                                              child: Text(
-                                                                l10n.cancel,
-                                                              ),
-                                                            ),
-                                                            TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.pop(
-                                                                    context,
-                                                                    true,
-                                                                  ),
-                                                              child: Text(
-                                                                l10n.delete,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                      if (confirmed == true &&
-                                                          appointment.id !=
-                                                              null) {
-                                                        await appointmentService
-                                                            .deleteAppointment(
-                                                              appointment.id!,
-                                                            );
-                                                        ref.invalidate(
-                                                          appointmentsProvider,
-                                                        );
-                                                      }
-                                                    },
-                                                  ),
-                                              ],
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    PaginationControls(
+                      currentPage: paginated.currentPage,
+                      totalPages: paginated.totalPages,
+                      totalItems: paginated.totalCount,
+                      onPageChanged: (newPage) {
+                        setState(() {
+                          _currentPage = newPage;
+                        });
+                      },
+                    ),
+                  ],
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),

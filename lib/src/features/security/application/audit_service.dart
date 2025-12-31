@@ -1,8 +1,10 @@
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
+import 'package:dentaltid/src/features/security/domain/paginated_audit_events.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:sqflite/sqflite.dart';
 
 final _log = Logger('AuditService');
 
@@ -36,11 +38,31 @@ class AuditService {
     }
   }
 
-  Future<List<AuditEvent>> getAuditEvents() async {
+  Future<PaginatedAuditEvents> getAuditEvents({int page = 1, int pageSize = 20}) async {
     final db = await _databaseService.database;
-    final List<Map<String, dynamic>> maps = await db.query(_tableName);
-    return List.generate(maps.length, (i) {
+    
+    // Total Count
+    final countResult = await db.query(_tableName, columns: ['COUNT(*)']);
+    final totalCount = Sqflite.firstIntValue(countResult) ?? 0;
+
+    // Data
+    final offset = (page - 1) * pageSize;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      orderBy: 'timestamp DESC',
+      limit: pageSize,
+      offset: offset,
+    );
+
+    final events = List.generate(maps.length, (i) {
       return AuditEvent.fromJson(maps[i]);
     });
+
+    return PaginatedAuditEvents(
+      events: events,
+      totalCount: totalCount,
+      currentPage: page,
+      totalPages: (totalCount / pageSize).ceil(),
+    );
   }
 }

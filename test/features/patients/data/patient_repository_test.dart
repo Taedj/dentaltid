@@ -121,12 +121,12 @@ void main() {
     // Total Due should be 80 + 50 = 130
 
     // 4. Fetch patients
-    final patients = await repository.getPatients();
+    final paginated = await repository.getPatients();
 
     // 5. Verify
-    expect(patients.length, 1);
-    expect(patients.first.id, patientId);
-    expect(patients.first.totalDue, 130.0);
+    expect(paginated.patients.length, 1);
+    expect(paginated.patients.first.id, patientId);
+    expect(paginated.patients.first.totalDue, 130.0);
   });
 }
 

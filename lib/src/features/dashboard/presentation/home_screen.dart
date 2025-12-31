@@ -70,7 +70,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
     final userProfileAsyncValue = ref.watch(userProfileProvider);
 
-    final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
+    final inventoryItemsAsyncValue = ref.watch(
+      inventoryItemsProvider(const InventoryListConfig(pageSize: 100)),
+    );
+    final lowStockItemsAsyncValue = ref.watch(
+      inventoryItemsProvider(const InventoryListConfig(showLowStockOnly: true, pageSize: 1)),
+    );
+    final expiringItemsAsyncValue = ref.watch(
+      inventoryItemsProvider(const InventoryListConfig(showExpiredOnly: true, pageSize: 1)),
+    );
     final l10n = AppLocalizations.of(context)!;
     final userProfile = userProfileAsyncValue.value;
     final isReceptionist = userProfile?.role == UserRole.receptionist;
@@ -140,6 +148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               _buildInventoryCard(
                                 cardWidth,
                                 inventoryItemsAsyncValue,
+                                lowStockItemsAsyncValue,
+                                expiringItemsAsyncValue,
                                 l10n,
                               ),
                               const SizedBox(height: 16),
@@ -169,6 +179,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           _buildInventoryCard(
                             cardWidth,
                             inventoryItemsAsyncValue,
+                            lowStockItemsAsyncValue,
+                            expiringItemsAsyncValue,
                             l10n,
                             height: cardHeight,
                           ),
@@ -249,7 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildPatientCard(
     double width,
-    AsyncValue<List<Patient>> data,
+    AsyncValue<PaginatedPatients> data,
     AppLocalizations l10n, {
     double? height,
   }) {
@@ -268,7 +280,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       cardType: 'patients',
       kpiBuilder: () => data.when(
         data: (p) => Text(
-          l10n.activeStatus(p.length),
+          l10n.activeStatus(p.totalCount),
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -278,12 +290,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         error: (_, _) => const SizedBox(),
       ),
       content: data.when(
-        data: (patients) => Column(
+        data: (paginated) => Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.todayCount(patients.length),
+              l10n.todayCount(paginated.totalCount),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24, // Bold Number
@@ -308,93 +320,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildInventoryCard(
     double width,
-    AsyncValue<List<InventoryItem>> data,
+    AsyncValue<PaginatedInventoryItems> data,
+    AsyncValue<PaginatedInventoryItems> lowStockData,
+    AsyncValue<PaginatedInventoryItems> expiringData,
     AppLocalizations l10n, {
     double? height,
   }) {
+    final lowStockCount = lowStockData.value?.totalCount ?? 0;
+    final expiringSoonCount = expiringData.value?.totalCount ?? 0;
+
     return _FlipCard3D(
       width: width,
       height: height ?? width * 1.2,
       frontTitle: l10n.criticalAlerts,
-      frontIcon: LucideIcons.alertTriangle, // ShieldAlert equivalent
-      frontGradient: data.maybeWhen(
-        data: (items) {
-          final now = DateTime.now();
-          final expiringSoonCount = items.where((item) {
-            final daysLeft = item.expirationDate.difference(now).inDays;
-            return daysLeft >= 0 && daysLeft < item.thresholdDays;
-          }).length;
-          final lowStockCount = items
-              .where((item) => item.quantity <= item.lowStockThreshold)
-              .length;
-
-          if (expiringSoonCount > 0 || lowStockCount > 0) {
-            return [
-              AppColors.warning,
-              AppColors.error,
-            ]; // Warning/Error Gradient
-          }
-          return [AppColors.success, Color(0xFF27AE60)]; // Healthy Gradient
-        },
-        orElse: () => [AppColors.success, Color(0xFF27AE60)],
-      ),
+      frontIcon: LucideIcons.alertTriangle,
+      frontGradient: (lowStockCount > 0 || expiringSoonCount > 0)
+          ? [AppColors.warning, AppColors.error]
+          : [AppColors.success, const Color(0xFF27AE60)],
       backTitle: l10n.viewCritical,
       backIcon: LucideIcons.alertOctagon,
       onTap: () => context.go('/inventory'),
       cardType: 'emergency',
-      kpiBuilder: () => data.when(
-        data: (items) {
-          final now = DateTime.now();
-          final low = items
-              .where((i) => i.quantity <= i.lowStockThreshold)
-              .length;
-          final expiring = items.where((item) {
-            final daysLeft = item.expirationDate.difference(now).inDays;
-            return daysLeft >= 0 && daysLeft < item.thresholdDays;
-          }).length;
-
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text(
-                l10n.expiringLabel(expiring),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              Container(width: 1, height: 12, color: Colors.white54),
-              Text(
-                l10n.lowStockLabelText(low),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          );
-        },
-        loading: () => const SizedBox(),
-        error: (_, _) => const SizedBox(),
+      kpiBuilder: () => Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Text(
+            l10n.expiringLabel(expiringSoonCount),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+          Container(width: 1, height: 12, color: Colors.white54),
+          Text(
+            l10n.lowStockLabelText(lowStockCount),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
-      content: data.when(
-        data: (items) {
-          final now = DateTime.now();
-          final expiringSoonCount = items.where((item) {
-            final daysLeft = item.expirationDate.difference(now).inDays;
-            return daysLeft >= 0 && daysLeft < item.thresholdDays;
-          }).length;
-          final lowStockCount = items
-              .where((item) => item.quantity <= item.lowStockThreshold)
-              .length;
-
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (expiringSoonCount > 0 || lowStockCount > 0) ...[
+      content: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (expiringSoonCount > 0 || lowStockCount > 0) ...[
                 Text(
                   "${expiringSoonCount + lowStockCount}",
                   style: const TextStyle(
@@ -426,12 +399,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ],
             ],
-          );
-        },
-        loading: () => const CircularProgressIndicator(color: Colors.white),
-        error: (e, s) =>
-            const Icon(LucideIcons.alertCircle, color: Colors.white),
-      ),
+          ),
     );
   }
 
@@ -1016,7 +984,7 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
           );
           return patientsAsync.when(
             data: (patients) {
-              if (patients.isEmpty) {
+              if (patients.patients.isEmpty) {
                 return Center(
                   child: Text(
                     l10n.noPatientsToday,
@@ -1025,7 +993,7 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
                 );
               }
               // Sort by creation time to ensure consistent order
-              final sorted = List<Patient>.from(patients)
+              final sorted = List<Patient>.from(patients.patients)
                 ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
               return ListView.builder(
@@ -1064,7 +1032,8 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
     } else if (widget.cardType == 'emergency') {
       return Consumer(
         builder: (ctx, ref, _) {
-          final items = ref.watch(inventoryItemsProvider).asData?.value ?? [];
+          final itemsAsyncValue = ref.watch(inventoryItemsProvider(const InventoryListConfig()));
+          final items = itemsAsyncValue.value?.items ?? [];
           final now = DateTime.now();
 
           final expiringSoon = items.where((item) {

@@ -257,7 +257,7 @@ class _AddEditAppointmentScreenState
 
   Widget _buildPatientSelectionSection(
     AppLocalizations l10n,
-    AsyncValue<List<Patient>> patientsAsyncValue,
+    AsyncValue<PaginatedPatients> patientsAsyncValue,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
@@ -270,46 +270,31 @@ class _AddEditAppointmentScreenState
             Text(l10n.patient, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
             patientsAsyncValue.when(
-              data: (patients) => DropdownButtonFormField<int>(
-                initialValue: _selectedPatient?.id,
-                decoration: InputDecoration(
-                  labelText: l10n.selectPatientLabel,
-                  labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.outline),
+              data: (paginated) {
+                final patients = paginated.patients;
+                return DropdownButtonFormField<int>(
+                  initialValue: _selectedPatient?.id,
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: colorScheme.outline),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: colorScheme.primary,
-                      width: 2,
+                  items: [
+                    ...patients,
+                    if (_selectedPatient != null &&
+                        !patients.any((p) => p.id == _selectedPatient!.id))
+                      _selectedPatient!,
+                  ].map((patient) {
+                    return DropdownMenuItem<int>(
+                      value: patient.id,
+                      child: Text('${patient.name} ${patient.familyName}'),
+                    );
+                  }).toList(),
+                  onChanged: (patientId) => setState(
+                    () => _selectedPatient = patients.firstWhere(
+                      (p) => p.id == patientId,
                     ),
                   ),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.1),
-                ),
-                items: [
-                  ...patients,
-                  if (_selectedPatient != null &&
-                      !patients.any((p) => p.id == _selectedPatient!.id))
-                    _selectedPatient!,
-                ].map((patient) {
-                  return DropdownMenuItem<int>(
-                    value: patient.id,
-                    child: Text('${patient.name} ${patient.familyName}'),
-                  );
-                }).toList(),
-                onChanged: (patientId) => setState(
-                  () => _selectedPatient = patients.firstWhere(
-                    (p) => p.id == patientId,
-                  ),
-                ),
-              ),
+                );
+              },
               loading: () => const CircularProgressIndicator(),
               error: (error, stack) => Text(
                 '${l10n.error}: $error',
@@ -445,7 +430,8 @@ class _AddEditAppointmentScreenState
                                 ),
                               )
                               .when(
-                                data: (patients) {
+                                data: (paginated) {
+                                  final patients = paginated.patients;
                                   if (patients.isEmpty) {
                                     return Center(
                                       child: Text(l10n.noPatientsYet),
@@ -700,7 +686,7 @@ class _AddEditAppointmentScreenState
   // Desktop-style card widgets
   Widget _buildPatientSelectionCard(
     AppLocalizations l10n,
-    AsyncValue<List<Patient>> patientsAsyncValue,
+    AsyncValue<PaginatedPatients> patientsAsyncValue,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
@@ -746,7 +732,9 @@ class _AddEditAppointmentScreenState
             const SizedBox(height: 16),
             Expanded(
               child: patientsAsyncValue.when(
-                data: (patients) => DropdownButtonFormField<int>(
+                data: (paginated) {
+                  final patients = paginated.patients;
+                  return DropdownButtonFormField<int>(
                   initialValue: _selectedPatient?.id,
                   decoration: InputDecoration(
                     labelText: l10n.choosePatientLabel,
@@ -792,7 +780,8 @@ class _AddEditAppointmentScreenState
                       (p) => p.id == patientId,
                     ),
                   ),
-                ),
+                );
+              },
                 loading: () => Center(
                   child: CircularProgressIndicator(color: colorScheme.primary),
                 ),

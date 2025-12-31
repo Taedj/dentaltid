@@ -545,6 +545,7 @@ class DatabaseService {
       await _database!.close();
       _database = null;
     }
+    _dbInitCompleter = null; // Reset completer to allow re-initialization
   }
 
   Future<void> _onCreate(Database db, int version) async {

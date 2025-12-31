@@ -6,15 +6,8 @@ import 'package:dentaltid/src/features/inventory/presentation/use_inventory_dial
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/clinic_usage_provider.dart';
+import 'package:dentaltid/src/shared/widgets/pagination_controls.dart';
 
-enum InventorySortOption {
-  nameAsc,
-  nameDesc,
-  quantityAsc,
-  quantityDesc,
-  expiryAsc,
-  expiryDesc,
-}
 
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
@@ -28,6 +21,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   String _searchQuery = '';
   bool _showExpiredOnly = false;
   bool _showLowStockOnly = false;
+  int _currentPage = 1;
+  static const int _pageSize = 20;
 
   Future<void> _showAddEditDialog({InventoryItem? item}) async {
     final l10n = AppLocalizations.of(context)!;
@@ -134,7 +129,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider);
+    final config = InventoryListConfig(
+      query: _searchQuery,
+      sortOption: _sortOption,
+      showExpiredOnly: _showExpiredOnly,
+      showLowStockOnly: _showLowStockOnly,
+      page: _currentPage,
+      pageSize: _pageSize,
+    );
+    final inventoryItemsAsyncValue = ref.watch(inventoryItemsProvider(config));
     final inventoryService = ref.watch(inventoryServiceProvider);
     final l10n = AppLocalizations.of(context)!;
     final usage = ref.watch(clinicUsageProvider);
@@ -261,6 +264,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               onChanged: (value) {
                 setState(() {
                   _searchQuery = value.toLowerCase();
+                  _currentPage = 1; // Reset on search
                 });
               },
             ),
@@ -268,194 +272,186 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           // Items List
           Expanded(
             child: inventoryItemsAsyncValue.when(
-              data: (items) {
-                // Filter items
-                var filteredItems = items.where((item) {
-                  final matchesSearch =
-                      _searchQuery.isEmpty ||
-                      item.name.toLowerCase().contains(_searchQuery) ||
-                      item.supplier.toLowerCase().contains(_searchQuery);
+              data: (paginated) {
+                final items = paginated.items;
 
-                  final isExpired = item.expirationDate.isBefore(
-                    DateTime.now(),
-                  );
-                  final isLowStock = item.quantity <= item.lowStockThreshold;
-
-                  final matchesFilter =
-                      (!_showExpiredOnly && !_showLowStockOnly) ||
-                      (_showExpiredOnly && isExpired) ||
-                      (_showLowStockOnly && isLowStock);
-
-                  return matchesSearch && matchesFilter;
-                }).toList();
-
-                // Sort items
-                filteredItems.sort((a, b) {
-                  switch (_sortOption) {
-                    case InventorySortOption.nameAsc:
-                      return a.name.compareTo(b.name);
-                    case InventorySortOption.nameDesc:
-                      return b.name.compareTo(a.name);
-                    case InventorySortOption.quantityAsc:
-                      return a.quantity.compareTo(b.quantity);
-                    case InventorySortOption.quantityDesc:
-                      return b.quantity.compareTo(a.quantity);
-                    case InventorySortOption.expiryAsc:
-                      return a.expirationDate.compareTo(b.expirationDate);
-                    case InventorySortOption.expiryDesc:
-                      return b.expirationDate.compareTo(a.expirationDate);
-                  }
-                });
-
-                if (filteredItems.isEmpty) {
+                if (items.isEmpty) {
                   return Center(child: Text(l10n.noItemsFound));
                 }
 
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 32),
-                  itemCount: filteredItems.length,
-                  itemBuilder: (context, index) {
-                    final item = filteredItems[index];
-                    final isExpired = item.expirationDate.isBefore(
-                      DateTime.now(),
-                    );
-                    final isLowStock = item.quantity <= item.lowStockThreshold;
-                    final daysUntilExpiry = item.expirationDate
-                        .difference(DateTime.now())
-                        .inDays;
+                return Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 32),
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          final item = items[index]; // Use 'items' directly
+                          final isExpired = item.expirationDate.isBefore(
+                            DateTime.now(),
+                          );
+                          final isLowStock =
+                              item.quantity <= item.lowStockThreshold;
+                          final daysUntilExpiry = item.expirationDate
+                              .difference(DateTime.now())
+                              .inDays;
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      color: isExpired
-                          ? Colors.red.withAlpha((255 * 0.1).round())
-                          : isLowStock
-                          ? Colors.orange.withAlpha((255 * 0.1).round())
-                          : null,
-                      child: ListTile(
-                        leading: Icon(
-                          isExpired
-                              ? Icons.warning
-                              : isLowStock
-                              ? Icons.warning_amber
-                              : Icons.inventory,
-                          color: isExpired
-                              ? Colors.red
-                              : isLowStock
-                              ? Colors.orange
-                              : Theme.of(context).primaryColor,
-                        ),
-                        title: Text(
-                          item.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: isExpired ? Colors.red[700] : null,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('${l10n.quantity}: ${item.quantity}'),
-                            Text('${l10n.supplier}: ${item.supplier}'),
-                            Text(
-                              '${l10n.expires} ${item.expirationDate.toLocal().toString().split(' ')[0]}',
-                              style: TextStyle(
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
+                            color: isExpired
+                                ? Colors.red.withAlpha((255 * 0.1).round())
+                                : isLowStock
+                                    ? Colors.orange
+                                        .withAlpha((255 * 0.1).round())
+                                    : null,
+                            child: ListTile(
+                              leading: Icon(
+                                isExpired
+                                    ? Icons.warning
+                                    : isLowStock
+                                        ? Icons.warning_amber
+                                        : Icons.inventory,
                                 color: isExpired
                                     ? Colors.red
-                                    : daysUntilExpiry <= item.thresholdDays
-                                    ? Colors.orange
-                                    : null,
+                                    : isLowStock
+                                        ? Colors.orange
+                                        : Theme.of(context).primaryColor,
                               ),
-                            ),
-                            if (isExpired)
-                              Text(
-                                l10n.expired,
-                                style: const TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              )
-                            else if (isLowStock)
-                              Text(
-                                l10n.lowStock,
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                              title: Text(
+                                item.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: isExpired ? Colors.red[700] : null,
                                 ),
                               ),
-                          ],
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.remove_circle,
-                                color: Colors.green,
-                              ),
-                              tooltip: l10n.useTooltip,
-                              onPressed: () => _showUseDialog(item),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: () => _showAddEditDialog(item: item),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () async {
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(l10n.deleteItem),
-                                    content: Text(l10n.confirmDeleteItem),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(false),
-                                        child: Text(l10n.cancel),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.of(context).pop(true),
-                                        child: Text(
-                                          l10n.deleteItemButton,
-                                        ), // Delete button
-                                      ),
-                                    ],
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${l10n.quantity}: ${item.quantity}'),
+                                  Text('${l10n.supplier}: ${item.supplier}'),
+                                  Text(
+                                    '${l10n.expires} ${item.expirationDate.toLocal().toString().split(' ')[0]}',
+                                    style: TextStyle(
+                                      color: isExpired
+                                          ? Colors.red
+                                          : daysUntilExpiry <=
+                                                  item.thresholdDays
+                                              ? Colors.orange
+                                              : null,
+                                    ),
                                   ),
-                                );
-                                if (confirmed == true && item.id != null) {
-                                  try {
-                                    await inventoryService.deleteInventoryItem(
-                                      item.id!,
-                                    );
-                                    ref.invalidate(inventoryItemsProvider);
-                                  } catch (e) {
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            '${l10n.failedToDeleteItemError}: ${e.toString()}',
-                                          ),
-                                          backgroundColor: Colors.red,
+                                  if (isExpired)
+                                    Text(
+                                      l10n.expired,
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    )
+                                  else if (isLowStock)
+                                    Text(
+                                      l10n.lowStock,
+                                      style: const TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.remove_circle,
+                                      color: Colors.green,
+                                    ),
+                                    tooltip: l10n.useTooltip,
+                                    onPressed: () => _showUseDialog(item),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit,
+                                        color: Colors.blue),
+                                    onPressed: () =>
+                                        _showAddEditDialog(item: item),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete,
+                                        color: Colors.red),
+                                    onPressed: () async {
+                                      final confirmed = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: Text(l10n.deleteItem),
+                                          content:
+                                              Text(l10n.confirmDeleteItem),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: Text(l10n.cancel),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: Text(
+                                                l10n.deleteItemButton,
+                                              ), // Delete button
+                                            ),
+                                          ],
                                         ),
                                       );
-                                    }
-                                  }
-                                }
-                              },
+                                      if (confirmed == true &&
+                                          item.id != null) {
+                                        try {
+                                          await inventoryService
+                                              .deleteInventoryItem(
+                                            item.id!,
+                                          );
+                                          ref.invalidate(
+                                              inventoryItemsProvider);
+                                        } catch (e) {
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  '${l10n.failedToDeleteItemError}: ${e.toString()}',
+                                                ),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                    PaginationControls(
+                      currentPage: paginated.currentPage,
+                      totalPages: paginated.totalPages,
+                      totalItems: paginated.totalCount,
+                      onPageChanged: (newPage) {
+                        setState(() {
+                          _currentPage = newPage;
+                        });
+                      },
+                    ),
+                  ],
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),

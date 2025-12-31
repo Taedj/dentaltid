@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:isolate';
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
+import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/features/settings/application/staff_service.dart';
@@ -138,12 +139,18 @@ class SyncService {
 
   /// Invalidates all data-related providers to force a UI refresh.
   void _invalidateAllProviders() {
+    _ref.read(patientServiceProvider).notifyDataChanged();
+    _ref.read(appointmentServiceProvider).notifyDataChanged();
+    _ref.read(inventoryServiceProvider).notifyDataChanged();
+    _ref.read(staffServiceProvider).notifyDataChanged();
+    _ref.read(financeServiceProvider).notifyDataChanged();
+
     _ref.invalidate(patientsProvider);
     _ref.invalidate(inventoryItemsProvider);
     _ref.invalidate(staffListProvider);
     _ref.invalidate(appointmentsProvider);
-    // Add other providers for finance, visits, etc.
-    _log.info('Invalidated data providers to refresh UI.');
+    
+    _log.info('Invalidated all data providers via notifyDataChanged and invalidate.');
   }
 }
 

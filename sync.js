@@ -13,6 +13,7 @@ const PUBLIC_ASSETS_PATH = path.join(WEBSITE_ROOT, 'public', 'assets', 'projects
 const APP_PAGES_PATH = path.join(WEBSITE_ROOT, 'app', 'projects');
 const CONTROL_DIR = path.join(APP_ROOT, 'CONTROL_WEBSITE');
 const REGISTRATION_TEMPLATE_PATH = path.join(CONTROL_DIR, 'RegistrationUI.tsx');
+const DASHBOARD_TEMPLATE_PATH = path.join(CONTROL_DIR, 'DashboardUI.tsx');
 const FIREBASE_CONFIG_PATH = path.join(WEBSITE_ROOT, 'lib', 'firebase.ts');
 // Gist URL for Pricing (Latest Raw)
 const GIST_URL = 'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/config.json';
@@ -71,7 +72,7 @@ function main() {
     });
 
     const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
-    const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
+    const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
 
     if (cardFile) cardImage = `/assets/projects/${config.slug}/${path.basename(cardFile)}`;
     if (heroFile) heroImage = `/assets/projects/${config.slug}/${path.basename(heroFile)}`;
@@ -82,15 +83,15 @@ function main() {
   const pricing = parsePricing(websiteContent);
   const heroTitle = readControlFile('1_HERO_AND_HEADER/TITLE.txt', extractValue(websiteContent, '**Title:**', 'Hero Section'));
   const heroSubtitle = readControlFile('1_HERO_AND_HEADER/SUBTITLE.txt', extractValue(websiteContent, '**Subtitle:**', 'Hero Section'));
-  const ctaPrimaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_TEXT.txt', extractValue(websiteContent, 'CTA Primary Label:', 'Hero Section') || 'Download Now');
-  const ctaPrimaryLink = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_LINK.txt', extractValue(websiteContent, 'CTA Primary Link:', 'Hero Section') || '#');
-  const ctaSecondaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_TEXT.txt', extractValue(websiteContent, 'CTA Secondary Label:', 'Hero Section') || 'Learn More');
-  const ctaSecondaryLink = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_LINK.txt', extractValue(websiteContent, 'CTA Secondary Link:', 'Hero Section') || '#');
+  const ctaPrimaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_TEXT.txt', extractValue(websiteContent, '**CTA Primary Label:**', 'Hero Section') || 'Download Now');
+  const ctaPrimaryLink = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_LINK.txt', extractValue(websiteContent, '**CTA Primary Link:**', 'Hero Section') || '#');
+  const ctaSecondaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_TEXT.txt', extractValue(websiteContent, '**CTA Secondary Label:**', 'Hero Section') || 'Learn More');
+  const ctaSecondaryLink = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_LINK.txt', extractValue(websiteContent, '**CTA Secondary Link:**', 'Hero Section') || '#');
   const visionCaption = readControlFile('4_FINAL_CONVERSION/CAPTION.txt', extractValue(websiteContent, '**Caption:**', 'Demo & Vision'));
   const finalCTATitle = readControlFile('4_FINAL_CONVERSION/TITLE.txt', extractValue(websiteContent, '**Title:**', 'Final CTA'));
   const finalCTASubtitle = readControlFile('4_FINAL_CONVERSION/SUBTITLE.txt', extractValue(websiteContent, '**Subtitle:**', 'Final CTA'));
   const finalCTAButtonLabel = readControlFile('4_FINAL_CONVERSION/BUTTON_TEXT.txt', extractValue(websiteContent, '**Button Label:**', 'Final CTA') || 'Get Started');
-  const finalCTAButtonLink = readControlFile('4_FINAL_CONVERSION/BUTTON_LINK.txt', extractValue(websiteContent, 'Button Link:', 'Final CTA') || '#');
+  const finalCTAButtonLink = readControlFile('4_FINAL_CONVERSION/BUTTON_LINK.txt', extractValue(websiteContent, '**Button Link:**', 'Final CTA') || '#');
 
   const styles = {
     heroTitleSize: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_FONT_SIZE_PX.txt', '120')) || 120,
@@ -104,6 +105,8 @@ function main() {
     heroImgWidth: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_WIDTH.txt', '100')) || 100,
     heroImgOffsetY: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_OFFSET_Y.txt', '0')) || 0,
     heroImgScale: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_SCALE.txt', '100')) || 100,
+    heroVideoWidth: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_VIDEO_WIDTH.txt', extractValue(websiteContent, '**Hero Video Width (px):**', 'UI & Styling') || '0')) || 0,
+    heroVideoHeight: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_VIDEO_HEIGHT.txt', extractValue(websiteContent, '**Hero Video Height (px):**', 'UI & Styling') || '0')) || 0,
   };
 
   // 3. Generate Project Files
@@ -158,6 +161,35 @@ export default function RegisterPage() {
     console.log(`[OK] Generated RegistrationUI.tsx for ${config.name}`);
   } else {
     console.warn('[WARN] RegistrationUI.tsx template not found in CONTROL_WEBSITE.');
+  }
+
+  // 4.5. Generate Dashboard Page (New Step)
+  const dashboardSlugDir = path.join(pageDir, 'dashboard');
+  ensureDirectory(dashboardSlugDir);
+
+  const dashboardServerShell = `
+import { Metadata } from 'next';
+import DashboardUI from './DashboardUI';
+
+export const metadata: Metadata = {
+  title: 'Dashboard - ${config.name}',
+  description: 'Manage your ${config.name} account',
+};
+
+export default function DashboardPage() {
+  return <DashboardUI />;
+}
+`;
+  fs.writeFileSync(path.join(dashboardSlugDir, 'page.tsx'), dashboardServerShell);
+  console.log(`[OK] Generated page.tsx for ${config.name} Dashboard`);
+
+  if (fs.existsSync(DASHBOARD_TEMPLATE_PATH)) {
+    let dashTemplate = fs.readFileSync(DASHBOARD_TEMPLATE_PATH, 'utf8');
+    const dashContent = performReplacements(dashTemplate, data);
+    fs.writeFileSync(path.join(dashboardSlugDir, 'DashboardUI.tsx'), dashContent);
+    console.log(`[OK] Generated DashboardUI.tsx for ${config.name}`);
+  } else {
+    console.warn('[WARN] DashboardUI.tsx template not found in CONTROL_WEBSITE.');
   }
 
   // 5. Generate lib/firebase.ts (if missing)
@@ -248,7 +280,11 @@ function performReplacements(template, data) {
 
   const visionHtml = visionCaption ? `<section className="py-60 text-center w-full px-6 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent"><div className="max-w-6xl mx-auto"><div className="w-24 h-1.5 bg-emerald-500 mx-auto mb-16 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]" /><blockquote className="text-5xl md:text-7xl font-bold text-white italic leading-[1.1] tracking-tight">"${visionCaption}"</blockquote></div></section>` : '';
   const brandElement = styles.brandLogo ? `<img src="/assets/projects/${config.slug}/${styles.brandLogo}" className="h-12 w-auto object-contain" />` : `<div className="text-4xl font-black tracking-tighter text-white/90 underline decoration-emerald-500 decoration-4 underline-offset-8">${config.brand}</div>`;
-  const heroImgElement = heroImage ? `<img src="${heroImage}" alt="${config.slug} Hero" style={{ maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="w-full h-full object-contain pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01]" />` : `<div className="w-full h-full flex items-center justify-center text-neutral-800 italic text-4xl font-light">Hero Visual Coming Soon</div>`;
+  const heroImgElement = heroImage
+    ? (heroImage.match(/\.(mp4|webm)$/i)
+      ? `<video src="${heroImage}" autoPlay muted loop playsInline controls onClick={(e) => e.currentTarget.muted = !e.currentTarget.muted} style={{ width: '${styles.heroVideoWidth ? styles.heroVideoWidth + 'px' : '100%'}', height: '${styles.heroVideoHeight ? styles.heroVideoHeight + 'px' : 'auto'}', maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="object-cover pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01] cursor-pointer" />`
+      : `<img src="${heroImage}" alt="${config.slug} Hero" style={{ maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="w-full h-full object-contain pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01]" />`)
+    : `<div className="w-full h-full flex items-center justify-center text-neutral-800 italic text-4xl font-light">Hero Visual Coming Soon</div>`;
   const heroBgElement = styles.heroBackground ? `<div className="fixed inset-0 z-0 opacity-20"><img src="/assets/projects/${config.slug}/${styles.heroBackground}" className="w-full h-full object-cover" alt="" /></div>` : '';
 
   t = replace(t, 'META_TITLE', `${config.name} | ${config.brand}`);

@@ -365,7 +365,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                                   actions: [
                                     TextButton(
                                       onPressed: () => Navigator.pop(context),
-                                      child: Text(l10n.ok),
+                                      child: Text(l10n.okButton),
                                     ),
                                   ],
                                 ),
@@ -430,7 +430,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
-                          color: colorScheme.primary.withValues(alpha: 0.1),
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         ),
                         child: destination.selectedIcon,
                       ),

@@ -38,6 +38,8 @@ interface StylesConfig {
     heroImgWidth: number;
     heroImgOffsetY: number;
     heroImgScale: number;
+    heroVideoWidth: number;
+    heroVideoHeight: number;
 }
 
 // Data injected by sync script

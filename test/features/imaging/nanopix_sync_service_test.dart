@@ -67,7 +67,19 @@ class FakePatientService extends Fake implements PatientService {
   FakePatientService(this.patients);
 
   @override
-  Future<List<Patient>> getPatients([PatientFilter filter = PatientFilter.all]) async => patients;
+  Future<PaginatedPatients> getPatients({
+    PatientFilter filter = PatientFilter.all,
+    int page = 1,
+    int pageSize = 20,
+    String? searchQuery,
+  }) async {
+    return PaginatedPatients(
+      patients: patients,
+      totalCount: patients.length,
+      currentPage: page,
+      totalPages: 1,
+    );
+  }
 }
 
 class FakeImagingService extends Fake implements ImagingService {

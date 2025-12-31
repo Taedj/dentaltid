@@ -129,7 +129,7 @@ export default function RegistrationUI() {
                         </div>
 
                         <div className="mt-auto pt-10 z-10">
-                            <Link href={`/${PROJECT_CONFIG.slug}`} className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors">
+                            <Link href="https://www.tidjanizitouni.com/projects/dentaltid" className="flex items-center gap-2 text-neutral-500 hover:text-white transition-colors">
                                 <FaArrowLeft /> Back to Home
                             </Link>
                         </div>

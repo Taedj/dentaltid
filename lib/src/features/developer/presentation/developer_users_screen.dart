@@ -339,24 +339,33 @@ class _UserAdvancedCard extends StatelessWidget {
     );
   }
 
+  Color _getPlanColor(SubscriptionPlan plan) {
+    switch (plan) {
+      case SubscriptionPlan.enterprise:
+        return Colors.purpleAccent;
+      case SubscriptionPlan.professional:
+        return Colors.amber;
+      case SubscriptionPlan.trial:
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
   Widget _buildPlanChip(SubscriptionPlan plan) {
-    Color color;
+    final color = _getPlanColor(plan);
     String label;
     switch (plan) {
       case SubscriptionPlan.enterprise:
-        color = Colors.purpleAccent;
         label = 'CROWN';
         break;
       case SubscriptionPlan.professional:
-        color = Colors.amber;
         label = 'PREMIUM';
         break;
       case SubscriptionPlan.trial:
-        color = Colors.blue;
         label = 'TRIAL';
         break;
       default:
-        color = Colors.grey;
         label = 'FREE';
     }
 

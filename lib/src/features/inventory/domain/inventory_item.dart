@@ -1,3 +1,12 @@
+enum InventorySortOption {
+  nameAsc,
+  nameDesc,
+  quantityAsc,
+  quantityDesc,
+  expiryAsc,
+  expiryDesc,
+}
+
 class InventoryItem {
   final int? id;
   final String name;
@@ -68,4 +77,18 @@ class InventoryItem {
       cost: cost ?? this.cost,
     );
   }
+}
+
+class PaginatedInventoryItems {
+  final List<InventoryItem> items;
+  final int totalCount;
+  final int currentPage;
+  final int totalPages;
+
+  PaginatedInventoryItems({
+    required this.items,
+    required this.totalCount,
+    required this.currentPage,
+    required this.totalPages,
+  });
 }

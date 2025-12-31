@@ -1,5 +1,7 @@
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
 
+enum SortOption { dateTimeAsc, dateTimeDesc, patientId }
+
 class Appointment {
   final int? id;
   final int patientId;
@@ -80,4 +82,18 @@ class Appointment {
       createdBy: createdBy ?? this.createdBy,
     );
   }
+}
+
+class PaginatedAppointments {
+  final List<Appointment> appointments;
+  final int totalCount;
+  final int currentPage;
+  final int totalPages;
+
+  PaginatedAppointments({
+    required this.appointments,
+    required this.totalCount,
+    required this.currentPage,
+    required this.totalPages,
+  });
 }

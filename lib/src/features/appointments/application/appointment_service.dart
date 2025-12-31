@@ -14,6 +14,7 @@ import 'package:dentaltid/src/features/patients/domain/patient.dart';
 import 'package:dentaltid/src/features/security/application/audit_service.dart';
 import 'package:dentaltid/src/features/security/domain/audit_event.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:equatable/equatable.dart';
 
 final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
   return AppointmentRepository(DatabaseService.instance);
@@ -28,7 +29,31 @@ final appointmentServiceProvider = Provider<AppointmentService>((ref) {
   );
 });
 
-final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
+class AppointmentListConfig extends Equatable {
+  final String query;
+  final AppointmentStatus? status;
+  final bool upcomingOnly;
+  final SortOption sortOption;
+  final int page;
+  final int pageSize;
+
+  const AppointmentListConfig({
+    this.query = '',
+    this.status,
+    this.upcomingOnly = false,
+    this.sortOption = SortOption.dateTimeAsc,
+    this.page = 1,
+    this.pageSize = 20,
+  });
+
+  @override
+  List<Object?> get props =>
+      [query, status, upcomingOnly, sortOption, page, pageSize];
+}
+
+final appointmentsProvider =
+    FutureProvider.family<PaginatedAppointments, AppointmentListConfig>(
+        (ref, config) async {
   final service = ref.read(appointmentServiceProvider);
 
   final subscription = service.onDataChanged.listen((_) {
@@ -36,7 +61,14 @@ final appointmentsProvider = FutureProvider<List<Appointment>>((ref) async {
   });
   ref.onDispose(() => subscription.cancel());
 
-  return service.getAppointments();
+  return service.getAppointments(
+    searchQuery: config.query,
+    statusFilter: config.status,
+    upcomingOnly: config.upcomingOnly,
+    sortOption: config.sortOption,
+    page: config.page,
+    pageSize: config.pageSize,
+  );
 });
 
 final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
@@ -131,8 +163,11 @@ final todaysEmergencyAppointmentsProvider = FutureProvider<List<Appointment>>((
     patSubscription.cancel();
   });
 
-  final allPatients = await patientService.getPatients(PatientFilter.all);
-  final emergencyPatientIds = allPatients
+  final allPatientsResult = await patientService.getPatients(
+    filter: PatientFilter.emergency,
+    pageSize: 1000, // Safe limit for emergency patients
+  );
+  final emergencyPatientIds = allPatientsResult.patients
       .where((p) => p.isEmergency)
       .map((p) => p.id)
       .whereType<int>()
@@ -212,8 +247,22 @@ class AppointmentService {
     }
   }
 
-  Future<List<Appointment>> getAppointments() async {
-    return await _repository.getAppointments();
+  Future<PaginatedAppointments> getAppointments({
+    String? searchQuery,
+    AppointmentStatus? statusFilter,
+    bool upcomingOnly = false,
+    SortOption? sortOption,
+    int? page,
+    int? pageSize,
+  }) async {
+    return await _repository.getAppointments(
+      searchQuery: searchQuery,
+      statusFilter: statusFilter,
+      upcomingOnly: upcomingOnly,
+      sortOption: sortOption,
+      page: page ?? 1,
+      pageSize: pageSize ?? 20,
+    );
   }
 
   Future<List<Appointment>> getUpcomingAppointments() async {

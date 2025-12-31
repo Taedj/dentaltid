@@ -133,7 +133,12 @@ class PrescriptionTemplate extends StatelessWidget {
       textDirection: txtDir,
       child: Container(
         width: double.infinity,
-        color: Colors.white,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: printOptions.showBorders
+              ? Border.all(color: Colors.black, width: 1.0)
+              : null,
+        ),
         child: Stack(
           children: [
             // Background Image with Transparency

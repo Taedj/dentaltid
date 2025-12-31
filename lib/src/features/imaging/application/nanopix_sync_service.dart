@@ -97,7 +97,8 @@ class NanoPixSyncService {
       // Step 1: Get patients from both databases
       final nanoPixPatients = await _readNanoPixDatabase(nanoPixPath);
       final patientService = _ref.read(patientServiceProvider);
-      final dentalTidPatients = await patientService.getPatients();
+      final dentalTidResult = await patientService.getPatients(pageSize: 100000);
+      final dentalTidPatients = dentalTidResult.patients;
 
       // Step 3: Identify new patients in NanoPix that aren't in DentalTID
       await _importNewNanoPixPatients(
@@ -114,7 +115,8 @@ class NanoPixSyncService {
       );
 
       // Refresh patients list and matched pairs after import/delete
-      final updatedDentalTidPatients = await patientService.getPatients();
+      final updatedResult = await patientService.getPatients(pageSize: 100000);
+      final updatedDentalTidPatients = updatedResult.patients;
       final updatedMatchedPairs = _matchPatients(updatedDentalTidPatients, nanoPixPatients);
 
       // Step 5: Import images for matched patients

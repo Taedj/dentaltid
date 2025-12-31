@@ -1,6 +1,7 @@
-import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/appointments/domain/appointment_status.dart';
+import 'package:dentaltid/src/core/database_service.dart';
+import 'package:sqflite/sqflite.dart';
 
 class AppointmentRepository {
   final DatabaseService _databaseService;
@@ -15,12 +16,80 @@ class AppointmentRepository {
     return appointment.copyWith(id: id);
   }
 
-  Future<List<Appointment>> getAppointments() async {
+  Future<PaginatedAppointments> getAppointments({
+    String? searchQuery,
+    AppointmentStatus? statusFilter,
+    bool upcomingOnly = false,
+    SortOption? sortOption,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     final db = await _databaseService.database;
-    final List<Map<String, dynamic>> maps = await db.query(_tableName);
-    return List.generate(maps.length, (i) {
-      return Appointment.fromJson(maps[i]);
-    });
+
+    List<String> conditions = [];
+    List<dynamic> whereArgs = [];
+
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      conditions.add('sessionId LIKE ?');
+      whereArgs.add('%$searchQuery%');
+    }
+
+    if (statusFilter != null) {
+      conditions.add('status = ?');
+      whereArgs.add(statusFilter.toString());
+    }
+
+    if (upcomingOnly) {
+      conditions.add('dateTime >= ?');
+      whereArgs.add(DateTime.now().toIso8601String());
+    }
+
+    final whereClause = conditions.isEmpty ? null : conditions.join(' AND ');
+
+    // Count
+    final countResult = await db.query(
+      _tableName,
+      columns: ['COUNT(*)'],
+      where: whereClause,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+    );
+    final totalCount = Sqflite.firstIntValue(countResult) ?? 0;
+
+    // Sort
+    String orderBy = 'dateTime ASC';
+    if (sortOption != null) {
+      switch (sortOption) {
+        case SortOption.dateTimeAsc:
+          orderBy = 'dateTime ASC';
+          break;
+        case SortOption.dateTimeDesc:
+          orderBy = 'dateTime DESC';
+          break;
+        case SortOption.patientId:
+          orderBy = 'sessionId ASC';
+          break;
+      }
+    }
+
+    // Data
+    final int offset = (page - 1) * pageSize;
+    final List<Map<String, dynamic>> maps = await db.query(
+      _tableName,
+      where: whereClause,
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: orderBy,
+      limit: pageSize,
+      offset: offset,
+    );
+
+    final appointments = maps.map((m) => Appointment.fromJson(m)).toList();
+
+    return PaginatedAppointments(
+      appointments: appointments,
+      totalCount: totalCount,
+      currentPage: page,
+      totalPages: (totalCount / pageSize).ceil(),
+    );
   }
 
   Future<void> updateAppointment(Appointment appointment) async {

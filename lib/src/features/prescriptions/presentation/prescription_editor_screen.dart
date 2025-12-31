@@ -17,6 +17,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class PrescriptionEditorScreen extends ConsumerStatefulWidget {
   final Patient patient;
@@ -107,6 +109,17 @@ class _PrescriptionEditorScreenState
             backgroundOpacity: bgOpacity ?? 0.2,
           );
         }
+        _printOptions = _printOptions.copyWith(
+          showLogo: settings.getBool('prescription_show_logo') ?? false,
+          showNotes: settings.getBool('prescription_show_notes') ?? false,
+          showAllergies: settings.getBool('prescription_show_allergies') ?? false,
+          showAdvice: settings.getBool('prescription_show_advice') ?? false,
+          showQrCode: settings.getBool('prescription_show_qr') ?? false,
+          showBranding: settings.getBool('prescription_show_branding') ?? false,
+          showBorders: settings.getBool('prescription_show_borders') ?? false,
+          showEmail: settings.getBool('prescription_show_email') ?? false,
+        );
+
         if (logo != null) _logoPath = logo;
         if (qr != null) _qrContent = qr;
         if (notes != null) _notes = notes;
@@ -217,25 +230,54 @@ class _PrescriptionEditorScreenState
     }
   }
 
+  Future<String> _securelyCopyPrescriptionImage(String sourcePath) async {
+    try {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final targetDir = Directory(
+        p.join(docsDir.path, 'DentalTid', 'Imaging', 'Prescriptions'),
+      );
+
+      if (!await targetDir.exists()) {
+        await targetDir.create(recursive: true);
+      }
+
+      final fileName = p.basename(sourcePath);
+      // Create a unique filename to avoid collisions if users pick "logo.png" multiple times
+      final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      final targetPath = p.join(targetDir.path, uniqueFileName);
+
+      await File(sourcePath).copy(targetPath);
+      return targetPath;
+    } catch (e) {
+      debugPrint('Error copying prescription image: $e');
+      // If copy fails, fallback to original path (better than nothing)
+      return sourcePath;
+    }
+  }
+
   Future<void> _handleUploadLogo() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.single.path != null) {
-      final path = result.files.single.path!;
-      setState(() => _logoPath = path);
-      await SettingsService.instance.setString('prescription_logo_path', path);
+      final originalPath = result.files.single.path!;
+      final securedPath = await _securelyCopyPrescriptionImage(originalPath);
+      
+      setState(() => _logoPath = securedPath);
+      await SettingsService.instance.setString('prescription_logo_path', securedPath);
     }
   }
 
   Future<void> _handleUploadBackground() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.single.path != null) {
-      final path = result.files.single.path!;
+      final originalPath = result.files.single.path!;
+      final securedPath = await _securelyCopyPrescriptionImage(originalPath);
+
       setState(
         () => _printOptions = _printOptions.copyWith(
-          backgroundImagePath: path,
+          backgroundImagePath: securedPath,
         ),
       );
-      await SettingsService.instance.setString('prescription_bg_path', path);
+      await SettingsService.instance.setString('prescription_bg_path', securedPath);
     }
   }
 
@@ -992,56 +1034,66 @@ class _PrescriptionEditorScreenState
               FilterChip(
                 label: const Text('Logo'),
                 selected: _printOptions.showLogo,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showLogo: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showLogo: v));
+                  await SettingsService.instance.setBool('prescription_show_logo', v);
+                },
               ),
               FilterChip(
                 label: const Text('Notes'),
                 selected: _printOptions.showNotes,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showNotes: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showNotes: v));
+                  await SettingsService.instance.setBool('prescription_show_notes', v);
+                },
+              ),
+              FilterChip(
+                label: const Text('Allergies'),
+                selected: _printOptions.showAllergies,
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showAllergies: v));
+                  await SettingsService.instance.setBool('prescription_show_allergies', v);
+                },
               ),
               FilterChip(
                 label: const Text('Advice'),
                 selected: _printOptions.showAdvice,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showAdvice: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showAdvice: v));
+                  await SettingsService.instance.setBool('prescription_show_advice', v);
+                },
               ),
               FilterChip(
                 label: const Text('Email'),
                 selected: _printOptions.showEmail,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showEmail: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showEmail: v));
+                  await SettingsService.instance.setBool('prescription_show_email', v);
+                },
               ),
               FilterChip(
                 label: const Text('QR Code'),
                 selected: _printOptions.showQrCode,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showQrCode: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showQrCode: v));
+                  await SettingsService.instance.setBool('prescription_show_qr', v);
+                },
               ),
               FilterChip(
                 label: const Text('Branding'),
                 selected: _printOptions.showBranding,
-                onSelected: (v) => setState(
-                  () => _printOptions = _printOptions.copyWith(
-                    showBranding: v,
-                  ),
-                ),
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showBranding: v));
+                  await SettingsService.instance.setBool('prescription_show_branding', v);
+                },
+              ),
+              FilterChip(
+                label: const Text('Borders'),
+                selected: _printOptions.showBorders,
+                onSelected: (v) async {
+                  setState(() => _printOptions = _printOptions.copyWith(showBorders: v));
+                  await SettingsService.instance.setBool('prescription_show_borders', v);
+                },
               ),
             ],
           ),

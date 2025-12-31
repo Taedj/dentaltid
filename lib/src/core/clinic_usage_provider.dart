@@ -1,4 +1,5 @@
 import 'package:dentaltid/src/core/settings_service.dart';
+import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/appointments/application/appointment_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
@@ -36,17 +37,21 @@ class ClinicUsageState {
 
 final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
   final userProfile = ref.watch(userProfileProvider).value;
-  final patients =
-      ref
-          .watch(
-            patientsProvider(
-              const PatientListConfig(filter: PatientFilter.all),
-            ),
-          )
-          .value ??
-      [];
-  final appointments = ref.watch(appointmentsProvider).value ?? [];
-  final inventory = ref.watch(inventoryItemsProvider).value ?? [];
+  final patientsResult = ref.watch(
+    patientsProvider(const PatientListConfig(filter: PatientFilter.all, pageSize: 1)),
+  ).value;
+  
+  final appointmentsResult = ref.watch(
+    appointmentsProvider(const AppointmentListConfig(pageSize: 1)),
+  ).value;
+  
+  final inventoryResult = ref.watch(
+    inventoryItemsProvider(const InventoryListConfig(pageSize: 1)),
+  ).value;
+
+  final patientCount = patientsResult?.totalCount ?? 0;
+  final appointmentCount = appointmentsResult?.totalCount ?? 0;
+  final inventoryCount = inventoryResult?.totalCount ?? 0;
 
   final isPremium = userProfile?.isPremium ?? false;
 
@@ -81,16 +86,16 @@ final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
   }
 
   return ClinicUsageState(
-    patientCount: patients.length,
-    appointmentCount: appointments.length,
-    inventoryCount: inventory.length,
+    patientCount: patientCount,
+    appointmentCount: appointmentCount,
+    inventoryCount: inventoryCount,
     daysLeft: daysLeft,
     isPremium: isPremium,
     isCrown: userProfile?.plan == SubscriptionPlan.enterprise ||
         userProfile?.plan == SubscriptionPlan.trial,
     isExpired: daysLeft <= 0,
-    hasReachedPatientLimit: !isPremium && patients.length >= 100,
-    hasReachedAppointmentLimit: !isPremium && appointments.length >= 100,
-    hasReachedInventoryLimit: !isPremium && inventory.length >= 100,
+    hasReachedPatientLimit: !isPremium && patientCount >= 100,
+    hasReachedAppointmentLimit: !isPremium && appointmentCount >= 100,
+    hasReachedInventoryLimit: !isPremium && inventoryCount >= 100,
   );
 });

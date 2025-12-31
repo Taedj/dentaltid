@@ -20,7 +20,7 @@ class EditablePatientField extends ConsumerWidget {
   final String field;
   final String currentValue;
   final Function(Patient, String) onUpdate;
-  final AutoDisposeFutureProviderFamily<List<Patient>, PatientListConfig>
+  final AutoDisposeFutureProviderFamily<PaginatedPatients, PatientListConfig>
   patientsProvider; // Changed type
   final PatientListConfig config; // Re-added this
   final bool isNumeric; // Re-added this

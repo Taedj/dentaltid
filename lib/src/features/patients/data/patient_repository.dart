@@ -1,5 +1,6 @@
 import 'package:dentaltid/src/core/database_service.dart';
 import 'package:dentaltid/src/features/patients/domain/patient.dart';
+import 'package:sqflite/sqflite.dart';
 
 class PatientRepository {
   final DatabaseService _databaseService;
@@ -22,14 +23,18 @@ class PatientRepository {
     ];
   }
 
-  Future<List<Patient>> getPatients([
+  Future<PaginatedPatients> getPatients({
     PatientFilter filter = PatientFilter.all,
-  ]) async {
+    String? searchQuery,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     final db = await _databaseService.database;
     String? where;
     List<dynamic>? whereArgs;
     final now = DateTime.now();
 
+    // 1. Build Filter Clause
     switch (filter) {
       case PatientFilter.today:
         final startOfDay = DateTime(now.year, now.month, now.day);
@@ -74,15 +79,52 @@ class PatientRepository {
         break;
     }
 
+    // 2. Append Search Query if present
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      final searchClause =
+          '(name LIKE ? OR familyName LIKE ? OR phoneNumber LIKE ?)';
+      final searchArgs = ['%$searchQuery%', '%$searchQuery%', '%$searchQuery%'];
+
+      if (where != null) {
+        where = '$where AND $searchClause';
+        whereArgs = [...whereArgs!, ...searchArgs];
+      } else {
+        where = searchClause;
+        whereArgs = searchArgs;
+      }
+    }
+
+    // 3. Get Total Count
+    final countResult = await db.query(
+      _tableName,
+      columns: ['COUNT(*) as count'],
+      where: where,
+      whereArgs: whereArgs,
+    );
+    final totalCount = Sqflite.firstIntValue(countResult) ?? 0;
+
+    // 4. Get Paginated Data
+    final offset = (page - 1) * pageSize;
     final List<Map<String, dynamic>> maps = await db.query(
       _tableName,
       columns: _getColumnsWithDue(),
       where: where,
       whereArgs: whereArgs,
+      limit: pageSize,
+      offset: offset,
+      orderBy: 'createdAt DESC', // Ensure consistent ordering
     );
-    return List.generate(maps.length, (i) {
+
+    final patients = List.generate(maps.length, (i) {
       return Patient.fromJson(maps[i]);
     });
+
+    return PaginatedPatients(
+      patients: patients,
+      totalCount: totalCount,
+      currentPage: page,
+      totalPages: (totalCount / pageSize).ceil(),
+    );
   }
 
   Future<void> updatePatient(Patient patient) async {

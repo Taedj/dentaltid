@@ -8,12 +8,14 @@ class RemoteConfig {
   final String supportPhone;
   final String websiteUrl;
   final String paymentInfoUrl;
+  final Map<String, dynamic> pricing;
 
   RemoteConfig({
     required this.supportEmail,
     required this.supportPhone,
     required this.websiteUrl,
     required this.paymentInfoUrl,
+    this.pricing = const {},
   });
 
   factory RemoteConfig.defaults() {
@@ -22,6 +24,10 @@ class RemoteConfig {
       supportPhone: '+213657293332',
       websiteUrl: 'https://github.com/zitounitidjani', // Placeholder
       paymentInfoUrl: 'https://github.com/zitounitidjani', // Placeholder
+      pricing: const {
+        'DZD': {'monthly': '2000', 'yearly': '20000'},
+        'USD': {'monthly': '15', 'yearly': '150'},
+      },
     );
   }
 
@@ -31,6 +37,7 @@ class RemoteConfig {
       supportPhone: json['support_phone'] ?? '+213657293332',
       websiteUrl: json['website_url'] ?? '',
       paymentInfoUrl: json['payment_info_url'] ?? '',
+      pricing: json['pricing'] ?? const {},
     );
   }
 
@@ -40,6 +47,7 @@ class RemoteConfig {
       'support_phone': supportPhone,
       'website_url': websiteUrl,
       'payment_info_url': paymentInfoUrl,
+      'pricing': pricing,
     };
   }
 }

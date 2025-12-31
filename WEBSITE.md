@@ -75,7 +75,7 @@
 **Title:** Ready to Transform Your Clinic?
 **Subtitle:** Join hundreds of dental professionals who have already upgraded their workflow with DentalTid.
 **Button Label:** Get Started
-Button Link: https://www.tidjanizitouni.com/projects/dentaltid/register
+**Button Link:** /projects/dentaltid/register
 
 ## UI & Styling
 **Hero Title Size:** 96
@@ -85,8 +85,9 @@ Button Link: https://www.tidjanizitouni.com/projects/dentaltid/register
 **Section Spacing:** 177
 **Border Radius:** 38
 **Card Image:** Card.png
-**Hero Image:** cover.png
-**Screenshots Path:** screenshots
+**Hero Image:** cover.mp4
+**Hero Video Width (px):** 1280
+**Hero Video Height (px):** 720
 **Hero Img Scale:** 93
 **Hero Img Offset Y:** 56
 **Hero Img Width:** 100
