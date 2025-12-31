@@ -1,36 +1,66 @@
-# DentalTid - The Modern Operating System for Dental Clinics
+# Website Strategy
 
 ## Hero Section
 **Title:** Elevate Your Practice with DentalTid
 **Subtitle:** A high-performance, offline-first management suite designed specifically for modern dental professionals.
-**CTA Primary:** Download for Windows
-**CTA Secondary:** Explore Features
+**CTA Primary Label:** Download for Windows
+**CTA Primary Link:** https://google.com
+**CTA Secondary Label:** Explore Features
+**CTA Secondary Link:** #features
 
-## Feature Chapters
-
+## Feature Chapters (Visuals support .png/.gif)
 ### Chapter 1: The Unified Patient Hub
 **Description:** Stop hunting for records. DentalTid brings medical history, treatment logs, and clinical alerts into a single, lightning-fast dashboard. It's your clinic's memory, organized perfectly.
 **Visual Hint:** cover.gif
+**Img Width:** 100
+**Img Offset Y:** 0
+**Img Scale:** 100
 
 ### Chapter 2: Precision Financial Intelligence
 **Description:** Real-time tracking of every treatment, expense, and payment. Generate professional financial reports in seconds and gain deep insights into your practice's growth without the complexity of traditional accounting software.
 **Visual Hint:** feature1.png
+**Img Width:** 90
+**Img Offset Y:** -10
+**Img Scale:** 105
 
 ### Chapter 3: Resilience by Design (Offline First)
 **Description:** Your patient data belongs in your clinic, not just on the web. DentalTid works seamlessly offline, ensuring your practice never stops even if the internet does. Local backups and optional cloud sync provide ultimate peace of mind.
 **Visual Hint:** feature2.png
+**Img Width:** 100
+**Img Offset Y:** 10
+**Img Scale:** 100
 
-## Tech Stack
-- **Framework:** Flutter (Windows Desktop)
-- **Backend:** Firebase (Firestore, Auth, Storage)
-- **Database:** SQLite (Offline-First sync)
-- **State:** Riverpod
-- **UI:** Custom 3D Flip Cards & Framer-like animations
 
 ## Demo & Vision
 **Caption:** We believe software should feel invisible, allowing you to focus on what matters most: your patients.
 
-## Final CTA
-**Title:** Ready to transform your clinic?
-**Subtitle:** Join the forward-thinking dentists who use DentalTid to power their daily operations.
+## Tech Stack
+- Framework: Flutter (Windows Desktop)
+- Backend: Firebase (Firestore
+- Auth
+- Storage)
+- Database: SQLite (Offline-First sync)
+- State: Riverpod
+- UI: Custom 3D Flip Cards & Framer-like animations
 
+## Final CTA
+**Title:** Ready to Transform Your Clinic?
+**Subtitle:** Join hundreds of dental professionals who have already upgraded their workflow with DentalTid.
+**Button Label:** Get DentalTid Now
+**Button Link:** https://taedj.dev/dentaltid/buy
+
+## UI & Styling
+**Hero Title Size:** 144
+**Button Padding X:** 64
+**Button Padding Y:** 32
+**Button Text Size:** 35
+**Section Spacing:** 177
+**Border Radius:** 38
+**Card Image:** Card.png
+**Hero Image:** cover.gif
+**Screenshots Path:** screenshots
+**Hero Img Scale:** 93
+**Hero Img Offset Y:** 56
+**Hero Img Width:** 100
+**Brand Logo:** 
+**Hero Background:** 
