@@ -57,9 +57,13 @@ function main() {
   let cardImage = '';
   let heroImage = '';
 
+  console.log('[DEBUG] Custom Screenshots Path:', customScreenshotsPath);
+  console.log('[DEBUG] Resolved Screenshots Dir:', screenshotsDir);
+
   if (fs.existsSync(screenshotsDir)) {
     ensureDirectory(targetAssetsDir);
     const files = fs.readdirSync(screenshotsDir);
+    console.log('[DEBUG] Files found:', files);
 
     files.forEach(file => {
       const src = path.join(screenshotsDir, file);
@@ -67,6 +71,7 @@ function main() {
         const dest = path.join(targetAssetsDir, file);
         if (!fs.existsSync(dest) || fs.statSync(src).mtime > fs.statSync(dest).mtime) {
           fs.copyFileSync(src, dest);
+          console.log('[DEBUG] Copied asset:', file);
         }
       }
     });
@@ -74,8 +79,12 @@ function main() {
     const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
     const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
 
+    console.log('[DEBUG] Selected Hero File:', heroFile);
+
     if (cardFile) cardImage = `/assets/projects/${config.slug}/${path.basename(cardFile)}`;
     if (heroFile) heroImage = `/assets/projects/${config.slug}/${path.basename(heroFile)}`;
+  } else {
+    console.log('[DEBUG] Screenshots directory not found.');
   }
 
   // 2. Parse Content & Styles
