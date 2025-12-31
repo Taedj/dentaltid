@@ -155,14 +155,34 @@ function ensureDirectory(dirPath) {
 function extractValue(content, key, sectionName = null) {
   const lines = content.split('\n');
   let currentSection = '';
+  let collecting = false;
+  let collected = [];
 
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmed = line.trim();
-    if (trimmed.startsWith('## ')) currentSection = trimmed.replace('## ', '').trim();
+
+    if (trimmed.startsWith('## ')) {
+      currentSection = trimmed.replace('## ', '').trim();
+      if (collecting) break; // Stop at next section
+    }
+
     if (sectionName && !currentSection.includes(sectionName)) continue;
-    if (line.includes(key)) return line.split(key)[1].trim();
+
+    if (line.includes(key)) {
+      collecting = true;
+      let firstLineValue = line.split(key)[1].trim();
+      if (firstLineValue) collected.push(firstLineValue);
+      continue;
+    }
+
+    if (collecting) {
+      // Stop if we hit another key or a header
+      if (trimmed.startsWith('**') || trimmed.startsWith('#')) break;
+      if (trimmed) collected.push(trimmed);
+    }
   }
-  return '';
+  return collected.join(' ').trim();
 }
 
 function extractList(content, sectionName) {
@@ -171,9 +191,16 @@ function extractList(content, sectionName) {
   const items = [];
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith('## ') && trimmed.includes(sectionName)) { inSection = true; continue; }
-    if (inSection && trimmed.startsWith('## ') && !trimmed.includes(sectionName)) inSection = false;
-    if (inSection && trimmed.startsWith('- ')) items.push(trimmed.replace('- ', '').trim());
+    if (trimmed.startsWith('## ') && trimmed.toLowerCase().includes(sectionName.toLowerCase())) {
+      inSection = true;
+      continue;
+    }
+    if (inSection && trimmed.startsWith('## ') && !trimmed.toLowerCase().includes(sectionName.toLowerCase())) {
+      inSection = false;
+    }
+    if (inSection && (trimmed.startsWith('- ') || trimmed.startsWith('* '))) {
+      items.push(trimmed.substring(2).trim());
+    }
   }
   return items;
 }
