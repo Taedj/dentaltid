@@ -21,6 +21,7 @@ class MainLayout extends ConsumerStatefulWidget {
 
 class _MainLayoutState extends ConsumerState<MainLayout> {
   UserRole _currentUserRole = UserRole.receptionist; // Default role
+  bool _isDialogShowing = false;
 
   @override
   void initState() {
@@ -100,8 +101,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final location = GoRouterState.of(context).uri.toString();
 
     // Handle Trial Expiration Blocking
-    // ONLY show if expired AND not premium AND NOT already on settings
-    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings')) {
+    // ONLY show if expired AND not premium AND NOT already on settings AND not already showing
+    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings') && !_isDialogShowing) {
+      _isDialogShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           showDialog(
@@ -137,8 +139,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 if (_currentUserRole != UserRole.dentist)
                   TextButton(
                     onPressed: () {
+                      _isDialogShowing = false;
                       SettingsService.instance.remove('managedUserProfile');
                       ref.invalidate(userProfileProvider);
+                      Navigator.pop(context);
                       context.go('/login');
                     },
                     child: Text(l10n.logout),
@@ -146,6 +150,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 else
                   TextButton(
                     onPressed: () {
+                      _isDialogShowing = false;
                       Navigator.pop(context);
                       context.go('/settings');
                     },
