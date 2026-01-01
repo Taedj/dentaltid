@@ -20,6 +20,7 @@ class _DeveloperCodesScreenState extends ConsumerState<DeveloperCodesScreen> {
   int _selectedDurationMonths = 1;
   String? _generatedCode;
   bool _isLoading = false;
+  String _selectedPlanType = 'premium_subscription'; // default
 
   String _generateRandomCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -42,7 +43,7 @@ class _DeveloperCodesScreenState extends ConsumerState<DeveloperCodesScreen> {
           .createActivationCode(
             code: code,
             durationMonths: _selectedDurationMonths,
-            type: 'premium_subscription',
+            type: _selectedPlanType,
           );
 
       setState(() {
@@ -133,6 +134,29 @@ class _DeveloperCodesScreenState extends ConsumerState<DeveloperCodesScreen> {
                               onChanged: (value) {
                                 setState(() {
                                   _selectedDurationMonths = value!;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              initialValue: _selectedPlanType,
+                              decoration: const InputDecoration(
+                                labelText: 'Target Tier',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'premium_subscription',
+                                  child: Text('PREMIUM (Professional)'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'crown_subscription',
+                                  child: Text('CROWN (Enterprise)'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedPlanType = value!;
                                 });
                               },
                             ),

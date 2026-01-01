@@ -539,6 +539,7 @@ class FirebaseService {
 
       final codeDoc = query.docs.first;
       final durationMonths = codeDoc.data()['durationMonths'] as int? ?? 0;
+      final codeType = codeDoc.data()['type'] as String? ?? 'premium_subscription';
 
       if (durationMonths <= 0) {
         _logger.severe('Invalid durationMonths: $durationMonths');
@@ -596,11 +597,14 @@ class FirebaseService {
       });
 
       final newExpiry = currentExpiry.add(Duration(days: 30 * durationMonths));
+      final targetPlan = codeType == 'crown_subscription' 
+          ? SubscriptionPlan.enterprise.toString() 
+          : SubscriptionPlan.professional.toString();
 
       // 4. Update User Profile
       await userParamsRef.update({
         'isPremium': true,
-        'plan': SubscriptionPlan.professional.toString(),
+        'plan': targetPlan,
         'premiumExpiryDate': newExpiry.toIso8601String(),
         'status': SubscriptionStatus.active.toString(),
       });

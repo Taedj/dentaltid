@@ -514,119 +514,48 @@ class _UserAdvancedCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Advanced Subscription Control'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _planOption(
-              ctx,
-              '1 Month Premium',
-              Icons.calendar_view_month,
-              Colors.amberAccent,
-              () {
-                service.updateUserPlan(
-                  user.uid,
-                  plan: SubscriptionPlan.professional,
-                  status: SubscriptionStatus.active,
-                  isPremium: true,
-                  expiryDate: DateTime.now().add(const Duration(days: 30)),
-                );
-              },
-            ),
-            _planOption(
-              ctx,
-              '1 Year Premium',
-              Icons.workspace_premium,
-              Colors.amber,
-              () {
-                service.updateUserPlan(
-                  user.uid,
-                  plan: SubscriptionPlan.professional,
-                  status: SubscriptionStatus.active,
-                  isPremium: true,
-                  expiryDate: DateTime.now().add(const Duration(days: 365)),
-                );
-              },
-            ),
-            _planOption(
-              ctx,
-              'Lifetime Premium',
-              Icons.all_inclusive,
-              Colors.deepOrange,
-              () {
-                service.updateUserPlan(
-                  user.uid,
-                  plan: SubscriptionPlan.professional,
-                  status: SubscriptionStatus.active,
-                  isPremium: true,
-                  expiryDate: null,
-                );
-              },
-            ),
-            const Divider(),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'CROWN TIER',
-                style: TextStyle(fontWeight: FontWeight.bold),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Admin Authority: Access Control'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text('PREMIUM TIER (Professional)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber)),
               ),
-            ),
-            _planOption(
-              ctx,
-              '1 Month CROWN',
-              Icons.diamond_outlined,
-              Colors.cyan,
-              () {
-                service.updateUserPlan(
-                  user.uid,
-                  plan: SubscriptionPlan.enterprise,
-                  status: SubscriptionStatus.active,
-                  isPremium: true,
-                  expiryDate: DateTime.now().add(const Duration(days: 30)),
-                );
-              },
-            ),
-            _planOption(ctx, '1 Year CROWN', Icons.diamond, Colors.blue, () {
-              service.updateUserPlan(
-                user.uid,
-                plan: SubscriptionPlan.enterprise,
-                status: SubscriptionStatus.active,
-                isPremium: true,
-                expiryDate: DateTime.now().add(const Duration(days: 365)),
-              );
-            }),
-            _planOption(
-              ctx,
-              'Lifetime CROWN',
-              Icons.stars,
-              Colors.purpleAccent,
-              () {
-                service.updateUserPlan(
-                  user.uid,
-                  plan: SubscriptionPlan.enterprise,
-                  status: SubscriptionStatus.active,
-                  isPremium: true,
-                  expiryDate: null,
-                );
-              },
-            ),
-            _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
-              service.updateUserPlan(
-                user.uid,
-                plan: SubscriptionPlan.trial,
-                status: SubscriptionStatus.active,
-                isPremium: false,
-              );
-            }),
-            _planOption(ctx, 'Revoke All (Free)', Icons.block, Colors.red, () {
-              service.updateUserPlan(
-                user.uid,
-                plan: SubscriptionPlan.free,
-                status: SubscriptionStatus.active,
-                isPremium: false,
-              );
-            }),
-          ],
+              _planOption(ctx, '1 Month PREMIUM', Icons.calendar_view_month, Colors.amberAccent, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.professional, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 30)));
+              }),
+              _planOption(ctx, '1 Year PREMIUM', Icons.workspace_premium, Colors.amber, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.professional, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 365)));
+              }),
+              _planOption(ctx, 'Lifetime PREMIUM', Icons.all_inclusive, Colors.deepOrange, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.professional, status: SubscriptionStatus.active, isPremium: true, expiryDate: null);
+              }),
+              const Divider(height: 32),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text('CROWN TIER (Enterprise)', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent)),
+              ),
+              _planOption(ctx, '1 Month CROWN', Icons.diamond_outlined, Colors.cyan, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.enterprise, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 30)));
+              }),
+              _planOption(ctx, '1 Year CROWN', Icons.diamond, Colors.blue, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.enterprise, status: SubscriptionStatus.active, isPremium: true, expiryDate: DateTime.now().add(const Duration(days: 365)));
+              }),
+              _planOption(ctx, 'Lifetime CROWN', Icons.stars, Colors.purpleAccent, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.enterprise, status: SubscriptionStatus.active, isPremium: true, expiryDate: null);
+              }),
+              const Divider(height: 32),
+              _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.trial, status: SubscriptionStatus.active, isPremium: false);
+              }),
+              _planOption(ctx, 'Revoke Access (Free)', Icons.block, Colors.red, () {
+                service.updateUserPlan(user.uid, plan: SubscriptionPlan.free, status: SubscriptionStatus.active, isPremium: false);
+              }),
+            ],
+          ),
         ),
       ),
     );
