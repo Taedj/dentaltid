@@ -29,6 +29,14 @@ class PrescriptionRepository {
       'notes': prescription.notes,
       'advice': prescription.advice,
       'qrContent': prescription.qrContent,
+      'showLogo': prescription.showLogo ? 1 : 0,
+      'showNotes': prescription.showNotes ? 1 : 0,
+      'showAllergies': prescription.showAllergies ? 1 : 0,
+      'showAdvice': prescription.showAdvice ? 1 : 0,
+      'showQrCode': prescription.showQrCode ? 1 : 0,
+      'showBranding': prescription.showBranding ? 1 : 0,
+      'showBorders': prescription.showBorders ? 1 : 0,
+      'showEmail': prescription.showEmail ? 1 : 0,
     });
     return prescription.copyWith(id: id);
   }
@@ -56,6 +64,14 @@ class PrescriptionRepository {
         'notes': prescription.notes,
         'advice': prescription.advice,
         'qrContent': prescription.qrContent,
+        'showLogo': prescription.showLogo ? 1 : 0,
+        'showNotes': prescription.showNotes ? 1 : 0,
+        'showAllergies': prescription.showAllergies ? 1 : 0,
+        'showAdvice': prescription.showAdvice ? 1 : 0,
+        'showQrCode': prescription.showQrCode ? 1 : 0,
+        'showBranding': prescription.showBranding ? 1 : 0,
+        'showBorders': prescription.showBorders ? 1 : 0,
+        'showEmail': prescription.showEmail ? 1 : 0,
       },
       where: 'id = ?',
       whereArgs: [prescription.id],
@@ -93,6 +109,14 @@ class PrescriptionRepository {
       notes: map['notes'] as String?,
       advice: map['advice'] as String?,
       qrContent: map['qrContent'] as String?,
+      showLogo: (map['showLogo'] as int?) == 1,
+      showNotes: (map['showNotes'] as int?) == 1,
+      showAllergies: (map['showAllergies'] as int?) == 1,
+      showAdvice: (map['showAdvice'] as int?) == 1,
+      showQrCode: (map['showQrCode'] as int?) == 1,
+      showBranding: (map['showBranding'] as int?) == 1,
+      showBorders: (map['showBorders'] as int?) == 1,
+      showEmail: (map['showEmail'] as int?) == 1,
     );
   }
 
@@ -130,6 +154,14 @@ class PrescriptionRepository {
         notes: map['notes'] as String?,
         advice: map['advice'] as String?,
         qrContent: map['qrContent'] as String?,
+        showLogo: (map['showLogo'] as int?) == 1,
+        showNotes: (map['showNotes'] as int?) == 1,
+        showAllergies: (map['showAllergies'] as int?) == 1,
+        showAdvice: (map['showAdvice'] as int?) == 1,
+        showQrCode: (map['showQrCode'] as int?) == 1,
+        showBranding: (map['showBranding'] as int?) == 1,
+        showBorders: (map['showBorders'] as int?) == 1,
+        showEmail: (map['showEmail'] as int?) == 1,
       );
     });
   }
@@ -168,6 +200,14 @@ class PrescriptionRepository {
         notes: map['notes'] as String?,
         advice: map['advice'] as String?,
         qrContent: map['qrContent'] as String?,
+        showLogo: (map['showLogo'] as int?) == 1,
+        showNotes: (map['showNotes'] as int?) == 1,
+        showAllergies: (map['showAllergies'] as int?) == 1,
+        showAdvice: (map['showAdvice'] as int?) == 1,
+        showQrCode: (map['showQrCode'] as int?) == 1,
+        showBranding: (map['showBranding'] as int?) == 1,
+        showBorders: (map['showBorders'] as int?) == 1,
+        showEmail: (map['showEmail'] as int?) == 1,
       );
     });
   }

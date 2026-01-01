@@ -8,7 +8,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
   static const int _databaseVersion =
-      27; // Added visitId to prescriptions table
+      28; // Added visibility columns to prescriptions table
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -528,14 +528,35 @@ class DatabaseService {
       }
     }
 
-    if (oldVersion < 27) {
+    if (oldVersion < 28) {
       try {
         await db.execute(
-          'ALTER TABLE prescriptions ADD COLUMN visitId INTEGER',
+          'ALTER TABLE prescriptions ADD COLUMN showLogo INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showNotes INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showAllergies INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showAdvice INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showQrCode INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showBranding INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showBorders INTEGER DEFAULT 1',
+        );
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN showEmail INTEGER DEFAULT 1',
         );
       } catch (e, s) {
         developer.log(
-          'Error altering table (prescription visitId column): $e',
+          'Error altering table (prescription visibility columns): $e',
           error: e,
           stackTrace: s,
         );
@@ -735,7 +756,15 @@ class DatabaseService {
           backgroundOpacity REAL DEFAULT 0.2,
           notes TEXT,
           advice TEXT,
-          qrContent TEXT
+          qrContent TEXT,
+          showLogo INTEGER DEFAULT 1,
+          showNotes INTEGER DEFAULT 1,
+          showAllergies INTEGER DEFAULT 1,
+          showAdvice INTEGER DEFAULT 1,
+          showQrCode INTEGER DEFAULT 1,
+          showBranding INTEGER DEFAULT 1,
+          showBorders INTEGER DEFAULT 1,
+          showEmail INTEGER DEFAULT 1
         )
       ''');
     await db.execute('''

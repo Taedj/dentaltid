@@ -5,7 +5,7 @@ This folder contains the visual assets used by the **TAEDJ Protocol** to render 
 ## 🚀 Hero & Brand
 - **`logo.png`**: The brand logo displayed in the top navigation bar. (Recommended: Transparent background).
 - **`cover.png`**: The main high-fidelity mockup shown in the Hero section of the page.
-- **`Card.png`**: The preview image displayed in the project grid on the homepage hub.
+- **`card.png`**: The preview image displayed in the project grid on the homepage hub.
 
 ## 📖 Story Chapters
 Replace these with actual screenshots of your application features:

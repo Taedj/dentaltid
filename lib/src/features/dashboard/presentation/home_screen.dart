@@ -579,7 +579,7 @@ class _DashboardHeader extends ConsumerWidget {
                 : l10n.trialVersionDaysLeft(daysLeft));
 
         final statusColor = isCrown
-            ? Colors.orangeAccent // Crown Gold
+            ? Colors.purpleAccent // Crown Purple
             : (isPremium ? AppColors.success : AppColors.warning);
 
         // Dynamic Greeting

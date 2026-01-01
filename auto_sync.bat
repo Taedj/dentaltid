@@ -14,15 +14,13 @@ if %errorlevel% neq 0 (
 echo [2/3] Committing Project Changes (Spoke)...
 git add CONTROL_WEBSITE\WEBSITE.md CONTROL_WEBSITE\screenshots\*
 git commit -m "Auto-sync: Updated project configuration and content"
-:: Uncomment the next line to enable automatic push
-:: git push origin main
+git push origin main
 
 echo [3/3] Committing Website Changes (Hub)...
 pushd "D:\work\Dev\Websites\My Website\Frontend"
-git add "data\projects.json" "app\projects\*" "public\assets\projects\*"
+git add .
 git commit -m "Auto-sync: Updated projects registry and content from dentaltid"
-:: Uncomment the next line to enable automatic push
-:: git push origin main
+git push origin main
 popd
 
 echo ==========================================

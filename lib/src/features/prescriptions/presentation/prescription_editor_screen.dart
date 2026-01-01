@@ -8,6 +8,7 @@ import 'package:dentaltid/src/features/prescriptions/presentation/prescription_p
 import 'package:dentaltid/src/features/prescriptions/domain/medicine_preset.dart';
 import 'package:dentaltid/src/features/prescriptions/application/medicine_preset_service.dart';
 import 'package:dentaltid/src/features/prescriptions/presentation/widgets/edit_medicine_preset_dialog.dart';
+import 'package:dentaltid/src/features/prescriptions/application/prescription_pdf_helper.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
@@ -139,7 +140,6 @@ class _PrescriptionEditorScreenState
 
   Future<void> _saveLanguage(String lang) async {
     setState(() => _selectedLanguage = lang);
-    await SettingsService.instance.setString('prescription_language', lang);
   }
 
   // Interactive Fields State
@@ -176,10 +176,6 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _notes = result);
-      await SettingsService.instance.setString(
-        'prescription_default_notes',
-        result,
-      );
     }
   }
 
@@ -210,10 +206,6 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _advice = result);
-      await SettingsService.instance.setString(
-        'prescription_default_advice',
-        result,
-      );
     }
   }
 
@@ -241,10 +233,6 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _qrContent = result);
-      await SettingsService.instance.setString(
-        'prescription_qr_content',
-        result,
-      );
     }
   }
 
@@ -281,10 +269,6 @@ class _PrescriptionEditorScreenState
       final securedPath = await _securelyCopyPrescriptionImage(originalPath);
 
       setState(() => _logoPath = securedPath);
-      await SettingsService.instance.setString(
-        'prescription_logo_path',
-        securedPath,
-      );
     }
   }
 
@@ -298,10 +282,6 @@ class _PrescriptionEditorScreenState
         () => _printOptions = _printOptions.copyWith(
           backgroundImagePath: securedPath,
         ),
-      );
-      await SettingsService.instance.setString(
-        'prescription_bg_path',
-        securedPath,
       );
     }
   }
@@ -776,6 +756,49 @@ class _PrescriptionEditorScreenState
     );
 
     try {
+      // Persist these options as defaults for future prescriptions
+      final settings = SettingsService.instance;
+      await settings.setString('prescription_language', _selectedLanguage);
+      if (_printOptions.backgroundImagePath != null) {
+        await settings.setString(
+          'prescription_bg_path',
+          _printOptions.backgroundImagePath!,
+        );
+      } else {
+        await settings.remove('prescription_bg_path');
+      }
+      await settings.setDouble(
+        'prescription_bg_opacity',
+        _printOptions.backgroundOpacity,
+      );
+      await settings.setBool('prescription_show_logo', _printOptions.showLogo);
+      await settings.setBool('prescription_show_notes', _printOptions.showNotes);
+      await settings.setBool(
+        'prescription_show_allergies',
+        _printOptions.showAllergies,
+      );
+      await settings.setBool('prescription_show_advice', _printOptions.showAdvice);
+      await settings.setBool('prescription_show_qr', _printOptions.showQrCode);
+      await settings.setBool(
+        'prescription_show_branding',
+        _printOptions.showBranding,
+      );
+      await settings.setBool('prescription_show_borders', _printOptions.showBorders);
+      await settings.setBool('prescription_show_email', _printOptions.showEmail);
+
+      if (_logoPath != null) {
+        await settings.setString('prescription_logo_path', _logoPath!);
+      }
+      if (_notes != null) {
+        await settings.setString('prescription_default_notes', _notes!);
+      }
+      if (_advice != null) {
+        await settings.setString('prescription_default_advice', _advice!);
+      }
+      if (_qrContent != null) {
+        await settings.setString('prescription_qr_content', _qrContent!);
+      }
+
       if (_existingPrescriptionId != null) {
         await ref
             .read(prescriptionServiceProvider)
@@ -908,23 +931,32 @@ class _PrescriptionEditorScreenState
                   aspectRatio: 1 / 1.414, // A4 aspect ratio
                   child: Card(
                     elevation: 8,
-                    child: PrescriptionTemplate(
-                      prescription: Prescription(
-                        dentistId: widget.userProfile.uid,
-                        patientId: widget.patient.id!,
-                        orderNumber: 1, // Preview number
-                        date: DateTime.now(),
-                        patientName: widget.patient.name,
-                        patientFamilyName: widget.patient.familyName,
-                        patientAge: widget.patient.age,
-                        medicines: List.from(_medicines),
-                        templateId: _selectedTemplate,
-                        notes: _notes,
-                        advice: _advice,
-                        qrContent: _qrContent,
-                      ),
-                      userProfile: widget.userProfile,
-                      templateId: _selectedTemplate,
+                              child: PrescriptionTemplate(
+                                prescription: Prescription(
+                                  dentistId: widget.userProfile.uid,
+                                  patientId: widget.patient.id!,
+                                  orderNumber: 1, // Preview number
+                                  date: DateTime.now(),
+                                  patientName: widget.patient.name,
+                                  patientFamilyName: widget.patient.familyName,
+                                  patientAge: widget.patient.age,
+                                  medicines: List.from(_medicines),
+                                  templateId: _selectedTemplate,
+                                  notes: _notes,
+                                  advice: _advice,
+                                  qrContent: _qrContent,
+                                  backgroundImagePath: _printOptions.backgroundImagePath,
+                                  backgroundOpacity: _printOptions.backgroundOpacity,
+                                  showLogo: _printOptions.showLogo,
+                                  showNotes: _printOptions.showNotes,
+                                  showAllergies: _printOptions.showAllergies,
+                                  showAdvice: _printOptions.showAdvice,
+                                  showQrCode: _printOptions.showQrCode,
+                                  showBranding: _printOptions.showBranding,
+                                  showBorders: _printOptions.showBorders,
+                                  showEmail: _printOptions.showEmail,
+                                ),
+                                userProfile: widget.userProfile,                      templateId: _selectedTemplate,
                       printOptions: _printOptions,
                       language: _selectedLanguage,
                       onEditNotes: _handleEditNotes,
@@ -1085,15 +1117,11 @@ class _PrescriptionEditorScreenState
                     value: _printOptions.backgroundOpacity,
                     min: 0.05,
                     max: 1.0,
-                    onChanged: (v) async {
+                    onChanged: (v) {
                       setState(
                         () => _printOptions = _printOptions.copyWith(
                           backgroundOpacity: v,
                         ),
-                      );
-                      await SettingsService.instance.setDouble(
-                        'prescription_bg_opacity',
-                        v,
                       );
                     },
                   ),
@@ -1115,108 +1143,76 @@ class _PrescriptionEditorScreenState
               FilterChip(
                 label: const Text('Logo'),
                 selected: _printOptions.showLogo,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(showLogo: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_logo',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Notes'),
                 selected: _printOptions.showNotes,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(showNotes: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_notes',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Allergies'),
                 selected: _printOptions.showAllergies,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(
                       showAllergies: v,
                     ),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_allergies',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Advice'),
                 selected: _printOptions.showAdvice,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(showAdvice: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_advice',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Email'),
                 selected: _printOptions.showEmail,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(showEmail: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_email',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('QR Code'),
                 selected: _printOptions.showQrCode,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () => _printOptions = _printOptions.copyWith(showQrCode: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_qr',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Branding'),
                 selected: _printOptions.showBranding,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () =>
                         _printOptions = _printOptions.copyWith(showBranding: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_branding',
-                    v,
                   );
                 },
               ),
               FilterChip(
                 label: const Text('Borders'),
                 selected: _printOptions.showBorders,
-                onSelected: (v) async {
+                onSelected: (v) {
                   setState(
                     () =>
                         _printOptions = _printOptions.copyWith(showBorders: v),
-                  );
-                  await SettingsService.instance.setBool(
-                    'prescription_show_borders',
-                    v,
                   );
                 },
               ),

@@ -68,22 +68,25 @@ function main() {
     files.forEach(file => {
       const src = path.join(screenshotsDir, file);
       if (fs.statSync(src).isFile()) {
-        const dest = path.join(targetAssetsDir, file);
+        const dest = path.join(targetAssetsDir, file.toLowerCase());
         if (!fs.existsSync(dest) || fs.statSync(src).mtime > fs.statSync(dest).mtime) {
           fs.copyFileSync(src, dest);
-          console.log('[DEBUG] Copied asset:', file);
+          console.log(`[INFO] Copied asset (forced lowercase): ${file} -> ${dest}`);
         }
       }
     });
 
-    const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || extractValue(websiteContent, '**Card Image:**', 'UI & Styling') || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
+    const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || extractValue(websiteContent, '**Card Image:**', 'UI & Styling') || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
     const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || extractValue(websiteContent, '**Hero Image:**', 'UI & Styling') || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
 
-    console.log('[DEBUG] Selected Card File:', cardFile);
-    console.log('[DEBUG] Selected Hero File:', heroFile);
-
-    if (cardFile) cardImage = `/assets/projects/${config.slug}/${path.basename(cardFile)}`;
-    if (heroFile) heroImage = `/assets/projects/${config.slug}/${path.basename(heroFile)}`;
+    if (cardFile) {
+      cardImage = `/assets/projects/${config.slug}/${path.basename(cardFile).toLowerCase()}`;
+      console.log(`[INFO] Selected Card Image: ${cardImage}`);
+    }
+    if (heroFile) {
+      heroImage = `/assets/projects/${config.slug}/${path.basename(heroFile).toLowerCase()}`;
+      console.log(`[INFO] Selected Hero Image: ${heroImage}`);
+    }
   } else {
     console.warn('[WARN] Screenshots directory not found at:', screenshotsDir);
   }
@@ -232,7 +235,9 @@ export { auth, db };
   console.log('[OK] Generated/Updated lib/firebase.ts');
 
   // 6. Update projects.json
-  updateProjectsJson(config, heroSubtitle, cardImage || heroImage);
+  const finalCardImage = cardImage || heroImage;
+  console.log(`[INFO] Final Card Image for Registry: ${finalCardImage}`);
+  updateProjectsJson(config, heroSubtitle, finalCardImage);
 
   // 7. Git Automation
   try {
@@ -336,7 +341,10 @@ function updateProjectsJson(config, subtitle, image) {
     lastUpdated: new Date().toISOString(),
     description: subtitle || 'No description',
     image: image || '',
+    thumbnail: image || '',
+    imageUrl: image || '',
   };
+  console.log(`[INFO] Updating projects.json entry for ${config.slug} with image: ${image}`);
   const idx = projectsData.findIndex(p => p.slug === config.slug);
   if (idx >= 0) projectsData[idx] = { ...projectsData[idx], ...entry };
   else projectsData.push(entry);
