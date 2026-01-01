@@ -102,7 +102,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final location = GoRouterState.of(context).uri.toString();
 
     // Handle Trial Expiration Blocking
-    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings') && !_isDialogShowing) {
+    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings') && !_isDialogShowing && _currentUserRole != UserRole.developer) {
       _isDialogShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -395,9 +395,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         route = '/finance';
                       } else if (destinationLabel == l10n.advanced) {
                         // EXPLICIT BLOCK: Only Trial and Enterprise (CROWN) have access.
-                        // Professional (Premium) is blocked.
+                        // Professional (Premium) is blocked. Developers bypass.
                         final plan = userProfile?.plan;
-                        final isAllowed = plan == SubscriptionPlan.trial || plan == SubscriptionPlan.enterprise;
+                        final isAllowed = plan == SubscriptionPlan.trial || 
+                                         plan == SubscriptionPlan.enterprise || 
+                                         _currentUserRole == UserRole.developer;
 
                         if (!isAllowed) {
                           showDialog(
@@ -432,7 +434,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                           route = '/settings';
                         }
                       } else {
-                        // Prevent navigation if expired
+                        // Prevent navigation if expired (Developers bypass)
                         if (usage.isExpired && !usage.isPremium &&
                             _currentUserRole == UserRole.dentist) {
                           return;

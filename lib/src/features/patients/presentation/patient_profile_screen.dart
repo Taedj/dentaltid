@@ -647,8 +647,11 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                             child: ElevatedButton.icon(
                               onPressed: () {
                                 // EXPLICIT BLOCK: Only Trial and Enterprise (CROWN) have access.
+                                // Developers bypass this check.
                                 final plan = userProfile?.plan;
-                                final isAllowed = plan == SubscriptionPlan.trial || plan == SubscriptionPlan.enterprise;
+                                final isAllowed = plan == SubscriptionPlan.trial || 
+                                                 plan == SubscriptionPlan.enterprise || 
+                                                 userProfile?.role == UserRole.developer;
 
                                 if (!isAllowed) {
                                   showDialog(
