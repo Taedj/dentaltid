@@ -10,6 +10,7 @@ import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/features/settings/application/finance_settings_provider.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:dentaltid/src/core/backup_service.dart';
 import 'package:dentaltid/src/features/settings/presentation/network_config_dialog.dart';
 import 'package:dentaltid/src/features/security/presentation/auth_screen.dart';
