@@ -393,9 +393,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       } else if (destinationLabel == l10n.finance) {
                         route = '/finance';
                       } else if (destinationLabel == l10n.advanced) {
-                        // NEW LOGIC: Block if user is Premium but NOT Crown. 
-                        // This allows Trial users (who are not premium yet) and Crown users.
-                        if (usage.isPremium && !usage.isCrown) {
+                        // EXPLICIT BLOCK: Only Trial and Enterprise (CROWN) have access.
+                        // Professional (Premium) is blocked.
+                        final plan = userProfile?.plan;
+                        final isAllowed = plan == SubscriptionPlan.trial || plan == SubscriptionPlan.enterprise;
+
+                        if (!isAllowed) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(

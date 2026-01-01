@@ -646,8 +646,11 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                // Block if user is Premium but NOT Crown.
-                                if (usage.isPremium && !usage.isCrown) {
+                                // EXPLICIT BLOCK: Only Trial and Enterprise (CROWN) have access.
+                                final plan = userProfile?.plan;
+                                final isAllowed = plan == SubscriptionPlan.trial || plan == SubscriptionPlan.enterprise;
+
+                                if (!isAllowed) {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
@@ -687,14 +690,14 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: (!usage.isPremium || usage.isCrown)
+                                backgroundColor: (userProfile?.plan == SubscriptionPlan.trial || userProfile?.plan == SubscriptionPlan.enterprise)
                                     ? colorScheme.secondaryContainer
                                     : Colors.grey.withValues(alpha: 0.2),
-                                foregroundColor: (!usage.isPremium || usage.isCrown)
+                                foregroundColor: (userProfile?.plan == SubscriptionPlan.trial || userProfile?.plan == SubscriptionPlan.enterprise)
                                     ? colorScheme.onSecondaryContainer
                                     : Colors.grey,
                               ),
-                              icon: (!usage.isPremium || usage.isCrown)
+                              icon: (userProfile?.plan == SubscriptionPlan.trial || userProfile?.plan == SubscriptionPlan.enterprise)
                                   ? const SizedBox.shrink()
                                   : const Icon(Icons.lock, size: 16),
                               label: const Text('Prescription'),
