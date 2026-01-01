@@ -97,8 +97,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final usage = ref.watch(clinicUsageProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    final location = GoRouterState.of(context).uri.toString();
+
     // Handle Trial Expiration Blocking
-    if (usage.isExpired && !usage.isPremium) {
+    // ONLY show if expired AND not premium AND NOT already on settings
+    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings')) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           showDialog(
@@ -154,7 +157,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
         }
       });
     }
-    final location = GoRouterState.of(context).uri.toString();
 
     final List<NavigationRailDestination> destinations = [];
 
