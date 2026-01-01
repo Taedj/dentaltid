@@ -95,6 +95,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
+    final userProfile = ref.watch(userProfileProvider).value;
     final usage = ref.watch(clinicUsageProvider);
     final l10n = AppLocalizations.of(context)!;
 
