@@ -384,10 +384,10 @@ class PrescriptionTemplate extends StatelessWidget {
                                 route = 'voie orale';
                               }
 
-                              // Template: [Qty] [Freq] par [Route] pendant [Duration]
+                              // Template: [Freq] par [Route] pendant [Duration]
                               // m.time is used for Duration
                               final posology =
-                                  '${m.quantity} ${m.frequency} par $route pendant ${m.time}';
+                                  '${m.frequency} par $route pendant ${m.time}';
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12.0),

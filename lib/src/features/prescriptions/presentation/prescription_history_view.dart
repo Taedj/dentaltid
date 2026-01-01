@@ -2,6 +2,7 @@ import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/prescriptions/application/prescription_service.dart';
 import 'package:dentaltid/src/features/prescriptions/domain/prescription.dart';
 import 'package:dentaltid/src/features/prescriptions/presentation/prescription_templates.dart';
+import 'package:dentaltid/src/features/prescriptions/application/prescription_pdf_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -169,7 +170,16 @@ class _PrescriptionHistoryViewState
               AppBar(
                 title: Text('Prescription #${p.orderNumber} Preview'),
                 actions: [
-                  IconButton(icon: const Icon(Icons.print), onPressed: () {}),
+                  IconButton(
+                    icon: const Icon(Icons.print),
+                    onPressed: () {
+                      PrescriptionPdfHelper.generateAndPrint(
+                        prescription: p,
+                        userProfile: userProfile,
+                        language: p.language,
+                      );
+                    },
+                  ),
                 ],
               ),
               Expanded(
@@ -185,6 +195,7 @@ class _PrescriptionHistoryViewState
                           userProfile: userProfile,
                           templateId: p.templateId,
                           logoPath: p.logoPath,
+                          language: p.language,
                         ),
                       ),
                     ),

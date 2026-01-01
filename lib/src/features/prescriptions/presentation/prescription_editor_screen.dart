@@ -10,14 +10,10 @@ import 'package:dentaltid/src/features/prescriptions/application/medicine_preset
 import 'package:dentaltid/src/features/prescriptions/presentation/widgets/edit_medicine_preset_dialog.dart';
 import 'package:dentaltid/src/features/prescriptions/application/prescription_pdf_helper.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
-import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:printing/printing.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -112,22 +108,18 @@ class _PrescriptionEditorScreenState
     if (mounted) {
       setState(() {
         if (lang != null) _selectedLanguage = lang;
-        if (bgPath != null) {
-          _printOptions = _printOptions.copyWith(
-            backgroundImagePath: bgPath,
-            backgroundOpacity: bgOpacity ?? 0.2,
-          );
-        }
         _printOptions = _printOptions.copyWith(
-          showLogo: settings.getBool('prescription_show_logo') ?? false,
-          showNotes: settings.getBool('prescription_show_notes') ?? false,
+          backgroundImagePath: bgPath,
+          backgroundOpacity: bgOpacity ?? 0.2,
+          showLogo: settings.getBool('prescription_show_logo') ?? true,
+          showNotes: settings.getBool('prescription_show_notes') ?? true,
           showAllergies:
-              settings.getBool('prescription_show_allergies') ?? false,
-          showAdvice: settings.getBool('prescription_show_advice') ?? false,
-          showQrCode: settings.getBool('prescription_show_qr') ?? false,
-          showBranding: settings.getBool('prescription_show_branding') ?? false,
-          showBorders: settings.getBool('prescription_show_borders') ?? false,
-          showEmail: settings.getBool('prescription_show_email') ?? false,
+              settings.getBool('prescription_show_allergies') ?? true,
+          showAdvice: settings.getBool('prescription_show_advice') ?? true,
+          showQrCode: settings.getBool('prescription_show_qr') ?? true,
+          showBranding: settings.getBool('prescription_show_branding') ?? true,
+          showBorders: settings.getBool('prescription_show_borders') ?? true,
+          showEmail: settings.getBool('prescription_show_email') ?? true,
         );
 
         if (logo != null) _logoPath = logo;
@@ -287,350 +279,39 @@ class _PrescriptionEditorScreenState
   }
 
   Future<void> _handlePrint() async {
-    final pdf = pw.Document();
-
-    // Load fonts and images
-    final font = await PdfGoogleFonts.nunitoRegular();
-    final fontBold = await PdfGoogleFonts.nunitoBold();
-
-    final logoImage = _logoPath != null
-        ? pw.MemoryImage(File(_logoPath!).readAsBytesSync())
-        : null;
-    final bgImage = _printOptions.backgroundImagePath != null
-        ? pw.MemoryImage(
-            File(_printOptions.backgroundImagePath!).readAsBytesSync(),
-          )
-        : null;
-
-    final t = {
-      'fr': {
-        'dr': 'Dr.',
-        'surgeon': 'Chirurgien Dentiste',
-        'city': 'Ville',
-        'on': 'le',
-        'order_no': 'N° d\'ordre',
-        'patient': 'PATIENT',
-        'age': 'Age',
-        'years': 'Ans',
-        'prescription_title': 'ORDONNANCE',
-        'notes': 'NOTES',
-        'advice': 'CONSEILS',
-        'signature': 'Signature & Cachet',
-        'tel': 'Tél',
-      },
-      'en': {
-        'dr': 'Dr.',
-        'surgeon': 'Dental Surgeon',
-        'city': 'City',
-        'on': 'on',
-        'order_no': 'Order No.',
-        'patient': 'PATIENT',
-        'age': 'Age',
-        'years': 'Yrs',
-        'prescription_title': 'PRESCRIPTION',
-        'notes': 'NOTES',
-        'advice': 'ADVICE',
-        'signature': 'Signature & Stamp',
-        'tel': 'Tel',
-      },
-      'ar': {
-        'dr': 'د.',
-        'surgeon': 'جراح أسنان',
-        'city': 'المدينة',
-        'on': 'في',
-        'order_no': 'رقم الترتيب',
-        'patient': 'المريض',
-        'age': 'العمر',
-        'years': 'سنة',
-        'prescription_title': 'وصفة طبية',
-        'notes': 'ملاحظات',
-        'advice': 'نصائح',
-        'signature': 'التوقيع والختم',
-        'tel': 'هاتف',
-      },
-    }[_selectedLanguage]!;
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a5,
-        theme: pw.ThemeData.withFont(base: font, bold: fontBold),
-        build: (pw.Context context) {
-          return pw.FullPage(
-            ignoreMargins: true,
-            child: pw.Stack(
-              children: [
-                // Background
-                if (bgImage != null)
-                  pw.Opacity(
-                    opacity: _printOptions.backgroundOpacity,
-                    child: pw.Center(
-                      child: pw.Image(bgImage, fit: pw.BoxFit.contain),
-                    ),
-                  ),
-                // Content
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(24),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-                    children: [
-                      // Header
-                      pw.Row(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Expanded(
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.start,
-                              children: [
-                                if (_printOptions.showLogo && logoImage != null)
-                                  pw.Container(
-                                    height: 50,
-                                    child: pw.Image(
-                                      logoImage,
-                                      alignment: pw.Alignment.centerLeft,
-                                    ),
-                                  ),
-                                pw.Text(
-                                  (widget.userProfile.clinicName ??
-                                          'Cabinet Dentaire')
-                                      .toUpperCase(),
-                                  style: pw.TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: pw.FontWeight.bold,
-                                  ),
-                                ),
-                                pw.Text(
-                                  widget.userProfile.dentistName ??
-                                      '${t['dr']} Dentist',
-                                  style: pw.TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: pw.FontWeight.bold,
-                                  ),
-                                ),
-                                pw.Text(
-                                  t['surgeon']!,
-                                  style: const pw.TextStyle(fontSize: 8),
-                                ),
-                              ],
-                            ),
-                          ),
-                          pw.Expanded(
-                            child: pw.Column(
-                              crossAxisAlignment: pw.CrossAxisAlignment.end,
-                              children: [
-                                if (_printOptions.showQrCode &&
-                                    _qrContent != null)
-                                  pw.Container(
-                                    width: 40,
-                                    height: 40,
-                                    child: pw.BarcodeWidget(
-                                      barcode: pw.Barcode.qrCode(),
-                                      data: _qrContent!,
-                                    ),
-                                  ),
-                                pw.SizedBox(height: 4),
-                                pw.Text(
-                                  '${t['order_no']}: 1',
-                                  style: pw.TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: pw.FontWeight.bold,
-                                  ),
-                                ),
-                                if (widget.userProfile.phoneNumber != null)
-                                  pw.Text(
-                                    '${t['tel']}: ${widget.userProfile.phoneNumber}',
-                                    style: const pw.TextStyle(fontSize: 8),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      pw.SizedBox(height: 10),
-                      pw.Divider(thickness: 0.5),
-                      pw.SizedBox(height: 5),
-                      // Patient Info
-                      pw.Row(
-                        children: [
-                          pw.Text(
-                            '${t['patient']}: ',
-                            style: pw.TextStyle(
-                              fontSize: 9,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.Text(
-                            '${widget.patient.name} ${widget.patient.familyName}'
-                                .toUpperCase(),
-                            style: pw.TextStyle(
-                              fontSize: 10,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.Spacer(),
-                          pw.Text(
-                            '${t['age']}: ${widget.patient.age} ${t['years']}',
-                            style: pw.TextStyle(
-                              fontSize: 9,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      pw.SizedBox(height: 10),
-                      // Date
-                      pw.Align(
-                        alignment: pw.Alignment.centerRight,
-                        child: pw.Text(
-                          '${widget.userProfile.province ?? ''} ${t['on']} : ${DateFormat('dd / MM / yyyy').format(DateTime.now())}',
-                          style: const pw.TextStyle(fontSize: 9),
-                        ),
-                      ),
-                      pw.SizedBox(height: 15),
-                      // Title
-                      pw.Center(
-                        child: pw.Text(
-                          t['prescription_title']!,
-                          style: pw.TextStyle(
-                            fontSize: 13,
-                            fontWeight: pw.FontWeight.bold,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ),
-                      pw.SizedBox(height: 10),
-                      // Medicines
-                      pw.Expanded(
-                        child: pw.ListView.builder(
-                          itemCount: _medicines.length,
-                          itemBuilder: (pw.Context context, int index) {
-                            final m = _medicines[index];
-                            String route = m.route;
-                            if (_selectedLanguage == 'fr' &&
-                                route.toLowerCase() == 'orally') {
-                              route = 'voie orale';
-                            }
-                            final posology =
-                                '${m.quantity} ${m.frequency} par $route pendant ${m.time}';
-
-                            return pw.Padding(
-                              padding: const pw.EdgeInsets.only(bottom: 10),
-                              child: pw.Column(
-                                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                                children: [
-                                  pw.Row(
-                                    children: [
-                                      pw.Text(
-                                        '• ',
-                                        style: pw.TextStyle(
-                                          fontWeight: pw.FontWeight.bold,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                      pw.Text(
-                                        m.medicineName.toUpperCase(),
-                                        style: pw.TextStyle(
-                                          fontWeight: pw.FontWeight.bold,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  pw.Padding(
-                                    padding: const pw.EdgeInsets.only(
-                                      left: 12,
-                                      top: 2,
-                                    ),
-                                    child: pw.Text(
-                                      posology,
-                                      style: pw.TextStyle(
-                                        fontSize: 9,
-                                        fontStyle: pw.FontStyle.italic,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      // Notes / Advice
-                      if (_printOptions.showNotes && _notes != null) ...[
-                        pw.Text(
-                          '${t['notes']}:',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                            color: PdfColors.red,
-                          ),
-                        ),
-                        pw.Container(
-                          padding: const pw.EdgeInsets.all(4),
-                          decoration: pw.BoxDecoration(
-                            border: pw.Border.all(color: PdfColors.grey300),
-                          ),
-                          child: pw.Text(
-                            _notes!,
-                            style: const pw.TextStyle(fontSize: 8),
-                          ),
-                        ),
-                        pw.SizedBox(height: 5),
-                      ],
-                      if (_printOptions.showAdvice && _advice != null) ...[
-                        pw.Text(
-                          '${t['advice']}:',
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                        pw.Text(
-                          _advice!,
-                          style: pw.TextStyle(
-                            fontSize: 8,
-                            fontStyle: pw.FontStyle.italic,
-                          ),
-                        ),
-                        pw.SizedBox(height: 5),
-                      ],
-                      pw.SizedBox(height: 20),
-                      // Footer
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            widget.userProfile.clinicAddress ?? '',
-                            style: const pw.TextStyle(fontSize: 7),
-                          ),
-                          pw.Column(
-                            children: [
-                              pw.Text(
-                                t['signature']!,
-                                style: const pw.TextStyle(fontSize: 7),
-                              ),
-                              pw.SizedBox(height: 30),
-                              pw.Container(
-                                width: 100,
-                                height: 0.5,
-                                color: PdfColors.black,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+    final prescription = Prescription(
+      id: _existingPrescriptionId,
+      dentistId: widget.userProfile.uid,
+      patientId: widget.patient.id!,
+      visitId: widget.visitId,
+      orderNumber: 1, // Preview number
+      date: DateTime.now(),
+      patientName: widget.patient.name,
+      patientFamilyName: widget.patient.familyName,
+      patientAge: widget.patient.age,
+      medicines: List.from(_medicines),
+      templateId: _selectedTemplate,
+      notes: _notes,
+      advice: _advice,
+      qrContent: _qrContent,
+      logoPath: _logoPath,
+      backgroundImagePath: _printOptions.backgroundImagePath,
+      backgroundOpacity: _printOptions.backgroundOpacity,
+      showLogo: _printOptions.showLogo,
+      showNotes: _printOptions.showNotes,
+      showAllergies: _printOptions.showAllergies,
+      showAdvice: _printOptions.showAdvice,
+      showQrCode: _printOptions.showQrCode,
+      showBranding: _printOptions.showBranding,
+      showBorders: _printOptions.showBorders,
+      showEmail: _printOptions.showEmail,
+      language: _selectedLanguage,
     );
 
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'Prescription_${widget.patient.name}',
+    await PrescriptionPdfHelper.generateAndPrint(
+      prescription: prescription,
+      userProfile: widget.userProfile,
+      language: _selectedLanguage,
     );
   }
 
@@ -753,6 +434,7 @@ class _PrescriptionEditorScreenState
       showBranding: _printOptions.showBranding,
       showBorders: _printOptions.showBorders,
       showEmail: _printOptions.showEmail,
+      language: _selectedLanguage,
     );
 
     try {
@@ -804,15 +486,19 @@ class _PrescriptionEditorScreenState
             .read(prescriptionServiceProvider)
             .updatePrescription(prescription);
       } else {
-        await ref
+        final created = await ref
             .read(prescriptionServiceProvider)
             .createPrescription(prescription);
+        if (mounted) {
+          setState(() {
+            _existingPrescriptionId = created.id;
+          });
+        }
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Prescription saved successfully')),
         );
-        Navigator.of(context).pop();
       }
     } catch (e) {
       if (mounted) {
@@ -952,11 +638,12 @@ class _PrescriptionEditorScreenState
                                   showAllergies: _printOptions.showAllergies,
                                   showAdvice: _printOptions.showAdvice,
                                   showQrCode: _printOptions.showQrCode,
-                                  showBranding: _printOptions.showBranding,
-                                  showBorders: _printOptions.showBorders,
-                                  showEmail: _printOptions.showEmail,
-                                ),
-                                userProfile: widget.userProfile,                      templateId: _selectedTemplate,
+                                                showBranding: _printOptions.showBranding,
+                                                showBorders: _printOptions.showBorders,
+                                                showEmail: _printOptions.showEmail,
+                                                language: _selectedLanguage,
+                                              ),
+                                              userProfile: widget.userProfile,                      templateId: _selectedTemplate,
                       printOptions: _printOptions,
                       language: _selectedLanguage,
                       onEditNotes: _handleEditNotes,

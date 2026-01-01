@@ -27,6 +27,7 @@ class Prescription {
   final bool showBranding;
   final bool showBorders;
   final bool showEmail;
+  final String language;
 
   const Prescription({
     this.id,
@@ -54,6 +55,7 @@ class Prescription {
     this.showBranding = true,
     this.showBorders = true,
     this.showEmail = true,
+    this.language = 'fr',
   });
 
   Map<String, dynamic> toJson() => {
@@ -82,6 +84,7 @@ class Prescription {
     'showBranding': showBranding,
     'showBorders': showBorders,
     'showEmail': showEmail,
+    'language': language,
   };
 
   factory Prescription.fromJson(Map<String, dynamic> json) {
@@ -125,6 +128,7 @@ class Prescription {
       showBranding: json['showBranding'] ?? true,
       showBorders: json['showBorders'] ?? true,
       showEmail: json['showEmail'] ?? true,
+      language: json['language'] ?? 'fr',
     );
   }
 
@@ -154,6 +158,7 @@ class Prescription {
     bool? showBranding,
     bool? showBorders,
     bool? showEmail,
+    String? language,
   }) {
     return Prescription(
       id: id ?? this.id,
@@ -181,6 +186,7 @@ class Prescription {
       showBranding: showBranding ?? this.showBranding,
       showBorders: showBorders ?? this.showBorders,
       showEmail: showEmail ?? this.showEmail,
+      language: language ?? this.language,
     );
   }
 }

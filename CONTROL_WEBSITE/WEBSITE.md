@@ -81,10 +81,10 @@
 **Button Padding X:** 64
 **Button Padding Y:** 32
 **Button Text Size:** 32
-**Section Spacing:** 20
+**Section Spacing:** 10
 **Border Radius:** 32
-**Card Image:** card.png
-**Hero Image:** cover.mp4
+**Card Image:**card.png
+**Hero Image:**cover.mp4
 **Hero Img Scale:** 100
 **Hero Img Offset Y:** 0
 **Hero Img Width:** 100

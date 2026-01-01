@@ -242,10 +242,15 @@ export { auth, db };
   // 7. Git Automation
   try {
     process.chdir(WEBSITE_ROOT);
+    // Ensure we are on main branch
+    execSync('git checkout main');
+    execSync('git pull origin main');
     execSync('git add .');
     execSync(`git commit -m "feat: sync project ${config.slug} with Type-safe Server-Client split"`);
-    execSync('git push');
-  } catch (e) { }
+    execSync('git push origin main');
+  } catch (e) {
+    console.error('Git automation error:', e);
+  }
 
   console.log('\n[SUCCESS] SYNC COMPLETED SUCCESSFULLY');
 }

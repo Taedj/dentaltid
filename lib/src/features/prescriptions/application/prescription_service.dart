@@ -1,4 +1,6 @@
 import 'package:dentaltid/src/core/database_service.dart';
+import 'package:dentaltid/src/core/network/sync_broadcaster.dart';
+import 'package:dentaltid/src/core/network/sync_event.dart';
 import 'package:dentaltid/src/features/prescriptions/data/prescription_repository.dart';
 import 'package:dentaltid/src/features/prescriptions/domain/prescription.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,10 +22,15 @@ final patientPrescriptionsProvider =
 
 class PrescriptionService {
   final PrescriptionRepository _repository;
-  // ignore: unused_field
   final Ref _ref;
 
   PrescriptionService(this._ref, this._repository);
+
+  void _broadcastChange(SyncAction action, Prescription data) {
+    _ref
+        .read(syncBroadcasterProvider)
+        .broadcast(table: 'prescriptions', action: action, data: data.toJson());
+  }
 
   Future<Prescription> createPrescription(Prescription prescription) async {
     // 1. Get the last order number for this dentist
@@ -36,14 +43,14 @@ class PrescriptionService {
     final finalPrescription = prescription.copyWith(orderNumber: nextNumber);
     final created = await _repository.createPrescription(finalPrescription);
 
-    // 3. (Optional) Update UserProfile lastPrescriptionNumber if we want it synced/cached fast
-    // This is handled by the repository being the source of truth for the local DB.
+    _broadcastChange(SyncAction.create, created);
 
     return created;
   }
 
   Future<void> updatePrescription(Prescription prescription) async {
     await _repository.updatePrescription(prescription);
+    _broadcastChange(SyncAction.update, prescription);
   }
 
   Future<Prescription?> getPrescriptionByVisit(int visitId) async {
@@ -60,5 +67,21 @@ class PrescriptionService {
 
   Future<void> deletePrescription(int id) async {
     await _repository.deletePrescription(id);
+    _broadcastChange(SyncAction.delete, Prescription(
+      id: id,
+      dentistId: '',
+      patientId: 0,
+      orderNumber: 0,
+      date: DateTime.now(),
+      patientName: '',
+      patientFamilyName: '',
+      patientAge: 0,
+      medicines: [],
+      templateId: '',
+    ));
+  }
+
+  void notifyDataChanged() {
+    _ref.invalidate(patientPrescriptionsProvider);
   }
 }

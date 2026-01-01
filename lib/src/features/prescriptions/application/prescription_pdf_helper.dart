@@ -250,9 +250,8 @@ class PrescriptionPdfHelper {
                                 route.toLowerCase() == 'orally') {
                               route = 'voie orale';
                             }
-                            final posology = 
-                                '${m.quantity} ${m.frequency} par $route pendant ${m.time}';
-
+                                                        final posology =
+                                                            '${m.frequency} par $route pendant ${m.time}';
                             return pw.Padding(
                               padding: const pw.EdgeInsets.only(bottom: 10),
                               child: pw.Column(

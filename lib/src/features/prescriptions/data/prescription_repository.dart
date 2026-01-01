@@ -37,6 +37,7 @@ class PrescriptionRepository {
       'showBranding': prescription.showBranding ? 1 : 0,
       'showBorders': prescription.showBorders ? 1 : 0,
       'showEmail': prescription.showEmail ? 1 : 0,
+      'language': prescription.language,
     });
     return prescription.copyWith(id: id);
   }
@@ -72,6 +73,7 @@ class PrescriptionRepository {
         'showBranding': prescription.showBranding ? 1 : 0,
         'showBorders': prescription.showBorders ? 1 : 0,
         'showEmail': prescription.showEmail ? 1 : 0,
+        'language': prescription.language,
       },
       where: 'id = ?',
       whereArgs: [prescription.id],
@@ -117,6 +119,7 @@ class PrescriptionRepository {
       showBranding: (map['showBranding'] as int?) == 1,
       showBorders: (map['showBorders'] as int?) == 1,
       showEmail: (map['showEmail'] as int?) == 1,
+      language: map['language'] as String? ?? 'fr',
     );
   }
 
@@ -162,6 +165,7 @@ class PrescriptionRepository {
         showBranding: (map['showBranding'] as int?) == 1,
         showBorders: (map['showBorders'] as int?) == 1,
         showEmail: (map['showEmail'] as int?) == 1,
+        language: map['language'] as String? ?? 'fr',
       );
     });
   }
@@ -208,6 +212,7 @@ class PrescriptionRepository {
         showBranding: (map['showBranding'] as int?) == 1,
         showBorders: (map['showBorders'] as int?) == 1,
         showEmail: (map['showEmail'] as int?) == 1,
+        language: map['language'] as String? ?? 'fr',
       );
     });
   }

@@ -5,6 +5,8 @@ import 'package:dentaltid/src/features/appointments/application/appointment_serv
 import 'package:dentaltid/src/features/finance/application/finance_service.dart';
 import 'package:dentaltid/src/features/inventory/application/inventory_service.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
+import 'package:dentaltid/src/features/prescriptions/application/medicine_preset_service.dart';
+import 'package:dentaltid/src/features/prescriptions/application/prescription_service.dart';
 import 'package:dentaltid/src/features/settings/application/staff_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:logging/logging.dart';
@@ -36,6 +38,8 @@ class SyncService {
         'audit_events',
         'staff_users',
         'managed_users',
+        'prescriptions',
+        'medicine_presets',
       ];
 
       final Map<String, List<Map<String, dynamic>>> allData = {};
@@ -85,6 +89,8 @@ class SyncService {
         'audit_events',
         'staff_users',
         'managed_users',
+        'prescriptions',
+        'medicine_presets',
       ];
 
       await db.transaction((txn) async {
@@ -144,11 +150,14 @@ class SyncService {
     _ref.read(inventoryServiceProvider).notifyDataChanged();
     _ref.read(staffServiceProvider).notifyDataChanged();
     _ref.read(financeServiceProvider).notifyDataChanged();
+    _ref.read(prescriptionServiceProvider).notifyDataChanged();
+    _ref.read(medicinePresetServiceProvider).notifyDataChanged();
 
     _ref.invalidate(patientsProvider);
     _ref.invalidate(inventoryItemsProvider);
     _ref.invalidate(staffListProvider);
     _ref.invalidate(appointmentsProvider);
+    _ref.invalidate(medicinePresetsProvider);
 
     _log.info(
       'Invalidated all data providers via notifyDataChanged and invalidate.',
