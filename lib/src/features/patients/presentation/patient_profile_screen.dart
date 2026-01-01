@@ -650,9 +650,16 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                      title: const Text('CROWN Feature'),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                      title: const Row(
+                                        children: [
+                                          Icon(Icons.description_outlined, color: Colors.blueAccent),
+                                          SizedBox(width: 12),
+                                          Text('CROWN / Trial Feature'),
+                                        ],
+                                      ),
                                       content: const Text(
-                                        'Prescriptions are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                                        'Digital Prescriptions are only available in the CROWN plan or during your 30-day Trial period.\n\nPlease upgrade to access this feature.',
                                       ),
                                       actions: [
                                         TextButton(

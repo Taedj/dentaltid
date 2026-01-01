@@ -394,9 +394,16 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              title: const Text('CROWN Feature'),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.diamond_outlined, color: Colors.purpleAccent),
+                                  SizedBox(width: 12),
+                                  Text('CROWN / Trial Feature'),
+                                ],
+                              ),
                               content: const Text(
-                                'Advanced features are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                                'Advanced insights and analytics are only available in the CROWN plan or during your 30-day Trial period.\n\nPlease upgrade your plan to access this feature.',
                               ),
                               actions: [
                                 TextButton(
