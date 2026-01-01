@@ -25,139 +25,80 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
   @override
   Widget build(BuildContext context) {
     final userProfile = ref.watch(userProfileProvider).value;
+    final remoteConfig = ref.watch(remoteConfigProvider);
     final currentPlan = userProfile?.plan ?? SubscriptionPlan.trial;
-    final isCrown = currentPlan == SubscriptionPlan.enterprise || currentPlan == SubscriptionPlan.trial; 
-    // Note: Trial has Crown features, but is not "subscription" Crown.
-    // Visually we want to distinguish "Active Plan".
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4F8), // Soft background
-      appBar: AppBar(
-        title: Text(
-          'Upgrade Your Practice',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            children: [
-              _buildCurrencySelector(),
-              const SizedBox(height: 24),
-              _buildDurationToggle(),
-              const SizedBox(height: 32),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  // Responsive Layout
-                  if (constraints.maxWidth > 900) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildPlanCard(
-                          context,
-                          'Trial',
-                          'For Evaluation',
-                          Icons.timer_outlined,
-                          Colors.grey,
-                          ['30 Days Access', 'Max 100 Patients', 'Max 100 Appointments', 'Local Backup Only', 'All Features Unlocked'],
-                          isCurrent: currentPlan == SubscriptionPlan.trial,
-                          price: 'Free',
-                        ),
-                        const SizedBox(width: 24),
-                        _buildPlanCard(
-                          context,
-                          'Premium',
-                          'For Standard Clinics',
-                          Icons.star_rounded,
-                          Colors.amber.shade700,
-                          ['Unlimited Duration', 'Unlimited Patients', 'Unlimited Appointments', 'Cloud Sync & Restore', 'Secure Local Backup', 'Standard Support'],
-                          isCurrent: currentPlan == SubscriptionPlan.professional,
-                          isRecommended: true,
-                          price: _getPrice('premium'),
-                        ),
-                        const SizedBox(width: 24),
-                        _buildPlanCard(
-                          context,
-                          'CROWN',
-                          'For Power Users',
-                          Icons.diamond_outlined,
-                          Colors.purple,
-                          ['Everything in Premium', 'Advanced Analytics Tab', 'Digital Prescriptions', 'Priority Support', 'Future AI Features'],
-                          isCurrent: currentPlan == SubscriptionPlan.enterprise,
-                          price: _getPrice('crown'),
-                        ),
-                      ],
-                    );
-                  } else {
-                    return Column(
-                      children: [
-                        _buildPlanCard(
-                          context,
-                          'Premium',
-                          'For Standard Clinics',
-                          Icons.star_rounded,
-                          Colors.amber.shade700,
-                          ['Unlimited Duration', 'Unlimited Patients', 'Unlimited Appointments', 'Cloud Sync & Restore', 'Secure Local Backup', 'Standard Support'],
-                          isCurrent: currentPlan == SubscriptionPlan.professional,
-                          isRecommended: true,
-                          price: _getPrice('premium'),
-                        ),
-                        const SizedBox(height: 24),
-                         _buildPlanCard(
-                          context,
-                          'CROWN',
-                          'For Power Users',
-                          Icons.diamond_outlined,
-                          Colors.purple,
-                          ['Everything in Premium', 'Advanced Analytics Tab', 'Digital Prescriptions', 'Priority Support', 'Future AI Features'],
-                          isCurrent: currentPlan == SubscriptionPlan.enterprise,
-                          price: _getPrice('crown'),
-                        ),
-                         const SizedBox(height: 24),
-                        _buildPlanCard(
-                          context,
-                          'Trial',
-                          'For Evaluation',
-                          Icons.timer_outlined,
-                          Colors.grey,
-                          ['30 Days Access', 'Max 100 Patients', 'Max 100 Appointments', 'Local Backup Only', 'All Features Unlocked'],
-                          isCurrent: currentPlan == SubscriptionPlan.trial,
-                          price: 'Free',
-                        ),
-                      ],
-                    );
-                  }
-                },
+      body: remoteConfig.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (config) => Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            ),
+          ),
+          child: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                title: Text(
+                  'Upgrade Your Practice',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                pinned: true,
               ),
-              const SizedBox(height: 20),
-              TextButton(
-                onPressed: () {
-                  final uid = ref.read(userProfileProvider).value?.uid ?? '';
-                  if (uid.isNotEmpty) {
-                    showDialog(
-                      context: context,
-                      builder:
-                          (context) => ActivationDialog(uid: uid),
-                    );
-                  }
-                },
-                child: Text(
-                  'I already have an activation code',
-                  style: GoogleFonts.poppins(
-                    decoration: TextDecoration.underline,
-                    color: Colors.blue,
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    children: [
+                      _buildCurrencySelector(config),
+                      const SizedBox(height: 24),
+                      _buildDurationToggle(),
+                      const SizedBox(height: 32),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          if (constraints.maxWidth > 900) {
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _buildPlanCard(context, config, 'Premium', 'For Standard Clinics', Icons.star_rounded, Colors.amber.shade700, ['Unlimited Duration', 'Unlimited Patients', 'Cloud Sync & Restore', 'Secure Local Backup'], isCurrent: currentPlan == SubscriptionPlan.professional, isRecommended: true, price: _getPrice('premium', config)),
+                                const SizedBox(width: 24),
+                                _buildPlanCard(context, config, 'CROWN', 'For Power Users', Icons.diamond_outlined, Colors.purple, ['Everything in Premium', 'Advanced Analytics', 'Digital Prescriptions', 'Priority Support'], isCurrent: currentPlan == SubscriptionPlan.enterprise, price: _getPrice('crown', config)),
+                              ],
+                            );
+                          } else {
+                            return Column(
+                              children: [
+                                _buildPlanCard(context, config, 'Premium', 'For Standard Clinics', Icons.star_rounded, Colors.amber.shade700, ['Unlimited Duration', 'Unlimited Patients', 'Cloud Sync & Restore', 'Secure Local Backup'], isCurrent: currentPlan == SubscriptionPlan.professional, isRecommended: true, price: _getPrice('premium', config)),
+                                const SizedBox(height: 24),
+                                _buildPlanCard(context, config, 'CROWN', 'For Power Users', Icons.diamond_outlined, Colors.purple, ['Everything in Premium', 'Advanced Analytics', 'Digital Prescriptions', 'Priority Support'], isCurrent: currentPlan == SubscriptionPlan.enterprise, price: _getPrice('crown', config)),
+                              ],
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextButton(
+                        onPressed: () {
+                          final uid = ref.read(userProfileProvider).value?.uid ?? '';
+                          if (uid.isNotEmpty) {
+                            showDialog(context: context, builder: (context) => ActivationDialog(uid: uid));
+                          }
+                        },
+                        child: Text('I already have an activation code', style: GoogleFonts.poppins(decoration: TextDecoration.underline, color: Colors.blue.shade300)),
+                      ),
+                      const SizedBox(height: 40),
+                      const Text('Need a custom Enterprise solution? Contact us directly.', style: TextStyle(color: Colors.white70)),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              const Text(
-                'Need a custom Enterprise solution? Contact us directly.',
-                style: TextStyle(color: Colors.grey),
               ),
             ],
           ),
@@ -166,20 +107,21 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     );
   }
 
-  String _getPrice(String tier) {
-    final config = ref.read(remoteConfigProvider);
-    final pricing = config.pricing[_selectedCurrency];
-    if (pricing == null) return 'N/A';
+  String _getPrice(String tier, RemoteConfig config) {
+    final pricing = config.pricing;
+    if (pricing.isEmpty || !pricing.containsKey(_selectedCurrency)) return 'N/A';
 
-    final symbol = pricing['symbol'] ?? '';
-    final position = pricing['position'] ?? 'suffix';
-    final plans = pricing['plans'];
+    final currencyConfig = pricing[_selectedCurrency];
+    if (currencyConfig is! Map) return 'N/A';
+
+    final symbol = currencyConfig['symbol'] ?? '';
+    final position = currencyConfig['position'] ?? 'suffix';
+    final plans = currencyConfig['plans'];
     
-    if (plans == null || plans[tier] == null) return 'N/A';
+    if (plans == null || plans is! Map || plans[tier] == null || plans[tier] is! Map || plans[tier][_selectedDuration] == null) return 'N/A';
     
-    final priceValue = plans[tier][_selectedDuration] ?? 'N/A';
+    final priceValue = plans[tier][_selectedDuration];
     
-    // Format: 2,000 DZD /mo or $15 /mo
     String formattedPrice = position == 'prefix' ? '$symbol$priceValue' : '$priceValue $symbol';
     
     if (_selectedDuration == 'monthly') formattedPrice += ' /mo';
@@ -188,29 +130,28 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     return formattedPrice;
   }
 
-  Widget _buildCurrencySelector() {
-    final config = ref.read(remoteConfigProvider);
-    // Get available currencies from config keys, defaulting to ['DZD'] if empty
+  Widget _buildCurrencySelector(RemoteConfig config) {
     final currencies = config.pricing.keys.isNotEmpty ? config.pricing.keys.toList() : ['DZD'];
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: currencies.contains(_selectedCurrency) ? _selectedCurrency : currencies.first,
+          dropdownColor: const Color(0xFF1E293B),
           items: currencies.map((c) => DropdownMenuItem(
             value: c,
-            child: Text(c, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+            child: Text(c, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
           )).toList(),
           onChanged: (val) {
             if (val != null) setState(() => _selectedCurrency = val);
           },
-          icon: const Icon(Icons.currency_exchange, size: 18),
+          icon: const Icon(Icons.currency_exchange, size: 18, color: Colors.white70),
         ),
       ),
     );
@@ -219,18 +160,15 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
   Widget _buildDurationToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.black.withOpacity(0.2),
         borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10),
-        ],
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _toggleButton('Monthly', 'monthly'),
-          _toggleButton('Yearly (Save 17%)', 'yearly'),
+          _toggleButton('Yearly', 'yearly'),
           _toggleButton('Lifetime', 'lifetime'),
         ],
       ),
@@ -245,13 +183,13 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E88E5) : Colors.transparent,
+          color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
         ),
         child: Text(
           label,
           style: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : Colors.black54,
+            color: isSelected ? Colors.white : Colors.white70,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -261,6 +199,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
 
   Widget _buildPlanCard(
     BuildContext context,
+    RemoteConfig config,
     String title,
     String subtitle,
     IconData icon,
@@ -270,6 +209,9 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     bool isRecommended = false,
     required String price,
   }) {
+    // A premium user should be able to upgrade to crown.
+    final canUpgrade = !isCurrent;
+
     return Stack(
       alignment: Alignment.topCenter,
       clipBehavior: Clip.none,
@@ -278,14 +220,14 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
           width: 300,
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: const Color(0xFF1E293B).withOpacity(0.5),
             borderRadius: BorderRadius.circular(24),
             border: isRecommended
                 ? Border.all(color: color, width: 2)
-                : Border.all(color: Colors.transparent),
+                : Border.all(color: Colors.white.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.1),
+                color: color.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -299,7 +241,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Icon(icon, color: color, size: 32),
@@ -314,14 +256,14 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                           style: GoogleFonts.poppins(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Colors.white,
                           ),
                         ),
                         Text(
                           subtitle,
                           style: GoogleFonts.poppins(
                             fontSize: 12,
-                            color: Colors.grey,
+                            color: Colors.white70,
                           ),
                         ),
                       ],
@@ -335,10 +277,10 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                 style: GoogleFonts.poppins(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: Colors.white,
                 ),
               ),
-              const Divider(height: 32),
+              const Divider(height: 32, color: Colors.white12),
               ...features.map((f) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
@@ -348,7 +290,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                         Expanded(
                           child: Text(
                             f,
-                            style: GoogleFonts.poppins(fontSize: 14),
+                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.white.withOpacity(0.9)),
                           ),
                         ),
                       ],
@@ -357,8 +299,27 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                child: isCurrent
-                    ? OutlinedButton(
+                child: canUpgrade
+                    ? ElevatedButton(
+                        onPressed: title == 'Trial' ? null : () => _contactSales(title, price),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: title == 'Trial' ? Colors.grey : color,
+                          disabledBackgroundColor: Colors.grey.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          title == 'Trial' ? 'Free Forever' : 'Subscribe Now',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      )
+                    : OutlinedButton(
                         onPressed: null,
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -370,25 +331,7 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
                           'Current Plan',
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      )
-                    : ElevatedButton(
-                        onPressed: () => _contactSales(title, price),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: color,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          'Subscribe Now',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
+                            color: Colors.white54,
                           ),
                         ),
                       ),

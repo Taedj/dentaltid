@@ -184,6 +184,7 @@ class _PrescriptionHistoryViewState
                           prescription: p,
                           userProfile: userProfile,
                           templateId: p.templateId,
+                          logoPath: p.logoPath,
                         ),
                       ),
                     ),

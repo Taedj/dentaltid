@@ -80,7 +80,6 @@ class LogService {
     // Write to file
     try {
       _fileSink?.writeln(message);
-      _fileSink?.flush(); // Force write to disk immediately
     } catch (e) {
       // ignore: avoid_print
       print('Error writing to log file: $e');

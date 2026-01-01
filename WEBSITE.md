@@ -82,12 +82,12 @@
 **Button Padding X:** 64
 **Button Padding Y:** 32
 **Button Text Size:** 35
-**Section Spacing:** 177
+**Section Spacing:** 50
 **Border Radius:** 38
 **Card Image:** Card.png
 **Hero Image:** cover.mp4
-**Hero Video Width (px):** 1280
-**Hero Video Height (px):** 720
+**Hero Video Width (px):** 1366
+**Hero Video Height (px):** 768
 **Hero Img Scale:** 93
 **Hero Img Offset Y:** 56
 **Hero Img Width:** 100

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dentaltid/src/core/settings_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart'; // Added import
 
 class RemoteConfig {
   final String supportEmail;
@@ -54,42 +55,52 @@ class RemoteConfig {
 
 class RemoteConfigService {
   static const String _configKey = 'remote_app_config';
-  // Default URL - User can change this in Developer settings if needed, but usually hardcoded to a master repo
   static const String _defaultUrl = 'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/155052a4f8a8d5c25be339821cfcfb5ecf08ec56/config.json'; 
 
+  final SettingsService _settingsService;
+  final Logger _log = Logger('RemoteConfig');
+
+  RemoteConfigService() : _settingsService = SettingsService.instance; // Using singleton
+
   Future<void> fetchAndCacheConfig() async {
+    _log.info('Fetching remote config from Gist...');
     try {
-      final customUrl = SettingsService.instance.getString('config_source_url') ?? _defaultUrl;
+      final customUrl = _settingsService.getString('config_source_url') ?? _defaultUrl;
       final response = await http.get(Uri.parse(customUrl));
       
       if (response.statusCode == 200) {
         final data = response.body;
-        // Validate JSON
-        jsonDecode(data); 
-        // Save to cache
-        await SettingsService.instance.setString(_configKey, data);
+        jsonDecode(data); // Validate JSON
+        await _settingsService.setString(_configKey, data);
+        _log.info('Successfully fetched and cached remote config.');
+      } else {
+        _log.warning('Failed to fetch remote config. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      // Fail silently, use cache
-      print('Config fetch failed: $e');
+      _log.severe('Error fetching remote config: $e. Using cached/default values.');
     }
   }
 
   RemoteConfig getConfig() {
-    final cachedData = SettingsService.instance.getString(_configKey);
+    final cachedData = _settingsService.getString(_configKey);
     if (cachedData != null) {
       try {
         final json = jsonDecode(cachedData);
         return RemoteConfig.fromJson(json);
-      } catch (_) {}
+      } catch (_) {
+        _log.severe('Failed to parse cached config. Using defaults.');
+      }
     }
     return RemoteConfig.defaults();
   }
 }
 
-final remoteConfigProvider = Provider<RemoteConfig>((ref) {
-  // We can't watch async fetch here easily without FutureProvider, 
-  // but we want immediate synchronous access for UI.
-  // The fetch happens in background (void).
-  return RemoteConfigService().getConfig();
+final remoteConfigServiceProvider = Provider<RemoteConfigService>((ref) {
+  return RemoteConfigService();
+});
+
+final remoteConfigProvider = FutureProvider<RemoteConfig>((ref) async {
+  final service = ref.watch(remoteConfigServiceProvider);
+  await service.fetchAndCacheConfig();
+  return service.getConfig();
 });

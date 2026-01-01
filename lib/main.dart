@@ -15,6 +15,7 @@ import 'package:dentaltid/firebase_options.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import 'package:dentaltid/src/core/log_service.dart';
+import 'package:dentaltid/src/core/remote_config_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,17 +23,13 @@ void main() async {
   // Setup logging
   final logService = LogService.instance;
   await logService.init();
-
+  
   final log = Logger('Main');
 
   // Catch Flutter Errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    log.severe(
-      'FLUTTER ERROR: ${details.exception}',
-      details.exception,
-      details.stack,
-    );
+    log.severe('FLUTTER ERROR: ${details.exception}', details.exception, details.stack);
   };
 
   // Catch Platform/Dart Errors
@@ -74,8 +71,19 @@ void main() async {
     log.severe('Failed to initialize Settings', e, s);
   }
 
+  log.info('Initializing Remote Config...');
+  try {
+    final remoteConfigService = RemoteConfigService(); // Create an instance
+    await remoteConfigService.fetchAndCacheConfig(); // Fetch and cache
+    log.info('Remote Config initialized successfully.');
+  } catch (e, s) {
+    log.severe('Failed to initialize Remote Config', e, s);
+  }
+
   log.info('Ready to runApp...');
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(
+    child: MyApp(),
+  ));
 }
 
 class MyApp extends ConsumerStatefulWidget {

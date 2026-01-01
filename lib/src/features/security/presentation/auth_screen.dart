@@ -62,6 +62,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   UserType _userType = UserType.dentist;
   bool _isLoading = false;
   bool _acceptTerms = false;
+  bool _isPasswordVisible = false;
 
   bool _rememberMe = false;
   List<String> _savedEmails = [];
@@ -1004,19 +1005,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
             ),
             // DEBUG BUTTON
-            if (kDebugMode)
-              Positioned(
-                bottom: 20,
-                right: 20,
-                child: ElevatedButton(
-                  onPressed: _bypassAuth,
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text(
-                    "DEBUG LOGIN",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
+            // if (kDebugMode)
+            //   Positioned(
+            //     bottom: 20,
+            //     right: 20,
+            //     child: ElevatedButton(
+            //       onPressed: _bypassAuth,
+            //       style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            //       child: const Text(
+            //         "DEBUG LOGIN",
+            //         style: TextStyle(color: Colors.white),
+            //       ),
+            //     ),
+            //   ),
           ],
         ),
       ),
@@ -1160,8 +1161,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           controller: _passwordController,
           label: l10n.password,
           icon: Icons.lock_outline,
-          obscureText: true,
+          obscureText: !_isPasswordVisible,
           focusNode: _passwordFocusNode,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: Colors.white54,
+            ),
+            onPressed: () {
+              setState(() {
+                _isPasswordVisible = !_isPasswordVisible;
+              });
+            },
+          ),
         ),
         if (_authMode == AuthMode.register) ...[
           const SizedBox(height: 8),
@@ -1267,9 +1279,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           controller: _pinController,
           label: l10n.pin4Digits,
           icon: Icons.lock_outline,
-          obscureText: true,
+          obscureText: !_isPasswordVisible,
           keyboardType: TextInputType.number,
           maxLength: 6,
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+              color: Colors.white54,
+            ),
+            onPressed: () {
+              setState(() {
+                _isPasswordVisible = !_isPasswordVisible;
+              });
+            },
+          ),
         ),
       ],
     );
@@ -1283,6 +1306,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     TextInputType? keyboardType,
     int? maxLength,
     FocusNode? focusNode,
+    Widget? suffixIcon,
   }) {
     return TextFormField(
       controller: controller,
@@ -1295,16 +1319,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         labelText: label,
         labelStyle: const TextStyle(color: Colors.white54, fontSize: 13),
         prefixIcon: Icon(icon, color: Colors.white54, size: 20),
+        suffixIcon: suffixIcon,
         filled: true,
         counterText: '',
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: Colors.white.withAlpha(12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: Colors.white.withAlpha(25)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: Colors.white.withAlpha(25)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

@@ -19,6 +19,14 @@ class Prescription {
   final String? logoPath;
   final String? backgroundImagePath;
   final double backgroundOpacity;
+  final bool showLogo;
+  final bool showNotes;
+  final bool showAllergies;
+  final bool showAdvice;
+  final bool showQrCode;
+  final bool showBranding;
+  final bool showBorders;
+  final bool showEmail;
 
   const Prescription({
     this.id,
@@ -38,6 +46,14 @@ class Prescription {
     this.logoPath,
     this.backgroundImagePath,
     this.backgroundOpacity = 0.2,
+    this.showLogo = true,
+    this.showNotes = true,
+    this.showAllergies = true,
+    this.showAdvice = true,
+    this.showQrCode = true,
+    this.showBranding = true,
+    this.showBorders = true,
+    this.showEmail = true,
   });
 
   Map<String, dynamic> toJson() => {
@@ -58,6 +74,14 @@ class Prescription {
         'logoPath': logoPath,
         'backgroundImagePath': backgroundImagePath,
         'backgroundOpacity': backgroundOpacity,
+        'showLogo': showLogo,
+        'showNotes': showNotes,
+        'showAllergies': showAllergies,
+        'showAdvice': showAdvice,
+        'showQrCode': showQrCode,
+        'showBranding': showBranding,
+        'showBorders': showBorders,
+        'showEmail': showEmail,
       };
 
   factory Prescription.fromJson(Map<String, dynamic> json) {
@@ -93,6 +117,14 @@ class Prescription {
       logoPath: json['logoPath'],
       backgroundImagePath: json['backgroundImagePath'],
       backgroundOpacity: (json['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+      showLogo: json['showLogo'] ?? true,
+      showNotes: json['showNotes'] ?? true,
+      showAllergies: json['showAllergies'] ?? true,
+      showAdvice: json['showAdvice'] ?? true,
+      showQrCode: json['showQrCode'] ?? true,
+      showBranding: json['showBranding'] ?? true,
+      showBorders: json['showBorders'] ?? true,
+      showEmail: json['showEmail'] ?? true,
     );
   }
 
@@ -114,6 +146,14 @@ class Prescription {
     String? logoPath,
     String? backgroundImagePath,
     double? backgroundOpacity,
+    bool? showLogo,
+    bool? showNotes,
+    bool? showAllergies,
+    bool? showAdvice,
+    bool? showQrCode,
+    bool? showBranding,
+    bool? showBorders,
+    bool? showEmail,
   }) {
     return Prescription(
       id: id ?? this.id,
@@ -133,6 +173,14 @@ class Prescription {
       logoPath: logoPath ?? this.logoPath,
       backgroundImagePath: backgroundImagePath ?? this.backgroundImagePath,
       backgroundOpacity: backgroundOpacity ?? this.backgroundOpacity,
+      showLogo: showLogo ?? this.showLogo,
+      showNotes: showNotes ?? this.showNotes,
+      showAllergies: showAllergies ?? this.showAllergies,
+      showAdvice: showAdvice ?? this.showAdvice,
+      showQrCode: showQrCode ?? this.showQrCode,
+      showBranding: showBranding ?? this.showBranding,
+      showBorders: showBorders ?? this.showBorders,
+      showEmail: showEmail ?? this.showEmail,
     );
   }
 }

@@ -49,6 +49,7 @@ dependencies:
   printing: ^5.14.2
   pdf: ^3.11.3
   http: ^1.6.0
+  pluto_grid: ^8.1.0
 
 dev_dependencies:
   flutter_test:

@@ -129,25 +129,37 @@ class PrescriptionTemplate extends StatelessWidget {
     final dateStr =
         '$city ${t['on']} : ${DateFormat('dd / MM / yyyy').format(prescription.date)}';
 
+    // Effective Print Options (Priority: Prescription object > printOptions argument)
+    final effectiveShowLogo = prescription.showLogo;
+    final effectiveShowNotes = prescription.showNotes;
+    final effectiveShowAllergies = prescription.showAllergies;
+    final effectiveShowAdvice = prescription.showAdvice;
+    final effectiveShowQrCode = prescription.showQrCode;
+    final effectiveShowBranding = prescription.showBranding;
+    final effectiveShowBorders = prescription.showBorders;
+    final effectiveShowEmail = prescription.showEmail;
+    final effectiveBgPath = prescription.backgroundImagePath;
+    final effectiveBgOpacity = prescription.backgroundOpacity;
+
     return Directionality(
       textDirection: txtDir,
       child: Container(
         width: double.infinity,
         decoration: BoxDecoration(
           color: Colors.white,
-          border: printOptions.showBorders
+          border: effectiveShowBorders
               ? Border.all(color: Colors.black, width: 1.0)
               : null,
         ),
         child: Stack(
           children: [
             // Background Image with Transparency
-            if (printOptions.backgroundImagePath != null)
+            if (effectiveBgPath != null)
               Positioned.fill(
                 child: Opacity(
-                  opacity: printOptions.backgroundOpacity,
+                  opacity: effectiveBgOpacity,
                   child: Image.file(
-                    File(printOptions.backgroundImagePath!),
+                    File(effectiveBgPath),
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -166,7 +178,7 @@ class PrescriptionTemplate extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (printOptions.showLogo) ...[
+                            if (effectiveShowLogo) ...[
                               // Interactive Logo Area
                               InkWell(
                                 onTap: onUploadLogo,
@@ -227,7 +239,7 @@ class PrescriptionTemplate extends StatelessWidget {
                           crossAxisAlignment: colAlignEnd,
                           children: [
                             // Interactive QR Code Area
-                            if (printOptions.showQrCode)
+                            if (effectiveShowQrCode)
                               InkWell(
                                 onTap: onEditQr,
                                 child: Container(
@@ -253,7 +265,7 @@ class PrescriptionTemplate extends StatelessWidget {
                                         ),
                                 ),
                               ),
-                            if (printOptions.showQrCode)
+                            if (effectiveShowQrCode)
                               const SizedBox(height: 4),
 
                             // Order Number
@@ -276,7 +288,7 @@ class PrescriptionTemplate extends StatelessWidget {
                                 textDirection:
                                     flutter_material.TextDirection.ltr,
                               ), // Phone usually LTR
-                            if (printOptions.showEmail &&
+                            if (effectiveShowEmail &&
                                 userProfile.email.isNotEmpty)
                               Text(
                                 userProfile.email,
@@ -439,7 +451,7 @@ class PrescriptionTemplate extends StatelessWidget {
                   ),
 
                   // Optional Sections
-                  if (printOptions.showNotes) ...[
+                  if (effectiveShowNotes) ...[
                     const SizedBox(height: 10),
                     Text(
                       '${t['notes']}:',
@@ -472,7 +484,7 @@ class PrescriptionTemplate extends StatelessWidget {
                     ),
                   ],
 
-                  if (printOptions.showAllergies) ...[
+                  if (effectiveShowAllergies) ...[
                     const SizedBox(height: 8),
                     Text(
                       '${t['allergies']}:',
@@ -502,7 +514,7 @@ class PrescriptionTemplate extends StatelessWidget {
                     ),
                   ],
 
-                  if (printOptions.showAdvice) ...[
+                  if (effectiveShowAdvice) ...[
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: onEditAdvice,
@@ -570,7 +582,7 @@ class PrescriptionTemplate extends StatelessWidget {
                     ],
                   ),
 
-                  if (printOptions.showBranding) ...[
+                  if (effectiveShowBranding) ...[
                     const SizedBox(height: 4),
                     Center(
                       child: Text(
@@ -582,6 +594,7 @@ class PrescriptionTemplate extends StatelessWidget {
                       ),
                     ),
                   ],
+
                 ],
               ),
             ),

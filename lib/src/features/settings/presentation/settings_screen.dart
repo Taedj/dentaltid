@@ -814,21 +814,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Text(l10n.editProfile),
                       ),
                       const SizedBox(height: 10),
-                      if (userProfile != null && !userProfile.isPremium)
+                      if (userProfile != null && userProfile.plan != SubscriptionPlan.enterprise)
                         ElevatedButton.icon(
                           onPressed: () {
                             context.go('/settings/subscription-plans');
                           },
                           icon: const Icon(Icons.star, color: Colors.orange),
-                          label: Text(l10n.activatePremium),
+                          label: Text(l10n.activatePremium), // This now says "Upgrade your plan"
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange.withValues(
-                              alpha: 0.1,
-                            ),
+                            backgroundColor: Colors.orange.withAlpha(30),
                             foregroundColor: Colors.orange,
                           ),
                         ),
-                      if (userProfile != null && !userProfile.isPremium)
+                      if (userProfile != null && userProfile.plan != SubscriptionPlan.enterprise)
                         const SizedBox(height: 10),
                       const SizedBox(height: 10),
 

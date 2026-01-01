@@ -1098,7 +1098,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get trialExpired => 'Trial Expired';
 
   @override
-  String get activatePremium => 'Activate Premium';
+  String get activatePremium => 'Upgrade your plan';
 
   @override
   String get financeSettings => 'Finance Settings';

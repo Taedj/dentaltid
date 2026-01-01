@@ -74,6 +74,14 @@ class _PrescriptionEditorScreenState
         _printOptions = _printOptions.copyWith(
           backgroundImagePath: existing.backgroundImagePath,
           backgroundOpacity: existing.backgroundOpacity,
+          showLogo: existing.showLogo,
+          showNotes: existing.showNotes,
+          showAllergies: existing.showAllergies,
+          showAdvice: existing.showAdvice,
+          showQrCode: existing.showQrCode,
+          showBranding: existing.showBranding,
+          showBorders: existing.showBorders,
+          showEmail: existing.showEmail,
         );
       });
     }
@@ -685,6 +693,14 @@ class _PrescriptionEditorScreenState
       logoPath: _logoPath,
       backgroundImagePath: _printOptions.backgroundImagePath,
       backgroundOpacity: _printOptions.backgroundOpacity,
+      showLogo: _printOptions.showLogo,
+      showNotes: _printOptions.showNotes,
+      showAllergies: _printOptions.showAllergies,
+      showAdvice: _printOptions.showAdvice,
+      showQrCode: _printOptions.showQrCode,
+      showBranding: _printOptions.showBranding,
+      showBorders: _printOptions.showBorders,
+      showEmail: _printOptions.showEmail,
     );
 
     try {

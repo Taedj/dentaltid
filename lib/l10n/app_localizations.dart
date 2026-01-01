@@ -2197,7 +2197,7 @@ abstract class AppLocalizations {
   /// No description provided for @activatePremium.
   ///
   /// In en, this message translates to:
-  /// **'Activate Premium'**
+  /// **'Upgrade your plan'**
   String get activatePremium;
 
   /// No description provided for @financeSettings.
