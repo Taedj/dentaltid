@@ -9,21 +9,21 @@
 **CTA Secondary Link:** #
 
 ## Feature Chapters (Visuals support .png/.gif)
-### Chapter 1: *The Unified DentalT!D Dashboard*
+### Chapter 1: The Unified DentalT!D Dashboard
 **Description:** The Command Center of Your Clinic. Embrace total clarity with a high-fidelity hub that consolidates patient records, clinical alerts, and Today's Appointments into a single, lightning-fast view. Experience zero-latency navigation and professional-grade organization designed to keep your practice moving, whether you're online or off.
 **Visual Hint:** feature1.gif
 **Img Width:** 100
 **Img Offset Y:** 0
 **Img Scale:** 100
 
-### Chapter 2: *The Multi-Dimensional Practice Suite*
+### Chapter 2: The Multi-Dimensional Practice Suite
 **Description:** Effortlessly pivot between every facet of your clinic with a single click. From comprehensive Patient records and dynamic Appointment scheduling to real-time Inventory logistics and granular Financial auditing experience a fluid, integrated workspace that brings your entire studio into one seamless flow*
 **Visual Hint:** feature2.png
 **Img Width:** 100
 **Img Offset Y:** 0
 **Img Scale:** 100
 
-### Chapter 3: *The High-Fidelity Clinical Network*
+### Chapter 3: The High-Fidelity Clinical Network
 **Description:** Master the complexities of modern care with advanced prescription editing and integrated medical imaging. DentalTid bridges the gap between your staff by connecting receptionists, assistants, and dentists to a single, high performance local database for real time teamwork. Bolstered by a dual-shield data strategy featuring instant local backups and secure cloud redundancy your clinic stays synchronized, resilient, and always ready.
 **Visual Hint:** feature3.png
 **Img Width:** 100
