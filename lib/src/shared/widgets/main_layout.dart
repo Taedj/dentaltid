@@ -98,18 +98,40 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     final l10n = AppLocalizations.of(context)!;
 
     // Handle Trial Expiration Blocking
-    if (usage.isExpired) {
-      if (_currentUserRole != UserRole.dentist) {
-        // Staff: Show blocking dialog if not already on login or locked
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                title: Text(l10n.trialExpired),
-                content: Text(l10n.staffActivationNotice),
-                actions: [
+    if (usage.isExpired && !usage.isPremium) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: Row(
+                children: [
+                  const Icon(Icons.timer_off_outlined, color: Colors.redAccent),
+                  const SizedBox(width: 12),
+                  Text(l10n.trialExpired),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _currentUserRole == UserRole.dentist 
+                      ? 'Your 30-day professional evaluation has ended. All clinical data has been safely locked.'
+                      : l10n.staffActivationNotice,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Please upgrade to a Premium or CROWN plan to restore full access to your clinic.',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              actions: [
+                if (_currentUserRole != UserRole.dentist)
                   TextButton(
                     onPressed: () {
                       SettingsService.instance.remove('managedUserProfile');
@@ -117,13 +139,17 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       context.go('/login');
                     },
                     child: Text(l10n.logout),
+                  )
+                else
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('VIEW SETTINGS'),
                   ),
-                ],
-              ),
-            );
-          }
-        });
-      }
+              ],
+            ),
+          );
+        }
+      });
     }
     final location = GoRouterState.of(context).uri.toString();
 
@@ -354,7 +380,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       } else if (destinationLabel == l10n.finance) {
                         route = '/finance';
                       } else if (destinationLabel == l10n.advanced) {
-                        if (!usage.isCrown) {
+                        if (!usage.isCrown && !usage.isTrial) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
@@ -381,7 +407,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         }
                       } else {
                         // Prevent navigation if expired
-                        if (usage.isExpired &&
+                        if (usage.isExpired && !usage.isPremium &&
                             _currentUserRole == UserRole.dentist) {
                           return;
                         }

@@ -646,7 +646,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {
-                                if (!usage.isCrown) {
+                                if (!usage.isCrown && !usage.isTrial) {
                                   showDialog(
                                     context: context,
                                     builder: (context) => AlertDialog(
@@ -679,14 +679,14 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: usage.isCrown
+                                backgroundColor: (usage.isCrown || usage.isTrial)
                                     ? colorScheme.secondaryContainer
                                     : Colors.grey.withValues(alpha: 0.2),
-                                foregroundColor: usage.isCrown
+                                foregroundColor: (usage.isCrown || usage.isTrial)
                                     ? colorScheme.onSecondaryContainer
                                     : Colors.grey,
                               ),
-                              icon: usage.isCrown
+                              icon: (usage.isCrown || usage.isTrial)
                                   ? const SizedBox.shrink()
                                   : const Icon(Icons.lock, size: 16),
                               label: const Text('Prescription'),

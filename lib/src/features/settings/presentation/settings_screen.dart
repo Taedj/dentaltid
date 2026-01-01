@@ -221,7 +221,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: (_isLoading || !isPremium)
-                            ? null
+                            ? () {
+                                if (!isPremium) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Feature Locked: Restore requires a Premium or CROWN plan.'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                }
+                              }
                             : () async {
                                 setState(() {
                                   _isLoading = true;
@@ -397,18 +406,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.1),
+                              color: Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey),
+                              border: Border.all(color: Colors.orange),
                             ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.cloud_off, color: Colors.grey),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(l10n.cloudSyncPremiumNotice),
-                                ),
-                              ],
+                            child: InkWell(
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Feature Locked: Cloud and Backup features require a Premium or CROWN plan.'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              },
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.lock_outline, color: Colors.orange),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Cloud Sync & Backups (Premium or CROWN Required)',
+                                      style: TextStyle(color: Colors.orange.shade200, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
