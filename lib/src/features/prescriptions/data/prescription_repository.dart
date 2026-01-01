@@ -84,9 +84,7 @@ class PrescriptionRepository {
       patientFamilyName: map['patientFamilyName'] as String,
       patientAge: map['patientAge'] as int,
       medicines: (jsonDecode(map['medicines'] as String) as List)
-          .map(
-            (m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>),
-          )
+          .map((m) => PrescriptionMedicine.fromJson(m as Map<String, dynamic>))
           .toList(),
       templateId: map['templateId'] as String,
       logoPath: map['logoPath'] as String?,
@@ -127,7 +125,8 @@ class PrescriptionRepository {
         templateId: map['templateId'] as String,
         logoPath: map['logoPath'] as String?,
         backgroundImagePath: map['backgroundImagePath'] as String?,
-        backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+        backgroundOpacity:
+            (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
         notes: map['notes'] as String?,
         advice: map['advice'] as String?,
         qrContent: map['qrContent'] as String?,
@@ -164,7 +163,8 @@ class PrescriptionRepository {
         templateId: map['templateId'] as String,
         logoPath: map['logoPath'] as String?,
         backgroundImagePath: map['backgroundImagePath'] as String?,
-        backgroundOpacity: (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
+        backgroundOpacity:
+            (map['backgroundOpacity'] as num?)?.toDouble() ?? 0.2,
         notes: map['notes'] as String?,
         advice: map['advice'] as String?,
         qrContent: map['qrContent'] as String?,

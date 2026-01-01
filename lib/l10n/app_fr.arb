@@ -294,6 +294,16 @@
     }
   },
   "premiumExpired": "Premium Expiré",
+  "crownAccount": "Compte Crown",
+  "crownDaysLeft": "Crown : {days} jours restants",
+  "@crownDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "crownExpired": "Crown Expiré",
   "trialVersionDaysLeft": "Version d'essai : {days} jours restants",
   "@trialVersionDaysLeft": {
     "placeholders": {

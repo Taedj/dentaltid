@@ -52,7 +52,9 @@ class FakePathProviderPlatform extends Fake
   }
 
   @override
-  Future<List<String>?> getExternalStoragePaths({StorageDirectory? type}) async {
+  Future<List<String>?> getExternalStoragePaths({
+    StorageDirectory? type,
+  }) async {
     return [tempPath];
   }
 
@@ -118,7 +120,7 @@ void main() {
   late String nanoPixPath;
   late NanoPixSyncService syncService;
   late FakeImagingService fakeImagingService;
-  
+
   setUpAll(() {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -139,8 +141,10 @@ void main() {
     // 3. Create NanoPix Database
     final dbPath = p.join(nanoPixPath, 'database');
     await Directory(dbPath).create();
-    final db = await databaseFactory.openDatabase(p.join(dbPath, 'NanoPix.db3'));
-    
+    final db = await databaseFactory.openDatabase(
+      p.join(dbPath, 'NanoPix.db3'),
+    );
+
     await db.execute('''
       CREATE TABLE Patient (
         pk INTEGER PRIMARY KEY,
@@ -158,9 +162,9 @@ void main() {
       'first_name': 'John',
       'last_name': 'Doe',
       'birthdate': '1980-01-01',
-      'sex': 'Male'
+      'sex': 'Male',
     });
-    
+
     await db.close();
 
     // 4. Create Patient Images
@@ -171,7 +175,9 @@ void main() {
     final thumbPath = p.join(patientFolderPath, 'image1_thumbnail.jpg');
     await File(thumbPath).writeAsString('fake image content');
     // Create an ignored .iosb file
-    await File(p.join(patientFolderPath, 'image1.iosb')).writeAsString('fake iosb content');
+    await File(
+      p.join(patientFolderPath, 'image1.iosb'),
+    ).writeAsString('fake iosb content');
 
     // 5. Setup Riverpod Container with Fakes
     fakeImagingService = FakeImagingService();
@@ -209,12 +215,15 @@ void main() {
     // Verify
     expect(fakeImagingService.savedTags.length, 1);
     // On Windows paths can be tricky, check if it ends with the filename
-    expect(fakeImagingService.savedTags.first.endsWith('image1_thumbnail.jpg'), isTrue);
+    expect(
+      fakeImagingService.savedTags.first.endsWith('image1_thumbnail.jpg'),
+      isTrue,
+    );
   });
-  
+
   test('Sync should skip if NanoPix path is invalid', () async {
     await SettingsService.instance.setString('nanopix_sync_path', '');
     await syncService.sync();
-     expect(fakeImagingService.savedTags.length, 0);
+    expect(fakeImagingService.savedTags.length, 0);
   });
 }

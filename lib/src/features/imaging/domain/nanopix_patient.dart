@@ -23,15 +23,15 @@ class NanoPixPatient extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        patientId,
-        firstName,
-        lastName,
-        birthDate,
-        gender,
-        folderName,
-        createdAt,
-      ];
+    id,
+    patientId,
+    firstName,
+    lastName,
+    birthDate,
+    gender,
+    folderName,
+    createdAt,
+  ];
 
   factory NanoPixPatient.fromMap(Map<String, dynamic> map) {
     // Column names observed in NanoPix.db3: pk, id, first_name, last_name, birthdate, sex, created_datetime

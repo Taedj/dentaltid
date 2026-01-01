@@ -40,7 +40,7 @@ class PatientListConfig extends Equatable {
   });
 
   @override
-  List<Object> get props => [filter, query, page, pageSize];
+  List<Object?> get props => [filter, query, page, pageSize];
 }
 
 final patientsProvider =
@@ -247,7 +247,7 @@ class PatientService {
 
       final trimmedName = patient.name.trim();
       final trimmedFamilyName = patient.familyName.trim();
-      
+
       final patientToUpdate = patient.copyWith(
         name: trimmedName,
         familyName: trimmedFamilyName,
@@ -263,7 +263,9 @@ class PatientService {
       _broadcastChange(SyncAction.update, patientToUpdate);
 
       // Trigger NanoPix export if live sync is on
-      _ref.read(nanoPixSyncServiceProvider).exportPatientToNanoPix(patientToUpdate);
+      _ref
+          .read(nanoPixSyncServiceProvider)
+          .exportPatientToNanoPix(patientToUpdate);
     } catch (e) {
       ErrorHandler.logError(e);
       if (e is ValidationException) rethrow;

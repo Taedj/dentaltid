@@ -47,29 +47,37 @@ class AppointmentListConfig extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [query, status, upcomingOnly, sortOption, page, pageSize];
+  List<Object?> get props => [
+    query,
+    status,
+    upcomingOnly,
+    sortOption,
+    page,
+    pageSize,
+  ];
 }
 
 final appointmentsProvider =
-    FutureProvider.family<PaginatedAppointments, AppointmentListConfig>(
-        (ref, config) async {
-  final service = ref.read(appointmentServiceProvider);
+    FutureProvider.family<PaginatedAppointments, AppointmentListConfig>((
+      ref,
+      config,
+    ) async {
+      final service = ref.read(appointmentServiceProvider);
 
-  final subscription = service.onDataChanged.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => subscription.cancel());
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
 
-  return service.getAppointments(
-    searchQuery: config.query,
-    statusFilter: config.status,
-    upcomingOnly: config.upcomingOnly,
-    sortOption: config.sortOption,
-    page: config.page,
-    pageSize: config.pageSize,
-  );
-});
+      return service.getAppointments(
+        searchQuery: config.query,
+        statusFilter: config.status,
+        upcomingOnly: config.upcomingOnly,
+        sortOption: config.sortOption,
+        page: config.page,
+        pageSize: config.pageSize,
+      );
+    });
 
 final upcomingAppointmentsProvider = FutureProvider<List<Appointment>>((
   ref,

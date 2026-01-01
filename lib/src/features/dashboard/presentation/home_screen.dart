@@ -74,10 +74,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       inventoryItemsProvider(const InventoryListConfig(pageSize: 100)),
     );
     final lowStockItemsAsyncValue = ref.watch(
-      inventoryItemsProvider(const InventoryListConfig(showLowStockOnly: true, pageSize: 1)),
+      inventoryItemsProvider(
+        const InventoryListConfig(showLowStockOnly: true, pageSize: 1),
+      ),
     );
     final expiringItemsAsyncValue = ref.watch(
-      inventoryItemsProvider(const InventoryListConfig(showExpiredOnly: true, pageSize: 1)),
+      inventoryItemsProvider(
+        const InventoryListConfig(showExpiredOnly: true, pageSize: 1),
+      ),
     );
     final l10n = AppLocalizations.of(context)!;
     final userProfile = userProfileAsyncValue.value;
@@ -265,55 +269,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     AppLocalizations l10n, {
     double? height,
   }) {
-    return _FlipCard3D(
-      width: width,
-      height: height ?? width * 1.2,
-      frontTitle: l10n.patients,
-      frontIcon: LucideIcons.users,
-      frontGradient: [
-        AppColors.primary,
-        AppColors.primary.withValues(alpha: 0.7),
-      ],
-      backTitle: l10n.viewDetails,
-      backIcon: LucideIcons.eye,
-      onTap: () => context.go('/patients'),
-      cardType: 'patients',
-      kpiBuilder: () => data.when(
-        data: (p) => Text(
-          l10n.activeStatus(p.totalCount),
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+    return RepaintBoundary(
+      child: _FlipCard3D(
+        width: width,
+        height: height ?? width * 1.2,
+        frontTitle: l10n.patients,
+        frontIcon: LucideIcons.users,
+        frontGradient: [
+          AppColors.primary,
+          AppColors.primary.withValues(alpha: 0.7),
+        ],
+        backTitle: l10n.viewDetails,
+        backIcon: LucideIcons.eye,
+        onTap: () => context.go('/patients'),
+        cardType: 'patients',
+        kpiBuilder: () => data.when(
+          data: (p) => Text(
+            l10n.activeStatus(p.totalCount),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          loading: () => const SizedBox(),
+          error: (_, _) => const SizedBox(),
         ),
-        loading: () => const SizedBox(),
-        error: (_, _) => const SizedBox(),
-      ),
-      content: data.when(
-        data: (paginated) => Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.todayCount(paginated.totalCount),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24, // Bold Number
-                fontWeight: FontWeight.bold,
+        content: data.when(
+          data: (paginated) => Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.todayCount(paginated.totalCount),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24, // Bold Number
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              l10n.scheduledVisits,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.8),
-                fontSize: 14,
+              Text(
+                l10n.scheduledVisits,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 14,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          loading: () => const CircularProgressIndicator(color: Colors.white),
+          error: (e, s) =>
+              const Icon(LucideIcons.alertCircle, color: Colors.white),
         ),
-        loading: () => const CircularProgressIndicator(color: Colors.white),
-        error: (e, s) =>
-            const Icon(LucideIcons.alertCircle, color: Colors.white),
       ),
     );
   }
@@ -329,77 +335,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final lowStockCount = lowStockData.value?.totalCount ?? 0;
     final expiringSoonCount = expiringData.value?.totalCount ?? 0;
 
-    return _FlipCard3D(
-      width: width,
-      height: height ?? width * 1.2,
-      frontTitle: l10n.criticalAlerts,
-      frontIcon: LucideIcons.alertTriangle,
-      frontGradient: (lowStockCount > 0 || expiringSoonCount > 0)
-          ? [AppColors.warning, AppColors.error]
-          : [AppColors.success, const Color(0xFF27AE60)],
-      backTitle: l10n.viewCritical,
-      backIcon: LucideIcons.alertOctagon,
-      onTap: () => context.go('/inventory'),
-      cardType: 'emergency',
-      kpiBuilder: () => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          Text(
-            l10n.expiringLabel(expiringSoonCount),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+    return RepaintBoundary(
+      child: _FlipCard3D(
+        width: width,
+        height: height ?? width * 1.2,
+        frontTitle: l10n.criticalAlerts,
+        frontIcon: LucideIcons.alertTriangle,
+        frontGradient: (lowStockCount > 0 || expiringSoonCount > 0)
+            ? [AppColors.warning, AppColors.error]
+            : [AppColors.success, const Color(0xFF27AE60)],
+        backTitle: l10n.viewCritical,
+        backIcon: LucideIcons.alertOctagon,
+        onTap: () => context.go('/inventory'),
+        cardType: 'emergency',
+        kpiBuilder: () => Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Text(
+              l10n.expiringLabel(expiringSoonCount),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
-          ),
-          Container(width: 1, height: 12, color: Colors.white54),
-          Text(
-            l10n.lowStockLabelText(lowStockCount),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
+            Container(width: 1, height: 12, color: Colors.white54),
+            Text(
+              l10n.lowStockLabelText(lowStockCount),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
-      ),
-      content: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (expiringSoonCount > 0 || lowStockCount > 0) ...[
-                Text(
-                  "${expiringSoonCount + lowStockCount}",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  l10n.actionNeeded,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
-                  ),
-                ),
-              ] else ...[
-                const Icon(
-                  LucideIcons.checkCircle,
+          ],
+        ),
+        content: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (expiringSoonCount > 0 || lowStockCount > 0) ...[
+              Text(
+                "${expiringSoonCount + lowStockCount}",
+                style: const TextStyle(
                   color: Colors.white,
-                  size: 32,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.allGood,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
+              ),
+              Text(
+                l10n.actionNeeded,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 14,
                 ),
-              ],
+              ),
+            ] else ...[
+              const Icon(LucideIcons.checkCircle, color: Colors.white, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                l10n.allGood,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
-          ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -408,116 +412,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     AppLocalizations l10n, {
     double? height,
   }) {
-    return _FlipCard3D(
-      width: width,
-      height: height ?? width * 1.2,
-      frontTitle: l10n.todaysAppointmentsFlow,
-      frontIcon: LucideIcons.clock,
-      frontGradient: [
-        AppColors.secondary,
-        AppColors.secondary.withValues(alpha: 0.7),
-      ],
-      backTitle: l10n.viewAppointments,
-      backIcon: LucideIcons.calendar,
-      onTap: () => context.go('/appointments'),
-      cardType: 'appointments',
-      kpiBuilder: () => Consumer(
-        builder: (ctx, ref, _) {
-          final apps =
-              ref.watch(todaysAppointmentsProvider).asData?.value ?? [];
-          final emergencies =
-              ref.watch(todaysEmergencyAppointmentsProvider).asData?.value ??
-              [];
-          final waiting = apps
-              .where((a) => a.status == AppointmentStatus.waiting)
-              .length;
+    return RepaintBoundary(
+      child: _FlipCard3D(
+        width: width,
+        height: height ?? width * 1.2,
+        frontTitle: l10n.todaysAppointmentsFlow,
+        frontIcon: LucideIcons.clock,
+        frontGradient: [
+          AppColors.secondary,
+          AppColors.secondary.withValues(alpha: 0.7),
+        ],
+        backTitle: l10n.viewAppointments,
+        backIcon: LucideIcons.calendar,
+        onTap: () => context.go('/appointments'),
+        cardType: 'appointments',
+        kpiBuilder: () => Consumer(
+          builder: (ctx, ref, _) {
+            final apps =
+                ref.watch(todaysAppointmentsProvider).asData?.value ?? [];
+            final emergencies =
+                ref.watch(todaysEmergencyAppointmentsProvider).asData?.value ??
+                [];
+            final waiting = apps
+                .where((a) => a.status == AppointmentStatus.waiting)
+                .length;
 
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text(
-                '$waiting Waiting',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                ),
-              ),
-              if (emergencies.isNotEmpty) ...[
-                Container(width: 1, height: 12, color: Colors.white54),
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
                 Text(
-                      l10n.emergencyCountLabel(emergencies.length),
-                      style: const TextStyle(
-                        color: AppColors.highlight,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat())
-                    .shimmer(duration: 1200.ms, color: Colors.white24)
-                    .scale(
-                      begin: const Offset(1, 1),
-                      end: const Offset(1.1, 1.1),
-                      duration: 600.ms,
-                    ),
-              ],
-            ],
-          );
-        },
-      ),
-      content: Consumer(
-        builder: (context, ref, child) {
-          final todaysAppointmentsAsync = ref.watch(todaysAppointmentsProvider);
-          return todaysAppointmentsAsync.when(
-            data: (appointments) {
-              final inProgress = appointments
-                  .where((a) => a.status == AppointmentStatus.inProgress)
-                  .length;
-              final completed = appointments
-                  .where((a) => a.status == AppointmentStatus.completed)
-                  .length;
-
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                  '$waiting Waiting',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+                if (emergencies.isNotEmpty) ...[
+                  Container(width: 1, height: 12, color: Colors.white54),
                   Text(
-                    "${appointments.length}",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    l10n.periodToday, // Total Today
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      _buildMiniStatusDot(
-                        Colors.white,
-                        l10n.activeStatus(inProgress),
+                        l10n.emergencyCountLabel(emergencies.length),
+                        style: const TextStyle(
+                          color: AppColors.highlight,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      )
+                      .animate(onPlay: (c) => c.repeat())
+                      .shimmer(duration: 1200.ms, color: Colors.white24)
+                      .scale(
+                        begin: const Offset(1, 1),
+                        end: const Offset(1.1, 1.1),
+                        duration: 600.ms,
                       ),
-                      const SizedBox(width: 8),
-                      _buildMiniStatusDot(
-                        Colors.white70,
-                        l10n.doneStatus(completed),
-                      ),
-                    ],
-                  ),
                 ],
-              );
-            },
-            loading: () => const CircularProgressIndicator(color: Colors.white),
-            error: (_, _) =>
-                const Icon(LucideIcons.alertCircle, color: Colors.white),
-          );
-        },
+              ],
+            );
+          },
+        ),
+        content: Consumer(
+          builder: (context, ref, child) {
+            final todaysAppointmentsAsync = ref.watch(todaysAppointmentsProvider);
+            return todaysAppointmentsAsync.when(
+              data: (appointments) {
+                final inProgress = appointments
+                    .where((a) => a.status == AppointmentStatus.inProgress)
+                    .length;
+                final completed = appointments
+                    .where((a) => a.status == AppointmentStatus.completed)
+                    .length;
+
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${appointments.length}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      l10n.periodToday, // Total Today
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        _buildMiniStatusDot(
+                          Colors.white,
+                          l10n.activeStatus(inProgress),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildMiniStatusDot(
+                          Colors.white70,
+                          l10n.doneStatus(completed),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+              loading: () => const CircularProgressIndicator(color: Colors.white),
+              error: (_, _) =>
+                  const Icon(LucideIcons.alertCircle, color: Colors.white),
+            );
+          },
+        ),
       ),
     );
   }
@@ -562,12 +568,19 @@ class _DashboardHeader extends ConsumerWidget {
         final greetingPrefix = isDentist ? 'Dr. ' : '';
 
         // Subscription Status Logic
+        final isCrown = usage.isCrown;
         final isPremium = usage.isPremium;
         final daysLeft = usage.daysLeft;
-        final statusText = isPremium
-            ? l10n.premiumDaysLeft(daysLeft)
-            : l10n.trialVersionDaysLeft(daysLeft);
-        final statusColor = isPremium ? AppColors.success : AppColors.warning;
+
+        final statusText = isCrown
+            ? l10n.crownDaysLeft(daysLeft)
+            : (isPremium
+                ? l10n.premiumDaysLeft(daysLeft)
+                : l10n.trialVersionDaysLeft(daysLeft));
+
+        final statusColor = isCrown
+            ? Colors.orangeAccent // Crown Gold
+            : (isPremium ? AppColors.success : AppColors.warning);
 
         // Dynamic Greeting
         final hour = DateTime.now().hour;
@@ -1032,7 +1045,9 @@ class _FlipCard3DState extends ConsumerState<_FlipCard3D>
     } else if (widget.cardType == 'emergency') {
       return Consumer(
         builder: (ctx, ref, _) {
-          final itemsAsyncValue = ref.watch(inventoryItemsProvider(const InventoryListConfig()));
+          final itemsAsyncValue = ref.watch(
+            inventoryItemsProvider(const InventoryListConfig()),
+          );
           final items = itemsAsyncValue.value?.items ?? [];
           final now = DateTime.now();
 

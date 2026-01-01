@@ -23,13 +23,17 @@ void main() async {
   // Setup logging
   final logService = LogService.instance;
   await logService.init();
-  
+
   final log = Logger('Main');
 
   // Catch Flutter Errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    log.severe('FLUTTER ERROR: ${details.exception}', details.exception, details.stack);
+    log.severe(
+      'FLUTTER ERROR: ${details.exception}',
+      details.exception,
+      details.stack,
+    );
   };
 
   // Catch Platform/Dart Errors
@@ -81,9 +85,7 @@ void main() async {
   }
 
   log.info('Ready to runApp...');
-  runApp(const ProviderScope(
-    child: MyApp(),
-  ));
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerStatefulWidget {

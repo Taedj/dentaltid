@@ -2182,6 +2182,24 @@ abstract class AppLocalizations {
   /// **'Premium Expired'**
   String get premiumExpired;
 
+  /// No description provided for @crownAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Crown Account'**
+  String get crownAccount;
+
+  /// No description provided for @crownDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'Crown: {days} days left'**
+  String crownDaysLeft(int days);
+
+  /// No description provided for @crownExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Crown Expired'**
+  String get crownExpired;
+
   /// No description provided for @trialVersionDaysLeft.
   ///
   /// In en, this message translates to:

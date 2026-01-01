@@ -85,7 +85,7 @@ class SettingsService {
   String? getString(String key) => _settings[key] as String?;
   bool? getBool(String key) => _settings[key] as bool?;
   int? getInt(String key) => _settings[key] as int?;
-  double? getDouble(String key) => _settings[key] as double?;
+  double? getDouble(String key) => (_settings[key] as num?)?.toDouble();
   List<String>? getStringList(String key) =>
       (_settings[key] as List?)?.map((e) => e.toString()).toList();
 

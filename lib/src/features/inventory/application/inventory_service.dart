@@ -42,30 +42,38 @@ class InventoryListConfig extends Equatable {
   });
 
   @override
-  List<Object?> get props =>
-      [query, sortOption, showExpiredOnly, showLowStockOnly, page, pageSize];
+  List<Object?> get props => [
+    query,
+    sortOption,
+    showExpiredOnly,
+    showLowStockOnly,
+    page,
+    pageSize,
+  ];
 }
 
 final inventoryItemsProvider =
-    FutureProvider.family<PaginatedInventoryItems, InventoryListConfig>(
-        (ref, config) async {
-  final service = ref.read(inventoryServiceProvider);
+    FutureProvider.family<PaginatedInventoryItems, InventoryListConfig>((
+      ref,
+      config,
+    ) async {
+      final service = ref.read(inventoryServiceProvider);
 
-  // Still react to generic changes but config-specific
-  final subscription = service.onDataChanged.listen((_) {
-    ref.invalidateSelf();
-  });
-  ref.onDispose(() => subscription.cancel());
+      // Still react to generic changes but config-specific
+      final subscription = service.onDataChanged.listen((_) {
+        ref.invalidateSelf();
+      });
+      ref.onDispose(() => subscription.cancel());
 
-  return service.getInventoryItems(
-    searchQuery: config.query,
-    sortOption: config.sortOption,
-    showExpiredOnly: config.showExpiredOnly,
-    showLowStockOnly: config.showLowStockOnly,
-    page: config.page,
-    pageSize: config.pageSize,
-  );
-});
+      return service.getInventoryItems(
+        searchQuery: config.query,
+        sortOption: config.sortOption,
+        showExpiredOnly: config.showExpiredOnly,
+        showLowStockOnly: config.showLowStockOnly,
+        page: config.page,
+        pageSize: config.pageSize,
+      );
+    });
 
 class InventoryService {
   final InventoryRepository _repository;

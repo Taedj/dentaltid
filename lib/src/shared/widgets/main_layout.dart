@@ -32,7 +32,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
     await SettingsService.instance.init();
     // Initialize Remote Config in background (fire and forget)
     RemoteConfigService().fetchAndCacheConfig();
-    
+
     final roleString = SettingsService.instance.getString('userRole');
     if (roleString != null) {
       if (mounted) {
@@ -294,30 +294,31 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                     ),
                   ],
                 ),
-                child: NavigationRail(
-                  leading: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 20.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surface,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Image.asset(
-                        'assets/images/DT!d.png',
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.contain,
+                child: RepaintBoundary(
+                  child: NavigationRail(
+                    leading: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surface,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Image.asset(
+                          'assets/images/DT!d.png',
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
-                  ),
                   selectedIndex: selectedIndex,
                   onDestinationSelected: (int index) {
                     String route = '/'; // Default
@@ -356,19 +357,18 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                         if (!usage.isCrown) {
                           showDialog(
                             context: context,
-                            builder:
-                                (context) => AlertDialog(
-                                  title: const Text('CROWN Feature'),
-                                  content: const Text(
-                                    'Advanced features are only available in the CROWN plan.\nPlease upgrade to access this feature.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text(l10n.okButton),
-                                    ),
-                                  ],
+                            builder: (context) => AlertDialog(
+                              title: const Text('CROWN Feature'),
+                              content: const Text(
+                                'Advanced features are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: Text(l10n.okButton),
                                 ),
+                              ],
+                            ),
                           );
                           return;
                         }
@@ -416,27 +416,30 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   ),
                   minWidth: 80,
                   groupAlignment: 0.0,
-                  destinations: destinations.map((destination) {
-                    return NavigationRailDestination(
-                      icon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Colors.transparent,
+                    destinations: destinations.map((destination) {
+                      return NavigationRailDestination(
+                        icon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.transparent,
+                          ),
+                          child: destination.icon,
                         ),
-                        child: destination.icon,
-                      ),
-                      selectedIcon: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                        selectedIcon: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
+                          ),
+                          child: destination.selectedIcon,
                         ),
-                        child: destination.selectedIcon,
-                      ),
-                      label: destination.label,
-                    );
-                  }).toList(),
+                        label: destination.label,
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               Container(
@@ -453,7 +456,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                 ),
               ),
               // Main Content Area
-              Expanded(child: widget.child),
+              Expanded(child: RepaintBoundary(child: widget.child)),
             ],
           ),
           if (location == '/')

@@ -6,8 +6,8 @@ const { execSync } = require('child_process');
 const APP_ROOT = process.cwd();
 const WEBSITE_ROOT = 'D:\\work\\Dev\\Websites\\My Website\\Frontend';
 
-const CONFIG_PATH = path.join(APP_ROOT, 'product.config.json');
-const WEBSITE_MD_PATH = path.join(APP_ROOT, 'WEBSITE.md');
+const CONFIG_PATH = path.join(APP_ROOT, 'CONTROL_WEBSITE', 'product.config.json');
+const WEBSITE_MD_PATH = path.join(APP_ROOT, 'CONTROL_WEBSITE', 'WEBSITE.md');
 const PROJECTS_JSON_PATH = path.join(WEBSITE_ROOT, 'data', 'projects.json');
 const PUBLIC_ASSETS_PATH = path.join(WEBSITE_ROOT, 'public', 'assets', 'projects');
 const APP_PAGES_PATH = path.join(WEBSITE_ROOT, 'app', 'projects');
@@ -76,19 +76,20 @@ function main() {
       }
     });
 
-    const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
-    const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
+    const cardFile = readControlFile('3_DESIGN_STUDIO/CARD_IMAGE.txt', null) || extractValue(websiteContent, '**Card Image:**', 'UI & Styling') || files.find(f => f.startsWith('card')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif)$/i.test(f));
+    const heroFile = readControlFile('3_DESIGN_STUDIO/HERO_IMAGE.txt', null) || extractValue(websiteContent, '**Hero Image:**', 'UI & Styling') || files.find(f => f.startsWith('hero')) || files.find(f => f.startsWith('cover')) || files.find(f => /\.(png|jpg|jpeg|webp|gif|mp4|webm)$/i.test(f));
 
+    console.log('[DEBUG] Selected Card File:', cardFile);
     console.log('[DEBUG] Selected Hero File:', heroFile);
 
     if (cardFile) cardImage = `/assets/projects/${config.slug}/${path.basename(cardFile)}`;
     if (heroFile) heroImage = `/assets/projects/${config.slug}/${path.basename(heroFile)}`;
   } else {
-    console.log('[DEBUG] Screenshots directory not found.');
+    console.warn('[WARN] Screenshots directory not found at:', screenshotsDir);
   }
 
   // 2. Parse Content & Styles
-  const chapters = parseChapters();
+  const chapters = parseChapters(websiteContent);
   const pricing = parsePricing(websiteContent);
   const heroTitle = readControlFile('1_HERO_AND_HEADER/TITLE.txt', extractValue(websiteContent, '**Title:**', 'Hero Section'));
   const heroSubtitle = readControlFile('1_HERO_AND_HEADER/SUBTITLE.txt', extractValue(websiteContent, '**Subtitle:**', 'Hero Section'));
@@ -103,17 +104,17 @@ function main() {
   const finalCTAButtonLink = readControlFile('4_FINAL_CONVERSION/BUTTON_LINK.txt', extractValue(websiteContent, '**Button Link:**', 'Final CTA') || '#');
 
   const styles = {
-    heroTitleSize: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_FONT_SIZE_PX.txt', '120')) || 120,
-    buttonPaddingX: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_PADDING_X_PX.txt', '64')) || 64,
-    buttonPaddingY: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_PADDING_Y_PX.txt', '32')) || 32,
-    buttonTextSize: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_TEXT_SIZE_PX.txt', '32')) || 32,
-    sectionSpacing: parseInt(readControlFile('3_DESIGN_STUDIO/SECTION_SPACING_PX.txt', '160')) || 160,
-    borderRadius: parseInt(readControlFile('3_DESIGN_STUDIO/CORNER_ROUNDNESS_PX.txt', '32')) || 32,
-    brandLogo: readControlFile('3_DESIGN_STUDIO/BRAND_LOGO.txt', ''),
-    heroBackground: readControlFile('3_DESIGN_STUDIO/HERO_BACKGROUND.txt', ''),
-    heroImgWidth: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_WIDTH.txt', '100')) || 100,
-    heroImgOffsetY: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_OFFSET_Y.txt', '0')) || 0,
-    heroImgScale: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_SCALE.txt', '100')) || 100,
+    heroTitleSize: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_FONT_SIZE_PX.txt', extractValue(websiteContent, '**Hero Title Size:**', 'UI & Styling'))) || 120,
+    buttonPaddingX: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_PADDING_X_PX.txt', extractValue(websiteContent, '**Button Padding X:**', 'UI & Styling'))) || 64,
+    buttonPaddingY: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_PADDING_Y_PX.txt', extractValue(websiteContent, '**Button Padding Y:**', 'UI & Styling'))) || 32,
+    buttonTextSize: parseInt(readControlFile('3_DESIGN_STUDIO/BUTTON_TEXT_SIZE_PX.txt', extractValue(websiteContent, '**Button Text Size:**', 'UI & Styling'))) || 32,
+    sectionSpacing: parseInt(readControlFile('3_DESIGN_STUDIO/SECTION_SPACING_PX.txt', extractValue(websiteContent, '**Section Spacing:**', 'UI & Styling'))) || 160,
+    borderRadius: parseInt(readControlFile('3_DESIGN_STUDIO/CORNER_ROUNDNESS_PX.txt', extractValue(websiteContent, '**Border Radius:**', 'UI & Styling'))) || 32,
+    brandLogo: readControlFile('3_DESIGN_STUDIO/BRAND_LOGO.txt', extractValue(websiteContent, '**Brand Logo:**', 'UI & Styling')),
+    heroBackground: readControlFile('3_DESIGN_STUDIO/HERO_BACKGROUND.txt', extractValue(websiteContent, '**Hero Background:**', 'UI & Styling')),
+    heroImgWidth: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_WIDTH.txt', extractValue(websiteContent, '**Hero Img Width:**', 'UI & Styling'))) || 100,
+    heroImgOffsetY: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_OFFSET_Y.txt', extractValue(websiteContent, '**Hero Img Offset Y:**', 'UI & Styling'))) || 0,
+    heroImgScale: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_IMG_SCALE.txt', extractValue(websiteContent, '**Hero Img Scale:**', 'UI & Styling'))) || 100,
     heroVideoWidth: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_VIDEO_WIDTH.txt', extractValue(websiteContent, '**Hero Video Width (px):**', 'UI & Styling') || '0')) || 0,
     heroVideoHeight: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_VIDEO_HEIGHT.txt', extractValue(websiteContent, '**Hero Video Height (px):**', 'UI & Styling') || '0')) || 0,
   };
@@ -266,12 +267,7 @@ function performReplacements(template, data) {
       </div>
       <div className="relative group/chapter w-full px-4 md:px-0">
         <div style={{ borderRadius: '${styles.borderRadius}px' }} className="aspect-video bg-[#0A0C10] border border-white/5 overflow-hidden shadow-[0_0_150px_rgba(0,0,0,0.8)] relative w-full">
-           <div className="absolute top-0 left-0 right-0 h-14 bg-[#14171C] border-b border-white/5 flex items-center px-8 gap-3 z-20">
-             <div className="w-4 h-4 rounded-full bg-white/5" />
-             <div className="w-4 h-4 rounded-full bg-white/5" />
-             <div className="w-4 h-4 rounded-full bg-white/5" />
-           </div>
-           <div className="w-full h-full flex items-center justify-center overflow-hidden pt-14">
+           <div className="w-full h-full flex items-center justify-center overflow-hidden">
              ${c.image ? `<img
                  src={\`/assets/projects/${config.slug}/${c.image}\`}
                  alt="${c.title}"
@@ -291,8 +287,8 @@ function performReplacements(template, data) {
   const brandElement = styles.brandLogo ? `<img src="/assets/projects/${config.slug}/${styles.brandLogo}" className="h-12 w-auto object-contain" />` : `<div className="text-4xl font-black tracking-tighter text-white/90 underline decoration-emerald-500 decoration-4 underline-offset-8">${config.brand}</div>`;
   const heroImgElement = heroImage
     ? (heroImage.match(/\.(mp4|webm)$/i)
-      ? `<video src="${heroImage}" autoPlay muted loop playsInline controls onClick={(e) => e.currentTarget.muted = !e.currentTarget.muted} style={{ width: '${styles.heroVideoWidth ? styles.heroVideoWidth + 'px' : '100%'}', height: '${styles.heroVideoHeight ? styles.heroVideoHeight + 'px' : 'auto'}', maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="object-cover pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01] cursor-pointer" />`
-      : `<img src="${heroImage}" alt="${config.slug} Hero" style={{ maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="w-full h-full object-contain pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01]" />`)
+      ? `<video src="${heroImage}" autoPlay muted loop playsInline controls onClick={(e) => e.currentTarget.muted = !e.currentTarget.muted} style={{ width: '${styles.heroVideoWidth ? styles.heroVideoWidth + 'px' : '100%'}', height: '${styles.heroVideoHeight ? styles.heroVideoHeight + 'px' : 'auto'}', maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="object-cover transition-all duration-1000 group-hover/hero:scale-[1.01] cursor-pointer" />`
+      : `<img src="${heroImage}" alt="${config.slug} Hero" style={{ maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="w-full h-full object-contain transition-all duration-1000 group-hover/hero:scale-[1.01]" />`)
     : `<div className="w-full h-full flex items-center justify-center text-neutral-800 italic text-4xl font-light">Hero Visual Coming Soon</div>`;
   const heroBgElement = styles.heroBackground ? `<div className="fixed inset-0 z-0 opacity-20"><img src="/assets/projects/${config.slug}/${styles.heroBackground}" className="w-full h-full object-cover" alt="" /></div>` : '';
 
@@ -375,21 +371,52 @@ function extractValue(content, key, sectionName) {
   return '';
 }
 
-function parseChapters() {
+function parseChapters(content) {
   const chaptersDir = path.join(CONTROL_DIR, '2_NARRATIVE_CHAPTERS');
-  if (!fs.existsSync(chaptersDir)) return [];
-  return fs.readdirSync(chaptersDir)
-    .filter(f => fs.statSync(path.join(chaptersDir, f)).isDirectory())
-    .map((f, i) => ({
-      title: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'TITLE.txt'), `Feature ${i + 1}`),
-      description: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'DESCRIPTION.txt'), ''),
-      image: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMAGE_NAME.txt'), ''),
-      styles: {
-        imgWidth: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_WIDTH.txt'), '100')) || 100,
-        imgOffsetY: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_OFFSET.txt'), '0')) || 0,
-        imgScale: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_ZOOM.txt'), '100')) || 100,
-      }
-    }));
+
+  // Try parsing from the directory first (compatible with old structure)
+  if (fs.existsSync(chaptersDir)) {
+    const folders = fs.readdirSync(chaptersDir).filter(f => fs.statSync(path.join(chaptersDir, f)).isDirectory());
+    if (folders.length > 0) {
+      return folders.map((f, i) => ({
+        title: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'TITLE.txt'), `Feature ${i + 1}`),
+        description: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'DESCRIPTION.txt'), ''),
+        image: readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMAGE_NAME.txt'), ''),
+        styles: {
+          imgWidth: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_WIDTH.txt'), '100')) || 100,
+          imgOffsetY: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_OFFSET.txt'), '0')) || 0,
+          imgScale: parseInt(readControlFile(path.join('2_NARRATIVE_CHAPTERS', f, 'IMG_ZOOM.txt'), '100')) || 100,
+        }
+      }));
+    }
+  }
+
+  // Fallback: Parse from WEBSITE.md
+  const chapters = [];
+  const lines = content.split('\n');
+  let current = null;
+  let inSection = false;
+
+  for (const line of lines) {
+    if (line.startsWith('## Feature Chapters')) inSection = true;
+    else if (inSection && line.startsWith('## ') && !line.includes('Feature Chapters')) inSection = false;
+
+    if (inSection && line.startsWith('### Chapter')) {
+      if (current) chapters.push(current);
+      current = {
+        title: line.split(': ')[1] || line.replace('### Chapter ', '').trim(),
+        styles: { imgWidth: 100, imgOffsetY: 0, imgScale: 100 }
+      };
+    } else if (inSection && current) {
+      if (line.includes('**Description:**')) current.description = line.split('**Description:**')[1].trim();
+      else if (line.includes('**Visual Hint:**')) current.image = line.split('**Visual Hint:**')[1].trim();
+      else if (line.includes('**Img Width:**')) current.styles.imgWidth = parseInt(line.split('**Img Width:**')[1].trim()) || 100;
+      else if (line.includes('**Img Offset Y:**')) current.styles.imgOffsetY = parseInt(line.split('**Img Offset Y:**')[1].trim()) || 0;
+      else if (line.includes('**Img Scale:**')) current.styles.imgScale = parseInt(line.split('**Img Scale:**')[1].trim()) || 100;
+    }
+  }
+  if (current) chapters.push(current);
+  return chapters;
 }
 
 function parsePricing(content) {

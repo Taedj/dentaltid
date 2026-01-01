@@ -37,17 +37,21 @@ class ClinicUsageState {
 
 final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
   final userProfile = ref.watch(userProfileProvider).value;
-  final patientsResult = ref.watch(
-    patientsProvider(const PatientListConfig(filter: PatientFilter.all, pageSize: 1)),
-  ).value;
-  
-  final appointmentsResult = ref.watch(
-    appointmentsProvider(const AppointmentListConfig(pageSize: 1)),
-  ).value;
-  
-  final inventoryResult = ref.watch(
-    inventoryItemsProvider(const InventoryListConfig(pageSize: 1)),
-  ).value;
+  final patientsResult = ref
+      .watch(
+        patientsProvider(
+          const PatientListConfig(filter: PatientFilter.all, pageSize: 1),
+        ),
+      )
+      .value;
+
+  final appointmentsResult = ref
+      .watch(appointmentsProvider(const AppointmentListConfig(pageSize: 1)))
+      .value;
+
+  final inventoryResult = ref
+      .watch(inventoryItemsProvider(const InventoryListConfig(pageSize: 1)))
+      .value;
 
   final patientCount = patientsResult?.totalCount ?? 0;
   final appointmentCount = appointmentsResult?.totalCount ?? 0;
@@ -91,7 +95,8 @@ final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
     inventoryCount: inventoryCount,
     daysLeft: daysLeft,
     isPremium: isPremium,
-    isCrown: userProfile?.plan == SubscriptionPlan.enterprise ||
+    isCrown:
+        userProfile?.plan == SubscriptionPlan.enterprise ||
         userProfile?.plan == SubscriptionPlan.trial,
     isExpired: daysLeft <= 0,
     hasReachedPatientLimit: !isPremium && patientCount >= 100,

@@ -190,7 +190,7 @@ class _UserAdvancedCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // contrast colors
-    final isDark = false; 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : const Color(0xFF1A1C1E);
     final subTextColor = isDark ? Colors.white70 : const Color(0xFF42474E);
 
@@ -235,7 +235,9 @@ class _UserAdvancedCard extends StatelessWidget {
               children: [
                 Flexible(
                   child: Text(
-                    user.dentistName?.isNotEmpty == true ? user.dentistName! : 'No Name',
+                    user.dentistName?.isNotEmpty == true
+                        ? user.dentistName!
+                        : 'No Name',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -291,7 +293,9 @@ class _UserAdvancedCard extends StatelessWidget {
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
               color: Colors.grey.withValues(alpha: 0.02),
-              border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+              border: Border(
+                top: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,7 +304,11 @@ class _UserAdvancedCard extends StatelessWidget {
                   children: [
                     _buildDataBadge('Level', engagementLevel, levelColor),
                     const SizedBox(width: 12),
-                    _buildDataBadge('Joined', user.createdAt.toString().split(' ')[0], Colors.blueGrey),
+                    _buildDataBadge(
+                      'Joined',
+                      user.createdAt.toString().split(' ')[0],
+                      Colors.blueGrey,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -311,9 +319,11 @@ class _UserAdvancedCard extends StatelessWidget {
                   children: [
                     TextButton.icon(
                       onPressed: () {
-                         // Copy User Email
-                         Clipboard.setData(ClipboardData(text: user.email));
-                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email copied')));
+                        // Copy User Email
+                        Clipboard.setData(ClipboardData(text: user.email));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Email copied')),
+                        );
                       },
                       icon: const Icon(Icons.email_outlined, size: 18),
                       label: const Text('Copy Email'),
@@ -397,10 +407,10 @@ class _UserAdvancedCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-           Text(
+          Text(
             '$label: ',
             style: TextStyle(
-              color: color.withOpacity(0.8),
+              color: color.withValues(alpha: 0.8),
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -432,13 +442,34 @@ class _UserAdvancedCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Row(
-           children: [
-             Expanded(child: _buildSimpleMeter('Patients', user.cumulativePatients, 100, Colors.blue)),
-             const SizedBox(width: 12),
-             Expanded(child: _buildSimpleMeter('Appts', user.cumulativeAppointments, 100, Colors.green)),
-             const SizedBox(width: 12),
-             Expanded(child: _buildSimpleMeter('Items', user.cumulativeInventory, 100, Colors.orange)),
-           ],
+          children: [
+            Expanded(
+              child: _buildSimpleMeter(
+                'Patients',
+                user.cumulativePatients,
+                100,
+                Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSimpleMeter(
+                'Appts',
+                user.cumulativeAppointments,
+                100,
+                Colors.green,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildSimpleMeter(
+                'Items',
+                user.cumulativeInventory,
+                100,
+                Colors.orange,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -451,8 +482,18 @@ class _UserAdvancedCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            Text('$current', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
+            ),
+            Text(
+              '$current',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -530,15 +571,21 @@ class _UserAdvancedCard extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            _planOption(ctx, '1 Month CROWN', Icons.diamond_outlined, Colors.cyan, () {
-              service.updateUserPlan(
-                user.uid,
-                plan: SubscriptionPlan.enterprise,
-                status: SubscriptionStatus.active,
-                isPremium: true,
-                expiryDate: DateTime.now().add(const Duration(days: 30)),
-              );
-            }),
+            _planOption(
+              ctx,
+              '1 Month CROWN',
+              Icons.diamond_outlined,
+              Colors.cyan,
+              () {
+                service.updateUserPlan(
+                  user.uid,
+                  plan: SubscriptionPlan.enterprise,
+                  status: SubscriptionStatus.active,
+                  isPremium: true,
+                  expiryDate: DateTime.now().add(const Duration(days: 30)),
+                );
+              },
+            ),
             _planOption(ctx, '1 Year CROWN', Icons.diamond, Colors.blue, () {
               service.updateUserPlan(
                 user.uid,
@@ -548,15 +595,21 @@ class _UserAdvancedCard extends StatelessWidget {
                 expiryDate: DateTime.now().add(const Duration(days: 365)),
               );
             }),
-            _planOption(ctx, 'Lifetime CROWN', Icons.stars, Colors.purpleAccent, () {
-              service.updateUserPlan(
-                user.uid,
-                plan: SubscriptionPlan.enterprise,
-                status: SubscriptionStatus.active,
-                isPremium: true,
-                expiryDate: null,
-              );
-            }),
+            _planOption(
+              ctx,
+              'Lifetime CROWN',
+              Icons.stars,
+              Colors.purpleAccent,
+              () {
+                service.updateUserPlan(
+                  user.uid,
+                  plan: SubscriptionPlan.enterprise,
+                  status: SubscriptionStatus.active,
+                  isPremium: true,
+                  expiryDate: null,
+                );
+              },
+            ),
             _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
               service.updateUserPlan(
                 user.uid,

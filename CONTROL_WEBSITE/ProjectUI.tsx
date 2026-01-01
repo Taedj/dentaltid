@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import React, { useState } from 'react';
@@ -125,10 +126,10 @@ export default function ProjectUI() {
                         <div className="flex flex-col md:flex-row flex-wrap gap-4 md:gap-8 pt-10 justify-center items-center px-6">
                             <Link
                                 href="{{CTA_PRIMARY_LINK}}"
-                                style={{ 
-                                    padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`, 
-                                    fontSize: `clamp(16px, 4vw, ${STYLES.buttonTextSize}px)`, 
-                                    borderRadius: `${STYLES.borderRadius}px` 
+                                style={{
+                                    padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`,
+                                    fontSize: `clamp(16px, 4vw, ${STYLES.buttonTextSize}px)`,
+                                    borderRadius: `${STYLES.borderRadius}px`
                                 }}
                                 className="w-full md:w-auto bg-emerald-500 hover:bg-emerald-400 text-[#080A0E] font-black transition-all flex items-center justify-center gap-4 shadow-[0_20px_60px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95"
                             >
@@ -136,10 +137,10 @@ export default function ProjectUI() {
                             </Link>
                             <Link
                                 href="{{CTA_SECONDARY_LINK}}"
-                                style={{ 
-                                    padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`, 
-                                    fontSize: `clamp(16px, 4vw, ${STYLES.buttonTextSize}px)`, 
-                                    borderRadius: `${STYLES.borderRadius}px` 
+                                style={{
+                                    padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`,
+                                    fontSize: `clamp(16px, 4vw, ${STYLES.buttonTextSize}px)`,
+                                    borderRadius: `${STYLES.borderRadius}px`
                                 }}
                                 className="w-full md:w-auto bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black transition-all flex items-center justify-center gap-4 hover:scale-105 active:scale-95"
                             >
@@ -151,12 +152,7 @@ export default function ProjectUI() {
 
                 <section className="pb-20 md:pb-40 w-full px-4 md:px-10">
                     <div style={{ borderRadius: `${STYLES.borderRadius}px` }} className="relative aspect-video overflow-hidden border border-white/5 shadow-[0_0_150px_rgba(16,185,129,0.1)] bg-[#0A0C10] group/hero w-full mx-auto flex items-center justify-center">
-                        <div className="absolute top-0 left-0 right-0 h-10 md:h-16 bg-[#14171C] border-b border-white/5 flex items-center px-4 md:px-10 gap-2 md:gap-3 z-20">
-                            <div className="w-3 h-3 md:w-5 md:h-5 rounded-full bg-red-500/40" />
-                            <div className="w-3 h-3 md:w-5 md:h-5 rounded-full bg-yellow-500/40" />
-                            <div className="w-3 h-3 md:w-5 md:h-5 rounded-full bg-green-500/40" />
-                            <div className="ml-10 h-9 px-8 bg-white/5 rounded-xl border border-white/5 flex-grow max-w-2xl hidden lg:flex text-sm text-neutral-500 items-center font-mono tracking-widest text-left">{PROJECT_CONFIG.slug}.app/dashboard</div>
-                        </div>
+
                         {{ HERO_IMAGE_ELEMENT }}
                     </div>
                 </section>
@@ -191,7 +187,7 @@ export default function ProjectUI() {
                                 <div key={i} style={{ borderRadius: `${STYLES.borderRadius}px` }} className="bg-[#0A0C10] border border-white/5 p-10 flex flex-col text-left group hover:border-emerald-500/50 transition-all duration-500 relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-emerald-500/20 transition-all" />
                                     <h3 className="text-3xl font-bold text-white mb-2">{plan.name}</h3>
-                                    <p className="text-emerald-400 font-mono text-sm mb-6">{plan.subtitle || ''}</p>
+                                    <p className="text-emerald-400 font-mono text-sm mb-6 uppercase tracking-widest">{plan.subtitle || ''}</p>
                                     <div className="text-4xl font-black text-white mb-8 transition-all min-h-[3rem]">{getPrice(plan.name)}</div>
                                     <ul className="space-y-4 mb-10 flex-grow">
                                         {plan.features.map((f, fi) => <li key={fi} className="flex items-start gap-3 text-neutral-400"><span className="text-emerald-500 mt-1">✔</span> {f}</li>)}
@@ -215,10 +211,10 @@ export default function ProjectUI() {
                         <p className="text-xl md:text-4xl text-neutral-400 mb-10 md:mb-20 max-w-4xl mx-auto leading-tight font-medium relative z-10">{{ FINAL_CTA_SUBTITLE }}</p>
                         <Link
                             href="{{FINAL_CTA_BUTTON_LINK}}"
-                            style={{ 
-                                padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`, 
-                                fontSize: `clamp(20px, 4vw, ${STYLES.buttonTextSize}px)`, 
-                                borderRadius: `${STYLES.borderRadius}px` 
+                            style={{
+                                padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`,
+                                fontSize: `clamp(20px, 4vw, ${STYLES.buttonTextSize}px)`,
+                                borderRadius: `${STYLES.borderRadius}px`
                             }}
                             className="relative z-10 bg-white text-black font-black rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all inline-flex items-center justify-center gap-4 md:gap-6 shadow-[0_30px_100px_rgba(255,255,255,0.15)] w-full md:w-auto"
                         >

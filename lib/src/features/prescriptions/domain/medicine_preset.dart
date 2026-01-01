@@ -15,11 +15,11 @@ class MedicinePreset {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'medicines': jsonEncode(medicines.map((m) => m.toJson()).toList()),
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'medicines': jsonEncode(medicines.map((m) => m.toJson()).toList()),
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   factory MedicinePreset.fromJson(Map<String, dynamic> json) {
     final medicinesData = json['medicines'];

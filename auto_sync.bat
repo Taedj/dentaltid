@@ -4,7 +4,7 @@ echo      TAEDJ AUTO SYSTEM V2 - SYNC
 echo ==========================================
 
 echo [1/3] Running Sync Engine...
-node sync.js
+node CONTROL_WEBSITE\sync.js
 if %errorlevel% neq 0 (
     echo Error: Sync Engine failed.
     pause
@@ -12,7 +12,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [2/3] Committing Project Changes (Spoke)...
-git add .
+git add CONTROL_WEBSITE\WEBSITE.md CONTROL_WEBSITE\screenshots\*
 git commit -m "Auto-sync: Updated project configuration and content"
 :: Uncomment the next line to enable automatic push
 :: git push origin main

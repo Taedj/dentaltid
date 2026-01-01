@@ -449,6 +449,16 @@
     }
   },
   "premiumExpired": "Premium Expired",
+  "crownAccount": "Crown Account",
+  "crownDaysLeft": "Crown: {days} days left",
+  "@crownDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "crownExpired": "Crown Expired",
   "trialVersionDaysLeft": "Trial Version: {days} days left",
   "@trialVersionDaysLeft": {
     "placeholders": {

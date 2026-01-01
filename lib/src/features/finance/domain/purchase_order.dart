@@ -39,7 +39,9 @@ class PurchaseOrder {
       'priceLabel': priceLabel,
       'status': status.toString(),
       'createdAt': Timestamp.fromDate(createdAt),
-      'processedAt': processedAt != null ? Timestamp.fromDate(processedAt!) : null,
+      'processedAt': processedAt != null
+          ? Timestamp.fromDate(processedAt!)
+          : null,
     };
   }
 
@@ -50,13 +52,13 @@ class PurchaseOrder {
       userEmail: json['userEmail'] ?? '',
       dentistName: json['dentistName'],
       plan: SubscriptionPlan.values.firstWhere(
-            (e) => e.toString() == json['plan'],
+        (e) => e.toString() == json['plan'],
         orElse: () => SubscriptionPlan.trial,
       ),
       durationLabel: json['durationLabel'] ?? 'unknown',
       priceLabel: json['priceLabel'] ?? '',
       status: OrderStatus.values.firstWhere(
-            (e) => e.toString() == json['status'],
+        (e) => e.toString() == json['status'],
         orElse: () => OrderStatus.pending,
       ),
       createdAt: (json['createdAt'] as Timestamp).toDate(),

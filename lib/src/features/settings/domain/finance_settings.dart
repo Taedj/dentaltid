@@ -52,7 +52,7 @@ class FinanceSettings {
       monthlyBudgetCap: json['monthlyBudgetCap'] != null
           ? (json['monthlyBudgetCap'] as num).toDouble()
           : null,
-      taxRatePercentage: (json['taxRatePercentage'] ?? 0.0) as double,
+      taxRatePercentage: (json['taxRatePercentage'] as num?)?.toDouble() ?? 0.0,
       useCompactNumbers: json['useCompactNumbers'] ?? true,
     );
   }

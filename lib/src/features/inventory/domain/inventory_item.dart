@@ -51,7 +51,7 @@ class InventoryItem {
     supplierContact: json['supplierContact'],
     thresholdDays: json['thresholdDays'] ?? 30,
     lowStockThreshold: json['lowStockThreshold'] ?? 5,
-    cost: json['cost'] ?? 0.0,
+    cost: (json['cost'] as num?)?.toDouble() ?? 0.0,
   );
 
   InventoryItem copyWith({

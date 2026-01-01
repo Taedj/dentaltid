@@ -232,7 +232,9 @@ class SyncServer {
 
       final event = SyncEvent.fromJson(json);
 
-      _log.info('Applying event to server database for table: ${event.table}, Action: ${event.action}');
+      _log.info(
+        'Applying event to server database for table: ${event.table}, Action: ${event.action}',
+      );
 
       // Apply to local DB
       final db = await _container.read(databaseServiceProvider).database;
@@ -244,7 +246,9 @@ class SyncServer {
             event.data,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
-          _log.info('Server DB Insert/Update success for ${event.table} ID: ${event.data['id']}');
+          _log.info(
+            'Server DB Insert/Update success for ${event.table} ID: ${event.data['id']}',
+          );
           break;
         case SyncAction.delete:
           await db.delete(
@@ -252,7 +256,9 @@ class SyncServer {
             where: 'id = ?',
             whereArgs: [event.data['id']],
           );
-          _log.info('Server DB Delete success for ${event.table} ID: ${event.data['id']}');
+          _log.info(
+            'Server DB Delete success for ${event.table} ID: ${event.data['id']}',
+          );
           break;
       }
 
@@ -279,7 +285,9 @@ class SyncServer {
       _container.invalidate(appointmentsProvider);
       _container.invalidate(todaysAppointmentsProvider);
       _container.invalidate(todaysEmergencyAppointmentsProvider);
-      _log.info('FORCE REFRESH: appointmentsProvider & todaysAppointmentsProvider invalidated.');
+      _log.info(
+        'FORCE REFRESH: appointmentsProvider & todaysAppointmentsProvider invalidated.',
+      );
     } else if (table == 'inventory') {
       _container.read(inventoryServiceProvider).notifyDataChanged();
       _container.invalidate(inventoryItemsProvider);

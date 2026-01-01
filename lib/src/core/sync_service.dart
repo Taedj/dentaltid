@@ -149,8 +149,10 @@ class SyncService {
     _ref.invalidate(inventoryItemsProvider);
     _ref.invalidate(staffListProvider);
     _ref.invalidate(appointmentsProvider);
-    
-    _log.info('Invalidated all data providers via notifyDataChanged and invalidate.');
+
+    _log.info(
+      'Invalidated all data providers via notifyDataChanged and invalidate.',
+    );
   }
 }
 

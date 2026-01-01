@@ -649,28 +649,27 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 if (!usage.isCrown) {
                                   showDialog(
                                     context: context,
-                                    builder:
-                                        (context) => AlertDialog(
-                                          title: const Text('CROWN Feature'),
-                                          content: const Text(
-                                            'Prescriptions are only available in the CROWN plan.\nPlease upgrade to access this feature.',
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () => Navigator.pop(context),
-                                              child: Text(l10n.okButton),
-                                            ),
-                                          ],
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('CROWN Feature'),
+                                      content: const Text(
+                                        'Prescriptions are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: Text(l10n.okButton),
                                         ),
+                                      ],
+                                    ),
                                   );
                                   return;
                                 }
                                 if (userProfile != null) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder:
-                                          (context) => PrescriptionEditorScreen(
+                                      builder: (context) =>
+                                          PrescriptionEditorScreen(
                                             patient: widget.patient,
                                             userProfile: userProfile,
                                             visitId: widget.appointment.id,
@@ -680,19 +679,16 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    usage.isCrown
-                                        ? colorScheme.secondaryContainer
-                                        : Colors.grey.withValues(alpha: 0.2),
-                                foregroundColor:
-                                    usage.isCrown
-                                        ? colorScheme.onSecondaryContainer
-                                        : Colors.grey,
+                                backgroundColor: usage.isCrown
+                                    ? colorScheme.secondaryContainer
+                                    : Colors.grey.withValues(alpha: 0.2),
+                                foregroundColor: usage.isCrown
+                                    ? colorScheme.onSecondaryContainer
+                                    : Colors.grey,
                               ),
-                              icon:
-                                  usage.isCrown
-                                      ? const SizedBox.shrink()
-                                      : const Icon(Icons.lock, size: 16),
+                              icon: usage.isCrown
+                                  ? const SizedBox.shrink()
+                                  : const Icon(Icons.lock, size: 16),
                               label: const Text('Prescription'),
                             ),
                           ),

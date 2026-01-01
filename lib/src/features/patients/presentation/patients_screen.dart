@@ -8,10 +8,8 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:intl/intl.dart';
-import 'package:dentaltid/src/features/patients/presentation/widgets/editable_patient_field.dart';
 import 'package:dentaltid/src/features/patients/presentation/widgets/delete_confirmation_dialog.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
-import 'dart:ui' as ui;
 import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:dentaltid/src/core/app_colors.dart';
@@ -49,12 +47,14 @@ class PatientsScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<PatientsScreen> createState() => _PatientsScreenState();
 }
+
 class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   PatientFilter _selectedFilter = PatientFilter.all;
   bool _isSearching = false;
   final _searchController = TextEditingController();
   int _currentPage = 1;
   static const int _pageSize = 20;
+  bool _sortAscending = false; // Add state for sorting
 
   @override
   void initState() {
@@ -121,7 +121,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
   Future<void> _importPatientsFromCsv() async {
     // Placeholder for import functionality
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Import functionality not implemented yet.')),
+      const SnackBar(
+        content: Text('Import functionality not implemented yet.'),
+      ),
     );
   }
 
@@ -209,6 +211,19 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
             },
           ),
           if (!_isSearching) ...[
+            IconButton(
+              icon: Icon(
+                _sortAscending ? LucideIcons.arrowUp : LucideIcons.arrowDown,
+              ),
+              tooltip: 'Sort by Creation Date',
+              onPressed: () {
+                setState(() {
+                  _sortAscending = !_sortAscending;
+                  // The provider will be rebuilt with the new sort order
+                  ref.invalidate(patientsProvider);
+                });
+              },
+            ),
             DropdownButtonHideUnderline(
               child: DropdownButton<PatientFilter>(
                 value: _selectedFilter,
@@ -319,14 +334,15 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
     );
   }
 
-  Widget _buildPlutoGrid(
-    BuildContext context,
-    List<Patient> patients,
-    AppLocalizations l10n,
-    PatientService patientService,
-    bool isDentist,
-  ) {
-    final columns = <PlutoColumn>[
+  List<PlutoColumn>? _cachedColumns;
+  AppLocalizations? _lastL10n;
+
+  List<PlutoColumn> _getColumns(AppLocalizations l10n, PatientService patientService, bool isDentist) {
+    if (_cachedColumns != null && _lastL10n == l10n) {
+      return _cachedColumns!;
+    }
+    _lastL10n = l10n;
+    _cachedColumns = <PlutoColumn>[
       PlutoColumn(
         title: l10n.patientIdHeader,
         field: 'id',
@@ -381,12 +397,10 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       PlutoColumn(
         title: l10n.dueHeader,
         field: 'due',
-        type: PlutoColumnType.number(
-          format: '#,###.##',
-        ),
+        type: PlutoColumnType.number(format: '#,###.##'),
         width: 120,
         renderer: (rendererContext) {
-          final due = rendererContext.cell.value as double;
+          final due = (rendererContext.cell.value as num).toDouble();
           return _buildFinancialStatus(due, compact: true);
         },
         readOnly: true,
@@ -405,7 +419,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
         enableDropToResize: false,
         enableSorting: false,
         renderer: (rendererContext) {
-          final patient = rendererContext.row.cells['actions']!.value as Patient;
+          final patient =
+              rendererContext.row.cells['actions']!.value as Patient;
           return _buildActionButtons(
             context,
             patient,
@@ -417,6 +432,17 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
         },
       ),
     ];
+    return _cachedColumns!;
+  }
+
+  Widget _buildPlutoGrid(
+    BuildContext context,
+    List<Patient> patients,
+    AppLocalizations l10n,
+    PatientService patientService,
+    bool isDentist,
+  ) {
+    final columns = _getColumns(l10n, patientService, isDentist);
 
     final rows = patients
         .map(
@@ -441,7 +467,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       onLoaded: (event) {
         event.stateManager.setPageSize(_pageSize, notify: false);
         event.stateManager.setPage(_currentPage);
-        event.stateManager.setShowColumnFilter(true);
+        event.stateManager.setShowColumnFilter(false);
+        // Removed problematic row and cell color callbacks
       },
       onChanged: (PlutoGridOnChangedEvent event) async {
         final patient = event.row.cells['actions']!.value as Patient;
@@ -457,7 +484,9 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
             updatedPatient = patient.copyWith(familyName: newValue.toString());
             break;
           case 'age':
-            updatedPatient = patient.copyWith(age: int.tryParse(newValue.toString()) ?? patient.age);
+            updatedPatient = patient.copyWith(
+              age: int.tryParse(newValue.toString()) ?? patient.age,
+            );
             break;
           case 'health_state':
             updatedPatient = patient.copyWith(healthState: newValue.toString());
@@ -466,7 +495,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
             updatedPatient = patient.copyWith(phoneNumber: newValue.toString());
             break;
         }
-        
+
         if (updatedPatient != patient) {
           await patientService.updatePatient(updatedPatient);
           ref.invalidate(patientsProvider);
@@ -474,14 +503,21 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       },
       configuration: PlutoGridConfiguration(
         style: PlutoGridStyleConfig(
-          gridBackgroundColor: Theme.of(context).cardColor,
-          rowColor: Theme.of(context).cardColor,
-          gridBorderColor: Theme.of(context).dividerColor.withOpacity(0.5),
-          borderColor: Theme.of(context).dividerColor.withOpacity(0.5),
-          activatedColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          columnTextStyle: Theme.of(context).textTheme.titleSmall!.copyWith(fontWeight: FontWeight.bold),
-          cellTextStyle: Theme.of(context).textTheme.bodyMedium!,
-          cellColorInReadOnlyState: Theme.of(context).disabledColor.withOpacity(0.1),
+          gridBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          rowColor: Colors.transparent,
+          gridBorderColor: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+          borderColor: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+          activatedColor: AppColors.primary.withValues(alpha: 0.25),
+          activatedBorderColor: AppColors.primary,
+          cellColorInEditState: AppColors.darkCard,
+          cellColorInReadOnlyState: Colors.transparent,
+          columnTextStyle: Theme.of(context).textTheme.titleSmall!.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+          cellTextStyle: Theme.of(context).textTheme.bodyMedium!.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
         ),
         columnSize: const PlutoGridColumnSizeConfig(
           autoSizeMode: PlutoAutoSizeMode.equal,
@@ -518,7 +554,6 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
       ],
     );
   }
-
 
   Widget _buildModernPatientCard(
     Patient patient,
@@ -565,11 +600,7 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
               ),
             ),
             if (isNanoPix)
-              Icon(
-                LucideIcons.info,
-                size: 14,
-                color: Colors.purple.shade300,
-              ),
+              Icon(LucideIcons.info, size: 14, color: Colors.purple.shade300),
           ],
         ),
         subtitle: Text('${l10n.age} ${patient.age} • ${patient.phoneNumber}'),
@@ -627,7 +658,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                 builder: (ctx) => AlertDialog(
                                   title: const Text('Delete from NanoPix?'),
                                   content: const Text(
-                                      'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?'),
+                                    'This patient is linked to NanoPix. Do you also want to delete their NanoPix database record and folder?',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -650,7 +682,8 @@ class _PatientsScreenState extends ConsumerState<PatientsScreen> {
                                 await ref
                                     .read(nanoPixSyncServiceProvider)
                                     .deletePatientFromNanoPix(
-                                        patient.externalId!);
+                                      patient.externalId!,
+                                    );
                               }
                             }
 

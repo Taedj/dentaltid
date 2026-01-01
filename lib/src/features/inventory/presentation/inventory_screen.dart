@@ -8,7 +8,6 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:dentaltid/src/shared/widgets/pagination_controls.dart';
 
-
 class InventoryScreen extends ConsumerStatefulWidget {
   const InventoryScreen({super.key});
 
@@ -304,21 +303,20 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             color: isExpired
                                 ? Colors.red.withAlpha((255 * 0.1).round())
                                 : isLowStock
-                                    ? Colors.orange
-                                        .withAlpha((255 * 0.1).round())
-                                    : null,
+                                ? Colors.orange.withAlpha((255 * 0.1).round())
+                                : null,
                             child: ListTile(
                               leading: Icon(
                                 isExpired
                                     ? Icons.warning
                                     : isLowStock
-                                        ? Icons.warning_amber
-                                        : Icons.inventory,
+                                    ? Icons.warning_amber
+                                    : Icons.inventory,
                                 color: isExpired
                                     ? Colors.red
                                     : isLowStock
-                                        ? Colors.orange
-                                        : Theme.of(context).primaryColor,
+                                    ? Colors.orange
+                                    : Theme.of(context).primaryColor,
                               ),
                               title: Text(
                                 item.name,
@@ -338,9 +336,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                       color: isExpired
                                           ? Colors.red
                                           : daysUntilExpiry <=
-                                                  item.thresholdDays
-                                              ? Colors.orange
-                                              : null,
+                                                item.thresholdDays
+                                          ? Colors.orange
+                                          : null,
                                     ),
                                   ),
                                   if (isExpired)
@@ -375,32 +373,35 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     onPressed: () => _showUseDialog(item),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.edit,
-                                        color: Colors.blue),
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.blue,
+                                    ),
                                     onPressed: () =>
                                         _showAddEditDialog(item: item),
                                   ),
                                   IconButton(
-                                    icon: const Icon(Icons.delete,
-                                        color: Colors.red),
+                                    icon: const Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
                                     onPressed: () async {
                                       final confirmed = await showDialog<bool>(
                                         context: context,
                                         builder: (context) => AlertDialog(
                                           title: Text(l10n.deleteItem),
-                                          content:
-                                              Text(l10n.confirmDeleteItem),
+                                          content: Text(l10n.confirmDeleteItem),
                                           actions: [
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(false),
+                                              onPressed: () => Navigator.of(
+                                                context,
+                                              ).pop(false),
                                               child: Text(l10n.cancel),
                                             ),
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.of(context)
-                                                      .pop(true),
+                                              onPressed: () => Navigator.of(
+                                                context,
+                                              ).pop(true),
                                               child: Text(
                                                 l10n.deleteItemButton,
                                               ), // Delete button
@@ -412,11 +413,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                           item.id != null) {
                                         try {
                                           await inventoryService
-                                              .deleteInventoryItem(
-                                            item.id!,
-                                          );
+                                              .deleteInventoryItem(item.id!);
                                           ref.invalidate(
-                                              inventoryItemsProvider);
+                                            inventoryItemsProvider,
+                                          );
                                         } catch (e) {
                                           if (context.mounted) {
                                             ScaffoldMessenger.of(

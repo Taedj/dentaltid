@@ -10,7 +10,8 @@ class EditMedicinePresetDialog extends StatefulWidget {
   const EditMedicinePresetDialog({super.key, required this.preset});
 
   @override
-  State<EditMedicinePresetDialog> createState() => _EditMedicinePresetDialogState();
+  State<EditMedicinePresetDialog> createState() =>
+      _EditMedicinePresetDialogState();
 }
 
 class _EditMedicinePresetDialogState extends State<EditMedicinePresetDialog> {
@@ -72,7 +73,10 @@ class _EditMedicinePresetDialogState extends State<EditMedicinePresetDialog> {
                     title: Text('${m.medicineName} (${m.quantity})'),
                     subtitle: Text('${m.frequency} - ${m.route} - ${m.time}'),
                     trailing: IconButton(
-                      icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: Colors.red,
+                      ),
                       onPressed: () => _removeMedicine(index),
                     ),
                   );
@@ -92,13 +96,15 @@ class _EditMedicinePresetDialogState extends State<EditMedicinePresetDialog> {
             return ElevatedButton(
               onPressed: () async {
                 if (_nameController.text.isEmpty) return;
-                
+
                 final updatedPreset = widget.preset.copyWith(
                   name: _nameController.text,
                   medicines: _medicines,
                 );
-                
-                await ref.read(medicinePresetServiceProvider).updatePreset(updatedPreset);
+
+                await ref
+                    .read(medicinePresetServiceProvider)
+                    .updatePreset(updatedPreset);
                 ref.invalidate(medicinePresetsProvider);
                 if (context.mounted) {
                   Navigator.pop(context);
@@ -113,7 +119,10 @@ class _EditMedicinePresetDialogState extends State<EditMedicinePresetDialog> {
   }
 }
 
-Future<void> showEditMedicinePresetDialog(BuildContext context, MedicinePreset preset) {
+Future<void> showEditMedicinePresetDialog(
+  BuildContext context,
+  MedicinePreset preset,
+) {
   return showDialog(
     context: context,
     builder: (context) => EditMedicinePresetDialog(preset: preset),

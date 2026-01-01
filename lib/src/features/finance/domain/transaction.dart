@@ -61,8 +61,8 @@ class Transaction {
     id: json['id'],
     sessionId: json['sessionId'],
     description: json['description'],
-    totalAmount: json['totalAmount'],
-    paidAmount: json['paidAmount'] ?? 0.0,
+    totalAmount: (json['totalAmount'] as num).toDouble(),
+    paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0.0,
     type: TransactionType.values.firstWhere(
       (e) => e.toString() == json['type'],
     ),

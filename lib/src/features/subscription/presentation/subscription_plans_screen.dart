@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -5,7 +6,6 @@ import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
-import 'package:dentaltid/src/core/firebase_service.dart';
 import 'package:dentaltid/src/core/remote_config_service.dart';
 import 'package:dentaltid/src/features/finance/domain/purchase_order.dart';
 import 'package:uuid/uuid.dart';
@@ -18,7 +18,8 @@ class SubscriptionPlansScreen extends ConsumerStatefulWidget {
       _SubscriptionPlansScreenState();
 }
 
-class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScreen> {
+class _SubscriptionPlansScreenState
+    extends ConsumerState<SubscriptionPlansScreen> {
   String _selectedDuration = 'yearly'; // monthly, yearly, lifetime
   String _selectedCurrency = 'DZD';
 
@@ -29,87 +30,185 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     final currentPlan = userProfile?.plan ?? SubscriptionPlan.trial;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF080A0E),
       body: remoteConfig.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
-        data: (config) => Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-            ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF10B981)),
+        ),
+        error: (err, stack) => Center(
+          child: Text(
+            'Error: $err',
+            style: const TextStyle(color: Colors.white),
           ),
-          child: CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                title: Text(
-                  'Upgrade Your Practice',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        data: (config) => Stack(
+          children: [
+            // Background Effects
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: const Color(0xFF10B981).withAlpha(13),
                 ),
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                centerTitle: true,
-                pinned: true,
+                child: BackdropFilter(
+                  filter: ui.ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                  child: Container(color: Colors.transparent),
+                ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      _buildCurrencySelector(config),
-                      const SizedBox(height: 24),
-                      _buildDurationToggle(),
-                      const SizedBox(height: 32),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth > 900) {
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  title: Text(
+                    'Choose Your Plan',
+                    style: GoogleFonts.outfit(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  centerTitle: true,
+                  pinned: true,
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 40,
+                    ),
+                    child: Column(
+                      children: [
+                        _buildCurrencySelector(config),
+                        const SizedBox(height: 32),
+                        _buildDurationToggle(),
+                        const SizedBox(height: 48),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return Wrap(
+                              spacing: 24,
+                              runSpacing: 24,
+                              alignment: WrapAlignment.center,
                               children: [
-                                _buildPlanCard(context, config, 'Premium', 'For Standard Clinics', Icons.star_rounded, Colors.amber.shade700, ['Unlimited Duration', 'Unlimited Patients', 'Cloud Sync & Restore', 'Secure Local Backup'], isCurrent: currentPlan == SubscriptionPlan.professional, isRecommended: true, price: _getPrice('premium', config)),
-                                const SizedBox(width: 24),
-                                _buildPlanCard(context, config, 'CROWN', 'For Power Users', Icons.diamond_outlined, Colors.purple, ['Everything in Premium', 'Advanced Analytics', 'Digital Prescriptions', 'Priority Support'], isCurrent: currentPlan == SubscriptionPlan.enterprise, price: _getPrice('crown', config)),
+                                _buildPlanCard(
+                                  context,
+                                  config,
+                                  'Trial',
+                                  'FOR EVALUATION (30 DAYS)',
+                                  Icons.timer_outlined,
+                                  const Color(0xFF10B981),
+                                  [
+                                    'Max 100 Patients',
+                                    'Max 100 Appointments',
+                                    'Local Backup Only',
+                                    'All Features Unlocked',
+                                  ],
+                                  isCurrent:
+                                      currentPlan == SubscriptionPlan.trial,
+                                  price: 'Free',
+                                ),
+                                _buildPlanCard(
+                                  context,
+                                  config,
+                                  'Premium',
+                                  'FOR STANDARD CLINICS',
+                                  Icons.star_rounded,
+                                  const Color(0xFF10B981),
+                                  [
+                                    'Unlimited Patients & Appointments',
+                                    'Cloud Sync & Restore',
+                                    'Secure Local Backup',
+                                    'Whatsapp Reminders',
+                                    'Standard Support',
+                                  ],
+                                  isCurrent:
+                                      currentPlan ==
+                                      SubscriptionPlan.professional,
+                                  price: _getPrice('premium', config),
+                                ),
+                                _buildPlanCard(
+                                  context,
+                                  config,
+                                  'CROWN',
+                                  'FOR POWER USERS',
+                                  Icons.diamond_outlined,
+                                  const Color(0xFF10B981),
+                                  [
+                                    'Everything in Premium',
+                                    'Advanced Analytics Tab',
+                                    'Digital Prescriptions',
+                                    'Priority Support',
+                                    'Future AI Features',
+                                  ],
+                                  isCurrent:
+                                      currentPlan ==
+                                      SubscriptionPlan.enterprise,
+                                  price: _getPrice('crown', config),
+                                ),
                               ],
                             );
-                          } else {
-                            return Column(
-                              children: [
-                                _buildPlanCard(context, config, 'Premium', 'For Standard Clinics', Icons.star_rounded, Colors.amber.shade700, ['Unlimited Duration', 'Unlimited Patients', 'Cloud Sync & Restore', 'Secure Local Backup'], isCurrent: currentPlan == SubscriptionPlan.professional, isRecommended: true, price: _getPrice('premium', config)),
-                                const SizedBox(height: 24),
-                                _buildPlanCard(context, config, 'CROWN', 'For Power Users', Icons.diamond_outlined, Colors.purple, ['Everything in Premium', 'Advanced Analytics', 'Digital Prescriptions', 'Priority Support'], isCurrent: currentPlan == SubscriptionPlan.enterprise, price: _getPrice('crown', config)),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton(
-                        onPressed: () {
-                          final uid = ref.read(userProfileProvider).value?.uid ?? '';
-                          if (uid.isNotEmpty) {
-                            showDialog(context: context, builder: (context) => ActivationDialog(uid: uid));
-                          }
-                        },
-                        child: Text('I already have an activation code', style: GoogleFonts.poppins(decoration: TextDecoration.underline, color: Colors.blue.shade300)),
-                      ),
-                      const SizedBox(height: 40),
-                      const Text('Need a custom Enterprise solution? Contact us directly.', style: TextStyle(color: Colors.white70)),
-                    ],
+                          },
+                        ),
+                        const SizedBox(height: 60),
+                        _buildActivationLink(),
+                        const SizedBox(height: 40),
+                        Text(
+                          'Need a custom Enterprise solution? Contact us directly.',
+                          style: GoogleFonts.outfit(
+                            color: Colors.white54,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivationLink() {
+    return TextButton(
+      onPressed: () {
+        final uid = ref.read(userProfileProvider).value?.uid ?? '';
+        if (uid.isNotEmpty) {
+          showDialog(
+            context: context,
+            builder: (context) => ActivationDialog(uid: uid),
+          );
+        }
+      },
+      child: Text(
+        'I already have an activation code',
+        style: GoogleFonts.outfit(
+          color: const Color(0xFF10B981).withAlpha(204),
+          decoration: TextDecoration.underline,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );
   }
 
   String _getPrice(String tier, RemoteConfig config) {
+    if (tier.toLowerCase() == 'trial') return 'Free';
+
     final pricing = config.pricing;
-    if (pricing.isEmpty || !pricing.containsKey(_selectedCurrency)) return 'N/A';
+    if (pricing.isEmpty || !pricing.containsKey(_selectedCurrency)) {
+      return 'N/A';
+    }
 
     final currencyConfig = pricing[_selectedCurrency];
     if (currencyConfig is! Map) return 'N/A';
@@ -117,82 +216,101 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     final symbol = currencyConfig['symbol'] ?? '';
     final position = currencyConfig['position'] ?? 'suffix';
     final plans = currencyConfig['plans'];
-    
-    if (plans == null || plans is! Map || plans[tier] == null || plans[tier] is! Map || plans[tier][_selectedDuration] == null) return 'N/A';
-    
-    final priceValue = plans[tier][_selectedDuration];
-    
-    String formattedPrice = position == 'prefix' ? '$symbol$priceValue' : '$priceValue $symbol';
-    
+
+    if (plans == null ||
+        plans is! Map ||
+        plans[tier.toLowerCase()] == null ||
+        plans[tier.toLowerCase()] is! Map ||
+        plans[tier.toLowerCase()][_selectedDuration] == null) {
+      return 'N/A';
+    }
+
+    final priceValue = plans[tier.toLowerCase()][_selectedDuration];
+
+    String formattedPrice = position == 'prefix'
+        ? '$symbol$priceValue'
+        : '$priceValue $symbol';
+
     if (_selectedDuration == 'monthly') formattedPrice += ' /mo';
     if (_selectedDuration == 'yearly') formattedPrice += ' /yr';
-    
+
     return formattedPrice;
   }
 
   Widget _buildCurrencySelector(RemoteConfig config) {
-    final currencies = config.pricing.keys.isNotEmpty ? config.pricing.keys.toList() : ['DZD'];
-    
+    final currencies = config.pricing.keys.isNotEmpty
+        ? config.pricing.keys.toList()
+        : ['DZD', 'USD', 'EUR'];
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        color: Colors.white.withAlpha(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withAlpha(13)),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: currencies.contains(_selectedCurrency) ? _selectedCurrency : currencies.first,
-          dropdownColor: const Color(0xFF1E293B),
-          items: currencies.map((c) => DropdownMenuItem(
-            value: c,
-            child: Text(c, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
-          )).toList(),
-          onChanged: (val) {
-            if (val != null) setState(() => _selectedCurrency = val);
-          },
-          icon: const Icon(Icons.currency_exchange, size: 18, color: Colors.white70),
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: currencies.map((c) {
+          final isSelected = _selectedCurrency == c;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedCurrency = c),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF10B981)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                c,
+                style: GoogleFonts.outfit(
+                  color: isSelected ? Colors.black : Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 
   Widget _buildDurationToggle() {
+    final durations = ['monthly', 'yearly', 'lifetime'];
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(30),
-      ),
       padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(8),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withAlpha(26)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleButton('Monthly', 'monthly'),
-          _toggleButton('Yearly', 'yearly'),
-          _toggleButton('Lifetime', 'lifetime'),
-        ],
-      ),
-    );
-  }
-
-  Widget _toggleButton(String label, String value) {
-    final isSelected = _selectedDuration == value;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedDuration = value),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
-          borderRadius: BorderRadius.circular(25),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            color: isSelected ? Colors.white : Colors.white70,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        children: durations.map((d) {
+          final isSelected = _selectedDuration == d;
+          return GestureDetector(
+            onTap: () => setState(() => _selectedDuration = d),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                d[0].toUpperCase() + d.substring(1),
+                style: GoogleFonts.outfit(
+                  color: isSelected ? Colors.black : Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -206,169 +324,148 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     Color color,
     List<String> features, {
     bool isCurrent = false,
-    bool isRecommended = false,
     required String price,
   }) {
-    // A premium user should be able to upgrade to crown.
     final canUpgrade = !isCurrent;
 
-    return Stack(
-      alignment: Alignment.topCenter,
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          width: 300,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E293B).withOpacity(0.5),
-            borderRadius: BorderRadius.circular(24),
-            border: isRecommended
-                ? Border.all(color: color, width: 2)
-                : Border.all(color: Colors.white.withOpacity(0.1)),
-            boxShadow: [
-              BoxShadow(
-                color: color.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    return Container(
+      width: 320,
+      height: 580,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D1117),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(
+          color: isCurrent ? color.withAlpha(128) : Colors.white.withAlpha(13),
+          width: 2,
+        ),
+        boxShadow: [
+          if (isCurrent)
+            BoxShadow(
+              color: color.withAlpha(26),
+              blurRadius: 40,
+              spreadRadius: 0,
+            ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Icon(icon, color: color, size: 32),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          subtitle,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.white70,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                price,
-                style: GoogleFonts.poppins(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const Divider(height: 32, color: Colors.white12),
-              ...features.map((f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        Icon(Icons.check_circle, color: color, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            f,
-                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.white.withOpacity(0.9)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: canUpgrade
-                    ? ElevatedButton(
-                        onPressed: title == 'Trial' ? null : () => _contactSales(title, price),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: title == 'Trial' ? Colors.grey : color,
-                          disabledBackgroundColor: Colors.grey.shade700,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          title == 'Trial' ? 'Free Forever' : 'Subscribe Now',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      )
-                    : OutlinedButton(
-                        onPressed: null,
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          'Current Plan',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white54,
-                          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              color: const Color(0xFF10B981),
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            price,
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: features
+                    .map(
+                      (f) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.check,
+                              color: Color(0xFF10B981),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                f,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 14,
+                                  color: Colors.white.withAlpha(153),
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                    )
+                    .toList(),
               ),
-            ],
+            ),
           ),
-        ),
-        if (isRecommended)
-          Positioned(
-            top: -12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(20),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: !canUpgrade ? null : () => _contactSales(title, price),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withAlpha(13),
+                disabledBackgroundColor: Colors.white.withAlpha(5),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(
+                    color: canUpgrade
+                        ? Colors.white.withAlpha(26)
+                        : Colors.transparent,
+                  ),
+                ),
+                elevation: 0,
               ),
               child: Text(
-                'RECOMMENDED',
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontSize: 12,
+                !isCurrent ? 'Select Plan' : 'Current Plan',
+                style: GoogleFonts.outfit(
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 1,
+                  fontSize: 15,
+                  color: isCurrent ? Colors.white38 : Colors.white,
                 ),
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 
-  void _contactSales(String plan, String price) async {
+  void _contactSales(String targetPlan, String price) async {
     final userProfile = ref.read(userProfileProvider).value;
     final uid = userProfile?.uid ?? 'unknown';
     final email = userProfile?.email ?? 'unknown';
-    
-    final config = ref.read(remoteConfigProvider); // Dynamic Config
+
+    final config = ref.read(remoteConfigProvider).value;
+    if (config == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not retrieve contact information. Please try again later.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (targetPlan == 'Trial') return; // Cannot purchase trial
 
     // --- Create Pending Order ---
     final order = PurchaseOrder(
@@ -376,7 +473,9 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
       userId: uid,
       userEmail: email,
       dentistName: userProfile?.dentistName,
-      plan: plan == 'CROWN' ? SubscriptionPlan.enterprise : SubscriptionPlan.professional,
+      plan: targetPlan == 'CROWN'
+          ? SubscriptionPlan.enterprise
+          : SubscriptionPlan.professional,
       durationLabel: _selectedDuration,
       priceLabel: price,
       status: OrderStatus.pending,
@@ -384,34 +483,35 @@ class _SubscriptionPlansScreenState extends ConsumerState<SubscriptionPlansScree
     );
 
     try {
-      // Create order in Firestore (fire and forget mostly, but we await to ensure ID exists if we want to ref it)
       await ref.read(firebaseServiceProvider).createPurchaseOrder(order);
     } catch (e) {
       debugPrint('Error creating order: $e');
     }
-    // ----------------------------
 
-    // Hybrid Payment Flow: Message to WhatsApp/Email
-    // Added Order Ref to message
     final message = Uri.encodeComponent(
-        'Hello DentalTID, I want to upgrade to *$plan* ($_selectedDuration) for $price.\n\nMy User ID: $uid\nOrder Ref: ${order.id.substring(0,8)}');
-    
-    // Prioritize WhatsApp if available, else Email
-    // Clean phone number for URL (remove + or spaces if needed, but WA usually handles it)
-    final waNumber = config.supportPhone.replaceAll(RegExp(r'\s+'), '').replaceAll('+', '');
-    final waUrl = 'https://wa.me/$waNumber?text=$message'; 
-    
+      'Hello DentalTID, I want to upgrade to *$targetPlan* ($_selectedDuration) for $price.\n\nMy User ID: $uid\nOrder Ref: ${order.id.substring(0, 8)}',
+    );
+
+    final waNumber = config.supportPhone
+        .replaceAll(RegExp(r'\s+'), '')
+        .replaceAll('+', '');
+    final waUrl = 'https://wa.me/$waNumber?text=$message';
+
     if (await canLaunchUrl(Uri.parse(waUrl))) {
       await launchUrl(Uri.parse(waUrl));
     } else {
-      // Fallback to Email
-      final emailUrl = 'mailto:${config.supportEmail}?subject=Upgrade to $plan&body=$message';
+      final emailUrl =
+          'mailto:${config.supportEmail}?subject=Upgrade to $targetPlan&body=$message';
       if (await canLaunchUrl(Uri.parse(emailUrl))) {
         await launchUrl(Uri.parse(emailUrl));
       } else {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Could not launch contact method. Please contact ${config.supportPhone}')),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Could not launch contact method. Please contact ${config.supportPhone}',
+              ),
+            ),
           );
         }
       }

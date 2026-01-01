@@ -158,10 +158,7 @@ class PrescriptionTemplate extends StatelessWidget {
               Positioned.fill(
                 child: Opacity(
                   opacity: effectiveBgOpacity,
-                  child: Image.file(
-                    File(effectiveBgPath),
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.file(File(effectiveBgPath), fit: BoxFit.contain),
                 ),
               ),
             // Prescription Content
@@ -265,8 +262,7 @@ class PrescriptionTemplate extends StatelessWidget {
                                         ),
                                 ),
                               ),
-                            if (effectiveShowQrCode)
-                              const SizedBox(height: 4),
+                            if (effectiveShowQrCode) const SizedBox(height: 4),
 
                             // Order Number
                             Text(
@@ -594,7 +590,6 @@ class PrescriptionTemplate extends StatelessWidget {
                       ),
                     ),
                   ],
-
                 ],
               ),
             ),

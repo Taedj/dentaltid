@@ -18,20 +18,40 @@ class RemoteConfig {
     required this.paymentInfoUrl,
     this.pricing = const {},
   });
-
   factory RemoteConfig.defaults() {
     return RemoteConfig(
       supportEmail: 'zitounitidjani@gmail.com',
       supportPhone: '+213657293332',
-      websiteUrl: 'https://github.com/zitounitidjani', // Placeholder
-      paymentInfoUrl: 'https://github.com/zitounitidjani', // Placeholder
+      websiteUrl: 'https://taedj.dev',
+      paymentInfoUrl: 'https://taedj.dev/pricing',
       pricing: const {
-        'DZD': {'monthly': '2000', 'yearly': '20000'},
-        'USD': {'monthly': '15', 'yearly': '150'},
+        'DZD': {
+          'symbol': 'DZD',
+          'position': 'suffix',
+          'plans': {
+            'premium': {
+              'monthly': '2,000',
+              'yearly': '20,000',
+              'lifetime': '60,000',
+            },
+            'crown': {
+              'monthly': '4,000',
+              'yearly': '40,000',
+              'lifetime': '100,000',
+            },
+          },
+        },
+        'USD': {
+          'symbol': r'$',
+          'position': 'prefix',
+          'plans': {
+            'premium': {'monthly': '15', 'yearly': '150', 'lifetime': '450'},
+            'crown': {'monthly': '30', 'yearly': '300', 'lifetime': '900'},
+          },
+        },
       },
     );
   }
-
   factory RemoteConfig.fromJson(Map<String, dynamic> json) {
     return RemoteConfig(
       supportEmail: json['support_email'] ?? 'zitounitidjani@gmail.com',
@@ -55,29 +75,36 @@ class RemoteConfig {
 
 class RemoteConfigService {
   static const String _configKey = 'remote_app_config';
-  static const String _defaultUrl = 'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/155052a4f8a8d5c25be339821cfcfb5ecf08ec56/config.json'; 
+  static const String _defaultUrl =
+      'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/config.json';
 
   final SettingsService _settingsService;
   final Logger _log = Logger('RemoteConfig');
 
-  RemoteConfigService() : _settingsService = SettingsService.instance; // Using singleton
+  RemoteConfigService()
+    : _settingsService = SettingsService.instance; // Using singleton
 
   Future<void> fetchAndCacheConfig() async {
     _log.info('Fetching remote config from Gist...');
     try {
-      final customUrl = _settingsService.getString('config_source_url') ?? _defaultUrl;
+      final customUrl =
+          _settingsService.getString('config_source_url') ?? _defaultUrl;
       final response = await http.get(Uri.parse(customUrl));
-      
+
       if (response.statusCode == 200) {
         final data = response.body;
         jsonDecode(data); // Validate JSON
         await _settingsService.setString(_configKey, data);
         _log.info('Successfully fetched and cached remote config.');
       } else {
-        _log.warning('Failed to fetch remote config. Status code: ${response.statusCode}');
+        _log.warning(
+          'Failed to fetch remote config. Status code: ${response.statusCode}',
+        );
       }
     } catch (e) {
-      _log.severe('Error fetching remote config: $e. Using cached/default values.');
+      _log.severe(
+        'Error fetching remote config: $e. Using cached/default values.',
+      );
     }
   }
 

@@ -16,10 +16,10 @@ class PatientRepository {
 
   List<String> _getColumnsWithDue() {
     return [
-      '*',
-      '(SELECT SUM(t.totalAmount - t.paidAmount) FROM transactions t JOIN appointments a ON t.sessionId = a.id WHERE a.sessionId = patients.id) as totalDue',
-      '(SELECT MAX(dateTime) FROM appointments WHERE sessionId = patients.id) as lastVisitDate',
-      '(SELECT COUNT(*) FROM appointments WHERE sessionId = patients.id) as visitCount',
+      'patients.*', // Select all columns from patients table
+      '(SELECT SUM(t.totalAmount - t.paidAmount) FROM transactions t JOIN appointments a ON t.sessionId = a.id WHERE a.sessionId = patients.id) as totalDue', // Corrected JOIN for totalDue
+      '(SELECT MAX(dateTime) FROM appointments WHERE sessionId = patients.id) as lastVisitDate', // Corrected for lastVisitDate
+      '(SELECT COUNT(*) FROM appointments WHERE sessionId = patients.id) as visitCount', // Corrected for visitCount
     ];
   }
 
@@ -69,8 +69,7 @@ class PatientRepository {
       case PatientFilter.todayByExternal:
         final startOfDay = DateTime(now.year, now.month, now.day);
         final endOfDay = startOfDay.add(const Duration(days: 1));
-        where =
-            "source = 'nanopix' AND createdAt >= ? AND createdAt < ?";
+        where = "source = 'nanopix' AND createdAt >= ? AND createdAt < ?";
         whereArgs = [startOfDay.toIso8601String(), endOfDay.toIso8601String()];
         break;
       case PatientFilter.allByExternal:
@@ -112,7 +111,7 @@ class PatientRepository {
       whereArgs: whereArgs,
       limit: pageSize,
       offset: offset,
-      orderBy: 'createdAt DESC', // Ensure consistent ordering
+      orderBy: 'createdAt DESC', // Default sort
     );
 
     final patients = List.generate(maps.length, (i) {

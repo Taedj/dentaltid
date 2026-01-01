@@ -120,7 +120,8 @@ class _PrescriptionEditorScreenState
         _printOptions = _printOptions.copyWith(
           showLogo: settings.getBool('prescription_show_logo') ?? false,
           showNotes: settings.getBool('prescription_show_notes') ?? false,
-          showAllergies: settings.getBool('prescription_show_allergies') ?? false,
+          showAllergies:
+              settings.getBool('prescription_show_allergies') ?? false,
           showAdvice: settings.getBool('prescription_show_advice') ?? false,
           showQrCode: settings.getBool('prescription_show_qr') ?? false,
           showBranding: settings.getBool('prescription_show_branding') ?? false,
@@ -175,7 +176,10 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _notes = result);
-      await SettingsService.instance.setString('prescription_default_notes', result);
+      await SettingsService.instance.setString(
+        'prescription_default_notes',
+        result,
+      );
     }
   }
 
@@ -206,7 +210,10 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _advice = result);
-      await SettingsService.instance.setString('prescription_default_advice', result);
+      await SettingsService.instance.setString(
+        'prescription_default_advice',
+        result,
+      );
     }
   }
 
@@ -234,7 +241,10 @@ class _PrescriptionEditorScreenState
     );
     if (result != null) {
       setState(() => _qrContent = result);
-      await SettingsService.instance.setString('prescription_qr_content', result);
+      await SettingsService.instance.setString(
+        'prescription_qr_content',
+        result,
+      );
     }
   }
 
@@ -251,7 +261,8 @@ class _PrescriptionEditorScreenState
 
       final fileName = p.basename(sourcePath);
       // Create a unique filename to avoid collisions if users pick "logo.png" multiple times
-      final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      final uniqueFileName =
+          '${DateTime.now().millisecondsSinceEpoch}_$fileName';
       final targetPath = p.join(targetDir.path, uniqueFileName);
 
       await File(sourcePath).copy(targetPath);
@@ -268,9 +279,12 @@ class _PrescriptionEditorScreenState
     if (result != null && result.files.single.path != null) {
       final originalPath = result.files.single.path!;
       final securedPath = await _securelyCopyPrescriptionImage(originalPath);
-      
+
       setState(() => _logoPath = securedPath);
-      await SettingsService.instance.setString('prescription_logo_path', securedPath);
+      await SettingsService.instance.setString(
+        'prescription_logo_path',
+        securedPath,
+      );
     }
   }
 
@@ -285,7 +299,10 @@ class _PrescriptionEditorScreenState
           backgroundImagePath: securedPath,
         ),
       );
-      await SettingsService.instance.setString('prescription_bg_path', securedPath);
+      await SettingsService.instance.setString(
+        'prescription_bg_path',
+        securedPath,
+      );
     }
   }
 
@@ -301,7 +318,8 @@ class _PrescriptionEditorScreenState
         : null;
     final bgImage = _printOptions.backgroundImagePath != null
         ? pw.MemoryImage(
-            File(_printOptions.backgroundImagePath!).readAsBytesSync())
+            File(_printOptions.backgroundImagePath!).readAsBytesSync(),
+          )
         : null;
 
     final t = {
@@ -386,26 +404,32 @@ class _PrescriptionEditorScreenState
                                 if (_printOptions.showLogo && logoImage != null)
                                   pw.Container(
                                     height: 50,
-                                    child: pw.Image(logoImage,
-                                        alignment: pw.Alignment.centerLeft),
+                                    child: pw.Image(
+                                      logoImage,
+                                      alignment: pw.Alignment.centerLeft,
+                                    ),
                                   ),
                                 pw.Text(
                                   (widget.userProfile.clinicName ??
                                           'Cabinet Dentaire')
                                       .toUpperCase(),
                                   style: pw.TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: pw.FontWeight.bold),
+                                    fontSize: 10,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
                                 ),
                                 pw.Text(
                                   widget.userProfile.dentistName ??
                                       '${t['dr']} Dentist',
                                   style: pw.TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: pw.FontWeight.bold),
+                                    fontSize: 11,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
                                 ),
-                                pw.Text(t['surgeon']!,
-                                    style: const pw.TextStyle(fontSize: 8)),
+                                pw.Text(
+                                  t['surgeon']!,
+                                  style: const pw.TextStyle(fontSize: 8),
+                                ),
                               ],
                             ),
                           ),
@@ -424,14 +448,18 @@ class _PrescriptionEditorScreenState
                                     ),
                                   ),
                                 pw.SizedBox(height: 4),
-                                pw.Text('${t['order_no']}: 1',
-                                    style: pw.TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: pw.FontWeight.bold)),
+                                pw.Text(
+                                  '${t['order_no']}: 1',
+                                  style: pw.TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
                                 if (widget.userProfile.phoneNumber != null)
                                   pw.Text(
-                                      '${t['tel']}: ${widget.userProfile.phoneNumber}',
-                                      style: const pw.TextStyle(fontSize: 8)),
+                                    '${t['tel']}: ${widget.userProfile.phoneNumber}',
+                                    style: const pw.TextStyle(fontSize: 8),
+                                  ),
                               ],
                             ),
                           ),
@@ -443,19 +471,29 @@ class _PrescriptionEditorScreenState
                       // Patient Info
                       pw.Row(
                         children: [
-                          pw.Text('${t['patient']}: ',
-                              style: pw.TextStyle(
-                                  fontSize: 9, fontWeight: pw.FontWeight.bold)),
                           pw.Text(
-                              '${widget.patient.name} ${widget.patient.familyName}'
-                                  .toUpperCase(),
-                              style: pw.TextStyle(
-                                  fontSize: 10, fontWeight: pw.FontWeight.bold)),
+                            '${t['patient']}: ',
+                            style: pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
+                          pw.Text(
+                            '${widget.patient.name} ${widget.patient.familyName}'
+                                .toUpperCase(),
+                            style: pw.TextStyle(
+                              fontSize: 10,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
                           pw.Spacer(),
                           pw.Text(
-                              '${t['age']}: ${widget.patient.age} ${t['years']}',
-                              style: pw.TextStyle(
-                                  fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                            '${t['age']}: ${widget.patient.age} ${t['years']}',
+                            style: pw.TextStyle(
+                              fontSize: 9,
+                              fontWeight: pw.FontWeight.bold,
+                            ),
+                          ),
                         ],
                       ),
                       pw.SizedBox(height: 10),
@@ -473,9 +511,10 @@ class _PrescriptionEditorScreenState
                         child: pw.Text(
                           t['prescription_title']!,
                           style: pw.TextStyle(
-                              fontSize: 13,
-                              fontWeight: pw.FontWeight.bold,
-                              letterSpacing: 2),
+                            fontSize: 13,
+                            fontWeight: pw.FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
                         ),
                       ),
                       pw.SizedBox(height: 10),
@@ -500,23 +539,34 @@ class _PrescriptionEditorScreenState
                                 children: [
                                   pw.Row(
                                     children: [
-                                      pw.Text('• ',
-                                          style: pw.TextStyle(
-                                              fontWeight: pw.FontWeight.bold,
-                                              fontSize: 10)),
-                                      pw.Text(m.medicineName.toUpperCase(),
-                                          style: pw.TextStyle(
-                                              fontWeight: pw.FontWeight.bold,
-                                              fontSize: 10)),
+                                      pw.Text(
+                                        '• ',
+                                        style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                      ),
+                                      pw.Text(
+                                        m.medicineName.toUpperCase(),
+                                        style: pw.TextStyle(
+                                          fontWeight: pw.FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                   pw.Padding(
                                     padding: const pw.EdgeInsets.only(
-                                        left: 12, top: 2),
-                                    child: pw.Text(posology,
-                                        style: pw.TextStyle(
-                                            fontSize: 9,
-                                            fontStyle: pw.FontStyle.italic)),
+                                      left: 12,
+                                      top: 2,
+                                    ),
+                                    child: pw.Text(
+                                      posology,
+                                      style: pw.TextStyle(
+                                        fontSize: 9,
+                                        fontStyle: pw.FontStyle.italic,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -526,27 +576,41 @@ class _PrescriptionEditorScreenState
                       ),
                       // Notes / Advice
                       if (_printOptions.showNotes && _notes != null) ...[
-                        pw.Text('${t['notes']}:',
-                            style: pw.TextStyle(
-                                fontSize: 8,
-                                fontWeight: pw.FontWeight.bold,
-                                color: PdfColors.red)),
+                        pw.Text(
+                          '${t['notes']}:',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.red,
+                          ),
+                        ),
                         pw.Container(
                           padding: const pw.EdgeInsets.all(4),
                           decoration: pw.BoxDecoration(
-                              border: pw.Border.all(color: PdfColors.grey300)),
-                          child: pw.Text(_notes!,
-                              style: const pw.TextStyle(fontSize: 8)),
+                            border: pw.Border.all(color: PdfColors.grey300),
+                          ),
+                          child: pw.Text(
+                            _notes!,
+                            style: const pw.TextStyle(fontSize: 8),
+                          ),
                         ),
                         pw.SizedBox(height: 5),
                       ],
                       if (_printOptions.showAdvice && _advice != null) ...[
-                        pw.Text('${t['advice']}:',
-                            style: pw.TextStyle(
-                                fontSize: 8, fontWeight: pw.FontWeight.bold)),
-                        pw.Text(_advice!,
-                            style: pw.TextStyle(
-                                fontSize: 8, fontStyle: pw.FontStyle.italic)),
+                        pw.Text(
+                          '${t['advice']}:',
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.Text(
+                          _advice!,
+                          style: pw.TextStyle(
+                            fontSize: 8,
+                            fontStyle: pw.FontStyle.italic,
+                          ),
+                        ),
                         pw.SizedBox(height: 5),
                       ],
                       pw.SizedBox(height: 20),
@@ -554,14 +618,22 @@ class _PrescriptionEditorScreenState
                       pw.Row(
                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                         children: [
-                          pw.Text(widget.userProfile.clinicAddress ?? '',
-                              style: const pw.TextStyle(fontSize: 7)),
+                          pw.Text(
+                            widget.userProfile.clinicAddress ?? '',
+                            style: const pw.TextStyle(fontSize: 7),
+                          ),
                           pw.Column(
                             children: [
-                              pw.Text(t['signature']!,
-                                  style: const pw.TextStyle(fontSize: 7)),
+                              pw.Text(
+                                t['signature']!,
+                                style: const pw.TextStyle(fontSize: 7),
+                              ),
                               pw.SizedBox(height: 30),
-                              pw.Container(width: 100, height: 0.5, color: PdfColors.black),
+                              pw.Container(
+                                width: 100,
+                                height: 0.5,
+                                color: PdfColors.black,
+                              ),
                             ],
                           ),
                         ],
@@ -751,10 +823,7 @@ class _PrescriptionEditorScreenState
               },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.print),
-            onPressed: _handlePrint,
-          ),
+          IconButton(icon: const Icon(Icons.print), onPressed: _handlePrint),
           ElevatedButton.icon(
             onPressed: _savePrescription,
             icon: const Icon(Icons.save),
@@ -903,12 +972,10 @@ class _PrescriptionEditorScreenState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(
-                        Icons.edit_note,
-                        color: Colors.blue,
-                      ),
+                      icon: const Icon(Icons.edit_note, color: Colors.blue),
                       tooltip: 'Edit Preset',
-                      onPressed: () => showEditMedicinePresetDialog(context, preset),
+                      onPressed: () =>
+                          showEditMedicinePresetDialog(context, preset),
                     ),
                     IconButton(
                       icon: const Icon(
@@ -1031,9 +1098,7 @@ class _PrescriptionEditorScreenState
                     },
                   ),
                 ),
-                Text(
-                  '${(_printOptions.backgroundOpacity * 100).toInt()}%',
-                ),
+                Text('${(_printOptions.backgroundOpacity * 100).toInt()}%'),
               ],
             ),
           ],
@@ -1051,64 +1116,108 @@ class _PrescriptionEditorScreenState
                 label: const Text('Logo'),
                 selected: _printOptions.showLogo,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showLogo: v));
-                  await SettingsService.instance.setBool('prescription_show_logo', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(showLogo: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_logo',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Notes'),
                 selected: _printOptions.showNotes,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showNotes: v));
-                  await SettingsService.instance.setBool('prescription_show_notes', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(showNotes: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_notes',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Allergies'),
                 selected: _printOptions.showAllergies,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showAllergies: v));
-                  await SettingsService.instance.setBool('prescription_show_allergies', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(
+                      showAllergies: v,
+                    ),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_allergies',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Advice'),
                 selected: _printOptions.showAdvice,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showAdvice: v));
-                  await SettingsService.instance.setBool('prescription_show_advice', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(showAdvice: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_advice',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Email'),
                 selected: _printOptions.showEmail,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showEmail: v));
-                  await SettingsService.instance.setBool('prescription_show_email', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(showEmail: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_email',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('QR Code'),
                 selected: _printOptions.showQrCode,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showQrCode: v));
-                  await SettingsService.instance.setBool('prescription_show_qr', v);
+                  setState(
+                    () => _printOptions = _printOptions.copyWith(showQrCode: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_qr',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Branding'),
                 selected: _printOptions.showBranding,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showBranding: v));
-                  await SettingsService.instance.setBool('prescription_show_branding', v);
+                  setState(
+                    () =>
+                        _printOptions = _printOptions.copyWith(showBranding: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_branding',
+                    v,
+                  );
                 },
               ),
               FilterChip(
                 label: const Text('Borders'),
                 selected: _printOptions.showBorders,
                 onSelected: (v) async {
-                  setState(() => _printOptions = _printOptions.copyWith(showBorders: v));
-                  await SettingsService.instance.setBool('prescription_show_borders', v);
+                  setState(
+                    () =>
+                        _printOptions = _printOptions.copyWith(showBorders: v),
+                  );
+                  await SettingsService.instance.setBool(
+                    'prescription_show_borders',
+                    v,
+                  );
                 },
               ),
             ],

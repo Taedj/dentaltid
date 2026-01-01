@@ -84,7 +84,8 @@ class MedicinePresetsManagementView extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.edit_note, color: Colors.blue),
-                      onPressed: () => showEditMedicinePresetDialog(context, preset),
+                      onPressed: () =>
+                          showEditMedicinePresetDialog(context, preset),
                     ),
                     IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),

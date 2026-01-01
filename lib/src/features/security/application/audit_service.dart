@@ -38,9 +38,12 @@ class AuditService {
     }
   }
 
-  Future<PaginatedAuditEvents> getAuditEvents({int page = 1, int pageSize = 20}) async {
+  Future<PaginatedAuditEvents> getAuditEvents({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
     final db = await _databaseService.database;
-    
+
     // Total Count
     final countResult = await db.query(_tableName, columns: ['COUNT(*)']);
     final totalCount = Sqflite.firstIntValue(countResult) ?? 0;

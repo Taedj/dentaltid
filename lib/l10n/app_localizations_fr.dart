@@ -1100,6 +1100,17 @@ class AppLocalizationsFr extends AppLocalizations {
   String get premiumExpired => 'Premium Expiré';
 
   @override
+  String get crownAccount => 'Compte Crown';
+
+  @override
+  String crownDaysLeft(int days) {
+    return 'Crown : $days jours restants';
+  }
+
+  @override
+  String get crownExpired => 'Crown Expiré';
+
+  @override
   String trialVersionDaysLeft(int days) {
     return 'Version d\'essai : $days jours restants';
   }

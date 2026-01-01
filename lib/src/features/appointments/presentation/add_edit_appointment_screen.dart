@@ -277,17 +277,18 @@ class _AddEditAppointmentScreenState
                   decoration: InputDecoration(
                     border: const OutlineInputBorder(),
                   ),
-                  items: [
-                    ...patients,
-                    if (_selectedPatient != null &&
-                        !patients.any((p) => p.id == _selectedPatient!.id))
-                      _selectedPatient!,
-                  ].map((patient) {
-                    return DropdownMenuItem<int>(
-                      value: patient.id,
-                      child: Text('${patient.name} ${patient.familyName}'),
-                    );
-                  }).toList(),
+                  items:
+                      [
+                        ...patients,
+                        if (_selectedPatient != null &&
+                            !patients.any((p) => p.id == _selectedPatient!.id))
+                          _selectedPatient!,
+                      ].map((patient) {
+                        return DropdownMenuItem<int>(
+                          value: patient.id,
+                          child: Text('${patient.name} ${patient.familyName}'),
+                        );
+                      }).toList(),
                   onChanged: (patientId) => setState(
                     () => _selectedPatient = patients.firstWhere(
                       (p) => p.id == patientId,
@@ -735,53 +736,58 @@ class _AddEditAppointmentScreenState
                 data: (paginated) {
                   final patients = paginated.patients;
                   return DropdownButtonFormField<int>(
-                  initialValue: _selectedPatient?.id,
-                  decoration: InputDecoration(
-                    labelText: l10n.choosePatientLabel,
-                    labelStyle: TextStyle(color: colorScheme.onSurfaceVariant),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: colorScheme.outline),
+                    initialValue: _selectedPatient?.id,
+                    decoration: InputDecoration(
+                      labelText: l10n.choosePatientLabel,
+                      labelStyle: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: colorScheme.outline),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: colorScheme.outline),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(
+                          color: colorScheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.1),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: colorScheme.outline),
+                    style: TextStyle(
+                      color: colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(
-                        color: colorScheme.primary,
-                        width: 2,
+                    items:
+                        [
+                          ...patients,
+                          if (_selectedPatient != null &&
+                              !patients.any(
+                                (p) => p.id == _selectedPatient!.id,
+                              ))
+                            _selectedPatient!,
+                        ].map((patient) {
+                          return DropdownMenuItem<int>(
+                            value: patient.id,
+                            child: Text(
+                              '${patient.name} ${patient.familyName}',
+                              style: TextStyle(color: colorScheme.onSurface),
+                            ),
+                          );
+                        }).toList(),
+                    onChanged: (patientId) => setState(
+                      () => _selectedPatient = patients.firstWhere(
+                        (p) => p.id == patientId,
                       ),
                     ),
-                    filled: true,
-                    fillColor: Colors.white.withValues(alpha: 0.1),
-                  ),
-                  style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  items: [
-                    ...patients,
-                    if (_selectedPatient != null &&
-                        !patients.any((p) => p.id == _selectedPatient!.id))
-                      _selectedPatient!,
-                  ].map((patient) {
-                    return DropdownMenuItem<int>(
-                      value: patient.id,
-                      child: Text(
-                        '${patient.name} ${patient.familyName}',
-                        style: TextStyle(color: colorScheme.onSurface),
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (patientId) => setState(
-                    () => _selectedPatient = patients.firstWhere(
-                      (p) => p.id == patientId,
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
                 loading: () => Center(
                   child: CircularProgressIndicator(color: colorScheme.primary),
                 ),

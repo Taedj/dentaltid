@@ -189,9 +189,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text(
-                        'Trial limit reached for this device. Please contact support.'),
-                    backgroundColor: Colors.red),
+                  content: Text(
+                    'Trial limit reached for this device. Please contact support.',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
               );
             }
             setState(() => _isLoading = false);
@@ -230,11 +232,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
 
           await _firebaseService.createUserProfile(userProfile, licenseKey);
-          
+
           // Register Device for Trial Blacklist
           if (deviceId != null) {
             await _firebaseService.registerDeviceTrial(
-                deviceId, user.email ?? _emailController.text);
+              deviceId,
+              user.email ?? _emailController.text,
+            );
           }
 
           log.info('User profile created and saved to Firestore.');
@@ -525,122 +529,136 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   void _showContactDialog() {
     final l10n = AppLocalizations.of(context)!;
-    final config = ref.read(remoteConfigProvider);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        backgroundColor: const Color(0xFF1E293B),
-        title: Text(
-          l10n.contactDeveloperLabel,
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Dr. Tidjani Ahmed ZITOUNI',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.white,
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final config = ref.watch(remoteConfigProvider);
+          return config.when(
+            data: (data) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-            ),
-            const SizedBox(height: 16),
-            InkWell(
-              onTap: () => _launchUrl('mailto:${config.supportEmail}'),
-              child: Row(
-                children: [
-                  const Icon(Icons.email, color: Colors.blueAccent),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      config.supportEmail,
-                      style: GoogleFonts.poppins(
-                        color: Colors.blueAccent,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
-                ],
+              backgroundColor: const Color(0xFF1E293B),
+              title: Text(
+                l10n.contactDeveloperLabel,
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () => _launchUrl('tel:${config.supportPhone}'),
-              child: Row(
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.phone, color: Colors.greenAccent),
-                  const SizedBox(width: 8),
                   Text(
-                    config.supportPhone,
+                    'Dr. Tidjani Ahmed ZITOUNI',
                     style: GoogleFonts.poppins(
-                      color: Colors.greenAccent,
-                      decoration: TextDecoration.underline,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () => _launchUrl('mailto:${data.supportEmail}'),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.email, color: Colors.blueAccent),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            data.supportEmail,
+                            style: GoogleFonts.poppins(
+                              color: Colors.blueAccent,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () => _launchUrl('tel:${data.supportPhone}'),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.phone, color: Colors.greenAccent),
+                        const SizedBox(width: 8),
+                        Text(
+                          data.supportPhone,
+                          style: GoogleFonts.poppins(
+                            color: Colors.greenAccent,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InkWell(
+                    onTap: () => _launchUrl(data.websiteUrl),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.language, color: Colors.purpleAccent),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            data.websiteUrl.isEmpty
+                                ? 'www.tidjanizitouni.com'
+                                : data.websiteUrl,
+                            style: GoogleFonts.poppins(
+                              color: Colors.purpleAccent,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 32, color: Colors.white12),
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Powered by',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            color: Colors.white38,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Taedj Dev',
+                          style: GoogleFonts.audiowide(
+                            fontSize: 14,
+                            color: Colors.white54,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            InkWell(
-              onTap: () => _launchUrl(config.websiteUrl),
-              child: Row(
-                children: [
-                  const Icon(Icons.language, color: Colors.purpleAccent),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      config.websiteUrl.isEmpty ? 'www.tidjanizitouni.com' : config.websiteUrl,
-                      style: GoogleFonts.poppins(
-                        color: Colors.purpleAccent,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    l10n.close,
+                    style: GoogleFonts.poppins(color: Colors.white70),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const Divider(height: 32, color: Colors.white12),
-            Center(
-              child: Column(
-                children: [
-                  Text(
-                    'Powered by',
-                    style: GoogleFonts.poppins(
-                      fontSize: 10,
-                      color: Colors.white38,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Taedj Dev',
-                    style: GoogleFonts.audiowide(
-                      fontSize: 14,
-                      color: Colors.white54,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
-              ),
+            loading: () => const AlertDialog(
+              content: Center(child: CircularProgressIndicator()),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              l10n.close,
-              style: GoogleFonts.poppins(color: Colors.white70),
-            ),
-          ),
-        ],
+            error: (err, stack) =>
+                AlertDialog(title: const Text('Error'), content: Text('$err')),
+          );
+        },
       ),
     );
   }

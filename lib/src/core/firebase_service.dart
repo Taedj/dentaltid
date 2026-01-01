@@ -697,8 +697,10 @@ class FirebaseService {
   // --- Device Trial Limits ---
   Future<bool> isDeviceBlocked(String deviceId) async {
     try {
-      final doc =
-          await _firestore.collection('device_trials').doc(deviceId).get();
+      final doc = await _firestore
+          .collection('device_trials')
+          .doc(deviceId)
+          .get();
       return doc.exists;
     } catch (e) {
       _logger.warning('Error checking device block: $e');
@@ -720,7 +722,10 @@ class FirebaseService {
 
   // --- Purchase Orders (Pending Requests) ---
   Future<void> createPurchaseOrder(PurchaseOrder order) async {
-    await _firestore.collection('purchase_orders').doc(order.id).set(order.toJson());
+    await _firestore
+        .collection('purchase_orders')
+        .doc(order.id)
+        .set(order.toJson());
   }
 
   Stream<List<PurchaseOrder>> getPendingOrders() {
@@ -729,9 +734,11 @@ class FirebaseService {
         .where('status', isEqualTo: OrderStatus.pending.toString())
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => PurchaseOrder.fromJson(doc.data()))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => PurchaseOrder.fromJson(doc.data()))
+              .toList(),
+        );
   }
 
   Future<void> approveOrder(PurchaseOrder order) async {
@@ -743,47 +750,49 @@ class FirebaseService {
         .doc('info');
 
     await _firestore.runTransaction((transaction) async {
-       final userDoc = await transaction.get(userRef);
-       DateTime currentExpiry = DateTime.now();
-       
-       if (userDoc.exists) {
-         final data = userDoc.data()!;
-         final isPremium = data['isPremium'] as bool? ?? false;
-         final expiryStr = data['premiumExpiryDate'] as String?;
-         if (isPremium && expiryStr != null) {
-           final expiry = DateTime.parse(expiryStr);
-           if (expiry.isAfter(DateTime.now())) {
-             currentExpiry = expiry;
-           }
-         }
-       }
-       
-       // Calculate duration
-       int monthsToAdd = 1;
-       final lowerDuration = order.durationLabel.toLowerCase();
-       if (lowerDuration.contains('year')) {
-          monthsToAdd = 12;
-       } else if (lowerDuration.contains('lifetime')) {
-          monthsToAdd = 1200; // 100 years
-       } else if (lowerDuration.contains('month')) {
-           if (lowerDuration.contains('3')) monthsToAdd = 3;
-           if (lowerDuration.contains('6')) monthsToAdd = 6;
-       }
+      final userDoc = await transaction.get(userRef);
+      DateTime currentExpiry = DateTime.now();
 
-       final newExpiry = currentExpiry.add(Duration(days: 30 * monthsToAdd));
-       
-       transaction.update(userRef, {
-          'isPremium': true,
-          'plan': order.plan.toString(),
-          'premiumExpiryDate': newExpiry.toIso8601String(),
-          'status': SubscriptionStatus.active.toString(),
-       });
-       
-       transaction.update(orderRef, {
-          'status': OrderStatus.approved.toString(),
-          'processedAt': FieldValue.serverTimestamp(),
-          'dentistName': (userDoc.data()?['dentistName'] ?? 'Unknown'), // Sync name just in case
-       });
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        final isPremium = data['isPremium'] as bool? ?? false;
+        final expiryStr = data['premiumExpiryDate'] as String?;
+        if (isPremium && expiryStr != null) {
+          final expiry = DateTime.parse(expiryStr);
+          if (expiry.isAfter(DateTime.now())) {
+            currentExpiry = expiry;
+          }
+        }
+      }
+
+      // Calculate duration
+      int monthsToAdd = 1;
+      final lowerDuration = order.durationLabel.toLowerCase();
+      if (lowerDuration.contains('year')) {
+        monthsToAdd = 12;
+      } else if (lowerDuration.contains('lifetime')) {
+        monthsToAdd = 1200; // 100 years
+      } else if (lowerDuration.contains('month')) {
+        if (lowerDuration.contains('3')) monthsToAdd = 3;
+        if (lowerDuration.contains('6')) monthsToAdd = 6;
+      }
+
+      final newExpiry = currentExpiry.add(Duration(days: 30 * monthsToAdd));
+
+      transaction.update(userRef, {
+        'isPremium': true,
+        'plan': order.plan.toString(),
+        'premiumExpiryDate': newExpiry.toIso8601String(),
+        'status': SubscriptionStatus.active.toString(),
+      });
+
+      transaction.update(orderRef, {
+        'status': OrderStatus.approved.toString(),
+        'processedAt': FieldValue.serverTimestamp(),
+        'dentistName':
+            (userDoc.data()?['dentistName'] ??
+            'Unknown'), // Sync name just in case
+      });
     });
   }
 

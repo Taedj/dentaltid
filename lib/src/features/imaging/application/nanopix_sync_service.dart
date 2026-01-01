@@ -44,8 +44,9 @@ class NanoPixSyncService {
       // Monitor directory for new folders/files (Instant detection for images)
       try {
         final directory = Directory(nanoPixPath);
-        _directorySubscription =
-            directory.watch(recursive: true).listen((event) {
+        _directorySubscription = directory.watch(recursive: true).listen((
+          event,
+        ) {
           // Debounce to avoid multiple rapid syncs
           _debounceTimer?.cancel();
           _debounceTimer = Timer(const Duration(seconds: 2), () {
@@ -97,7 +98,9 @@ class NanoPixSyncService {
       // Step 1: Get patients from both databases
       final nanoPixPatients = await _readNanoPixDatabase(nanoPixPath);
       final patientService = _ref.read(patientServiceProvider);
-      final dentalTidResult = await patientService.getPatients(pageSize: 100000);
+      final dentalTidResult = await patientService.getPatients(
+        pageSize: 100000,
+      );
       final dentalTidPatients = dentalTidResult.patients;
 
       // Step 3: Identify new patients in NanoPix that aren't in DentalTID
@@ -117,7 +120,10 @@ class NanoPixSyncService {
       // Refresh patients list and matched pairs after import/delete
       final updatedResult = await patientService.getPatients(pageSize: 100000);
       final updatedDentalTidPatients = updatedResult.patients;
-      final updatedMatchedPairs = _matchPatients(updatedDentalTidPatients, nanoPixPatients);
+      final updatedMatchedPairs = _matchPatients(
+        updatedDentalTidPatients,
+        nanoPixPatients,
+      );
 
       // Step 5: Import images for matched patients
       await _importImagesForMatchedPatients(updatedMatchedPairs, nanoPixPath);
@@ -150,11 +156,13 @@ class NanoPixSyncService {
 
     for (final npp in nanoPixPatients) {
       // Check if already in DentalTID by external_id or Name/DOB
-      final exists = dentalTidPatients.any((dtp) =>
-          dtp.externalId == npp.patientId ||
-          (_normalize(dtp.name) == _normalize(npp.firstName) &&
-              _normalize(dtp.familyName) == _normalize(npp.lastName) &&
-              _isSameDate(dtp.dateOfBirth, npp.birthDate)));
+      final exists = dentalTidPatients.any(
+        (dtp) =>
+            dtp.externalId == npp.patientId ||
+            (_normalize(dtp.name) == _normalize(npp.firstName) &&
+                _normalize(dtp.familyName) == _normalize(npp.lastName) &&
+                _isSameDate(dtp.dateOfBirth, npp.birthDate)),
+      );
 
       if (!exists) {
         if (!isPremium && currentPatientCount >= 100) {
@@ -162,12 +170,14 @@ class NanoPixSyncService {
           break;
         }
 
-        _log.info('Found new patient in NanoPix: ${npp.fullName} (ID: ${npp.patientId}). Importing...');
+        _log.info(
+          'Found new patient in NanoPix: ${npp.fullName} (ID: ${npp.patientId}). Importing...',
+        );
         try {
           final dob = npp.birthDate != null && npp.birthDate!.isNotEmpty
               ? DateFormat('yyyy-MM-dd').parse(npp.birthDate!)
               : null;
-          
+
           final newPatient = Patient(
             name: npp.firstName ?? 'Unknown',
             familyName: npp.lastName ?? 'Unknown',
@@ -181,7 +191,7 @@ class NanoPixSyncService {
             source: 'nanopix',
             externalId: npp.patientId,
           );
-          
+
           await patientService.addPatient(newPatient);
           currentPatientCount++;
         } catch (e) {
@@ -202,17 +212,23 @@ class NanoPixSyncService {
     if (!liveSyncEnabled) return;
 
     // We only delete patients that were imported from NanoPix (source == 'nanopix')
-    final linkedPatients = dentalTidPatients.where((p) => p.source == 'nanopix');
+    final linkedPatients = dentalTidPatients.where(
+      (p) => p.source == 'nanopix',
+    );
 
     for (final dtp in linkedPatients) {
-      final stillExistsInNanoPix = nanoPixPatients.any((npp) => 
-          npp.patientId == dtp.externalId || 
-          (_normalize(dtp.name) == _normalize(npp.firstName) &&
-           _normalize(dtp.familyName) == _normalize(npp.lastName) &&
-           _isSameDate(dtp.dateOfBirth, npp.birthDate)));
+      final stillExistsInNanoPix = nanoPixPatients.any(
+        (npp) =>
+            npp.patientId == dtp.externalId ||
+            (_normalize(dtp.name) == _normalize(npp.firstName) &&
+                _normalize(dtp.familyName) == _normalize(npp.lastName) &&
+                _isSameDate(dtp.dateOfBirth, npp.birthDate)),
+      );
 
       if (!stillExistsInNanoPix) {
-        _log.info('Patient ${dtp.name} no longer found in NanoPix. Removing from DentalTID...');
+        _log.info(
+          'Patient ${dtp.name} no longer found in NanoPix. Removing from DentalTID...',
+        );
         try {
           if (dtp.id != null) {
             await patientService.deletePatient(dtp.id!);
@@ -240,7 +256,8 @@ class NanoPixSyncService {
       final db = await databaseFactoryFfi.openDatabase(dbPath);
 
       // 1. Generate unique NanoPix ID if not exists
-      final externalId = patient.externalId ?? 
+      final externalId =
+          patient.externalId ??
           DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
 
       // 2. Check if already exists in NanoPix
@@ -256,12 +273,16 @@ class NanoPixSyncService {
           'id': externalId,
           'first_name': patient.name,
           'last_name': patient.familyName,
-          'birthdate': patient.dateOfBirth != null 
-              ? DateFormat('yyyy-MM-dd').format(patient.dateOfBirth!) 
+          'birthdate': patient.dateOfBirth != null
+              ? DateFormat('yyyy-MM-dd').format(patient.dateOfBirth!)
               : null,
           'sex': 'Unknown',
-          'created_datetime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
-          'updated_datetime': DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+          'created_datetime': DateFormat(
+            'yyyy-MM-dd HH:mm:ss',
+          ).format(DateTime.now()),
+          'updated_datetime': DateFormat(
+            'yyyy-MM-dd HH:mm:ss',
+          ).format(DateTime.now()),
         });
 
         // 4. Create Folder
@@ -274,9 +295,9 @@ class NanoPixSyncService {
 
         // 5. Update DentalTID patient with the externalId
         if (patient.externalId == null) {
-          await _ref.read(patientServiceProvider).updatePatient(
-            patient.copyWith(externalId: externalId),
-          );
+          await _ref
+              .read(patientServiceProvider)
+              .updatePatient(patient.copyWith(externalId: externalId));
         }
       }
       await db.close();
@@ -316,7 +337,8 @@ class NanoPixSyncService {
     if (dob == null) return 0;
     final now = DateTime.now();
     int age = now.year - dob.year;
-    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
       age--;
     }
     return age;
@@ -328,7 +350,9 @@ class NanoPixSyncService {
     if (dt == null || s == null || s.isEmpty) return false;
     try {
       final other = DateFormat('yyyy-MM-dd').parse(s);
-      return dt.year == other.year && dt.month == other.month && dt.day == other.day;
+      return dt.year == other.year &&
+          dt.month == other.month &&
+          dt.day == other.day;
     } catch (_) {
       return false;
     }
@@ -339,7 +363,9 @@ class NanoPixSyncService {
     String basePath,
   ) async {
     final imagingService = _ref.read(imagingServiceProvider);
-    _log.info('Checking for new images in ${matchedPairs.length} matched patients...');
+    _log.info(
+      'Checking for new images in ${matchedPairs.length} matched patients...',
+    );
 
     for (final entry in matchedPairs.entries) {
       final dentalTidPatient = entry.key;
@@ -357,18 +383,21 @@ class NanoPixSyncService {
 
       try {
         final List<FileSystemEntity> entities = await directory.list().toList();
-        _log.fine('Scanning ${entities.length} items in ${nanoPixPatient.folderName}');
+        _log.fine(
+          'Scanning ${entities.length} items in ${nanoPixPatient.folderName}',
+        );
 
         for (final entity in entities) {
           if (entity is File) {
             final fileName = p.basename(entity.path).toLowerCase();
-            
+
             // Support thumbnails and actual images
-            final isImage = fileName.endsWith('.jpg') || 
-                            fileName.endsWith('.jpeg') || 
-                            fileName.endsWith('.png') || 
-                            fileName.endsWith('.bmp');
-            
+            final isImage =
+                fileName.endsWith('.jpg') ||
+                fileName.endsWith('.jpeg') ||
+                fileName.endsWith('.png') ||
+                fileName.endsWith('.bmp');
+
             if (isImage) {
               await _importSingleImage(
                 file: entity,
@@ -395,12 +424,15 @@ class NanoPixSyncService {
     if (exists) return;
 
     try {
-      _log.info('Importing new image for ${patient.name} (${patient.id}): ${file.path}');
+      _log.info(
+        'Importing new image for ${patient.name} (${patient.id}): ${file.path}',
+      );
       await imagingService.saveXray(
         patientId: patient.id!,
         patientName: '${patient.familyName}_${patient.name}',
         imageFile: file,
-        label: 'NanoPix Import ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
+        label:
+            'NanoPix Import ${DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now())}',
         sourceTag: sourceTag,
       );
       // Automatically refresh the gallery for this patient if it's open
@@ -418,10 +450,10 @@ class NanoPixSyncService {
 
     for (final dtp in dentalTidPatients) {
       for (final npp in nanoPixPatients) {
-        if (dtp.externalId == npp.patientId || 
-           (_normalize(dtp.name) == _normalize(npp.firstName) &&
-            _normalize(dtp.familyName) == _normalize(npp.lastName) &&
-            _isSameDate(dtp.dateOfBirth, npp.birthDate))) {
+        if (dtp.externalId == npp.patientId ||
+            (_normalize(dtp.name) == _normalize(npp.firstName) &&
+                _normalize(dtp.familyName) == _normalize(npp.lastName) &&
+                _isSameDate(dtp.dateOfBirth, npp.birthDate))) {
           matches[dtp] = npp;
           break;
         }

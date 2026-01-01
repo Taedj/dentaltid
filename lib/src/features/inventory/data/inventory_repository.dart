@@ -24,7 +24,7 @@ class InventoryRepository {
     int pageSize = 20,
   }) async {
     final db = await _databaseService.database;
-    
+
     List<String> conditions = [];
     List<dynamic> whereArgs = [];
 

@@ -188,7 +188,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                             xray: xray,
                             patientName:
                                 '${widget.patient.name} ${widget.patient.familyName}',
-                            onRefresh: () => ref.invalidate(patientXraysProvider(widget.patient.id!)),
+                            onRefresh: () => ref.invalidate(
+                              patientXraysProvider(widget.patient.id!),
+                            ),
                           );
                         },
                       )
@@ -206,7 +208,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                             xray: xray,
                             patientName:
                                 '${widget.patient.name} ${widget.patient.familyName}',
-                            onRefresh: () => ref.invalidate(patientXraysProvider(widget.patient.id!)),
+                            onRefresh: () => ref.invalidate(
+                              patientXraysProvider(widget.patient.id!),
+                            ),
                           );
                         },
                       ),
@@ -275,7 +279,9 @@ class _PatientImagingGalleryState extends ConsumerState<PatientImagingGallery> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(l10n.importSuccess)),
                         );
-                        ref.invalidate(patientXraysProvider(widget.patient.id!));
+                        ref.invalidate(
+                          patientXraysProvider(widget.patient.id!),
+                        );
                       }
                     } catch (e) {
                       if (mounted) {

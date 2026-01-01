@@ -9,7 +9,10 @@ import 'package:dentaltid/src/core/settings_service.dart';
 
 final imagingServiceProvider = Provider((ref) => ImagingService());
 
-final patientXraysProvider = FutureProvider.family<List<Xray>, int>((ref, patientId) async {
+final patientXraysProvider = FutureProvider.family<List<Xray>, int>((
+  ref,
+  patientId,
+) async {
   final service = ref.watch(imagingServiceProvider);
   return service.getPatientXrays(patientId);
 });

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
+import 'package:dentaltid/src/core/remote_config_service.dart';
 
 class ActivationDialog extends ConsumerStatefulWidget {
   final String uid;
@@ -79,6 +80,11 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final remoteConfig = ref.watch(remoteConfigProvider).value;
+    final supportEmail =
+        remoteConfig?.supportEmail ?? 'zitounitidjani@gmail.com';
+    final supportPhone = remoteConfig?.supportPhone ?? '+213657293332';
+
     return AlertDialog(
       title: Text(
         AppLocalizations.of(context)!.activationRequired,
@@ -110,13 +116,13 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
             ),
             const SizedBox(height: 8),
             InkWell(
-              onTap: () => _launchUrl('mailto:zitounitidjani@gmail.com'),
+              onTap: () => _launchUrl('mailto:$supportEmail'),
               child: Row(
                 children: [
                   const Icon(Icons.email, color: Colors.blue, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'zitounitidjani@gmail.com',
+                    supportEmail,
                     style: GoogleFonts.poppins(color: Colors.blue),
                   ),
                 ],
@@ -124,13 +130,15 @@ class _ActivationDialogState extends ConsumerState<ActivationDialog> {
             ),
             const SizedBox(height: 8),
             InkWell(
-              onTap: () => _launchUrl('tel:+213657293332'),
+              onTap: () => _launchUrl(
+                'https://wa.me/${supportPhone.replaceAll(RegExp(r"\s+"), "").replaceAll("+", "")}',
+              ),
               child: Row(
                 children: [
                   const Icon(Icons.phone, color: Colors.green, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    '+213 657 293 332',
+                    supportPhone,
                     style: GoogleFonts.poppins(color: Colors.green),
                   ),
                 ],

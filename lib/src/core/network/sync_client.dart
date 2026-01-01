@@ -227,7 +227,9 @@ class SyncClient {
       _container.invalidate(appointmentsProvider);
       _container.invalidate(todaysAppointmentsProvider);
       _container.invalidate(todaysEmergencyAppointmentsProvider);
-      _log.info('FORCE REFRESH (Client): appointmentsProvider & todaysAppointmentsProvider invalidated.');
+      _log.info(
+        'FORCE REFRESH (Client): appointmentsProvider & todaysAppointmentsProvider invalidated.',
+      );
     } else if (table == 'inventory') {
       _container.read(inventoryServiceProvider).notifyDataChanged();
       _container.invalidate(inventoryItemsProvider);

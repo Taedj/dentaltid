@@ -105,17 +105,25 @@ final router = GoRouter(
         return MainLayout(child: child);
       },
       routes: [
-        GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+        GoRoute(
+          path: '/',
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const HomeScreen(),
+          ),
+        ),
         GoRoute(
           path: '/appointments',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
+            Widget child;
             if (state.extra is AppointmentStatus) {
-              return AppointmentsScreen(
+              child = AppointmentsScreen(
                 status: state.extra as AppointmentStatus,
               );
             } else {
-              return const AppointmentsScreen();
+              child = const AppointmentsScreen();
             }
+            return NoTransitionPage(key: state.pageKey, child: child);
           },
           routes: [
             GoRoute(
@@ -150,13 +158,16 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/patients',
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             // Handle both PatientFilter and null cases
             PatientFilter? filter;
             if (state.extra is PatientFilter) {
               filter = state.extra as PatientFilter;
             }
-            return PatientsScreen(filter: filter);
+            return NoTransitionPage(
+              key: state.pageKey,
+              child: PatientsScreen(filter: filter),
+            );
           },
           routes: [
             GoRoute(
@@ -177,7 +188,10 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/finance',
-          builder: (context, state) => const FinanceScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const FinanceScreen(),
+          ),
           routes: [
             GoRoute(
               path: 'add-transaction',
@@ -209,15 +223,24 @@ final router = GoRouter(
         ),
         GoRoute(
           path: '/inventory',
-          builder: (context, state) => const InventoryScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const InventoryScreen(),
+          ),
         ),
         GoRoute(
           path: '/advanced',
-          builder: (context, state) => const AdvancedScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const AdvancedScreen(),
+          ),
         ),
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const SettingsScreen(),
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const SettingsScreen(),
+          ),
           routes: [
             GoRoute(
               path: 'cloud-backups',

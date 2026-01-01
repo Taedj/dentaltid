@@ -7,7 +7,8 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseService {
   static const String _databaseName = 'dentaltid.db';
-  static const int _databaseVersion = 27; // Added visitId to prescriptions table
+  static const int _databaseVersion =
+      27; // Added visitId to prescriptions table
 
   DatabaseService._privateConstructor();
   static final DatabaseService instance = DatabaseService._privateConstructor();
@@ -529,7 +530,9 @@ class DatabaseService {
 
     if (oldVersion < 27) {
       try {
-        await db.execute('ALTER TABLE prescriptions ADD COLUMN visitId INTEGER');
+        await db.execute(
+          'ALTER TABLE prescriptions ADD COLUMN visitId INTEGER',
+        );
       } catch (e, s) {
         developer.log(
           'Error altering table (prescription visitId column): $e',

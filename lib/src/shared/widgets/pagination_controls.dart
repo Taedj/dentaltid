@@ -32,8 +32,8 @@ class PaginationControls extends StatelessWidget {
           Text(
             'Total: $totalItems items',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
+              color: Theme.of(context).textTheme.bodySmall?.color,
+            ),
           ),
           Row(
             children: [

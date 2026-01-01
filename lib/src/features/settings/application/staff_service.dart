@@ -10,7 +10,7 @@ class StaffService {
   StaffService(this._dbService);
 
   Future<Database> get _db async => await _dbService.database;
-  
+
   final _dataChangeController = StreamController<void>.broadcast();
   Stream<void> get onDataChanged => _dataChangeController.stream;
 
@@ -52,7 +52,11 @@ class StaffService {
 
   Future<int> deleteStaff(int id) async {
     final db = await _db;
-    final result = await db.delete('staff_users', where: 'id = ?', whereArgs: [id]);
+    final result = await db.delete(
+      'staff_users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
     notifyDataChanged();
     return result;
   }

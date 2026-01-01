@@ -354,6 +354,16 @@
     }
   },
   "premiumExpired": "انتهى البريميوم",
+  "crownAccount": "حساب Crown",
+  "crownDaysLeft": "Crown: متبقي {days} يوم",
+  "@crownDaysLeft": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "crownExpired": "انتهى Crown",
   "trialVersionDaysLeft": "النسخة التجريبية: متبقي {days} يوم",
   "@trialVersionDaysLeft": {
     "placeholders": {

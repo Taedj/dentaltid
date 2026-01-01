@@ -11,10 +11,12 @@ class DeveloperDashboardScreen extends ConsumerStatefulWidget {
   const DeveloperDashboardScreen({super.key});
 
   @override
-  ConsumerState<DeveloperDashboardScreen> createState() => _DeveloperDashboardScreenState();
+  ConsumerState<DeveloperDashboardScreen> createState() =>
+      _DeveloperDashboardScreenState();
 }
 
-class _DeveloperDashboardScreenState extends ConsumerState<DeveloperDashboardScreen> {
+class _DeveloperDashboardScreenState
+    extends ConsumerState<DeveloperDashboardScreen> {
   int _selectedIndex = 0;
 
   @override
@@ -30,7 +32,9 @@ class _DeveloperDashboardScreenState extends ConsumerState<DeveloperDashboardScr
                 _selectedIndex = index;
               });
             },
-            backgroundColor: const Color(0xFF1A1C1E), // Dark professional background
+            backgroundColor: const Color(
+              0xFF1A1C1E,
+            ), // Dark professional background
             selectedIconTheme: const IconThemeData(color: Colors.white),
             unselectedIconTheme: IconThemeData(color: Colors.grey[600]),
             selectedLabelTextStyle: GoogleFonts.poppins(
@@ -49,7 +53,10 @@ class _DeveloperDashboardScreenState extends ConsumerState<DeveloperDashboardScr
               padding: const EdgeInsets.symmetric(vertical: 24.0),
               child: CircleAvatar(
                 backgroundColor: Colors.white10,
-                child: const Icon(Icons.admin_panel_settings, color: Colors.blueAccent),
+                child: const Icon(
+                  Icons.admin_panel_settings,
+                  color: Colors.blueAccent,
+                ),
               ),
             ),
             destinations: const [
@@ -80,7 +87,7 @@ class _DeveloperDashboardScreenState extends ConsumerState<DeveloperDashboardScr
               ),
             ],
           ),
-          
+
           // Main Content Area
           Expanded(
             child: Container(
@@ -94,15 +101,15 @@ class _DeveloperDashboardScreenState extends ConsumerState<DeveloperDashboardScr
   }
 
   Widget _buildScreen(int index) {
-    // We wrap each screen in a consistent padding/container if needed, 
-    // or let them handle their own Scaffolds (which they do). 
-    // Since they have Scaffolds, we might get nested scaffolds, but likely fine 
-    // if we remove the AppBar there or just nest them. 
+    // We wrap each screen in a consistent padding/container if needed,
+    // or let them handle their own Scaffolds (which they do).
+    // Since they have Scaffolds, we might get nested scaffolds, but likely fine
+    // if we remove the AppBar there or just nest them.
     // For a cleaner look, the sub-screens should ideally NOT be Scaffolds if used here,
     // OR this dashboard shouldn't be a Scaffold if the children are.
-    // Given the previous architecture, they are Scaffolds. 
+    // Given the previous architecture, they are Scaffolds.
     // Let's just render them.
-    
+
     switch (index) {
       case 0:
         return const DeveloperOverviewScreen();

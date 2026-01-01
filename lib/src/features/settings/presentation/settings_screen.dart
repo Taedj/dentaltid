@@ -1,7 +1,6 @@
 import 'package:dentaltid/src/core/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:dentaltid/src/core/firebase_service.dart';
-import 'package:dentaltid/src/shared/widgets/activation_dialog.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:dentaltid/src/core/settings_service.dart';
@@ -565,7 +564,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           subtitle: const Text(
                             'Instantly sync patients and images between DentalTID and NanoPix',
                           ),
-                          value: SettingsService.instance.getBool(
+                          value:
+                              SettingsService.instance.getBool(
                                 'nanopix_live_sync',
                               ) ??
                               false,
@@ -575,9 +575,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               value,
                             );
                             if (value) {
-                              ref.read(nanoPixSyncServiceProvider).startLiveSync();
+                              ref
+                                  .read(nanoPixSyncServiceProvider)
+                                  .startLiveSync();
                             } else {
-                              ref.read(nanoPixSyncServiceProvider).stopLiveSync();
+                              ref
+                                  .read(nanoPixSyncServiceProvider)
+                                  .stopLiveSync();
                             }
                             setState(() {});
                           },
@@ -814,19 +818,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: Text(l10n.editProfile),
                       ),
                       const SizedBox(height: 10),
-                      if (userProfile != null && userProfile.plan != SubscriptionPlan.enterprise)
+                      if (userProfile != null &&
+                          userProfile.plan != SubscriptionPlan.enterprise)
                         ElevatedButton.icon(
                           onPressed: () {
                             context.go('/settings/subscription-plans');
                           },
                           icon: const Icon(Icons.star, color: Colors.orange),
-                          label: Text(l10n.activatePremium), // This now says "Upgrade your plan"
+                          label: Text(
+                            l10n.activatePremium,
+                          ), // This now says "Upgrade your plan"
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange.withAlpha(30),
                             foregroundColor: Colors.orange,
                           ),
                         ),
-                      if (userProfile != null && userProfile.plan != SubscriptionPlan.enterprise)
+                      if (userProfile != null &&
+                          userProfile.plan != SubscriptionPlan.enterprise)
                         const SizedBox(height: 10),
                       const SizedBox(height: 10),
 
