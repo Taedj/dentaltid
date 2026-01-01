@@ -142,7 +142,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                   )
                 else
                   TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.go('/settings');
+                    },
                     child: const Text('VIEW SETTINGS'),
                   ),
               ],
