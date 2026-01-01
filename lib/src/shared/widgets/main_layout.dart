@@ -393,7 +393,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       } else if (destinationLabel == l10n.finance) {
                         route = '/finance';
                       } else if (destinationLabel == l10n.advanced) {
-                        if (!usage.isCrown && !usage.isTrial) {
+                        // NEW LOGIC: Block if user is Premium but NOT Crown. 
+                        // This allows Trial users (who are not premium yet) and Crown users.
+                        if (usage.isPremium && !usage.isCrown) {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
