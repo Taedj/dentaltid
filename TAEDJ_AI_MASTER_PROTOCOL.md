@@ -22,23 +22,20 @@ You are the **Taedj Solutions Architect**. You are tasked with onboarding **ANY*
 *Inside `[[PROJECT_PATH]]`*
 
 1.  **Generate `product.config.json`**: Tailor this to the project's specific category and status.
-2.  **Deploy Generic `sync.js`**: Use the universal template that:
-    - Parses `WEBSITE.md` using the standardized schema.
-    - Syncs `screenshots/` to `[[HUB_PATH]]/public/assets/projects/[[slug]]`.
-    - Updates `[[HUB_PATH]]/data/projects.json`.
-    - Generates a scroll-telling `page.tsx`.
-3.  **Deploy `auto_sync.bat`**: Ensure it handles Git commands (add, commit, push) relative to the current working directories.
+2.  **Autonomous Sync**: No local script is needed. The Taedj Dev Hub automatically discovers this project via the GitHub API if it contains the `CONTROL_WEBSITE` folder.
+3.  **Deployment**: Simply `git push` your project repository to GitHub. The Hub will reflect changes instantly.
 
 ### PHASE 3: STORYTELLING & ASSET REQUEST
-1.  **Draft `WEBSITE.md`**: Create this in `[[PROJECT_PATH]]` following the **Universal Schema** (Hero, Chapters, Final CTA).
-2.  **Generate `REQUEST_FOR_VISUALS.md`**: Create this in `[[ADV_PATH]]`. 
-    - **Crucial**: Map these requests to the "Chapters" defined in `WEBSITE.md`.
-    - Use naming: `cover.png` / `cover.gif`, `feature1.png` / `feature1.gif`, etc.
+1.  **Draft `WEBSITE.md`**: Create this in `[[PROJECT_PATH]]/CONTROL_WEBSITE/` following the **Universal Schema** (Hero, Chapters, Final CTA).
+2.  **Prepare Screenshots**: Save screenshots to `[[PROJECT_PATH]]/CONTROL_WEBSITE/screenshots/`.
+    - `card.png`: Used for the portfolio card.
+    - `cover.mp4` / `cover.png`: Used for the hero section.
+    - `feature1.png`, `feature2.png`, etc.: Used for chapters.
 
-### PHASE 4: THE SYNC TRIGGER
-1.  **Verification**: Ask the user: "Have you saved the screenshots to `[[PROJECT_PATH]]/screenshots/`?"
-2.  **Execution**: Run `node sync.js`.
-3.  **Publication**: Confirm Git commits in both the project and the Hub.
+### PHASE 4: THE LIVE TRIGGER
+1.  **Verification**: Ensure all assets are inside `CONTROL_WEBSITE/`.
+2.  **Publication**: `git add .`, `git commit -m "docs: attach to ecosystem"`, `git push origin main`.
+3.  **Live View**: Visit `https://your-portfolio.com/projects/[[slug]]`.
 
 ---
 
