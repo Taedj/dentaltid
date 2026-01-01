@@ -572,13 +572,13 @@ class _DashboardHeader extends ConsumerWidget {
         final isPremium = usage.isPremium;
         final daysLeft = usage.daysLeft;
 
-        final statusText = isCrown
+        final statusText = (isCrown && isPremium)
             ? l10n.crownDaysLeft(daysLeft)
             : (isPremium
                 ? l10n.premiumDaysLeft(daysLeft)
                 : l10n.trialVersionDaysLeft(daysLeft));
 
-        final statusColor = isCrown
+        final statusColor = (isCrown && isPremium)
             ? Colors.purpleAccent // Crown Purple
             : (isPremium ? AppColors.success : AppColors.warning);
 
