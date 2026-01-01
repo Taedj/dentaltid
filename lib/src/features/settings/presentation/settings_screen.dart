@@ -143,6 +143,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final backupService = BackupService();
     final l10n = AppLocalizations.of(context)!;
     final userProfileAsync = ref.watch(userProfileProvider);
+    final usage = ref.watch(clinicUsageProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settings)),
