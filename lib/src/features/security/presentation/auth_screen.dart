@@ -118,7 +118,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
           final userProfile = UserProfile.fromJson(profileMap);
 
-          if (!_isLicenseValid(userProfile)) return;
+          // Allow dentist auto-login regardless of license (MainLayout locks it)
+          // Only block staff/managed users if needed (currently logic is simple)
 
           if (mounted) context.go('/');
         } catch (e) {
@@ -263,8 +264,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
       if (userProfile != null) {
         log.info('Validating license...');
-        if (!_isLicenseValid(userProfile)) {
-          log.warning('License invalid, signing out.');
+        // --- MODIFIED: Allow Dentist login even if expired. MainLayout handles the lock. ---
+        if (_userType != UserType.dentist && !_isLicenseValid(userProfile)) {
+          log.warning('Staff/Other License invalid, signing out.');
           await FirebaseAuth.instance.signOut();
           if (mounted) _showActivationDialog(userProfile.uid);
           return;
