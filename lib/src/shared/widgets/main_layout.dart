@@ -101,8 +101,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
     final location = GoRouterState.of(context).uri.toString();
 
-    // Handle Trial Expiration Blocking
-    if (usage.isExpired && !usage.isPremium && !location.startsWith('/settings') && !_isDialogShowing && _currentUserRole != UserRole.developer) {
+    // Handle Subscription/Trial Expiration Blocking
+    // ONLY show if expired AND NOT already on settings AND not already showing
+    // AND user is NOT a developer
+    if (usage.isExpired && !location.startsWith('/settings') && !_isDialogShowing && _currentUserRole != UserRole.developer) {
       _isDialogShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {

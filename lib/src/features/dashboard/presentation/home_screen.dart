@@ -571,16 +571,24 @@ class _DashboardHeader extends ConsumerWidget {
         final isCrown = usage.isCrown;
         final isPremium = usage.isPremium;
         final daysLeft = usage.daysLeft;
+        final isExpired = usage.isExpired;
 
-        final statusText = isCrown
-            ? l10n.crownDaysLeft(daysLeft)
-            : (isPremium
-                ? l10n.premiumDaysLeft(daysLeft)
-                : l10n.trialVersionDaysLeft(daysLeft));
+        String statusText;
+        Color statusColor;
 
-        final statusColor = isCrown
-            ? Colors.purpleAccent // Crown Purple
-            : (isPremium ? AppColors.success : AppColors.warning);
+        if (isExpired) {
+          statusText = isCrown ? l10n.crownExpired : (isPremium ? 'PREMIUM EXPIRED' : l10n.trialExpired);
+          statusColor = Colors.redAccent;
+        } else {
+          statusText = (isCrown && isPremium)
+              ? l10n.crownDaysLeft(daysLeft)
+              : (isPremium
+                  ? l10n.premiumDaysLeft(daysLeft)
+                  : l10n.trialVersionDaysLeft(daysLeft));
+          statusColor = isCrown
+              ? Colors.purpleAccent
+              : (isPremium ? AppColors.success : AppColors.warning);
+        }
 
         // Dynamic Greeting
         final hour = DateTime.now().hour;
