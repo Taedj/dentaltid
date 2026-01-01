@@ -159,6 +159,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   if (!isDentist) return const SizedBox.shrink();
 
                   final isPremium = userProfile?.isPremium ?? false;
+                  final isExpired = usage.isExpired;
+                  final canRestore = isPremium && !isExpired;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,12 +222,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: (_isLoading || !isPremium)
+                        onPressed: (_isLoading || !canRestore)
                             ? () {
-                                if (!isPremium) {
+                                if (!canRestore) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Feature Locked: Restore requires a Premium or CROWN plan.'),
+                                    SnackBar(
+                                      content: Text(isExpired 
+                                        ? 'Subscription Expired: Please renew to restore backups.' 
+                                        : 'Feature Locked: Restore requires a Premium or CROWN plan.'),
                                       backgroundColor: Colors.orange,
                                     ),
                                   );
@@ -255,9 +259,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         child: _isLoading
                             ? const CircularProgressIndicator()
                             : Text(
-                                isPremium
+                                canRestore
                                     ? l10n.restoreFromLocalBackup
-                                    : "${l10n.restoreFromLocalBackup} (${l10n.premiumOnly})",
+                                    : "${l10n.restoreFromLocalBackup} (${isExpired ? 'Expired' : l10n.premiumOnly})",
                               ),
                       ),
                       const Divider(height: 40),
@@ -285,7 +289,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 10),
-                        if (userProfile.isPremium) ...[
+                        if (userProfile.isPremium && !usage.isExpired) ...[
                           ElevatedButton(
                             onPressed: _isLoading
                                 ? null
@@ -413,8 +417,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             child: InkWell(
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Feature Locked: Cloud and Backup features require a Premium or CROWN plan.'),
+                                  SnackBar(
+                                    content: Text(usage.isExpired 
+                                      ? 'Subscription Expired: Cloud and Backup features are locked. Please renew your plan.'
+                                      : 'Feature Locked: Cloud and Backup features require a Premium or CROWN plan.'),
                                     backgroundColor: Colors.orange,
                                   ),
                                 );
@@ -425,7 +431,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      'Cloud Sync & Backups (Premium or CROWN Required)',
+                                      usage.isExpired ? 'Cloud Sync & Backups (EXPIRED)' : 'Cloud Sync & Backups (Premium or CROWN Required)',
                                       style: TextStyle(color: Colors.orange.shade200, fontWeight: FontWeight.bold),
                                     ),
                                   ),
