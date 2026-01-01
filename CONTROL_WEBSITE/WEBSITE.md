@@ -4,9 +4,9 @@
 **Title:** DentalTid
 **Subtitle:** Your trusted dental companion
 **CTA Primary Label:** Download Now
-**CTA Primary Link:** #
+CTA Primary Link: https://www.dropbox.com/scl/fi/shr54fc5j8lukcd3huz5h/DentalT-d_x64_setup.exe?rlkey=vmq60in2skpkqele52nxk4xnw&st=81jzep2g&dl=1
 **CTA Secondary Label:** Learn More
-**CTA Secondary Link:** #
+CTA Secondary Link: https://www.tidjanizitouni.com/projects/dentaltid/features
 
 ## Feature Chapters (Visuals support .png/.gif)
 ### Chapter 1: The Unified DentalT!D Dashboard
@@ -18,14 +18,14 @@
 
 ### Chapter 2: The Multi-Dimensional Practice Suite
 **Description:** Effortlessly pivot between every facet of your clinic with a single click. From comprehensive Patient records and dynamic Appointment scheduling to real-time Inventory logistics and granular Financial auditing experience a fluid, integrated workspace that brings your entire studio into one seamless flow*
-**Visual Hint:** feature2.png
+**Visual Hint:** feature2.gif
 **Img Width:** 100
 **Img Offset Y:** 0
 **Img Scale:** 100
 
 ### Chapter 3: The High-Fidelity Clinical Network
 **Description:** Master the complexities of modern care with advanced prescription editing and integrated medical imaging. DentalTid bridges the gap between your staff by connecting receptionists, assistants, and dentists to a single, high performance local database for real time teamwork. Bolstered by a dual-shield data strategy featuring instant local backups and secure cloud redundancy your clinic stays synchronized, resilient, and always ready.
-**Visual Hint:** feature3.png
+**Visual Hint:** feature3.gif
 **Img Width:** 100
 **Img Offset Y:** 0
 **Img Scale:** 100

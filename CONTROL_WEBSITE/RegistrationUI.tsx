@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import React, { useState } from 'react';
@@ -68,7 +67,7 @@ export default function RegistrationUI() {
                 country: formData.country,
                 clinicAddress: formData.address,
                 plan: 'trial',
-                licenseKey: crypto.randomUUID(), // Generate a UUID using native browser API
+                licenseKey: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2), 
                 status: 'active',
                 isPremium: false,
                 role: 'dentist',

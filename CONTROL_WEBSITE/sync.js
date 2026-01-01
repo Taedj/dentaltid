@@ -14,6 +14,7 @@ const APP_PAGES_PATH = path.join(WEBSITE_ROOT, 'app', 'projects');
 const CONTROL_DIR = path.join(APP_ROOT, 'CONTROL_WEBSITE');
 const REGISTRATION_TEMPLATE_PATH = path.join(CONTROL_DIR, 'RegistrationUI.tsx');
 const DASHBOARD_TEMPLATE_PATH = path.join(CONTROL_DIR, 'DashboardUI.tsx');
+const FEATURES_TEMPLATE_PATH = path.join(CONTROL_DIR, 'FeaturesUI.tsx');
 const FIREBASE_CONFIG_PATH = path.join(WEBSITE_ROOT, 'lib', 'firebase.ts');
 // Gist URL for Pricing (Latest Raw)
 const GIST_URL = 'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/config.json';
@@ -203,6 +204,36 @@ export default function DashboardPage() {
     console.log(`[OK] Generated DashboardUI.tsx for ${config.name}`);
   } else {
     console.warn('[WARN] DashboardUI.tsx template not found in CONTROL_WEBSITE.');
+  }
+
+  // 4.7. Generate Features Page (Deep Dive)
+  const featuresSlugDir = path.join(pageDir, 'features');
+  ensureDirectory(featuresSlugDir);
+
+  const featuresServerShell = `
+import React from 'react';
+import { Metadata } from 'next';
+import FeaturesUI from './FeaturesUI';
+
+export const metadata: Metadata = {
+  title: 'Features - ${config.name}',
+  description: 'Full feature report for ${config.name}',
+};
+
+export default function FeaturesPage() {
+  return <FeaturesUI />;
+}
+`;
+  fs.writeFileSync(path.join(featuresSlugDir, 'page.tsx'), featuresServerShell);
+  console.log(`[OK] Generated page.tsx for ${config.name} Features`);
+
+  if (fs.existsSync(FEATURES_TEMPLATE_PATH)) {
+    let featTemplate = fs.readFileSync(FEATURES_TEMPLATE_PATH, 'utf8');
+    const featContent = performReplacements(featTemplate, data);
+    fs.writeFileSync(path.join(featuresSlugDir, 'FeaturesUI.tsx'), featContent);
+    console.log(`[OK] Generated FeaturesUI.tsx for ${config.name}`);
+  } else {
+    console.warn('[WARN] FeaturesUI.tsx template not found in CONTROL_WEBSITE.');
   }
 
   // 5. Generate lib/firebase.ts (if missing)

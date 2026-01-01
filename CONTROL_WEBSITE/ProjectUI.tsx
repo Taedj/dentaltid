@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import React, { useState } from 'react';
@@ -136,7 +135,7 @@ export default function ProjectUI() {
                                 <FaDownload className="text-lg md:text-2xl" /> {{ CTA_PRIMARY_LABEL }}
                             </Link>
                             <Link
-                                href="{{CTA_SECONDARY_LINK}}"
+                                href={`/projects/${PROJECT_CONFIG.slug}/features`}
                                 style={{
                                     padding: `clamp(16px, 4vw, ${STYLES.buttonPaddingY}px) clamp(32px, 5vw, ${STYLES.buttonPaddingX}px)`,
                                     fontSize: `clamp(16px, 4vw, ${STYLES.buttonTextSize}px)`,
