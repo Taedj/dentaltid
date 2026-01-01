@@ -9,8 +9,8 @@
 **CTA Secondary Link:** #
 
 ## Feature Chapters (Visuals support .png/.gif)
-### Chapter 1: Feature 1
-**Description:** Description for Chapter 1
+### Chapter 1: The Unified DentalT!D Dashboard
+**Description:** The Command Center of Your Clinic. Embrace total clarity with a high-fidelity hub that consolidates patient records, clinical alerts, and Today's Appointments into a single, lightning-fast view. Experience zero-latency navigation and professional-grade organization designed to keep your practice moving, whether you're online or off.
 **Visual Hint:** feature1.gif
 **Img Width:** 100
 **Img Offset Y:** 0
