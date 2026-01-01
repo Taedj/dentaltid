@@ -13,6 +13,7 @@ class ClinicUsageState {
   final int daysLeft;
   final bool isPremium;
   final bool isExpired;
+  final bool isCrown;
   final bool hasReachedPatientLimit;
   final bool hasReachedAppointmentLimit;
   final bool hasReachedInventoryLimit;
@@ -23,6 +24,7 @@ class ClinicUsageState {
     required this.inventoryCount,
     required this.daysLeft,
     required this.isPremium,
+    required this.isCrown,
     required this.isExpired,
     required this.hasReachedPatientLimit,
     required this.hasReachedAppointmentLimit,
@@ -84,6 +86,8 @@ final clinicUsageProvider = Provider<ClinicUsageState>((ref) {
     inventoryCount: inventory.length,
     daysLeft: daysLeft,
     isPremium: isPremium,
+    isCrown: userProfile?.plan == SubscriptionPlan.enterprise ||
+        userProfile?.plan == SubscriptionPlan.trial,
     isExpired: daysLeft <= 0,
     hasReachedPatientLimit: !isPremium && patients.length >= 100,
     hasReachedAppointmentLimit: !isPremium && appointments.length >= 100,

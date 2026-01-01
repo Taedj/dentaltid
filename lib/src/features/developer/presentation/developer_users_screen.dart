@@ -1,6 +1,7 @@
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DeveloperUsersScreen extends StatefulWidget {
@@ -188,77 +189,145 @@ class _UserAdvancedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // contrast colors
+    final isDark = false; 
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1C1E);
+    final subTextColor = isDark ? Colors.white70 : const Color(0xFF42474E);
+
     final totalEngagement =
         user.cumulativePatients +
         user.cumulativeAppointments +
         user.cumulativeInventory;
-    String level = 'Ghost';
+    String engagementLevel = 'Ghost';
     Color levelColor = Colors.grey;
 
     if (totalEngagement > 200) {
-      level = 'Power User';
+      engagementLevel = 'Power User';
       levelColor = Colors.purple;
     } else if (totalEngagement > 20) {
-      level = 'Active';
+      engagementLevel = 'Active';
       levelColor = Colors.green;
     } else if (totalEngagement > 0) {
-      level = 'Beginner';
+      engagementLevel = 'Beginner';
       levelColor = Colors.blue;
     }
 
     return Card(
+      elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
       child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         leading: CircleAvatar(
           backgroundColor: levelColor.withValues(alpha: 0.1),
+          radius: 24,
           child: Icon(
-            user.isPremium ? Icons.verified : Icons.person,
+            user.isPremium ? Icons.verified : Icons.person_outline,
             color: levelColor,
+            size: 28,
           ),
         ),
-        title: Row(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                user.dentistName ?? 'Unknown User',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    user.dentistName?.isNotEmpty == true ? user.dentistName! : 'No Name',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: textColor,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildPlanChip(user.plan),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              user.email,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: subTextColor,
               ),
             ),
-            _buildBadge(level, levelColor),
           ],
         ),
-        subtitle: Text(user.email, style: const TextStyle(fontSize: 12)),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: InkWell(
+            onTap: () {
+              Clipboard.setData(ClipboardData(text: user.uid));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('UID copied to clipboard')),
+              );
+            },
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _buildUsageSection(),
-                const Divider(height: 32),
+                const Icon(Icons.fingerprint, size: 14, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  user.uid,
+                  style: GoogleFonts.firaCode(
+                    fontSize: 11,
+                    color: Colors.grey[700],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.copy, size: 12, color: Colors.blueAccent),
+              ],
+            ),
+          ),
+        ),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.02),
+              border: Border(top: BorderSide(color: Colors.grey.withValues(alpha: 0.1))),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Plan: ${user.plan.toString().split('.').last.toUpperCase()}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Joined: ${user.createdAt.toString().split(' ')[0]}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                    _buildDataBadge('Level', engagementLevel, levelColor),
+                    const SizedBox(width: 12),
+                    _buildDataBadge('Joined', user.createdAt.toString().split(' ')[0], Colors.blueGrey),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                _buildUsageSection(textColor),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                         // Copy User Email
+                         Clipboard.setData(ClipboardData(text: user.email));
+                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email copied')));
+                      },
+                      icon: const Icon(Icons.email_outlined, size: 18),
+                      label: const Text('Copy Email'),
                     ),
-                    ElevatedButton(
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
                       onPressed: () => _showPlanDialog(context),
-                      child: const Text('Manage Plan'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _getPlanColor(user.plan),
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.edit_note, size: 18),
+                      label: const Text('Manage Access'),
                     ),
                   ],
                 ),
@@ -270,82 +339,124 @@ class _UserAdvancedCard extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(String label, Color color) {
+  Widget _buildPlanChip(SubscriptionPlan plan) {
+    Color color;
+    String label;
+    switch (plan) {
+      case SubscriptionPlan.enterprise:
+        color = Colors.purpleAccent;
+        label = 'CROWN';
+        break;
+      case SubscriptionPlan.professional:
+        color = Colors.amber;
+        label = 'PREMIUM';
+        break;
+      case SubscriptionPlan.trial:
+        color = Colors.blue;
+        label = 'TRIAL';
+        break;
+      default:
+        color = Colors.grey;
+        label = 'FREE';
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDataBadge(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUsageSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Resource Usage (Trial Limits)',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildMeter('Patients', user.cumulativePatients, 100, Colors.blue),
-        _buildMeter(
-          'Appointments',
-          user.cumulativeAppointments,
-          100,
-          Colors.green,
-        ),
-        _buildMeter('Inventory', user.cumulativeInventory, 100, Colors.orange),
-      ],
-    );
-  }
-
-  Widget _buildMeter(String label, int current, int limit, Color color) {
-    final double progress = (current / limit).clamp(0.0, 1.0);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 11)),
-              Text(
-                '$current/$limit',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: progress >= 0.9 ? Colors.red : Colors.black,
-                ),
-              ),
-            ],
+           Text(
+            '$label: ',
+            style: TextStyle(
+              color: color.withOpacity(0.8),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: color.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                progress >= 0.9 ? Colors.red : color,
-              ),
-              minHeight: 6,
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUsageSection(Color textColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Resource Usage',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+           children: [
+             Expanded(child: _buildSimpleMeter('Patients', user.cumulativePatients, 100, Colors.blue)),
+             const SizedBox(width: 12),
+             Expanded(child: _buildSimpleMeter('Appts', user.cumulativeAppointments, 100, Colors.green)),
+             const SizedBox(width: 12),
+             Expanded(child: _buildSimpleMeter('Items', user.cumulativeInventory, 100, Colors.orange)),
+           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSimpleMeter(String label, int current, int limit, Color color) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Text('$current', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: (current / limit).clamp(0.0, 1.0),
+            backgroundColor: color.withValues(alpha: 0.1),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+            minHeight: 4,
+          ),
+        ),
+      ],
     );
   }
 
@@ -359,7 +470,22 @@ class _UserAdvancedCard extends StatelessWidget {
           children: [
             _planOption(
               ctx,
-              '1 Year Professional',
+              '1 Month Premium',
+              Icons.calendar_view_month,
+              Colors.amberAccent,
+              () {
+                service.updateUserPlan(
+                  user.uid,
+                  plan: SubscriptionPlan.professional,
+                  status: SubscriptionStatus.active,
+                  isPremium: true,
+                  expiryDate: DateTime.now().add(const Duration(days: 30)),
+                );
+              },
+            ),
+            _planOption(
+              ctx,
+              '1 Year Premium',
               Icons.workspace_premium,
               Colors.amber,
               () {
@@ -374,19 +500,54 @@ class _UserAdvancedCard extends StatelessWidget {
             ),
             _planOption(
               ctx,
-              'Lifetime Access',
+              'Lifetime Premium',
               Icons.all_inclusive,
-              Colors.purple,
+              Colors.deepOrange,
               () {
                 service.updateUserPlan(
                   user.uid,
                   plan: SubscriptionPlan.professional,
                   status: SubscriptionStatus.active,
                   isPremium: true,
-                  expiryDate: DateTime.now().add(const Duration(days: 36500)),
+                  expiryDate: null,
                 );
               },
             ),
+            const Divider(),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'CROWN TIER',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            _planOption(ctx, '1 Month CROWN', Icons.diamond_outlined, Colors.cyan, () {
+              service.updateUserPlan(
+                user.uid,
+                plan: SubscriptionPlan.enterprise,
+                status: SubscriptionStatus.active,
+                isPremium: true,
+                expiryDate: DateTime.now().add(const Duration(days: 30)),
+              );
+            }),
+            _planOption(ctx, '1 Year CROWN', Icons.diamond, Colors.blue, () {
+              service.updateUserPlan(
+                user.uid,
+                plan: SubscriptionPlan.enterprise,
+                status: SubscriptionStatus.active,
+                isPremium: true,
+                expiryDate: DateTime.now().add(const Duration(days: 365)),
+              );
+            }),
+            _planOption(ctx, 'Lifetime CROWN', Icons.stars, Colors.purpleAccent, () {
+              service.updateUserPlan(
+                user.uid,
+                plan: SubscriptionPlan.enterprise,
+                status: SubscriptionStatus.active,
+                isPremium: true,
+                expiryDate: null,
+              );
+            }),
             _planOption(ctx, 'Reset to Trial', Icons.refresh, Colors.blue, () {
               service.updateUserPlan(
                 user.uid,

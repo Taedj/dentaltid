@@ -10,6 +10,7 @@ import 'package:logging/logging.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 
 final nanoPixSyncServiceProvider = Provider((ref) {
   return NanoPixSyncService(ref);
@@ -139,6 +140,12 @@ class NanoPixSyncService {
     final autoImportEnabled = settings.getBool('nanopix_live_sync') ?? false;
     if (!autoImportEnabled) return;
 
+    // Check for Trial Limit enforcement
+    // Check for Trial Limit enforcement
+    final usage = _ref.read(clinicUsageProvider);
+    var currentPatientCount = usage.patientCount;
+    final isPremium = usage.isPremium;
+
     for (final npp in nanoPixPatients) {
       // Check if already in DentalTID by external_id or Name/DOB
       final exists = dentalTidPatients.any((dtp) =>
@@ -148,6 +155,11 @@ class NanoPixSyncService {
               _isSameDate(dtp.dateOfBirth, npp.birthDate)));
 
       if (!exists) {
+        if (!isPremium && currentPatientCount >= 100) {
+          _log.warning('Trial limit reached during batch import. Stopping.');
+          break;
+        }
+
         _log.info('Found new patient in NanoPix: ${npp.fullName} (ID: ${npp.patientId}). Importing...');
         try {
           final dob = npp.birthDate != null && npp.birthDate!.isNotEmpty
@@ -169,6 +181,7 @@ class NanoPixSyncService {
           );
           
           await patientService.addPatient(newPatient);
+          currentPatientCount++;
         } catch (e) {
           _log.severe('Failed to auto-import patient ${npp.fullName}', e);
         }

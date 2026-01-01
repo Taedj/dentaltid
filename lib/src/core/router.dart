@@ -25,6 +25,7 @@ import 'package:dentaltid/src/features/appointments/presentation/appointments_sc
 import 'package:dentaltid/src/features/appointments/presentation/add_edit_appointment_screen.dart';
 import 'package:dentaltid/src/features/prescriptions/presentation/advanced_screen.dart';
 import 'package:dentaltid/src/shared/widgets/main_layout.dart';
+import 'package:dentaltid/src/features/subscription/presentation/subscription_plans_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -225,6 +226,10 @@ final router = GoRouter(
             GoRoute(
               path: 'profile',
               builder: (context, state) => const ProfileSettingsScreen(),
+            ),
+            GoRoute(
+              path: 'subscription-plans',
+              builder: (context, state) => const SubscriptionPlansScreen(),
             ),
           ],
         ),

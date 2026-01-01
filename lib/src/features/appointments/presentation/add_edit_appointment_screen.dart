@@ -293,7 +293,12 @@ class _AddEditAppointmentScreenState
                   filled: true,
                   fillColor: Colors.white.withValues(alpha: 0.1),
                 ),
-                items: patients.map((patient) {
+                items: [
+                  ...patients,
+                  if (_selectedPatient != null &&
+                      !patients.any((p) => p.id == _selectedPatient!.id))
+                    _selectedPatient!,
+                ].map((patient) {
                   return DropdownMenuItem<int>(
                     value: patient.id,
                     child: Text('${patient.name} ${patient.familyName}'),
@@ -768,7 +773,12 @@ class _AddEditAppointmentScreenState
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.w500,
                   ),
-                  items: patients.map((patient) {
+                  items: [
+                    ...patients,
+                    if (_selectedPatient != null &&
+                        !patients.any((p) => p.id == _selectedPatient!.id))
+                      _selectedPatient!,
+                  ].map((patient) {
                     return DropdownMenuItem<int>(
                       value: patient.id,
                       child: Text(

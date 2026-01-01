@@ -400,6 +400,15 @@ class PrescriptionTemplate extends StatelessWidget {
                                             color: Colors.black,
                                           ),
                                         ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          m.quantity,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     // Level 2: Posology (Indented)

@@ -41,6 +41,36 @@
 - State: Riverpod
 - UI: Custom 3D Flip Cards & Framer-like animations
 
+## Pricing
+### Plan: Trial
+**Price:** Free
+**Subtitle:** For Evaluation (30 Days)
+**Features:**
+- Max 100 Patients
+- Max 100 Appointments
+- Local Backup Only
+- All Features Unlocked
+
+### Plan: Premium
+**Price:** 2,000 DZD /mo
+**Subtitle:** For Standard Clinics
+**Features:**
+- Unlimited Patients & Appointments
+- Cloud Sync & Restore
+- Secure Local Backup
+- Whatsapp Reminders
+- Standard Support
+
+### Plan: CROWN
+**Price:** 4,000 DZD /mo
+**Subtitle:** For Power Users
+**Features:**
+- Everything in Premium
+- Advanced Analytics Tab
+- Digital Prescriptions
+- Priority Support
+- Future AI Features
+
 ## Final CTA
 **Title:** Ready to Transform Your Clinic?
 **Subtitle:** Join hundreds of dental professionals who have already upgraded their workflow with DentalTid.

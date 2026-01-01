@@ -3,6 +3,8 @@ import 'package:dentaltid/src/features/developer/data/developer_service.dart';
 import 'package:flutter/material.dart';
 import 'package:dentaltid/l10n/app_localizations.dart';
 
+import 'package:google_fonts/google_fonts.dart';
+
 class DeveloperOverviewScreen extends StatelessWidget {
   const DeveloperOverviewScreen({super.key});
 
@@ -103,21 +105,44 @@ class _OverviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+      ),
       child: Container(
         width: 200,
         padding: const EdgeInsets.all(24),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: color),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
             const SizedBox(height: 16),
             Text(
               value,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              style: GoogleFonts.poppins(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF1A1C1E),
+              ),
             ),
+            const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: const Color(0xFF757575),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),

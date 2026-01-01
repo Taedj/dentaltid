@@ -70,7 +70,7 @@ class AdminDashboard extends StatelessWidget {
             children: [
               ListTile(
                 leading: const Icon(Icons.star),
-                title: const Text('Grant Professional Plan'),
+                title: const Text('Grant Premium Plan'),
                 onTap: () {
                   service.updateUserPlan(
                     user.uid,
@@ -82,7 +82,7 @@ class AdminDashboard extends StatelessWidget {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Plan updated to Professional'),
+                      content: Text('Plan updated to Premium'),
                     ),
                   );
                 },

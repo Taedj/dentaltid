@@ -232,7 +232,7 @@ class SyncServer {
 
       final event = SyncEvent.fromJson(json);
 
-      _log.info('Applying event to server database for table: ${event.table}');
+      _log.info('Applying event to server database for table: ${event.table}, Action: ${event.action}');
 
       // Apply to local DB
       final db = await _container.read(databaseServiceProvider).database;
@@ -244,6 +244,7 @@ class SyncServer {
             event.data,
             conflictAlgorithm: ConflictAlgorithm.replace,
           );
+          _log.info('Server DB Insert/Update success for ${event.table} ID: ${event.data['id']}');
           break;
         case SyncAction.delete:
           await db.delete(
@@ -251,6 +252,7 @@ class SyncServer {
             where: 'id = ?',
             whereArgs: [event.data['id']],
           );
+          _log.info('Server DB Delete success for ${event.table} ID: ${event.data['id']}');
           break;
       }
 
@@ -259,12 +261,13 @@ class SyncServer {
 
       // Broadcast the event to all OTHER clients
       broadcast(message, from: origin);
-    } catch (e) {
-      _log.warning('Could not process incoming event: $e');
+    } catch (e, s) {
+      _log.severe('Could not process incoming event: $e', e, s);
     }
   }
 
   void _invalidateProviderForTable(String table) {
+    _log.info('Invalidating providers for table: $table');
     if (table == 'patients') {
       _container.read(patientServiceProvider).notifyDataChanged();
       _container.read(financeServiceProvider).notifyDataChanged();
@@ -276,7 +279,7 @@ class SyncServer {
       _container.invalidate(appointmentsProvider);
       _container.invalidate(todaysAppointmentsProvider);
       _container.invalidate(todaysEmergencyAppointmentsProvider);
-      _log.info('Triggered refresh for table: $table (including Finance)');
+      _log.info('FORCE REFRESH: appointmentsProvider & todaysAppointmentsProvider invalidated.');
     } else if (table == 'inventory') {
       _container.read(inventoryServiceProvider).notifyDataChanged();
       _container.invalidate(inventoryItemsProvider);

@@ -12,6 +12,7 @@ import 'package:dentaltid/src/features/finance/domain/transaction.dart';
 import 'package:dentaltid/src/features/patients/application/patient_service.dart';
 import 'package:dentaltid/src/core/currency_provider.dart';
 import 'package:dentaltid/src/core/user_model.dart';
+import 'package:dentaltid/src/core/clinic_usage_provider.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/features/prescriptions/presentation/prescription_editor_screen.dart';
 import 'package:dentaltid/src/features/imaging/presentation/patient_imaging_gallery.dart';
@@ -397,6 +398,7 @@ class _VisitCardState extends ConsumerState<VisitCard> {
     final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final currency = ref.watch(currencyProvider);
+    final usage = ref.watch(clinicUsageProvider);
     final formattedDate = widget.appointment.dateTime.toLocal();
     final dateString =
         '${formattedDate.year}-${formattedDate.month.toString().padLeft(2, '0')}-${formattedDate.day.toString().padLeft(2, '0')}';
@@ -642,13 +644,33 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                             ),
                           ),
                           Expanded(
-                            child: ElevatedButton(
+                            child: ElevatedButton.icon(
                               onPressed: () {
+                                if (!usage.isCrown) {
+                                  showDialog(
+                                    context: context,
+                                    builder:
+                                        (context) => AlertDialog(
+                                          title: const Text('CROWN Feature'),
+                                          content: const Text(
+                                            'Prescriptions are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  () => Navigator.pop(context),
+                                              child: Text(l10n.ok),
+                                            ),
+                                          ],
+                                        ),
+                                  );
+                                  return;
+                                }
                                 if (userProfile != null) {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
-                                      builder: (context) =>
-                                          PrescriptionEditorScreen(
+                                      builder:
+                                          (context) => PrescriptionEditorScreen(
                                             patient: widget.patient,
                                             userProfile: userProfile,
                                             visitId: widget.appointment.id,
@@ -658,11 +680,20 @@ class _VisitCardState extends ConsumerState<VisitCard> {
                                 }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.secondaryContainer,
+                                backgroundColor:
+                                    usage.isCrown
+                                        ? colorScheme.secondaryContainer
+                                        : Colors.grey.withValues(alpha: 0.2),
                                 foregroundColor:
-                                    colorScheme.onSecondaryContainer,
+                                    usage.isCrown
+                                        ? colorScheme.onSecondaryContainer
+                                        : Colors.grey,
                               ),
-                              child: const Text('Prescription'),
+                              icon:
+                                  usage.isCrown
+                                      ? const SizedBox.shrink()
+                                      : const Icon(Icons.lock, size: 16),
+                              label: const Text('Prescription'),
                             ),
                           ),
                           const SizedBox(width: 16),

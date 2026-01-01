@@ -22,6 +22,8 @@ import 'package:dentaltid/src/core/user_model.dart';
 import 'package:uuid/uuid.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dentaltid/src/core/utils/device_utils.dart';
+import 'package:dentaltid/src/core/remote_config_service.dart';
 
 enum AuthMode { login, register }
 
@@ -178,6 +180,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       UserProfile? userProfile;
 
       if (_authMode == AuthMode.register) {
+        // Device Fingerprinting Check
+        final deviceId = await DeviceUtils.getWindowsDeviceId();
+        if (deviceId != null) {
+          final isBlocked = await _firebaseService.isDeviceBlocked(deviceId);
+          if (isBlocked) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text(
+                        'Trial limit reached for this device. Please contact support.'),
+                    backgroundColor: Colors.red),
+              );
+            }
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+
         log.info('Calling signUpWithEmailAndPassword...');
         final User? user = await _firebaseService.signUpWithEmailAndPassword(
           _emailController.text,
@@ -209,6 +229,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
 
           await _firebaseService.createUserProfile(userProfile, licenseKey);
+          
+          // Register Device for Trial Blacklist
+          if (deviceId != null) {
+            await _firebaseService.registerDeviceTrial(
+                deviceId, user.email ?? _emailController.text);
+          }
+
+          log.info('User profile created and saved to Firestore.');
           log.info('User profile created and saved to Firestore.');
           ref.invalidate(userProfileProvider);
         }
@@ -496,6 +524,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   void _showContactDialog() {
     final l10n = AppLocalizations.of(context)!;
+    final config = ref.read(remoteConfigProvider);
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -522,14 +552,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             const SizedBox(height: 16),
             InkWell(
-              onTap: () => _launchUrl('mailto:zitounitidjani@gmail.com'),
+              onTap: () => _launchUrl('mailto:${config.supportEmail}'),
               child: Row(
                 children: [
                   const Icon(Icons.email, color: Colors.blueAccent),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'zitounitidjani@gmail.com',
+                      config.supportEmail,
                       style: GoogleFonts.poppins(
                         color: Colors.blueAccent,
                         decoration: TextDecoration.underline,
@@ -541,13 +571,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             const SizedBox(height: 12),
             InkWell(
-              onTap: () => _launchUrl('tel:+213657293332'),
+              onTap: () => _launchUrl('tel:${config.supportPhone}'),
               child: Row(
                 children: [
                   const Icon(Icons.phone, color: Colors.greenAccent),
                   const SizedBox(width: 8),
                   Text(
-                    '+213 657 293 332',
+                    config.supportPhone,
                     style: GoogleFonts.poppins(
                       color: Colors.greenAccent,
                       decoration: TextDecoration.underline,
@@ -558,14 +588,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
             const SizedBox(height: 12),
             InkWell(
-              onTap: () => _launchUrl('https://www.tidjanizitouni.com'),
+              onTap: () => _launchUrl(config.websiteUrl),
               child: Row(
                 children: [
                   const Icon(Icons.language, color: Colors.purpleAccent),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'www.tidjanizitouni.com',
+                      config.websiteUrl.isEmpty ? 'www.tidjanizitouni.com' : config.websiteUrl,
                       style: GoogleFonts.poppins(
                         color: Colors.purpleAccent,
                         decoration: TextDecoration.underline,
@@ -910,7 +940,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'Professional Dental Management',
+                                    'Premium Dental Management',
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       color: Colors.white70,

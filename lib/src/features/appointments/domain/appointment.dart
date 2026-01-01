@@ -44,7 +44,7 @@ class Appointment {
     patientId: json['patientId'] ?? json['sessionId'], // Backward compatibility
     dateTime: DateTime.parse(json['dateTime']), // Parse combined DateTime
     status: AppointmentStatus.values.firstWhere(
-      (e) => e.toString() == json['status'],
+      (e) => e.toString() == json['status'] || e.name == json['status'],
       orElse: () => AppointmentStatus.waiting,
     ),
     appointmentType: json['appointmentType'] ?? '',

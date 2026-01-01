@@ -776,11 +776,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       if (userProfile != null && !userProfile.isPremium)
                         ElevatedButton.icon(
                           onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) =>
-                                  ActivationDialog(uid: userProfile.uid),
-                            );
+                            context.go('/settings/subscription-plans');
                           },
                           icon: const Icon(Icons.star, color: Colors.orange),
                           label: Text(l10n.activatePremium),

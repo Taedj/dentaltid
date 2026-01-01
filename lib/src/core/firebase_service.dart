@@ -10,6 +10,7 @@ import 'package:dentaltid/src/features/appointments/domain/appointment.dart';
 import 'package:dentaltid/src/features/finance/domain/transaction.dart'
     as finance;
 import 'package:dentaltid/src/features/inventory/domain/inventory_item.dart';
+import 'package:dentaltid/src/features/finance/domain/purchase_order.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseService {
@@ -691,5 +692,105 @@ class FirebaseService {
       _logger.severe('Error in deleteUserBackupFromFirestore: $e', e, s);
       rethrow;
     }
+  }
+
+  // --- Device Trial Limits ---
+  Future<bool> isDeviceBlocked(String deviceId) async {
+    try {
+      final doc =
+          await _firestore.collection('device_trials').doc(deviceId).get();
+      return doc.exists;
+    } catch (e) {
+      _logger.warning('Error checking device block: $e');
+      return false; // Fail open if offline/error to avoid blocking legitimate users
+    }
+  }
+
+  Future<void> registerDeviceTrial(String deviceId, String email) async {
+    try {
+      await _firestore.collection('device_trials').doc(deviceId).set({
+        'email': email,
+        'createdAt': FieldValue.serverTimestamp(),
+        'platform': Platform.operatingSystem,
+      });
+    } catch (e) {
+      _logger.severe('Failed to register device trial: $e');
+    }
+  }
+
+  // --- Purchase Orders (Pending Requests) ---
+  Future<void> createPurchaseOrder(PurchaseOrder order) async {
+    await _firestore.collection('purchase_orders').doc(order.id).set(order.toJson());
+  }
+
+  Stream<List<PurchaseOrder>> getPendingOrders() {
+    return _firestore
+        .collection('purchase_orders')
+        .where('status', isEqualTo: OrderStatus.pending.toString())
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PurchaseOrder.fromJson(doc.data()))
+            .toList());
+  }
+
+  Future<void> approveOrder(PurchaseOrder order) async {
+    final orderRef = _firestore.collection('purchase_orders').doc(order.id);
+    final userRef = _firestore
+        .collection('users')
+        .doc(order.userId)
+        .collection('profile')
+        .doc('info');
+
+    await _firestore.runTransaction((transaction) async {
+       final userDoc = await transaction.get(userRef);
+       DateTime currentExpiry = DateTime.now();
+       
+       if (userDoc.exists) {
+         final data = userDoc.data()!;
+         final isPremium = data['isPremium'] as bool? ?? false;
+         final expiryStr = data['premiumExpiryDate'] as String?;
+         if (isPremium && expiryStr != null) {
+           final expiry = DateTime.parse(expiryStr);
+           if (expiry.isAfter(DateTime.now())) {
+             currentExpiry = expiry;
+           }
+         }
+       }
+       
+       // Calculate duration
+       int monthsToAdd = 1;
+       final lowerDuration = order.durationLabel.toLowerCase();
+       if (lowerDuration.contains('year')) {
+          monthsToAdd = 12;
+       } else if (lowerDuration.contains('lifetime')) {
+          monthsToAdd = 1200; // 100 years
+       } else if (lowerDuration.contains('month')) {
+           if (lowerDuration.contains('3')) monthsToAdd = 3;
+           if (lowerDuration.contains('6')) monthsToAdd = 6;
+       }
+
+       final newExpiry = currentExpiry.add(Duration(days: 30 * monthsToAdd));
+       
+       transaction.update(userRef, {
+          'isPremium': true,
+          'plan': order.plan.toString(),
+          'premiumExpiryDate': newExpiry.toIso8601String(),
+          'status': SubscriptionStatus.active.toString(),
+       });
+       
+       transaction.update(orderRef, {
+          'status': OrderStatus.approved.toString(),
+          'processedAt': FieldValue.serverTimestamp(),
+          'dentistName': (userDoc.data()?['dentistName'] ?? 'Unknown'), // Sync name just in case
+       });
+    });
+  }
+
+  Future<void> rejectOrder(String orderId) async {
+    await _firestore.collection('purchase_orders').doc(orderId).update({
+      'status': OrderStatus.rejected.toString(),
+      'processedAt': FieldValue.serverTimestamp(),
+    });
   }
 }

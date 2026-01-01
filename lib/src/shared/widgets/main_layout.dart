@@ -8,6 +8,7 @@ import 'package:dentaltid/l10n/app_localizations.dart';
 import 'package:dentaltid/src/core/user_model.dart';
 import 'package:dentaltid/src/core/user_profile_provider.dart';
 import 'package:dentaltid/src/core/clinic_usage_provider.dart';
+import 'package:dentaltid/src/core/remote_config_service.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key, required this.child});
@@ -29,6 +30,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
 
   Future<void> _loadUserRole() async {
     await SettingsService.instance.init();
+    // Initialize Remote Config in background (fire and forget)
+    RemoteConfigService().fetchAndCacheConfig();
+    
     final roleString = SettingsService.instance.getString('userRole');
     if (roleString != null) {
       if (mounted) {
@@ -349,6 +353,25 @@ class _MainLayoutState extends ConsumerState<MainLayout> {
                       } else if (destinationLabel == l10n.finance) {
                         route = '/finance';
                       } else if (destinationLabel == l10n.advanced) {
+                        if (!usage.isCrown) {
+                          showDialog(
+                            context: context,
+                            builder:
+                                (context) => AlertDialog(
+                                  title: const Text('CROWN Feature'),
+                                  content: const Text(
+                                    'Advanced features are only available in the CROWN plan.\nPlease upgrade to access this feature.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: Text(l10n.ok),
+                                    ),
+                                  ],
+                                ),
+                          );
+                          return;
+                        }
                         route = '/advanced';
                       } else if (destinationLabel == l10n.settings) {
                         if (_currentUserRole != UserRole.dentist) {
