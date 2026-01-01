@@ -74,7 +74,7 @@ CTA Secondary Link: https://www.tidjanizitouni.com/projects/dentaltid/features
 **Title:** Get Started Today
 **Subtitle:** Join the future of dental practice management.
 **Button Label:** Get Started
-**Button Link:** #
+**Button Link: https://www.tidjanizitouni.com/projects/dentaltid/register
 
 ## UI & Styling
 **Hero Title Size:** 120
