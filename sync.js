@@ -12,6 +12,8 @@ const PROJECTS_JSON_PATH = path.join(WEBSITE_ROOT, 'data', 'projects.json');
 const PUBLIC_ASSETS_PATH = path.join(WEBSITE_ROOT, 'public', 'assets', 'projects');
 const APP_PAGES_PATH = path.join(WEBSITE_ROOT, 'app', 'projects');
 const CONTROL_DIR = path.join(APP_ROOT, 'CONTROL_WEBSITE');
+const REGISTRATION_TEMPLATE_PATH = path.join(CONTROL_DIR, 'RegistrationUI.tsx');
+const FIREBASE_CONFIG_PATH = path.join(WEBSITE_ROOT, 'lib', 'firebase.ts');
 // Gist URL for Pricing (Latest Raw)
 const GIST_URL = 'https://gist.githubusercontent.com/Taedj/9bf1dae53f37681b9c13dab8cde8472f/raw/config.json';
 
@@ -80,15 +82,15 @@ function main() {
   const pricing = parsePricing(websiteContent);
   const heroTitle = readControlFile('1_HERO_AND_HEADER/TITLE.txt', extractValue(websiteContent, '**Title:**', 'Hero Section'));
   const heroSubtitle = readControlFile('1_HERO_AND_HEADER/SUBTITLE.txt', extractValue(websiteContent, '**Subtitle:**', 'Hero Section'));
-  const ctaPrimaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_TEXT.txt', 'Download Now');
-  const ctaPrimaryLink = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_LINK.txt', '#');
-  const ctaSecondaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_TEXT.txt', 'Learn More');
-  const ctaSecondaryLink = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_LINK.txt', '#');
+  const ctaPrimaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_TEXT.txt', extractValue(websiteContent, 'CTA Primary Label:', 'Hero Section') || 'Download Now');
+  const ctaPrimaryLink = readControlFile('1_HERO_AND_HEADER/BTN_PRIMARY_LINK.txt', extractValue(websiteContent, 'CTA Primary Link:', 'Hero Section') || '#');
+  const ctaSecondaryLabel = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_TEXT.txt', extractValue(websiteContent, 'CTA Secondary Label:', 'Hero Section') || 'Learn More');
+  const ctaSecondaryLink = readControlFile('1_HERO_AND_HEADER/BTN_SECONDARY_LINK.txt', extractValue(websiteContent, 'CTA Secondary Link:', 'Hero Section') || '#');
   const visionCaption = readControlFile('4_FINAL_CONVERSION/CAPTION.txt', extractValue(websiteContent, '**Caption:**', 'Demo & Vision'));
   const finalCTATitle = readControlFile('4_FINAL_CONVERSION/TITLE.txt', extractValue(websiteContent, '**Title:**', 'Final CTA'));
   const finalCTASubtitle = readControlFile('4_FINAL_CONVERSION/SUBTITLE.txt', extractValue(websiteContent, '**Subtitle:**', 'Final CTA'));
-  const finalCTAButtonLabel = readControlFile('4_FINAL_CONVERSION/BUTTON_TEXT.txt', 'Get Started');
-  const finalCTAButtonLink = readControlFile('4_FINAL_CONVERSION/BUTTON_LINK.txt', '#');
+  const finalCTAButtonLabel = readControlFile('4_FINAL_CONVERSION/BUTTON_TEXT.txt', extractValue(websiteContent, '**Button Label:**', 'Final CTA') || 'Get Started');
+  const finalCTAButtonLink = readControlFile('4_FINAL_CONVERSION/BUTTON_LINK.txt', extractValue(websiteContent, 'Button Link:', 'Final CTA') || '#');
 
   const styles = {
     heroTitleSize: parseInt(readControlFile('3_DESIGN_STUDIO/HERO_FONT_SIZE_PX.txt', '120')) || 120,
@@ -111,7 +113,9 @@ function main() {
   const data = {
     heroTitle, heroSubtitle, ctaPrimaryLabel, ctaPrimaryLink, ctaSecondaryLabel, ctaSecondaryLink,
     chapters, pricing, heroImage, visionCaption, finalCTATitle, finalCTASubtitle,
-    finalCTAButtonLabel, finalCTAButtonLink, styles, remoteConfig, config
+    finalCTAButtonLabel, finalCTAButtonLink, styles, remoteConfig, config,
+    supportEmail: remoteConfig.support_email || 'zitounitidjani@gmail.com',
+    supportPhone: remoteConfig.support_phone || '+213657293332'
   };
 
   // Generate page.tsx (Server Shell)
@@ -126,14 +130,73 @@ function main() {
   clientContent = performReplacements(clientContent, data);
   fs.writeFileSync(path.join(pageDir, 'ProjectUI.tsx'), clientContent, 'utf8');
 
-  // 4. Update projects.json
+  // 4. Generate Registration Page
+  const registerSlugDir = path.join(pageDir, 'register');
+  if (!fs.existsSync(registerSlugDir)) fs.mkdirSync(registerSlugDir, { recursive: true });
+
+  const registerServerShell = `
+import { Metadata } from 'next';
+import RegistrationUI from './RegistrationUI';
+
+export const metadata: Metadata = {
+  title: 'Register - ${config.name}',
+  description: 'Create your account for ${config.name}',
+};
+
+export default function RegisterPage() {
+  return <RegistrationUI />;
+}
+`;
+  fs.writeFileSync(path.join(registerSlugDir, 'page.tsx'), registerServerShell);
+  console.log(`[OK] Generated page.tsx for ${config.name} Registration`);
+
+  // Generate RegistrationUI.tsx
+  if (fs.existsSync(REGISTRATION_TEMPLATE_PATH)) {
+    let regTemplate = fs.readFileSync(REGISTRATION_TEMPLATE_PATH, 'utf8');
+    const regContent = performReplacements(regTemplate, data);
+    fs.writeFileSync(path.join(registerSlugDir, 'RegistrationUI.tsx'), regContent);
+    console.log(`[OK] Generated RegistrationUI.tsx for ${config.name}`);
+  } else {
+    console.warn('[WARN] RegistrationUI.tsx template not found in CONTROL_WEBSITE.');
+  }
+
+  // 5. Generate lib/firebase.ts (if missing)
+  const libDir = path.join(WEBSITE_ROOT, 'lib');
+  ensureDirectory(libDir);
+
+  const firebaseConfigContent = `
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDqW_c9YRyxM8GnICR9kSRvs1T-GhseZzY",
+  authDomain: "dentaltid.firebaseapp.com",
+  projectId: "dentaltid",
+  storageBucket: "dentaltid.firebasestorage.app",
+  messagingSenderId: "698475695605",
+  appId: "1:698475695605:web:1e576e008f891e543964bc"
+};
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+export { auth, db };
+`;
+
+  // Always overwrite to ensure correctness
+  fs.writeFileSync(FIREBASE_CONFIG_PATH, firebaseConfigContent);
+  console.log('[OK] Generated/Updated lib/firebase.ts');
+
+  // 6. Update projects.json
   updateProjectsJson(config, heroSubtitle, cardImage || heroImage);
 
-  // 5. Git Automation
+  // 7. Git Automation
   try {
     process.chdir(WEBSITE_ROOT);
     execSync('git add .');
-    execSync(`git commit -m "feat: sync project ${config.slug} with Server-Client split"`);
+    execSync(`git commit -m "feat: sync project ${config.slug} with Type-safe Server-Client split"`);
     execSync('git push');
   } catch (e) { }
 
@@ -141,7 +204,7 @@ function main() {
 }
 
 function performReplacements(template, data) {
-  const { heroTitle, heroSubtitle, ctaPrimaryLabel, ctaPrimaryLink, ctaSecondaryLabel, ctaSecondaryLink, chapters, pricing, heroImage, visionCaption, finalCTATitle, finalCTASubtitle, finalCTAButtonLabel, finalCTAButtonLink, styles, remoteConfig, config } = data;
+  const { heroTitle, heroSubtitle, ctaPrimaryLabel, ctaPrimaryLink, ctaSecondaryLabel, ctaSecondaryLink, chapters, pricing, heroImage, visionCaption, finalCTATitle, finalCTASubtitle, finalCTAButtonLabel, finalCTAButtonLink, styles, remoteConfig, config, supportEmail, supportPhone } = data;
 
   const replace = (t, key, value) => {
     if (value === undefined || value === null) value = '';
@@ -186,14 +249,14 @@ function performReplacements(template, data) {
   const visionHtml = visionCaption ? `<section className="py-60 text-center w-full px-6 bg-gradient-to-b from-transparent via-emerald-500/5 to-transparent"><div className="max-w-6xl mx-auto"><div className="w-24 h-1.5 bg-emerald-500 mx-auto mb-16 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]" /><blockquote className="text-5xl md:text-7xl font-bold text-white italic leading-[1.1] tracking-tight">"${visionCaption}"</blockquote></div></section>` : '';
   const brandElement = styles.brandLogo ? `<img src="/assets/projects/${config.slug}/${styles.brandLogo}" className="h-12 w-auto object-contain" />` : `<div className="text-4xl font-black tracking-tighter text-white/90 underline decoration-emerald-500 decoration-4 underline-offset-8">${config.brand}</div>`;
   const heroImgElement = heroImage ? `<img src="${heroImage}" alt="${config.slug} Hero" style={{ maxWidth: '${styles.heroImgWidth}%', transform: 'translateY(${styles.heroImgOffsetY}px) scale(${styles.heroImgScale / 100})', transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)' }} className="w-full h-full object-contain pt-16 transition-all duration-1000 group-hover/hero:scale-[1.01]" />` : `<div className="w-full h-full flex items-center justify-center text-neutral-800 italic text-4xl font-light">Hero Visual Coming Soon</div>`;
+  const heroBgElement = styles.heroBackground ? `<div className="fixed inset-0 z-0 opacity-20"><img src="/assets/projects/${config.slug}/${styles.heroBackground}" className="w-full h-full object-cover" alt="" /></div>` : '';
 
   t = replace(t, 'META_TITLE', `${config.name} | ${config.brand}`);
   t = replace(t, 'META_DESCRIPTION', (heroSubtitle || '').replace(/'/g, "\\'"));
   t = replace(t, 'PRICING_DATA_JSON', JSON.stringify(remoteConfig.pricing || {}));
   t = replace(t, 'PLAN_STRUCTURE_JSON', JSON.stringify(pricing || []));
-  t = replace(t, 'HERO_BACKGROUND', styles.heroBackground ? `/assets/projects/${config.slug}/${styles.heroBackground}` : '');
+  t = replace(t, 'HERO_BACKGROUND_ELEMENT', heroBgElement); // FIXED NAME
   t = replace(t, 'BRAND_LOGO_ELEMENT', brandElement);
-  t = replace(t, 'STYLE_HERO_TITLE_SIZE', styles.heroTitleSize);
   t = replace(t, 'HERO_TITLE_HTML', heroTitleFormatted);
   t = replace(t, 'HERO_SUBTITLE', heroSubtitle);
   t = replace(t, 'CTA_PRIMARY_LINK', ctaPrimaryLink);
@@ -210,6 +273,8 @@ function performReplacements(template, data) {
   t = replace(t, 'FINAL_CTA_BUTTON_LABEL', finalCTAButtonLabel);
   t = replace(t, 'YEAR', new Date().getFullYear());
   t = replace(t, 'BRAND_NAME', config.brand);
+  t = replace(t, 'SUPPORT_EMAIL', supportEmail);
+  t = replace(t, 'SUPPORT_PHONE', supportPhone);
   t = replace(t, 'STYLES_JSON', JSON.stringify(styles));
 
   return t;

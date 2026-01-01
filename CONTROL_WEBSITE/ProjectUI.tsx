@@ -33,7 +33,11 @@ interface StylesConfig {
     buttonTextSize: number;
     borderRadius: number;
     sectionSpacing: number;
-    borderRadius2X?: number;
+    brandLogo: string;
+    heroBackground: string;
+    heroImgWidth: number;
+    heroImgOffsetY: number;
+    heroImgScale: number;
 }
 
 // Data injected by sync script
@@ -43,14 +47,16 @@ const STYLES: StylesConfig = {{ STYLES_JSON }};
 const PROJECT_CONFIG = {
     name: '{{META_TITLE}}',
     slug: '{{SLUG}}',
-    brand: '{{BRAND_NAME}}'
+    brand: '{{BRAND_NAME}}',
+    email: '{{SUPPORT_EMAIL}}',
+    phone: '{{SUPPORT_PHONE}}'
 };
 
 export default function ProjectUI() {
     const [currency, setCurrency] = useState('DZD');
     const [duration, setDuration] = useState<'monthly' | 'yearly' | 'lifetime'>('yearly');
 
-    const getPrice = (planName: string) => {
+    const getPrice = (planName: string, includeDuration: boolean = true) => {
         const tier = planName.toLowerCase().includes('crown') ? 'crown' : (planName.toLowerCase().includes('premium') ? 'premium' : null);
         if (!tier) return 'Free';
 
@@ -61,9 +67,29 @@ export default function ProjectUI() {
             const position = p.position || 'suffix';
 
             const formatted = position === 'prefix' ? `${symbol}${val}` : `${val} ${symbol}`;
+            if (!includeDuration) return formatted;
             return formatted + (duration === 'lifetime' ? '' : (duration === 'monthly' ? ' /mo' : ' /yr'));
         }
         return 'N/A';
+    };
+
+    const handleSelectPlan = (planName: string) => {
+        if (planName.toLowerCase().includes('trial')) {
+            window.location.href = "{{CTA_PRIMARY_LINK}}";
+            return;
+        }
+
+        const price = getPrice(planName, false);
+        const message = `Hello ${PROJECT_CONFIG.brand}, I would like to upgrade to the ${planName} plan (${duration}) for ${PROJECT_CONFIG.name} for ${price}. (Currency: ${currency})`;
+        const encodedMessage = encodeURIComponent(message);
+
+        // Prefer WhatsApp if available, otherwise Email
+        if (PROJECT_CONFIG.phone) {
+            const phone = PROJECT_CONFIG.phone.replace(/[\s+]/g, '');
+            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+        } else {
+            window.location.href = `mailto:${PROJECT_CONFIG.email}?subject=Plan Upgrade: ${planName}&body=${encodedMessage}`;
+        }
     };
 
     return (
@@ -89,22 +115,23 @@ export default function ProjectUI() {
                         <h1
                             style={{ filter: 'drop-shadow(0 20px 50px rgba(0,0,0,0.5))', fontSize: `${STYLES.heroTitleSize}px` }}
                             className="font-black tracking-tighter leading-[0.85] text-white"
-                            dangerouslySetInnerHTML={{ __html: `{{HERO_TITLE_HTML}}` }}
-                        />
+                        >
+                            {{ HERO_TITLE_HTML }}
+                        </h1>
                         <p className="text-3xl md:text-4xl text-neutral-400 max-w-5xl mx-auto leading-tight font-medium">{{ HERO_SUBTITLE }}</p>
 
                         <div className="flex flex-wrap gap-8 pt-10 justify-center">
                             <Link
                                 href="{{CTA_PRIMARY_LINK}}"
                                 style={{ padding: `${STYLES.buttonPaddingY}px ${STYLES.buttonPaddingX}px`, fontSize: `${STYLES.buttonTextSize}px`, borderRadius: `${STYLES.borderRadius}px` }}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-[#080A0E] font-black transition-all flex items-center gap-4 shadow-[0_20px_60px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-[#080A0E] font-black rounded-[2rem] transition-all flex items-center gap-4 shadow-[0_20px_60px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95"
                             >
                                 <FaDownload /> {{ CTA_PRIMARY_LABEL }}
                             </Link>
                             <Link
                                 href="{{CTA_SECONDARY_LINK}}"
                                 style={{ padding: `${STYLES.buttonPaddingY}px ${STYLES.buttonPaddingX}px`, fontSize: `${STYLES.buttonTextSize}px`, borderRadius: `${STYLES.borderRadius}px` }}
-                                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black transition-all flex items-center gap-4 hover:scale-105 active:scale-95"
+                                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black rounded-[2rem] transition-all flex items-center gap-4 hover:scale-105 active:scale-95"
                             >
                                 {{ CTA_SECONDARY_LABEL }}
                             </Link>
@@ -126,10 +153,10 @@ export default function ProjectUI() {
 
                 <div className="py-40 max-w-[95%] mx-auto text-left">
                     <div className="h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent mb-40" />
-                    <div dangerouslySetInnerHTML={{ __html: `{{CHAPTERS_HTML}}` }} />
+                    {{ CHAPTERS_HTML }}
                 </div>
 
-                <div dangerouslySetInnerHTML={{ __html: `{{VISION_SECTION_HTML}}` }} />
+                {{ VISION_SECTION_HTML }}
 
                 {PLAN_STRUCTURE && PLAN_STRUCTURE.length > 0 && (
                     <section className="py-20 w-full px-6 text-center">
@@ -159,7 +186,12 @@ export default function ProjectUI() {
                                     <ul className="space-y-4 mb-10 flex-grow">
                                         {plan.features.map((f, fi) => <li key={fi} className="flex items-start gap-3 text-neutral-400"><span className="text-emerald-500 mt-1">✔</span> {f}</li>)}
                                     </ul>
-                                    <Link href="{{CTA_PRIMARY_LINK}}" className="w-full py-4 rounded-xl bg-white/5 hover:bg-emerald-600 hover:text-white text-white font-bold transition-all text-center border border-white/10">Select Plan</Link>
+                                    <button
+                                        onClick={() => handleSelectPlan(plan.name)}
+                                        className="w-full py-4 rounded-xl bg-white/5 hover:bg-emerald-600 hover:text-white text-white font-bold transition-all text-center border border-white/10"
+                                    >
+                                        Select Plan
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -174,7 +206,7 @@ export default function ProjectUI() {
                         <Link
                             href="{{FINAL_CTA_BUTTON_LINK}}"
                             style={{ padding: `${STYLES.buttonPaddingY}px ${STYLES.buttonPaddingX}px`, fontSize: `${STYLES.buttonTextSize}px`, borderRadius: `${STYLES.borderRadius}px` }}
-                            className="bg-white text-black font-black text-4xl rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-6 shadow-[0_30px_100px_rgba(255,255,255,0.15)]"
+                            className="relative z-10 bg-white text-black font-black text-4xl rounded-[2.5rem] hover:scale-105 active:scale-95 transition-all inline-flex items-center gap-6 shadow-[0_30px_100px_rgba(255,255,255,0.15)]"
                         >
                             <FaRocket size={40} /> {{ FINAL_CTA_BUTTON_LABEL }}
                         </Link>

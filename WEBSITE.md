@@ -3,8 +3,8 @@
 ## Hero Section
 **Title:** Elevate Your Practice with DentalTid
 **Subtitle:** A high-performance, offline-first management suite designed specifically for modern dental professionals.
-**CTA Primary Label:** Download for Windows
-**CTA Primary Link:** https://google.com
+**CTA Primary Label:** Get Started
+**CTA Primary Link:** /projects/dentaltid/register
 **CTA Secondary Label:** Explore Features
 **CTA Secondary Link:** #features
 
@@ -74,8 +74,8 @@
 ## Final CTA
 **Title:** Ready to Transform Your Clinic?
 **Subtitle:** Join hundreds of dental professionals who have already upgraded their workflow with DentalTid.
-**Button Label:** Get DentalTid Now
-**Button Link:** https://taedj.dev/dentaltid/buy
+**Button Label:** Get Started
+Button Link: https://www.tidjanizitouni.com/projects/dentaltid/register
 
 ## UI & Styling
 **Hero Title Size:** 96
