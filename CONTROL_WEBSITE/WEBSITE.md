@@ -182,3 +182,4 @@
 **Screenshots Path:** CONTROL_WEBSITE\screenshots
 **Hero Video Width (px):** 1366
 **Hero Video Height (px):** 768
+**Font Scale:** 100
