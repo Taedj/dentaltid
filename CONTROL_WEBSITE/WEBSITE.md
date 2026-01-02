@@ -183,3 +183,9 @@
 **Hero Video Width (px):** 1366
 **Hero Video Height (px):** 768
 **Font Scale:** 100
+**Hero Subtitle Size:** 32
+**Chapter Title Size:** 72
+**Chapter Desc Size:** 30
+**Pricing Name Size:** 30
+**Report Title Size:** 96
+**Report Text Size:** 20
