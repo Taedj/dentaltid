@@ -189,3 +189,5 @@
 **Pricing Name Size:** 30
 **Report Title Size:** 96
 **Report Text Size:** 20
+**Final CTA Title Size:** 160
+
