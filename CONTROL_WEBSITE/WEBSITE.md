@@ -187,7 +187,7 @@
 **Chapter Title Size:** 72
 **Chapter Desc Size:** 30
 **Pricing Name Size:** 30
-**Report Title Size: 30
+**Report Title Size:** 30
 **Report Text Size:** 20
 **Final CTA Title Size: 100
 
