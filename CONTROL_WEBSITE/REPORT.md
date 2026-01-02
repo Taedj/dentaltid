@@ -1,53 +1,86 @@
 [EN]
-# Technical Guide & Capabilities
+# Patient Management Excellence
+## Streamlined Dental Workflows
+DentalTid transforms how you handle patient data. From the first consultation to complex treatment plans, every detail is organized for maximum efficiency.
+- **Comprehensive Profiles**: Store medical history, allergies, and treatment notes in one secure place.
+- **Smart Search**: Find any patient instantly by name, ID, or phone number.
+- **Benefit**: Reduce administrative time by 40%, allowing you to focus on care.
 
-## Core Clinical Infrastructure
-- **High-Fidelity Intraoral Imaging**: Complete TWAIN sensor integration supporting NanoPix and major X-Ray hardware. Features real-time capture, Smart Zoom tools, and medical-grade measurement precision.
-- **Offline-First LAN Sync**: A robust host-client architecture allowing instant data synchronization across multiple devices in your clinic—no internet connection required.
-- **Dynamic Appointment Flow**: Professional management system with status tracking (Waiting, In Progress, Completed) and emergency triage.
+# Precision Financial Systems
+## Real-time Revenue Tracking
+Take full control of your clinic's finances with automated billing and collection tools.
+- **Automated Invoicing**: Generate professional bills with one click based on treatments performed.
+- **Expense Management**: Track laboratory costs, supplies, and staff salaries.
+- **Benefit**: Eliminate billing errors and gain a clear view of your ROI through detailed monthly reports.
 
-## Inventory & Financial Intelligence
-- **Inventory Logistics**: Automated radar system for low-stock alerts and expiration tracking to prevent clinical downtime.
-- **Advanced Financial Auditing**: Granular tracking of daily/monthly revenue, expense categorization (Rent, Salaries, Materials), and net profit analysis.
-- **Role-Based Security**: Secure PIN-based access for Assistants and Receptionists with localized permissions to protect sensitive financial data.
+# Dynamic Staff Operations
+## Collaborative Clinic Environment
+Connect your front desk, doctors, and laboratory assistants through a unified staff portal.
+- **Role-Based Access**: Securely manage what each staff member can see and edit.
+- **Activity Logs**: Track updates and changes made by your team for full accountability.
+- **Benefit**: Improve team coordination and reduce communication overhead.
 
-## Why DentalTid?
-- **Zero Latency**: Built on a high-performance local database for lightning-fast patient retrieval.
-- **Data Resilience**: Dual-layer protection with local instant backups and optional secure cloud redundancy.
-- **Premium UX**: Modern, distraction-free interface designed for the high-velocity clinical environment.
+# Advanced Treatment Planning
+## Visual Case Presentation
+Empower patients to understand their dental health through detailed treatment visualizations.
+- **Step-by-Step Plans**: Break down complex procedures into manageable sessions.
+- **Status Tracking**: Monitor the progress of ongoing treatments in real-time.
+- **Benefit**: Increase treatment acceptance rates by providing clear, visual roadmap to a better smile.
 
 [AR]
-# الدليل التقني والمميزات
+# التميز في إدارة المرضى
+## تدفقات عمل أسنان انسيابية
+يغير DentalTid كيفية تعاملك مع بيانات المرضى. من الاستشارة الأولى إلى خطط العلاج المعقدة، يتم تنظيم كل التفاصيل لتحقيق أقصى قدر من الكفاءة.
+- **ملفات تعريف شاملة**: قم بتخزين التاريخ الطبي والحساسية وملاحظات العلاج في مكان آمن واحد.
+- **بحث ذكي**: ابحث عن أي مريض فوراً عن طريق الاسم أو الرقم القومي أو رقم الهاتف.
+- **الفائدة**: تقليل الوقت الإداري بنسبة 40٪، مما يتيح لك التركيز على الرعاية.
 
-## البنية التحتية السريرية الأساسية
-- **تصوير الأشعة داخل الفم عالي الدقة**: تكامل تام مع مستشعرات TWAIN يدعم NanoPix ومعظم أجهزة الأشعة. يتميز بالالتقاط الفوري، وأدوات الزووم الذكي، ودقة القياسات الطبية.
-- **مزامنة LAN بدون إنترنت**: هندسة (خادم-عميل) قوية تتيح المزامنة الفورية للبيانات عبر أجهزة متعددة في عيادتك دون الحاجة لاتصال بالإنترنت.
-- **تدفق المواعيد الديناميكي**: نظام إدارة احترافي مع تتبع الحالة (انتظار، قيد التنفيذ، مكتمل) وفرز حالات الطوارئ.
+# أنظمة مالية دقيقة
+## تتبع الإيرادات في الوقت الفعلي
+تحكم بشكل كامل في الشؤون المالية لعيادتك باستخدام أدوات الفوترة والتحصيل الآلية.
+- **فوترة آلية**: قم بإصدار فواتير احترافية بنقرة واحدة بناءً على العلاجات التي تم إجراؤها.
+- **إدارة المصاريف**: تتبع تكاليف المختبر والمستلزمات ورواتب الموظفين.
+- **الفائدة**: القضاء على أخطاء الفوترة والحصول على رؤية واضحة لعائد الاستثمار من خلال تقارير شهرية مفصلة.
 
-## الذكاء المخزني والمالي
-- **لوجستيات المخزون**: نظام رادار آلي للتنبيه عند انخفاض المخزون وتتبع تاريخ انتهاء الصلاحية لمنع توقف العمل السريري.
-- **التدقيق المالي المتقدم**: تتبع دقيق للإيرادات اليومية والشهرية، وتصنيف المصاريف (إيجار، رواتب، مواد)، وتحليل صافي الربح.
-- **أمن الموظفين**: وصول آمن محمي برمز PIN للمساعدين وموظفي الاستقبال مع صلاحيات مخصصة لحماية البيانات المالية الحساسة.
+# عمليات الموظفين الديناميكية
+## بيئة عيادة تعاونية
+اربط مكتب الاستقبال والأطباء ومساعدي المختبر من خلال بوابة موظفين موحدة.
+- **الوصول المستند إلى الأدوار**: أدر بأمان ما يمكن لكل موظف رؤيته وتحريره.
+- **سجلات النشاط**: تتبع التحديثات والتغييرات التي أجراها فريقك للمساءلة الكاملة.
+- **الفائدة**: تحسين تنسيق الفريق وتقليل تكاليف الاتصال الإضافية.
 
-## لماذا DentalTid؟
-- **سرعة استجابة قصوى**: مبني على قاعدة بيانات محلية عالية الأداء لاسترجاع بيانات المرضى بسرعة البرق.
-- **مرونة البيانات**: حماية مزدوجة الطبقات مع نسخ احتياطي محلي فوري ومزامنة سحابية اختيارية آمنة.
-- **تجربة مستخدم متميزة**: واجهة حديثة خالية من المشتتات مصممة لبيئة العمل السريرية السريعة.
+# تخطيط العلاج المتقدم
+## تقديم الحالة المرئية
+مكّن المرضى من فهم صحة أسنانهم من خلال تصورات علاجية مفصلة.
+- **خطط خطوة بخطوة**: قم بتقسيم الإجراءات المعقدة إلى جلسات سهلة الإدارة.
+- **تتبع الحالة**: راقب تقدم العلاجات الجارية في الوقت الفعلي.
+- **الفائدة**: زيادة معدلات قبول العلاج من خلال تقديم خارطة طريق واضحة ومرئية لابتسامة أفضل.
 
 [FR]
-# Guide Technique et Capacités
+# Excellence en Gestion des Patients
+## Flux de Travail Dentaire Optimisés
+DentalTid transforme la gestion de vos données patients. De la première consultation aux plans de traitement complexes, chaque détail est organisé pour une efficacité maximale.
+- **Profils Complets** : Stockez les antécédents médicaux, les allergies et les notes de traitement dans un endroit sécurisé.
+- **Recherche Intelligente** : Trouvez n'importe quel patient instantanément par nom, ID ou numéro de téléphone.
+- **Avantage** : Réduisez le temps administratif de 40%, vous permettant de vous concentrer sur les soins.
 
-## Infrastructure Clinique de Base
-- **Imagerie Intra-orale Haute Fidélité**: Intégration complète des capteurs TWAIN supportant NanoPix et les principaux matériels radiographiques. Comprend la capture en temps réel, des outils de zoom intelligent et une précision de mesure médicale.
-- **Synchro LAN Hors-ligne**: Une architecture hôte-client robuste permettant une synchronisation instantanée des données sur plusieurs appareils dans votre clinique—aucune connexion Internet n'est requise.
-- **Flux de Rendez-vous Dynamique**: Système de gestion professionnelle avec suivi de statut (En attente, En cours, Terminé) et tri des urgences.
+# Systèmes Financiers de Précision
+## Suivi des Revenus en Temps Réel
+Prenez le contrôle total des finances de votre clinique grâce à des outils de facturation et de recouvrement automatisés.
+- **Facturation Automatisée** : Gérez des factures professionnelles en un clic basées sur les soins effectués.
+- **Gestion des Dépenses** : Suivez les coûts de laboratoire, les fournitures et les salaires du personnel.
+- **Avantage** : Éliminez les erreurs de facturation et obtenez une vision claire de votre ROI grâce à des rapports mensuels détaillés.
 
-## Intelligence d'Inventaire et Financière
-- **Logistique d'Inventaire**: Système radar automatisé pour les alertes de stock bas et le suivi des expirations afin d'éviter les arrêts cliniques.
-- **Audit Financier Avancé**: Suivi granulaire des revenus quotidiens/mensuels, catégorisation des dépenses (Loyer, Salaires, Matériaux) et analyse du bénéfice net.
-- **Sécurité par Rôle**: Accès sécurisé par code PIN pour les assistants et les réceptionnistes avec des autorisations localisées pour protéger les données financières sensibles.
+# Opérations Dynamiques du Personnel
+## Environnement Clinique Collaboratif
+Connectez votre réception, vos médecins et vos assistants de laboratoire via un portail unifié.
+- **Accès par Rôles** : Gérez en toute sécurité ce que chaque membre du personnel peut voir et modifier.
+- **Journaux d'Activité** : Suivez les mises à jour et les changements effectués par votre équipe pour une responsabilité totale.
+- **Avantage** : Améliorez la coordination de l'équipe et réduisez les coûts de communication.
 
-## Pourquoi DentalTid?
-- **Zéro Latence**: Basé sur une base de données locale haute performance pour une récupération ultra-rapide des patients.
-- **Résilience des Données**: Protection à double couche avec des sauvegardes locales instantanées et une redondance cloud sécurisée en option.
-- **UX Premium**: Interface moderne et sans distraction conçue pour l'environnement clinique à haute vélocité.
+# Planification de Traitement Avancée
+## Présentation Visuelle des Cas
+Permettez aux patients de comprendre leur santé dentaire grâce à des visualisations de traitement détaillées.
+- **Plans Étape par Étape** : Décomposez les procédures complexes en sessions gérables.
+- **Suivi des Statuts** : Surveillez la progression des traitements en cours en temps réel.
+- **Avantage** : Augmentez les taux d'acceptation des traitements en offrant une feuille de route claire et visuelle vers un meilleur sourire.
