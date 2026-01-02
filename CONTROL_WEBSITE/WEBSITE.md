@@ -4,7 +4,7 @@
 **Title:** DentalTid
 **Subtitle:** Your trusted dental companion
 **CTA Primary Label:** Download Now
-CTA Primary Link: https://www.dropbox.com/scl/fi/shr54fc5j8lukcd3huz5h/DentalT-d_x64_setup.exe?rlkey=vmq60in2skpkqele52nxk4xnw&st=81jzep2g&dl=1
+CTA Primary Link: https://www.dropbox.com/scl/fi/shr54fc5j8lukcd3huz5h/DentalT-D_x64_setup.exe?rlkey=vmq60in2skpkqele52nxk4xnw&st=bqkbdm5b&dl=1
 **CTA Secondary Label:** Learn More
 CTA Secondary Link: https://www.tidjanizitouni.com/projects/dentaltid/features
 
